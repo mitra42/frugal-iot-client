@@ -1,24 +1,33 @@
 {
-  "name": "frugaliot-clientserver",
-  "version": "1.0.0",
-  "description": "Frugal IoT client and server",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "author": {
+    "name": "Mitra Ardron",
+    "email": "mitra@mitra.biz",
+    "url": "https://www.mitra.biz"
   },
-  "private": true,
+  "browserslist": "> 20%, not dead",
+  "bugs": "https://github.com/mitra42/frugal-iot-logger/issues",
   "dependencies": {
-    "frugal-iot-logger": "^1.0.1",
     "async": "^3.2.6",
     "chart.js": "^4.4.6",
-    "chartjs-adapter-luxon": "^1.3.1",
-    "express": "^5.0.1",
     "html-element-extended": "^0.1.2",
     "js-yaml": "^4.1.0",
     "luxon": "^3.5.0",
     "mqtt": "^5.10.1",
-    "morgan": "^1.10.0"
   },
-  "repository": "https://github.com/mitra42/frugal-iot",
-  "type": "module"
+  "description": "Frugal IoT client",
+  "homepage": "https://github.com/mitra42/frugal-iot-client",
+  "keywords": [
+    "mqtt",
+    "frugal-iot"
+  ],
+  "license": "MIT",
+  "main": "webcomponents.js",
+  "name": "frugal-iot-client",
+  "private": true,
+  "repository": "https://github.com/mitra42/frugal-iot-client",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "type": "module",
+  "version": "0.0.1"
 }
