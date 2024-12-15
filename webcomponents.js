@@ -353,7 +353,7 @@ class MqttToggle extends MqttTransmitter {
           onchange: this.onChange.bind(this)}),
         // TODO check how can test whether value is set and set indeterminate if not set (but not if false)
         EL('label', {for: 'checkbox'+unique_id }, [
-           EL('slot', {}),
+          EL('slot', {}),
         ]),
       ]),
     ];
@@ -654,30 +654,30 @@ class MqttWrapper extends HTMLElementExtended {
     }
   }
   connectedCallback() {
-      // TODO-69 security this will be replaced by a subset of config.yaml,
-      //  that is public, but in the same format, so safe to build on this for now
-      GET("/config.json", {}, (err, json) => {
-        if (err) {
-          console.error(err);
-          // TODO-69 display error to user, not just console
-          return;
-        } else { // got config
-          server_config = json;
-          this.loadAttributesFromURL();
-          this.appendClient();
-          this.appender();
-        }
-        this.renderAndReplace();
-      });
-      //super.connectedCallback(); // Not doing as finishes with a re-render.
+    // TODO-69 security this will be replaced by a subset of config.yaml,
+    //  that is public, but in the same format, so safe to build on this for now
+    GET("/config.json", {}, (err, json) => {
+      if (err) {
+        console.error(err);
+        // TODO-69 display error to user, not just console
+        return;
+      } else { // got config
+        server_config = json;
+        this.loadAttributesFromURL();
+        this.appendClient();
+        this.appender();
+      }
+      this.renderAndReplace();
+    });
+    //super.connectedCallback(); // Not doing as finishes with a re-render.
   }
   render() {
     return [
       EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
       EL('div', {class: 'outer'}, [
-          EL('slot', {name: 'client'}),
-          EL('slot'),
-        ]),
+        EL('slot', {name: 'client'}),
+        EL('slot'),
+      ]),
     ];
 
   }
@@ -810,7 +810,7 @@ class MqttNode extends MqttReceiver {
           EL('div', {},[
             EL('span',{class: 'name', textContent: this.state.name}),
             EL('span',{class: 'nodeid', textContent: this.state.id}),
-            ]),
+          ]),
           EL('span',{class: 'description', textContent: this.state.description}),
         ]),
         EL('div', {class: "nodes"},[
@@ -886,12 +886,12 @@ class MqttGraph extends MqttElement {
   render() {
     return ( [
       EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
-        // TODO see https://www.chartjs.org/docs/latest/configuration/responsive.html#important-note div should ONLY contain canvas
+      // TODO see https://www.chartjs.org/docs/latest/configuration/responsive.html#important-note div should ONLY contain canvas
       EL("div", {class: 'outer'}, [ // TODO Move style to sheet
         EL('slot', {name: "chart"}), // TODO-46-line should just be the chart slot I think
         EL('slot', {}), // TODO-46-line should just be the chart slot I think
-      ])
-    );
+      ]),
+    ]);
   }
 }
 customElements.define('mqtt-graph', MqttGraph);
