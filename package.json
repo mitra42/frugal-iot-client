@@ -13,7 +13,7 @@
     "html-element-extended": "^0.1.2",
     "js-yaml": "^4.1.0",
     "luxon": "^3.5.0",
-    "mqtt": "^5.10.1",
+    "mqtt": "^5.10.1"
   },
   "description": "Frugal IoT client",
   "homepage": "https://github.com/mitra42/frugal-iot-client",
