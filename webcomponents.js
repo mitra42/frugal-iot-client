@@ -1055,7 +1055,7 @@ class MqttGraph extends MqttElement {
       // TODO see https://www.chartjs.org/docs/latest/configuration/responsive.html#important-note div should ONLY contain canvas
       EL("div", {class: 'outer'}, [ // TODO Move style to sheet
         EL('div',{class: 'leftright'}, [
-          EL('span', {class: "graphnavleft", textContent: "⬅︎", onclick: this.graphnavleft.bind(this)}),
+          //EL('span', {class: "graphnavleft", textContent: "⬅︎", onclick: this.graphnavleft.bind(this)}),
           EL('slot', {name: "chart"}), // This is <div><canvas></div>
         ]),
         EL('slot', {}), // This is the slot where the GraphDatasets get stored
