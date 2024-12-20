@@ -1,73 +1,48 @@
-# Setting up Frugal IoT demo HTML
+# Frugal IoT client
 
-*Important* At this time, the demo only demonstrates HTML access to MQTT
-it is not yet connected to the sensor node development
-And in fact in most situations they won't see the laptop unless its 
-IP address is configured in `_configuration.h`
+This is a javascript based client for the Frugal IoT project, in particular it has the 
+following features
 
-To get this demo running required a lot of fiddling
-with mosquitto - this is what worked for me on a Mac
+* Can connect to MQTT.
+* Understands the discovery messages of Frugal IoT so can determine what sensors are available
+* Can display results from sensors in Bar graphs, toggles, with other UX coming soon
+* Can control nodes including both direct control
+  e.g. toggling a relay - and configuting various parameters.
+* Can show graph results for multiple readings
 
-I welcome improvements for other platforms and setups.
-#### Install javascript libraries
-You will need npm [See instructions on npmjs](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+There is much still to do - see https://github.com/mitra42/frugal-iot-client. 
+This repo was spun out of the main repo https://github.com/mitra42/frugal-iot 
+which is still the best place to post complex issues involving client / server and node. 
 
-Then in this directory
-```aiignore
-npm install
+## Test and demonstration
+
+Connect to http://naturalinnovation:8080  it will server up the current UI.
+
+## Installation for development
+
+Note this process will probably change to make configuration changes for development easier.
+
+This should work on Linux or a Mac - (instructions on windows welcome as a PR)
+Clone this repo, 
 ```
-It should install the mqtt library and a package I wrote to simplify web components. 
-#### Setting up Mosquitto on my Mac
-Install homebrew if not already available
+git clone https://github.com/mitra42/frugal-iot-client.git
+cd frugal-iot-client; npm install
+cd ..
+```
+Clone and run the server
+```
+git clone https://github.com/mitra42/frugal-iot-server.git
+cd frugal-iot-server; npm install
+```
+Edit `frugal-iot-server.js` and uncomment the line hear the top
+that sets `htmldir` to the `../frugal-iot-client`
+```
+node frugal-iot-server.js
+```
+Point your browser at `https://localhost:8080`
 
-```brew install mosquitto```
-There is a configuration file and password file here.
-Mosquitto is picky about its config file, it won't work without either the passwords setup or `allow_anonymous true`
-There is a demo password file here 
-with a single user `public` with password `public`, 
-it can be configured with e.g. 
-```
-mosquitto_password -c ./mosquitto_passwords public
-```
-(only use `-c` when creating file first time)
+You should see a series of dialogues allowing you to select a project.
+Choosing `dev` and `Lotus Ponds` will often get one of the test nodes I'm running at home.
 
-Then run it with
-```
-/opt/homebrew/opt/mosquitto/sbin/mosquitto -c mosquitto.conf
-```
-And you should see a log file like
-```
-1728120137: mosquitto version 2.0.18 starting
-1728120137: Config loaded from mosquitto.conf.
-1728120137: Opening ipv6 listen socket on port 1883.
-1728120137: Opening ipv4 listen socket on port 1883.
-1728120137: Opening websockets listen socket on port 9012.
-1728120137: mosquitto version 2.0.18 running
-```
-#### Setup http server
-```aiignore
-brew install http-server
-```
-Then 
-```
-http-server
-```
-Will give a local http-server on port 8080
 
-The web browser should be able to navigate to `http://localhost:8080`
-#### Connect local server node to server
-
-Find the IP of your local server
-
-Edit that into `SYSTEM_MQTT_SERVER` in `_configuration.h`
-Edit the `SYSTEM_MQTT_PASSWORD` and `SYSTEM_MQTT_PASSWORD` in the same file
-Flash the node. 
-
-You should see the connection both in the Serial Monitor of the node, 
-and in the window where you started `mosquitto`
-
-#### Connect your web browser
-Browse to `https://localhost:8080` or wherever your local http server is.
-
-This should also show up in the `mosquitto` console.
 
