@@ -152,7 +152,7 @@ class MqttClient extends HTMLElementExtended {
         connectTimeout: 5000,
         username: "public", //TODO-30 parameterize this - read config.json then use password from there
         password: "public",
-        // Remainder dont appear to be needed
+        // Remainder do not appear to be needed
         //hostname: "127.0.0.1",
         //port: 9012, // Has to be configured in mosquitto configuration
         //path: "/mqtt",
@@ -219,6 +219,7 @@ class MqttReceiver extends MqttElement {
   }
    */
 // Event gets called when graph icon is clicked - asks topic to add a line to the graph
+  // noinspection JSUnusedLocalSymbols
   opengraph(e) {
     this.mt.createGraph();
   }
@@ -537,7 +538,7 @@ class MqttWrapper extends HTMLElementExtended {
           this.state.project = p;
         }
       } // Drop through with o & p
-      this.addProject(false);
+      let elProject = this.addProject(false);
       elProject.valueSet(this.state.node, true); // Create node on project along with its MqttNode
     } else { // !n
       if (!this.state.project)  { // !n !p ?o
@@ -600,7 +601,7 @@ class MqttWrapper extends HTMLElementExtended {
         this.appendClient();
         this.appender();
       }
-      this.renderAndReplace(); // TODO check, but shouldnt need to renderAndReplace as render is (currently) fully static
+      this.renderAndReplace(); // TODO check, but should not need to renderAndReplace as render is (currently) fully static
     });
     //super.connectedCallback(); // Not doing as finishes with a re-render.
   }
@@ -696,9 +697,10 @@ class MqttTopic {
   // Create the UX element that displays this
   createElement() {
     if (!this.element) {
-      let name = this.name;
+      // noinspection JSUnresolvedReference
+      let name = this.name; // comes from discovery
       let el;
-      let topic = this.topic;
+      // noinspection JSUnresolvedReference
       switch (this.display) {
         case 'toggle':
           el = EL('mqtt-toggle', {}, [name]);
@@ -706,22 +708,26 @@ class MqttTopic {
           this.qos = 1;
           break;
         case 'bar':
+          // noinspection JSUnresolvedReference
           el = EL('mqtt-bar', {max: this.max, min: this.min, color: this.color}, []);
           break;
         case 'text':
           el = EL('mqtt-text', {}, []);
           break;
         case 'slider':
+          // noinspection JSUnresolvedReference
           el = EL('mqtt-slider', {min: this.min, max: this.max, value: (this.max + this.min) / 2}, [
             EL('span', {textContent: "△"}, []),
           ]);
           break;
         case 'dropdown':
+          // noinspection JSUnresolvedReference
           el = EL('mqtt-dropdown', {options: this.options, project: this.project});
           this.retain = true;
           this.qos = 1; // This message needs to get through to node
           break;
         default:
+          // noinspection JSUnresolvedReference
           console.log("do not know how to display a ", this.display);
       }
       if (el) el.mt = this;
@@ -754,6 +760,7 @@ class MqttTopic {
       case "text":
         return message;
       case "yaml":
+        // noinspection JSUnusedGlobalSymbols
         return yaml.loadAll(message, {onWarning: (warn) => console.log('Yaml warning:', warn)});
       default:
         console.error(`Unrecognized message type: ${this.type}`);
@@ -776,6 +783,7 @@ class MqttTopic {
   get yaxisid() {
     let scaleNames = Object.keys(graph.state.scales);
     let yaxisid;
+    // noinspection JSUnresolvedReference
     let n = this.name.toLowerCase();
     let t = this.topic.split('/').pop().toLowerCase();
     if (scaleNames.includes(n)) { return n; }
@@ -786,16 +794,21 @@ class MqttTopic {
     if ( yaxisid = scaleNames.find(tt => tt.includes(n) || n.includes(tt)) ) { return yaxisid; }
     // TODO-46 - need to turn axis on, and position when used.
     // Not found - lets make one - this might get more parameters (e.g. linear vs exponential could be a attribute of Bar ?
+    // noinspection JSUnresolvedReference
     graph.addScale(t, {
       // TODO-46 add color
       type: 'linear',
       display: true,
       title: {
+        // noinspection JSUnresolvedReference
         color: this.color,  // May need to vary so not all e.g. humidity same color
         display: true,
+        // noinspection JSUnresolvedReference
         text: this.name,
       },
+      // noinspection JSUnresolvedReference
       suggestedMin: this.min,
+      // noinspection JSUnresolvedReference
       suggestedMax: this.max,
     });
     return t;
@@ -809,9 +822,12 @@ class MqttTopic {
 
     // Create a graphdataset to put in the chart
     if (!this.graphdataset) {
+      // noinspection JSUnresolvedReference
       this.graphdataset = EL('mqtt-graphdataset', {
+        // noinspection JSUnresolvedReference
         name: this.name, color: this.color,
         // TODO-46 yaxis should depend on type of graph BUT cant use name as that may end up language dependent
+        // noinspection JSUnresolvedReference
         min: this.min, max: this.max, yaxisid: yaxisid,
       });
       this.graphdataset.mt = this;
@@ -830,13 +846,13 @@ class MqttTopic {
   addDataFrom(filename, first, cb) {
     //TODO this location may change
     let filepath = `/server/data/${this.topic}/${filename}`;
-    let self = this;
+    //let self = this; // if needed in Promise
     fetch(filepath)
       .then(response => response.text())
       .then(csvData => {
         parse(csvData, (err, newdata) => {
           if (err) {
-            console.error(err);
+            console.error(err); // Intentionally not passing error back
           } else {
             console.log("retrieved new records", newdata.length);
             newdata.forEach(r => {
@@ -844,14 +860,14 @@ class MqttTopic {
               r[1] = parseFloat(r[1]); // TODO-72 need function for this as presuming its float
             });
             // self.state.data and self.parentElement.datasets[x] are same actual data,
-            // can't set one to this data as wont affect the other
+            // cannot set one to this data as will not affect the other
             // 25k 10 1227
             // 305k 73ms 243seconds
             // 121k 97ms 485secs
             let xxx1 = Date.now();
             let olddata = this.data.splice(0, Infinity);
             for (let dd of newdata) { this.data.push(dd); }
-            if (!first) { // If its the first, dont put data back as will already be in newdata
+            if (!first) { // If it is the first, do not put data back as will already be in newdata
               for (let dd of olddata) {
                 this.data.push(dd);
               }
@@ -901,7 +917,7 @@ class MqttNode extends MqttReceiver {
       console.log(obj); // Useful for debugging to see this
       let nodediscover = obj[0]; // Should only ever be one of them
       this.state.value = nodediscover; // Save the object for this node
-      ['id', 'description', 'name'].forEach(k => this.state[k] = nodediscover[k]); // Grab top level properties from discover
+      ['id', 'description', 'name'].forEach(k => this.state[k] = nodediscover[k]); // Grab top level properties from Discover
       while (this.childNodes.length > 0) this.childNodes[0].remove(); // Remove and replace any existing nodes
       nodediscover.topics.forEach(t => {
         if (!this.state.topics[t.topic]) { // Have we done this already
@@ -1025,7 +1041,7 @@ class MqttGraph extends MqttElement {
       } else {
         cb();
       }
-    }),(err) => {
+    }),() => { // Note ds.addDataFrom does not return an error via cb, if cant read file will just skip that line
       console.log("XXX72 done all");
       let xxx2 = Date.now(); // TODO-72 remove when done
       this.chart.update();
@@ -1111,7 +1127,7 @@ class MqttGraphDataset extends MqttElement {
   dataChanged() { // Called when creating UX adds data.
     this.chartEl.dataChanged();
   }
-  // Note this wont update the chart, but the caller will be fetching multiple data files and update all.
+  // Note this will not update the chart, but the caller will be fetching multiple data files and update all.
   addDataFrom(filename, first, cb) {
     //TODO this location may change
     this.mt.addDataFrom(filename, first, cb);
