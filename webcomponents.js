@@ -466,13 +466,13 @@ customElements.define('mqtt-dropdown', MqttDropdown);
 // Add appropriate internals
 
 // Functions on the configuration object returned during discovery - see more in frugal-iot-logger
-function nodeName2OrgProject(nodename) {
+function nodeId2OrgProject(nodeid) {
   // noinspection JSUnresolvedReference
   for ( let [oid, o] of Object.entries(server_config.organizations)) {
     // noinspection JSUnresolvedReference
-    for (let [pname, p] of o.projects) {
-      if (p.nodes[nodename]) {
-        return [oid, pname];
+    for (let [pid, p] of o.projects) {
+      if (p.nodes[nodeid]) {
+        return [oid, pid];
       }
     }
   }
@@ -504,7 +504,7 @@ class MqttWrapper extends HTMLElementExtended {
   }
   addProject(discover) {
     let topic = `${this.state.organization}/${this.state.project}/`;
-    let elProject = EL('mqtt-project', {discover, name: `${this.state.project}`}, []);
+    let elProject = EL('mqtt-project', {discover, id: this.state.project, name: server_config.organizations[this.state.organization].projects[this.state.project].name }, []);
     let mt = new MqttTopic();
     mt.type = "text";
     mt.topic = topic;
@@ -518,7 +518,7 @@ class MqttWrapper extends HTMLElementExtended {
     // At this point could have any combination of org project or node
     if (this.state.node) { // n
       if (!this.state.organization || !this.state.project) {   // n, !(o,p)
-        let [o,p] = nodeName2OrgProject(this.state.node);
+        let [o,p] = nodeId2OrgProject(this.state.node);
         if (!o) {
           console.error("Unable to find node=", this.state.node);
           // TODO-69 display error to user, not just console
