@@ -465,25 +465,15 @@ customElements.define('mqtt-dropdown', MqttDropdown);
 // otherwise get config from server
 // Add appropriate internals
 
-// Functions on the configuration object returned during discovery
-function oHasProject(o, project) {
-  // noinspection JSUnresolvedReference
-  return o.projects.some(p => p.name === project);
-}
-function pHasNode(p, nodename) {
-  return p.nodes.some(n => n.name === nodename);
-}
-function o2ProjectWithNode(o, nodename) {
-  // noinspection JSUnresolvedReference
-  return o.projects.find(p => pHasNode(p, nodename)); // returns a project
-}
+// Functions on the configuration object returned during discovery - see more in frugal-iot-logger
 function nodeName2OrgProject(nodename) {
   // noinspection JSUnresolvedReference
-  for ( let o in server_config.organizations) {
-    let p;
-    // noinspection JSAssignmentUsedAsCondition
-    if ( p = o2ProjectWithNode(nodename)) {
-      return [o.name, p.name];
+  for ( let [oid, o] of Object.entries(server_config.organizations)) {
+    // noinspection JSUnresolvedReference
+    for (let [pname, p] of o.projects) {
+      if (p.nodes[nodename]) {
+        return [oid, pname];
+      }
     }
   }
   return [null, null];
@@ -549,9 +539,8 @@ class MqttWrapper extends HTMLElementExtended {
               EL('label', {for: 'organizations', textContent: "Organization"}),
               EL('select', {id: 'organizations', onchange: this.onOrganization.bind(this)}, [
                 EL('option', {value: null, textContent: "Not selected", selected: !this.state.value}),
-                // noinspection JSUnresolvedReference
-                server_config.organizations.map( o =>
-                  EL('option', {value: o.name, textContent: o.name, selected: false}),
+                Object.entries(server_config.organizations).map( ([oid, o]) =>
+                  EL('option', {value: oid, textContent: `${oid}: ${o.name}`, selected: false}),
                 ),
               ]),
             ]));
@@ -562,9 +551,8 @@ class MqttWrapper extends HTMLElementExtended {
               EL('label', {for: 'projects', textContent: "Project"}),
               EL('select', {id: 'projects', onchange: this.onProject.bind(this)}, [
                 EL('option', {value: null, textContent: "Not selected", selected: !this.state.value}),
-                // noinspection JSUnresolvedReference
-                server_config.organizations.find(o => o.name === this.state.organization).projects.map( p =>
-                  EL('option', {value: p.name, textContent: p.name, selected: false}),
+                Object.entries(server_config.organizations[this.state.organization].projects).map(([pid,p]) =>
+                  EL('option', {value: pid, textContent: (p.name ? `${pid}: ${p.name}` : pid), selected: false})
                 ),
               ]),
             ]));
@@ -573,7 +561,7 @@ class MqttWrapper extends HTMLElementExtended {
         // noinspection JSUnresolvedReference
         if (!this.state.organization) {
           // noinspection JSUnresolvedReference
-          let o = server_config.organizations.find(o => oHasProject(o, this.state.project));
+          let o = server_config.organizations.find(o => o.projects[this.state.project]);
           if (!o) {
             console.error("Unable to find project:", this.state.project);
             // TODO-69 display error to user, not just console
@@ -845,7 +833,7 @@ class MqttTopic {
   // TODO would be better if caller updated chart when all complete. Needs Promise.all or similar.
   addDataFrom(filename, first, cb) {
     //TODO this location may change
-    let filepath = `/server/data/${this.topic}/${filename}`;
+    let filepath = `/data/${this.topic}/${filename}`;
     //let self = this; // if needed in Promise
     fetch(filepath)
       .then(response => {
@@ -856,6 +844,7 @@ class MqttTopic {
         }
       })
       .then(csvData => {
+        // noinspection JSCheckFunctionSignatures
         parse(csvData, (err, newdata) => {
           if (err) {
             console.error(err); // Intentionally not passing error back
