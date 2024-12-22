@@ -848,7 +848,13 @@ class MqttTopic {
     let filepath = `/server/data/${this.topic}/${filename}`;
     //let self = this; // if needed in Promise
     fetch(filepath)
-      .then(response => response.text())
+      .then(response => {
+        if (response.ok) {
+          return response.text(); // A promise
+        } else {
+          throw new Error(`${filepath} ${response.status}: ${response.statusText}`);
+        }
+      })
       .then(csvData => {
         parse(csvData, (err, newdata) => {
           if (err) {
