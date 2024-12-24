@@ -505,7 +505,7 @@ class MqttWrapper extends HTMLElementExtended {
     )
   }
   addProject(discover) {
-    let topic = `${this.state.organization}/${this.state.project}/`;
+    let topic = `${this.state.organization}/${this.state.project}`;
     let elProject = EL('mqtt-project', {discover, id: this.state.project, name: server_config.organizations[this.state.organization].projects[this.state.project].name }, []);
     let mt = new MqttTopic();
     mt.type = "text";
@@ -627,7 +627,7 @@ class MqttProject extends MqttReceiver {
       if (!this.state.nodes.includes(val)) {
         this.state.nodes.push(val);
         let id = val;
-        let topic = this.mt.topic + val;
+        let topic = `${this.mt.topic}/${val}`;
         let elNode = EL('mqtt-node', {id, topic, discover: this.state.discover},[]);
         let mt = new MqttTopic();
         mt.type = "yaml";
