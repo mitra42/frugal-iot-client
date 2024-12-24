@@ -126,6 +126,9 @@ let server_config;
 
 // Subscribe to a topic (no wild cards as topic not passed to cb),
 function mqtt_subscribe(topic, cb) { // cb(message)
+  if (!mqtt_client.connected) {
+    console.error("Trying to subscribe before connected");
+  }
   console.log("Subscribing to ", topic);
   mqtt_subscriptions.push({topic, cb});
   mqtt_client.subscribe(topic, (err) => { if (err) console.error(err); })
@@ -195,7 +198,6 @@ class MqttClient extends HTMLElementExtended {
 customElements.define('mqtt-client', MqttClient);
 
 class MqttElement extends HTMLElementExtended {
-  // shouldLoadWhenConnected() { return !!mqtt_client; } // TODO check that don't subscribe before connected.
 }
 
 class MqttReceiver extends MqttElement {
@@ -735,6 +737,7 @@ class MqttTopic {
   }
 
   // TODO add opposite - return string or int based on argument, then look at valueGet subclassed many places
+  // NOTE same function in frugal-iot-logger and frugal-iot-client if change here, change there
   valueFromText(message) {
     switch(this.type) {
       case "bool":
