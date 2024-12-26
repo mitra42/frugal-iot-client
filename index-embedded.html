@@ -18,8 +18,16 @@
     <script src="./webcomponents.js" type="module"></script>
 </head>
 <body>
-<!-- TODO maybe add mqtt-organization discover to discover projects - but maybe better to go to server for it -->
-<!-- <mqtt-project topic="dev/Lotus Ponds/" name="Lotus Ponds" discover></mqtt-project> -->
-<mqtt-wrapper></mqtt-wrapper>
+<h1>This is an example of embedding a widget in a page</h1>
+<div style="display:hidden">
+    <mqtt-client server="ws://naturalinnovation.org:9012"></mqtt-client>
+</div>
+<div style="float:right;border:2px,solid,blue;width:50%">
+    <!-- This isn't working it needs a MqttTopic which should probably get created when pass topic as string not MqttTopic -->
+    <mqtt-bar max="45" min="0" topic="dev/lotus/esp8266-85ea2b/temperature" label="Temperature" type="float" color="red"></mqtt-bar>
+</div>
+<p>
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+</p>
 </body>
 </html>

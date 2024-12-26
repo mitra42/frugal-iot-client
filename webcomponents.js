@@ -126,541 +126,16 @@ let server_config;
 
 // Subscribe to a topic (no wild cards as topic not passed to cb),
 function mqtt_subscribe(topic, cb) { // cb(message)
-  if (!mqtt_client.connected) {
-    console.error("Trying to subscribe before connected");
-  }
   console.log("Subscribing to ", topic);
   mqtt_subscriptions.push({topic, cb});
-  mqtt_client.subscribe(topic, (err) => { if (err) console.error(err); })
-}
-
-/* MQTT support */
-class MqttClient extends HTMLElementExtended {
-  // This appears to be reconnecting properly, but if not see mqtt (library I think)'s README
-  static get observedAttributes() { return ['server']; }
-
-  setStatus(text) {
-    this.state.status = text;
-    this.renderAndReplace();
-    // TODO Could maybe just sent textContent of a <span> sitting in a slot ?
-  }
-  shouldLoadWhenConnected() { return !!this.state.server; } /* Only load when has a server specified */
-
-  loadContent() {
-    //console.log("loadContent", this.state.server);
-    if (!mqtt_client) {
-      // See https://stackoverflow.com/questions/69709461/mqtt-websocket-connection-failed
-      this.setStatus("connecting");
-      mqtt_client = mqtt.connect(this.state.server, {
-        connectTimeout: 5000,
-        username: "public", //TODO-30 parameterize this - read config.json then use password from there
-        password: "public",
-        // Remainder do not appear to be needed
-        //hostname: "127.0.0.1",
-        //port: 9012, // Has to be configured in mosquitto configuration
-        //path: "/mqtt",
-      });
-      for (let k of ['connect','disconnect','reconnect','close','offline','end']) {
-        mqtt_client.on(k, () => {
-          this.setStatus(k);
-        });
-      }
-      mqtt_client.on('error', function (error) {
-        console.log(error);
-        this.setStatus("Error:" + error.message);
-      }.bind(this));
-      mqtt_client.on("message", (topic, message) => {
-        // message is Buffer
-        let msg = message.toString();
-        console.log("Received", topic, " ", msg);
-        for (let o of mqtt_subscriptions) {
-          if (o.topic === topic) {
-            o.cb(msg);
-          }
-        }
-        //mqtt_client.end();
-      });
-    } else {
-      // console.log("XXX already started connection") // We expect this, probably one time
-    }
-  }
-  // TODO-86 display some more about the client and its status, but probably under an "i"nfo button on Org
-  render() {
-    return [
-      EL('div', {},[
-        EL('span',{class: 'demo', textContent: "MQTT Client"}),
-        EL('span',{class: 'demo', textContent: "server: "+this.state.server}),
-        EL('span',{class: 'demo', textContent: "   status:"+this.state.status}),
-      ]),
-    ];
+  if (mqtt_client.connected) {
+    mqtt_client.subscribe(topic, (err) => {
+      if (err) console.error(err);
+    })
+  } else {
+    console.log("Delaying till connected");
   }
 }
-customElements.define('mqtt-client', MqttClient);
-
-class MqttElement extends HTMLElementExtended {
-}
-
-class MqttReceiver extends MqttElement {
-  static get observedAttributes() { return ['value','color']; }
-  static get boolAttributes() { return []; }
-
-  valueSet(val) {
-    // Note val can be of many types - it will be subclass dependent
-    this.state.value = val;
-    return true; // Rerender by default - subclass will often return false
-  }
-
-  get project() { // Note this will only work once the element is connected
-    // noinspection CssInvalidHtmlTagReference
-    return this.closest("mqtt-project");
-  }
-  /* Unused
-  get node() { // Note this will only work once the element is connected.
-    // noinspection CssInvalidHtmlTagReference
-    return this.closest("mqtt-node");
-  }
-   */
-// Event gets called when graph icon is clicked - asks topic to add a line to the graph
-  // noinspection JSUnusedLocalSymbols
-  opengraph(e) {
-    this.mt.createGraph();
-  }
-}
-
-class MqttText extends MqttReceiver {
-  // constructor() { super(); }
-  render() {
-    return [
-      EL('div', {},[
-        EL('span',{class: 'demo', textContent: this.mt.topic + ": "}),
-        EL('span',{class: 'demo', textContent: this.state.value || ""}),
-      ])
-    ]
-  }
-}
-customElements.define('mqtt-text', MqttText);
-
-class MqttTransmitter extends MqttReceiver {
-  // TODO - make sure this doesn't get triggered by a message from server.
-  valueGet() { // Needs to return an integer or a string
-    return this.state.value
-    // TODO could probably use a switch in MqttNode rather than overriding in each subclass
-  } // Overridden for booleans
-
-  publish() {
-    this.mt.publish(this.valueGet());
-  }
-}
-
-class MqttToggle extends MqttTransmitter {
-  valueSet(val) {
-    super.valueSet(val);
-    this.state.indeterminate = false; // Checkbox should default to indeterminate till get a message
-    return true; // Rerender // TODO could set values on input instead of rerendering
-  }
-  valueGet() {
-    // TODO use Mqtt to convert instead of subclassing
-    return (+this.state.value).toString(); // Implicit conversion from bool to int then to String.
-  }
-  static get observedAttributes() {
-    return MqttTransmitter.observedAttributes.concat(['checked','indeterminate']);
-  }
-  // TODO - make sure this doesn't get triggered by a message from server.
-  onChange(e) {
-    //console.log("Changed"+e.target.checked);
-    this.state.value = e.target.checked; // Boolean
-    this.publish();
-  }
-
-  render() {
-    //this.state.changeable.addEventListener('change', this.onChange.bind(this));
-    return [
-      EL('div', {},[
-        EL('input', {type: 'checkbox', id: 'checkbox'+ (++unique_id) ,
-          checked: !!this.state.value, indeterminate: typeof(this.state.value) == "undefined",
-          onchange: this.onChange.bind(this)}),
-        // TODO check how can test whether value is set and set indeterminate if not set (but not if false)
-        EL('label', {for: 'checkbox'+unique_id }, [
-          EL('slot', {}),
-        ]),
-      ]),
-    ];
-  }
-}
-customElements.define('mqtt-toggle', MqttToggle);
-
-class MqttBar extends MqttReceiver {
-  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['min','max']); }
-  static get floatAttributes() { return MqttReceiver.floatAttributes.concat(['value','min','max']); }
-
-  constructor() {
-    super();
-  }
-  // noinspection JSCheckFunctionSignatures
-  valueSet(val) {
-    super.valueSet(val); // TODO could get smarter about setting with in span rather than rerender
-    return true; // Note will not re-render children like a MqttSlider because these are inserted into DOM via a "slot"
-  }
-  render() {
-    //this.state.changeable.addEventListener('change', this.onChange.bind(this));
-    let width = 100*(this.state.value-this.state.min)/(this.state.max-this.state.min);
-    return !this.isConnected ? null : [
-      EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
-      EL('div', {class: "outer"}, [
-        EL('div', {class: "name"}, [ // TODO-30 maybe should use a <label>
-          EL('span', {textContent: this.mt.name}),
-          EL('img', {class: "icon", src: 'images/icon_graph.svg', onclick: this.opengraph.bind(this)}),
-        ]),
-        EL('div', {class: "bar",},[
-          EL('span', {class: "left", style: `width:${width}%; background-color:${this.state.color};`},[
-            EL('span', {class: "val", textContent: this.state.value}),
-          ]),
-          EL('span', {class: "right", style: "width:"+(100-width)+"%"}),
-        ]),
-        EL('slot',{}),
-      ]),
-    ];
-  }
-}
-customElements.define('mqtt-bar', MqttBar);
-
-
-const MSstyle = `
-.outer {background-color: white;margin:5px; padding:5px;}
-.pointbar {margin:0px; padding 0px;}
-.val {margin:5px;}
-.setpoint {
-    position: relative;
-    top: -5px;
-    cursor: pointer;
-    width: max-content;
-    height: max-content;
-  }
- `;
-
-// TODO Add some way to do numeric display, numbers should change on mousemoves.
-class MqttSlider extends MqttTransmitter {
-  static get observedAttributes() { return MqttTransmitter.observedAttributes.concat(['min','max','color','setpoint','continuous']); }
-  static get floatAttributes() { return MqttTransmitter.floatAttributes.concat(['value','min','max', 'setpoint']); }
-  static get boolAttributes() { return MqttTransmitter.boolAttributes.concat(['continuous'])}
-
-  // noinspection JSCheckFunctionSignatures
-  valueSet(val) {
-    super.valueSet(val);
-    this.thumb.style.left = this.leftOffset() + "px";
-    return true; // Rerenders on moving based on any received value but not when dragged
-    // TODO could get smarter about setting with rather than rerendering
-  }
-  valueGet() {
-    // TODO use mqttTopic for conversion instead of subclassing
-    return (this.state.value).toPrecision(3); // Conversion from int to String (for MQTT)
-  }
-  leftToValue(l) {
-    return (l+this.thumb.offsetWidth/2)/this.slider.offsetWidth * (this.state.max-this.state.min) + this.state.min;
-  }
-  leftOffset() {
-    return ((this.state.value-this.state.min)/(this.state.max-this.state.min)) * (this.slider.offsetWidth) - this.thumb.offsetWidth/2;
-  }
-  onmousedown(event) {
-    event.preventDefault();
-    let shiftX = event.clientX - this.thumb.getBoundingClientRect().left; // Pixels of mouse click from left
-    let thumb = this.thumb;
-    let slider = this.slider;
-    let tt = this;
-    let lastvalue = this.state.value;
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
-    function onMouseMove(event) {
-      let newLeft = event.clientX - shiftX - slider.getBoundingClientRect().left;
-      // if the pointer is out of slider => lock the thumb within the boundaries
-      newLeft = Math.min(Math.max( -thumb.offsetWidth/2, newLeft,), slider.offsetWidth - thumb.offsetWidth/2);
-      tt.valueSet(tt.leftToValue(newLeft));
-      // noinspection JSUnresolvedReference
-      if (tt.state.continuous && (tt.state.value !== lastvalue)) { tt.publish(); lastvalue = tt.state.value; }
-    }
-    // noinspection JSUnusedLocalSymbols
-    function onMouseUp(event) {
-      tt.publish();
-      document.removeEventListener('mouseup', onMouseUp);
-      document.removeEventListener('mousemove', onMouseMove);
-    }
-    // shiftY not needed, the thumb moves only horizontally
-  }
-  renderAndReplace() {
-    super.renderAndReplace();
-    if (this.thumb) {
-      this.thumb.style.left = this.leftOffset() + "px";
-    }
-  }
-  render() {
-    if ((!this.slider) && (this.children.length > 0)) {
-      // Build once as don't want re-rendered - but do not render till after children added (end of EL)
-      this.thumb = EL('div', {class: "setpoint"}, this.children);
-      this.slider = EL('div', {class: "pointbar",},[this.thumb]);
-      this.slider.onmousedown = this.onmousedown.bind(this);
-    }
-    return !this.isConnected ? null : [
-      EL('style', {textContent: MSstyle}), // Using styles defined above
-      EL('div', {class: "outer"}, [
-        EL('div', {class: "name"}, [ //TODO maybe use a label
-          EL('span', {textContent: this.mt.name}),
-          EL('span', {class: "val", textContent: this.state.value}), // TODO restrict number of DP
-        ]),
-        this.slider,  // <div.setpoint><child></div
-      ])
-    ];
-  }
-}
-customElements.define('mqtt-slider', MqttSlider);
-
-const MDDstyle = `
-.outer { border: 0px,black,solid;  margin: 0.2em; }
-.name, .description, .nodeid { margin-left: 1em; margin-right: 1em; } 
-`;
-
-// TODO-43 rename as MqttChooseTopic
-class MqttDropdown extends MqttTransmitter {
-  // options = "bool" for boolean topics (matches t.type on others)
-  static get observedAttributes() { return MqttTransmitter.observedAttributes.concat(['options','project']); }
-
-  // TODO-43 may need to change findTopics to account for other selection criteria
-  findTopics() {
-    let project = this.state.project;
-    let nodes = Array.from(project.children);
-    // Note the nodes value is its config
-    return nodes.map(n => n.topicsByType(this.state.options)).flat();
-  }
-  // noinspection JSCheckFunctionSignatures
-  valueSet(val) {
-    super.valueSet(val);
-    // TODO get smarter about setting "selected" instead of rerendering
-    return true; // Rerenders on moving based on any received value to change selected topic
-  }
-  onchange(e) {
-    //console.log("Dropdown onchange");
-    this.state.value = e.target.value; // Want the value
-    this.publish();
-  }
-
-  render() {
-    return !this.isConnected ? null : [
-      EL('style', {textContent: MDDstyle}), // Using styles defined above
-      EL('div', {class: 'outer'}, [
-        EL('label', {for: this.mt.topic, textContent: this.mt.name}),
-        EL('select', {id: this.mt.topic, onchange: this.onchange.bind(this)}, [
-          EL('option', {value: "", textContent: "Unused", selected: !this.state.value}),
-          this.findTopics().map( t => // { name, type etc. }
-            EL('option', {value: t.topic, textContent: t.name, selected: t.topic === this.state.value}),
-          ),
-        ]),
-      ]),
-    ];
-  }
-  // super.valueGet fine as its text
-}
-customElements.define('mqtt-dropdown', MqttDropdown);
-
-// TODO merge all the styles into a stylesheet and load that and reference in each class
-
-// Outer element of the client - Top Level logic
-// If specifies org / project / node then believe it and build to that
-// otherwise get config from server
-// Add appropriate internals
-
-// Functions on the configuration object returned during discovery - see more in frugal-iot-logger
-function nodeId2OrgProject(nodeid) {
-  // noinspection JSUnresolvedReference
-  for ( let [oid, o] of Object.entries(server_config.organizations)) {
-    // noinspection JSUnresolvedReference
-    for (let [pid, p] of o.projects) {
-      if (p.nodes[nodeid]) {
-        return [oid, pid];
-      }
-    }
-  }
-  return [null, null];
-}
-class MqttWrapper extends HTMLElementExtended {
-  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['organization','project','node']); }
-  // Maybe add 'discover' but think thru interactions
-  //static get boolAttributes() { return MqttReceiver.boolAttributes.concat(['discover'])}
-
-  // Note this is not using the standard connectedCallBack which loads content and re-renders,
-  // it is going to instead add things to the slot
-
-  onOrganization(e) {
-    this.state.organization = e.target.value;
-    this.appender();
-  }
-  onProject(e) {
-    this.state.project = e.target.value;
-    this.appender();
-  }
-  appendClient() {
-    // TODO-security at some point we'll need one client per org and to use username and password from config.yaml which by then should be in config.d
-    // TODO-security but that should be trivial if only ever display one org
-    // noinspection JSUnresolvedReference
-    this.append(
-      EL('mqtt-client', {slot: 'client', server: server_config.mqtt.broker}) // typically "ws://naturalinnovation.org:9012"
-    )
-  }
-  addProject(discover) {
-    let topic = `${this.state.organization}/${this.state.project}`;
-    let elProject = EL('mqtt-project', {discover, id: this.state.project, name: server_config.organizations[this.state.organization].projects[this.state.project].name }, []);
-    let mt = new MqttTopic();
-    mt.type = "text";
-    mt.topic = topic;
-    mt.element = elProject;
-    elProject.mt = mt;
-    mt.subscribe();
-    this.append(elProject);
-    return elProject;
-  }
-  appender() {
-    // At this point could have any combination of org project or node
-    if (this.state.node) { // n
-      if (!this.state.organization || !this.state.project) {   // n, !(o,p)
-        let [o,p] = nodeId2OrgProject(this.state.node);
-        if (!o) {
-          console.error("Unable to find node=", this.state.node);
-          // TODO-69 display error to user, not just console
-          return;
-        } else {
-          this.state.organization = o;
-          this.state.project = p;
-        }
-      } // Drop through with o & p
-      let elProject = this.addProject(false);
-      elProject.valueSet(this.state.node, true); // Create node on project along with its MqttNode
-    } else { // !n
-      if (!this.state.project)  { // !n !p ?o
-        if (!this.state.organization) { // !n !p !o
-          // noinspection JSUnresolvedReference
-          this.append(
-            EL('div', {class: 'dropdown'}, [
-              EL('label', {for: 'organizations', textContent: "Organization"}),
-              EL('select', {id: 'organizations', onchange: this.onOrganization.bind(this)}, [
-                EL('option', {value: null, textContent: "Not selected", selected: !this.state.value}),
-                Object.entries(server_config.organizations).map( ([oid, o]) =>
-                  EL('option', {value: oid, textContent: `${oid}: ${o.name}`, selected: false}),
-                ),
-              ]),
-            ]));
-        } else { // !n !p o  // TODO-69 maybe this should be a blank project ?
-          // noinspection JSUnresolvedReference
-          this.append(
-            EL('div', {class: 'dropdown'}, [
-              EL('label', {for: 'projects', textContent: "Project"}),
-              EL('select', {id: 'projects', onchange: this.onProject.bind(this)}, [
-                EL('option', {value: null, textContent: "Not selected", selected: !this.state.value}),
-                Object.entries(server_config.organizations[this.state.organization].projects).map(([pid,p]) =>
-                  EL('option', {value: pid, textContent: (p.name ? `${pid}: ${p.name}` : pid), selected: false})
-                ),
-              ]),
-            ]));
-        }
-      } else { // !n p ?o
-        // noinspection JSUnresolvedReference
-        if (!this.state.organization) {
-          // noinspection JSUnresolvedReference
-          let o = server_config.organizations.find(o => o.projects[this.state.project]);
-          if (!o) {
-            console.error("Unable to find project:", this.state.project);
-            // TODO-69 display error to user, not just console
-            return;
-          } else {
-            this.state.organization = o.name;
-          }
-        } // drop through with !n p o
-        // TODO-69 need to have a human-friendly name, and short project id - will be needed in configuration and elsewhere.
-        this.addProject(true);
-      }
-    }
-  }
-  connectedCallback() {
-    // TODO-69 security this will be replaced by a subset of config.yaml,
-    //  that is public, but in the same format, so safe to build on this for now
-    GET("/config.json", {}, (err, json) => {
-      if (err) {
-        console.error(err);
-        // TODO-69 display error to user, not just console
-        return;
-      } else { // got config
-        server_config = json;
-        this.loadAttributesFromURL();
-        this.appendClient();
-        this.appender();
-      }
-      this.renderAndReplace(); // TODO check, but should not need to renderAndReplace as render is (currently) fully static
-    });
-    //super.connectedCallback(); // Not doing as finishes with a re-render.
-  }
-  render() {
-    return [
-      EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
-      EL('div', {class: 'outer'}, [
-        EL('slot', {name: 'client'}),
-        EL('slot'),
-      ]),
-    ];
-
-  }
-}
-customElements.define('mqtt-wrapper', MqttWrapper);
-
-const MPstyle = `
-.outer {border: 1px,black,solid;  margin: 0.2em; }
-.projectname, .name { margin-left: 1em; margin-right: 1em; } 
-`;
-
-class MqttProject extends MqttReceiver {
-  constructor() {
-    super();
-    this.state.nodes = [];  // [ MqttNode ]
-  }
-  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['discover']); }
-  static get boolAttributes() { return MqttReceiver.boolAttributes.concat(['discover'])}
-
-  // noinspection JSCheckFunctionSignatures
-  valueSet(val, force) {  //TODO-REFACTOR maybe dont use "force", (only used by wrapper)
-    if (this.state.discover || force) {
-      if (!this.state.nodes.includes(val)) {
-        this.state.nodes.push(val);
-        let id = val;
-        let topic = `${this.mt.topic}/${val}`;
-        let elNode = EL('mqtt-node', {id, topic, discover: this.state.discover},[]);
-        let mt = new MqttTopic();
-        mt.type = "yaml";
-        mt.topic = topic;
-        mt.element = elNode;
-        elNode.mt = mt;
-        this.append(elNode);
-        mt.subscribe(); // Subscribe to get Discovery
-      }
-    }
-    return false; // Should not need to rerender
-  }
-  render() {
-    return  !this.isConnected ? null : [
-      EL('style', {textContent: MPstyle}), // Using styles defined above
-      EL('div', {class: "outer"}, [
-        EL('div', {class: "title"},[
-          EL('span',{class: 'projectname', textContent: this.mt.topic}),
-          EL('span',{class: 'name', textContent: this.mt.name}),
-        ]),
-        EL('div', {class: "nodes"},[
-          EL('slot', {}),
-        ]),
-      ])
-    ];
-  }
-}
-customElements.define('mqtt-project', MqttProject);
-
-const MNstyle = `
-.outer { border: 1px,black,solid;  margin: 0.2em; }
-.name, .description, .nodeid { margin-left: 1em; margin-right: 1em; } 
-`;
 
 
 class MqttTopic {
@@ -894,6 +369,564 @@ class MqttTopic {
   }
 
 }
+
+/* MQTT support */
+class MqttClient extends HTMLElementExtended {
+  // This appears to be reconnecting properly, but if not see mqtt (library I think)'s README
+  static get observedAttributes() { return ['server']; }
+
+  setStatus(text) {
+    this.state.status = text;
+    this.renderAndReplace();
+    // TODO Could maybe just sent textContent of a <span> sitting in a slot ?
+  }
+  shouldLoadWhenConnected() { return !!this.state.server; } /* Only load when has a server specified */
+
+  loadContent() {
+    //console.log("loadContent", this.state.server);
+    if (!mqtt_client) {
+      // See https://stackoverflow.com/questions/69709461/mqtt-websocket-connection-failed
+      this.setStatus("connecting");
+      mqtt_client = mqtt.connect(this.state.server, {
+        connectTimeout: 5000,
+        username: "public", //TODO-30 parameterize this - read config.json then use password from there
+        password: "public",
+        // Remainder do not appear to be needed
+        //hostname: "127.0.0.1",
+        //port: 9012, // Has to be configured in mosquitto configuration
+        //path: "/mqtt",
+      });
+      for (let k of ['disconnect','reconnect','close','offline','end']) {
+        mqtt_client.on(k, () => {
+          this.setStatus(k);
+        });
+      }
+      mqtt_client.on('connect', () => {
+        this.setStatus('connect');
+        if (mqtt_subscriptions.length > 0) {
+          mqtt_subscriptions.forEach((s) => {
+            console.log("Now connected, subscribing to",s.topic);
+            mqtt_client.subscribe(s.topic, (err) => { if (err) console.error(err); });
+          })
+        }
+      })
+      mqtt_client.on('error', function (error) {
+        console.log(error);
+        this.setStatus("Error:" + error.message);
+      }.bind(this));
+      mqtt_client.on("message", (topic, message) => {
+        // message is Buffer
+        let msg = message.toString();
+        console.log("Received", topic, " ", msg);
+        for (let o of mqtt_subscriptions) {
+          if (o.topic === topic) {
+            o.cb(msg);
+          }
+        }
+        //mqtt_client.end();
+      });
+    } else {
+      // console.log("XXX already started connection") // We expect this, probably one time
+    }
+  }
+  // TODO-86 display some more about the client and its status, but probably under an "i"nfo button on Org
+  render() {
+    return [
+      EL('div', {},[
+        EL('span',{class: 'demo', textContent: "MQTT Client"}),
+        EL('span',{class: 'demo', textContent: "server: "+this.state.server}),
+        EL('span',{class: 'demo', textContent: "   status:"+this.state.status}),
+      ]),
+    ];
+  }
+}
+customElements.define('mqtt-client', MqttClient);
+
+class MqttElement extends HTMLElementExtended {
+}
+
+class MqttReceiver extends MqttElement {
+  static get observedAttributes() { return ['value','color','type']; }
+  static get boolAttributes() { return []; }
+
+  connectedCallback() {
+    // TODO-1 catch this and see if mt is set at this point
+    if (this.state.topic && !this.mt) {
+      // Created with a topic string, so create the MqttTopic
+      this.createTopic();
+    }
+    super.connectedCallback();
+  }
+
+  // This should be called when a receiver is created with a topic
+  createTopic() {
+    let mt = new MqttTopic();
+    mt.type = this.state.type;
+    mt.topic = this.state.topic;
+    mt.element = this;
+    this.mt = mt;
+    mt.subscribe();
+  }
+
+  valueSet(val) {
+    // Note val can be of many types - it will be subclass dependent
+    this.state.value = val;
+    return true; // Rerender by default - subclass will often return false
+  }
+
+  get project() { // Note this will only work once the element is connected
+    // noinspection CssInvalidHtmlTagReference
+    return this.closest("mqtt-project");
+  }
+  /* Unused
+  get node() { // Note this will only work once the element is connected.
+    // noinspection CssInvalidHtmlTagReference
+    return this.closest("mqtt-node");
+  }
+   */
+// Event gets called when graph icon is clicked - asks topic to add a line to the graph
+  // noinspection JSUnusedLocalSymbols
+  opengraph(e) {
+    this.mt.createGraph();
+  }
+}
+
+class MqttText extends MqttReceiver {
+  // constructor() { super(); }
+  render() {
+    return [
+      EL('div', {},[
+        EL('span',{class: 'demo', textContent: this.mt.topic + ": "}),
+        EL('span',{class: 'demo', textContent: this.state.value || ""}),
+      ])
+    ]
+  }
+}
+customElements.define('mqtt-text', MqttText);
+
+class MqttTransmitter extends MqttReceiver {
+  // TODO - make sure this doesn't get triggered by a message from server.
+  valueGet() { // Needs to return an integer or a string
+    return this.state.value
+    // TODO could probably use a switch in MqttNode rather than overriding in each subclass
+  } // Overridden for booleans
+
+  publish() {
+    this.mt.publish(this.valueGet());
+  }
+}
+
+class MqttToggle extends MqttTransmitter {
+  valueSet(val) {
+    super.valueSet(val);
+    this.state.indeterminate = false; // Checkbox should default to indeterminate till get a message
+    return true; // Rerender // TODO could set values on input instead of rerendering
+  }
+  valueGet() {
+    // TODO use Mqtt to convert instead of subclassing
+    return (+this.state.value).toString(); // Implicit conversion from bool to int then to String.
+  }
+  static get observedAttributes() {
+    return MqttTransmitter.observedAttributes.concat(['checked','indeterminate']);
+  }
+  // TODO - make sure this doesn't get triggered by a message from server.
+  onChange(e) {
+    //console.log("Changed"+e.target.checked);
+    this.state.value = e.target.checked; // Boolean
+    this.publish();
+  }
+
+  render() {
+    //this.state.changeable.addEventListener('change', this.onChange.bind(this));
+    return [
+      EL('div', {},[
+        EL('input', {type: 'checkbox', id: 'checkbox'+ (++unique_id) ,
+          checked: !!this.state.value, indeterminate: typeof(this.state.value) == "undefined",
+          onchange: this.onChange.bind(this)}),
+        // TODO check how can test whether value is set and set indeterminate if not set (but not if false)
+        EL('label', {for: 'checkbox'+unique_id }, [
+          EL('slot', {}),
+        ]),
+      ]),
+    ];
+  }
+}
+customElements.define('mqtt-toggle', MqttToggle);
+
+class MqttBar extends MqttReceiver {
+  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['min','max','topic']); }
+  static get floatAttributes() { return MqttReceiver.floatAttributes.concat(['value','min','max']); }
+
+  constructor() {
+    super();
+  }
+  // noinspection JSCheckFunctionSignatures
+  valueSet(val) {
+    super.valueSet(val); // TODO could get smarter about setting with in span rather than rerender
+    return true; // Note will not re-render children like a MqttSlider because these are inserted into DOM via a "slot"
+  }
+  render() {
+    //this.state.changeable.addEventListener('change', this.onChange.bind(this));
+    let width = 100*(this.state.value-this.state.min)/(this.state.max-this.state.min);
+    return !(this.isConnected && this.mt) ? null : [
+      EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
+      EL('div', {class: "outer"}, [
+        EL('div', {class: "name"}, [ // TODO-30 maybe should use a <label>
+          EL('span', {textContent: this.mt.name}),
+          EL('img', {class: "icon", src: 'images/icon_graph.svg', onclick: this.opengraph.bind(this)}),
+        ]),
+        EL('div', {class: "bar",},[
+          EL('span', {class: "left", style: `width:${width}%; background-color:${this.state.color};`},[
+            EL('span', {class: "val", textContent: this.state.value}),
+          ]),
+          EL('span', {class: "right", style: "width:"+(100-width)+"%"}),
+        ]),
+        EL('slot',{}),
+      ]),
+    ];
+  }
+}
+customElements.define('mqtt-bar', MqttBar);
+
+
+const MSstyle = `
+.outer {background-color: white;margin:5px; padding:5px;}
+.pointbar {margin:0px; padding 0px;}
+.val {margin:5px;}
+.setpoint {
+    position: relative;
+    top: -5px;
+    cursor: pointer;
+    width: max-content;
+    height: max-content;
+  }
+ `;
+
+// TODO Add some way to do numeric display, numbers should change on mousemoves.
+class MqttSlider extends MqttTransmitter {
+  static get observedAttributes() { return MqttTransmitter.observedAttributes.concat(['min','max','color','setpoint','continuous']); }
+  static get floatAttributes() { return MqttTransmitter.floatAttributes.concat(['value','min','max', 'setpoint']); }
+  static get boolAttributes() { return MqttTransmitter.boolAttributes.concat(['continuous'])}
+
+  // noinspection JSCheckFunctionSignatures
+  valueSet(val) {
+    super.valueSet(val);
+    this.thumb.style.left = this.leftOffset() + "px";
+    return true; // Rerenders on moving based on any received value but not when dragged
+    // TODO could get smarter about setting with rather than rerendering
+  }
+  valueGet() {
+    // TODO use mqttTopic for conversion instead of subclassing
+    return (this.state.value).toPrecision(3); // Conversion from int to String (for MQTT)
+  }
+  leftToValue(l) {
+    return (l+this.thumb.offsetWidth/2)/this.slider.offsetWidth * (this.state.max-this.state.min) + this.state.min;
+  }
+  leftOffset() {
+    return ((this.state.value-this.state.min)/(this.state.max-this.state.min)) * (this.slider.offsetWidth) - this.thumb.offsetWidth/2;
+  }
+  onmousedown(event) {
+    event.preventDefault();
+    let shiftX = event.clientX - this.thumb.getBoundingClientRect().left; // Pixels of mouse click from left
+    let thumb = this.thumb;
+    let slider = this.slider;
+    let tt = this;
+    let lastvalue = this.state.value;
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+    function onMouseMove(event) {
+      let newLeft = event.clientX - shiftX - slider.getBoundingClientRect().left;
+      // if the pointer is out of slider => lock the thumb within the boundaries
+      newLeft = Math.min(Math.max( -thumb.offsetWidth/2, newLeft,), slider.offsetWidth - thumb.offsetWidth/2);
+      tt.valueSet(tt.leftToValue(newLeft));
+      // noinspection JSUnresolvedReference
+      if (tt.state.continuous && (tt.state.value !== lastvalue)) { tt.publish(); lastvalue = tt.state.value; }
+    }
+    // noinspection JSUnusedLocalSymbols
+    function onMouseUp(event) {
+      tt.publish();
+      document.removeEventListener('mouseup', onMouseUp);
+      document.removeEventListener('mousemove', onMouseMove);
+    }
+    // shiftY not needed, the thumb moves only horizontally
+  }
+  renderAndReplace() {
+    super.renderAndReplace();
+    if (this.thumb) {
+      this.thumb.style.left = this.leftOffset() + "px";
+    }
+  }
+  render() {
+    if ((!this.slider) && (this.children.length > 0)) {
+      // Build once as don't want re-rendered - but do not render till after children added (end of EL)
+      this.thumb = EL('div', {class: "setpoint"}, this.children);
+      this.slider = EL('div', {class: "pointbar",},[this.thumb]);
+      this.slider.onmousedown = this.onmousedown.bind(this);
+    }
+    return !this.isConnected ? null : [
+      EL('style', {textContent: MSstyle}), // Using styles defined above
+      EL('div', {class: "outer"}, [
+        EL('div', {class: "name"}, [ //TODO maybe use a label
+          EL('span', {textContent: this.mt.name}),
+          EL('span', {class: "val", textContent: this.state.value}), // TODO restrict number of DP
+        ]),
+        this.slider,  // <div.setpoint><child></div
+      ])
+    ];
+  }
+}
+customElements.define('mqtt-slider', MqttSlider);
+
+const MDDstyle = `
+.outer { border: 0px,black,solid;  margin: 0.2em; }
+.name, .description, .nodeid { margin-left: 1em; margin-right: 1em; } 
+`;
+
+// TODO-43 rename as MqttChooseTopic
+class MqttDropdown extends MqttTransmitter {
+  // options = "bool" for boolean topics (matches t.type on others)
+  static get observedAttributes() { return MqttTransmitter.observedAttributes.concat(['options','project']); }
+
+  // TODO-43 may need to change findTopics to account for other selection criteria
+  findTopics() {
+    let project = this.state.project;
+    let nodes = Array.from(project.children);
+    // Note the nodes value is its config
+    return nodes.map(n => n.topicsByType(this.state.options)).flat();
+  }
+  // noinspection JSCheckFunctionSignatures
+  valueSet(val) {
+    super.valueSet(val);
+    // TODO get smarter about setting "selected" instead of rerendering
+    return true; // Rerenders on moving based on any received value to change selected topic
+  }
+  onchange(e) {
+    //console.log("Dropdown onchange");
+    this.state.value = e.target.value; // Want the value
+    this.publish();
+  }
+
+  render() {
+    return !this.isConnected ? null : [
+      EL('style', {textContent: MDDstyle}), // Using styles defined above
+      EL('div', {class: 'outer'}, [
+        EL('label', {for: this.mt.topic, textContent: this.mt.name}),
+        EL('select', {id: this.mt.topic, onchange: this.onchange.bind(this)}, [
+          EL('option', {value: "", textContent: "Unused", selected: !this.state.value}),
+          this.findTopics().map( t => // { name, type etc. }
+            EL('option', {value: t.topic, textContent: t.name, selected: t.topic === this.state.value}),
+          ),
+        ]),
+      ]),
+    ];
+  }
+  // super.valueGet fine as its text
+}
+customElements.define('mqtt-dropdown', MqttDropdown);
+
+// TODO merge all the styles into a stylesheet and load that and reference in each class
+
+// Outer element of the client - Top Level logic
+// If specifies org / project / node then believe it and build to that
+// otherwise get config from server
+// Add appropriate internals
+
+// Functions on the configuration object returned during discovery - see more in frugal-iot-logger
+function nodeId2OrgProject(nodeid) {
+  // noinspection JSUnresolvedReference
+  for ( let [oid, o] of Object.entries(server_config.organizations)) {
+    // noinspection JSUnresolvedReference
+    for (let [pid, p] of o.projects) {
+      if (p.nodes[nodeid]) {
+        return [oid, pid];
+      }
+    }
+  }
+  return [null, null];
+}
+class MqttWrapper extends HTMLElementExtended {
+  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['organization','project','node']); }
+  // Maybe add 'discover' but think thru interactions
+  //static get boolAttributes() { return MqttReceiver.boolAttributes.concat(['discover'])}
+
+  // Note this is not using the standard connectedCallBack which loads content and re-renders,
+  // it is going to instead add things to the slot
+
+  onOrganization(e) {
+    this.state.organization = e.target.value;
+    this.setAttribute('organization', this.state.organization);
+    this.appender();
+  }
+  onProject(e) {
+    this.state.project = e.target.value;
+    this.appender();
+  }
+  appendClient() {
+    // TODO-security at some point we'll need one client per org and to use username and password from config.yaml which by then should be in config.d
+    // TODO-security but that should be trivial if only ever display one org
+    // noinspection JSUnresolvedReference
+    this.append(
+      EL('mqtt-client', {slot: 'client', server: server_config.mqtt.broker}) // typically "ws://naturalinnovation.org:9012"
+    )
+  }
+  addProject(discover) {
+    let topic = `${this.state.organization}/${this.state.project}`;
+    let elProject = EL('mqtt-project', {discover, id: this.state.project, name: server_config.organizations[this.state.organization].projects[this.state.project].name }, []);
+    let mt = new MqttTopic();
+    mt.type = "text";
+    mt.topic = topic;
+    mt.element = elProject;
+    elProject.mt = mt;
+    mt.subscribe();
+    this.append(elProject);
+    return elProject;
+  }
+  appender() {
+    // At this point could have any combination of org project or node
+    if (this.state.node) { // n
+      if (!this.state.organization || !this.state.project) {   // n, !(o,p)
+        let [o,p] = nodeId2OrgProject(this.state.node);
+        if (!o) {
+          console.error("Unable to find node=", this.state.node);
+          // TODO-69 display error to user, not just console
+          return;
+        } else {
+          this.state.organization = o;
+          this.state.project = p;
+        }
+      } // Drop through with o & p
+      let elProject = this.addProject(false);
+      elProject.valueSet(this.state.node, true); // Create node on project along with its MqttNode
+    } else { // !n
+      if (!this.state.project)  { // !n !p ?o
+        if (!this.state.organization) { // !n !p !o
+          // noinspection JSUnresolvedReference
+          this.append(
+            EL('div', {class: 'dropdown'}, [
+              EL('label', {for: 'organizations', textContent: "Organization"}),
+              EL('select', {id: 'organizations', onchange: this.onOrganization.bind(this)}, [
+                EL('option', {value: null, textContent: "Not selected", selected: !this.state.value}),
+                Object.entries(server_config.organizations).map( ([oid, o]) =>
+                  EL('option', {value: oid, textContent: `${oid}: ${o.name}`, selected: false}),
+                ),
+              ]),
+            ]));
+        } else { // !n !p o  // TODO-69 maybe this should be a blank project ?
+          // noinspection JSUnresolvedReference
+          this.append(
+            EL('div', {class: 'dropdown'}, [
+              EL('label', {for: 'projects', textContent: "Project"}),
+              EL('select', {id: 'projects', onchange: this.onProject.bind(this)}, [
+                EL('option', {value: null, textContent: "Not selected", selected: !this.state.value}),
+                Object.entries(server_config.organizations[this.state.organization].projects).map(([pid,p]) =>
+                  EL('option', {value: pid, textContent: (p.name ? `${pid}: ${p.name}` : pid), selected: false})
+                ),
+              ]),
+            ]));
+        }
+      } else { // !n p ?o
+        // noinspection JSUnresolvedReference
+        if (!this.state.organization) {
+          // noinspection JSUnresolvedReference
+          let o = server_config.organizations.find(o => o.projects[this.state.project]);
+          if (!o) {
+            console.error("Unable to find project:", this.state.project);
+            // TODO-69 display error to user, not just console
+            return;
+          } else {
+            this.state.organization = o.name;
+          }
+        } // drop through with !n p o
+        // TODO-69 need to have a human-friendly name, and short project id - will be needed in configuration and elsewhere.
+        this.addProject(true);
+      }
+    }
+  }
+  connectedCallback() {
+    // TODO-69 security this will be replaced by a subset of config.yaml,
+    //  that is public, but in the same format, so safe to build on this for now
+    GET("/config.json", {}, (err, json) => {
+      if (err) {
+        console.error(err);
+        // TODO-69 display error to user, not just console
+        return;
+      } else { // got config
+        server_config = json;
+        this.loadAttributesFromURL();
+        this.appendClient();
+        this.appender();
+      }
+      this.renderAndReplace(); // TODO check, but should not need to renderAndReplace as render is (currently) fully static
+    });
+    //super.connectedCallback(); // Not doing as finishes with a re-render.
+  }
+  render() {
+    return [
+      EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
+      EL('div', {class: 'outer'}, [
+        EL('slot', {name: 'client'}),
+        EL('slot'),
+      ]),
+    ];
+
+  }
+}
+customElements.define('mqtt-wrapper', MqttWrapper);
+
+const MPstyle = `
+.outer {border: 1px,black,solid;  margin: 0.2em; }
+.projectname, .name { margin-left: 1em; margin-right: 1em; } 
+`;
+
+class MqttProject extends MqttReceiver {
+  constructor() {
+    super();
+    this.state.nodes = [];  // [ MqttNode ]
+  }
+  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['discover']); }
+  static get boolAttributes() { return MqttReceiver.boolAttributes.concat(['discover'])}
+
+  // noinspection JSCheckFunctionSignatures
+  valueSet(val, force) {  //TODO-REFACTOR maybe dont use "force", (only used by wrapper)
+    if (this.state.discover || force) {
+      if (!this.state.nodes.includes(val)) {
+        this.state.nodes.push(val);
+        let id = val;
+        let topic = `${this.mt.topic}/${val}`;
+        let elNode = EL('mqtt-node', {id, topic, discover: this.state.discover},[]);
+        let mt = new MqttTopic();
+        mt.type = "yaml";
+        mt.topic = topic;
+        mt.element = elNode;
+        elNode.mt = mt;
+        this.append(elNode);
+        mt.subscribe(); // Subscribe to get Discovery
+      }
+    }
+    return false; // Should not need to rerender
+  }
+  render() {
+    return  !this.isConnected ? null : [
+      EL('style', {textContent: MPstyle}), // Using styles defined above
+      EL('div', {class: "outer"}, [
+        EL('div', {class: "title"},[
+          EL('span',{class: 'projectname', textContent: this.mt.topic}),
+          EL('span',{class: 'name', textContent: this.mt.name}),
+        ]),
+        EL('div', {class: "nodes"},[
+          EL('slot', {}),
+        ]),
+      ])
+    ];
+  }
+}
+customElements.define('mqtt-project', MqttProject);
+
+const MNstyle = `
+.outer { border: 1px,black,solid;  margin: 0.2em; }
+.name, .description, .nodeid { margin-left: 1em; margin-right: 1em; } 
+`;
+
 
 class MqttNode extends MqttReceiver {
   static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['id', 'discover']); }
