@@ -1,6 +1,8 @@
 /* Currently empty - placeholder */
 /* Multiple places */
 .outer {background-color: white;margin:5px; padding:5px;}
+mqtt-node .outer { border: 1px,black,solid;  margin: 0.2em; }
+mqtt-node .name,mqtt-node .description,mqtt-node .nodeid { margin-left: 1em; margin-right: 1em; }
 /* In MqttBar */
 .bar {border: 1px,black,solid; background-color: white;margin: 0px;}
 .left {display:inline-block; text-align: right;}
@@ -13,3 +15,5 @@
 .right{{}}
 /* In MqttWrapper */
 .wrapper {border: 1px,black,solid;  margin: 0.2em; }
+/* In MqttNode */
+div.offline {background-color: #888888;}

@@ -137,6 +137,26 @@ function mqtt_subscribe(topic, cb) { // cb(message)
   }
 }
 
+class Watchdog {
+  constructor(el) {
+    this.el = el;
+    this.latest = Date.now();
+    this.offlineAfter = undefined;
+    this.count = 3; // How many times latest before consider offline
+  }
+  tickle() {
+    let now = Date.now();
+    let delta = now-this.latest;
+    this.latest = now;
+    if (!this.offlineAfter) { this.offlineAfter = delta * this.count; }
+    this.offlineAfter = ((this.offlineAfter) * (this.count-1)/this.count)+delta; // Smoothed
+    clearTimeout(this.timer);
+    this.timer = setTimeout(this.offline.bind(this), this.offlineAfter);
+  }
+  offline() {
+    this.el.offline();
+  }
+}
 
 class MqttTopic {
   // Note this intentionally does NOT extend HtmlElement or MqttElement etc
@@ -367,7 +387,6 @@ class MqttTopic {
         cb(null); // Dont break caller
       }); // May want to report filename here
   }
-
 }
 
 /* MQTT support */
@@ -450,7 +469,6 @@ class MqttReceiver extends MqttElement {
   static get boolAttributes() { return []; }
 
   connectedCallback() {
-    // TODO-1 catch this and see if mt is set at this point
     if (this.state.topic && !this.mt) {
       // Created with a topic string, so create the MqttTopic
       this.createTopic();
@@ -881,19 +899,23 @@ const MPstyle = `
 class MqttProject extends MqttReceiver {
   constructor() {
     super();
-    this.state.nodes = [];  // [ MqttNode ]
+    this.state.nodes = {};  // [ MqttNode ]
   }
   static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['discover']); }
   static get boolAttributes() { return MqttReceiver.boolAttributes.concat(['discover'])}
 
   // noinspection JSCheckFunctionSignatures
   valueSet(val, force) {  //TODO-REFACTOR maybe dont use "force", (only used by wrapper)
+    // val is a node id such as esp8266-12ab3c
     if (this.state.discover || force) {
-      if (!this.state.nodes.includes(val)) {
-        this.state.nodes.push(val);
+      if (this.state.nodes[val]) {
+        // Already have the node, but reset its watchdog
+        this.state.nodes[val].tickle();
+      } else {
         let id = val;
         let topic = `${this.mt.topic}/${val}`;
         let elNode = EL('mqtt-node', {id, topic, discover: this.state.discover},[]);
+        this.state.nodes[val] = elNode;
         let mt = new MqttTopic();
         mt.type = "yaml";
         mt.topic = topic;
@@ -922,12 +944,6 @@ class MqttProject extends MqttReceiver {
 }
 customElements.define('mqtt-project', MqttProject);
 
-const MNstyle = `
-.outer { border: 1px,black,solid;  margin: 0.2em; }
-.name, .description, .nodeid { margin-left: 1em; margin-right: 1em; } 
-`;
-
-
 class MqttNode extends MqttReceiver {
   static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['id', 'discover']); }
   static get boolAttributes() { return MqttReceiver.boolAttributes.concat(['discover'])}
@@ -937,6 +953,7 @@ class MqttNode extends MqttReceiver {
     super(); // Will subscribe to topic
     this.state.topics = {}; // Index of MqttTopic
     this.state.days = 0;
+    this.watchdog = new Watchdog(this);
   }
   topicsByType(type) {
     return this.state.value.topics.filter( t => t.type === type).map(t=> { return({name: t.name, topic: this.mt.topic + "/" + t.topic})});
@@ -977,8 +994,8 @@ class MqttNode extends MqttReceiver {
  */
   render() {
     return !this.isConnected ? null : [
-      EL('style', {textContent: MNstyle}), // Using styles defined above
-      EL('div', {class: "outer"}, [
+      EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
+      this.state.outerDiv = EL('div', {class: "outer"}, [
         EL('details', {},[
           EL('summary', {},[
             EL('span',{class: 'name', textContent: this.mt.name}),
@@ -995,6 +1012,16 @@ class MqttNode extends MqttReceiver {
         ]),
       ])
     ]
+  }
+  //document.getElementsByTagName('body')[0].classList.add('category');
+  tickle() {
+    this.watchdog.tickle();
+    this.state.online = true;
+    this.state.outerDiv.classList.remove('offline');
+  }
+  offline() {
+    this.state.outerDiv.classList.add('offline');
+    this.state.online = false;
   }
 }
 customElements.define('mqtt-node', MqttNode);
@@ -1111,7 +1138,7 @@ class MqttGraph extends MqttElement {
       // TODO see https://www.chartjs.org/docs/latest/configuration/responsive.html#important-note div should ONLY contain canvas
       EL("div", {class: 'outer'}, [ // TODO Move style to sheet
         EL('div',{class: 'leftright'}, [
-          //EL('span', {class: "graphnavleft", textContent: "⬅︎", onclick: this.graphnavleft.bind(this)}),
+          EL('span', {class: "graphnavleft", textContent: "⬅︎", onclick: this.graphnavleft.bind(this)}),
           EL('slot', {name: "chart"}), // This is <div><canvas></div>
         ]),
         EL('slot', {}), // This is the slot where the GraphDatasets get stored
