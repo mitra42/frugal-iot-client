@@ -952,11 +952,16 @@ class MqttNode extends MqttReceiver {
       while (this.childNodes.length > 0) this.childNodes[0].remove(); // Remove and replace any existing nodes
       nodediscover.topics.forEach(t => {
         if (!this.state.topics[t.topic]) { // Have we done this already
-          let x1 = new MqttTopic();
-          x1.fromDiscovery(t, this);
-          this.state.topics[t.topic] = x1;
-          x1.subscribe();
-          this.append(x1.createElement());
+          let mt = new MqttTopic();
+          mt.fromDiscovery(t, this);
+          this.state.topics[t.topic] = mt;
+          mt.subscribe();
+          let leaf = t.topic.split("/").pop();
+          let el = mt.createElement();
+          if (['battery','ledbuiltin'].includes(leaf)) { // TODO-30 parameterize this
+            el.setAttribute('slot', leaf);
+          }
+          this.append(el);
         }
       });
       return true; // because change name description etc
@@ -974,14 +979,18 @@ class MqttNode extends MqttReceiver {
     return !this.isConnected ? null : [
       EL('style', {textContent: MNstyle}), // Using styles defined above
       EL('div', {class: "outer"}, [
-        EL('div', {class: "title"},[
-          EL('div', {},[
+        EL('details', {},[
+          EL('summary', {},[
             EL('span',{class: 'name', textContent: this.mt.name}),
             EL('span',{class: 'nodeid', textContent: this.state.id}),
           ]),
           EL('span',{class: 'description', textContent: this.state.description}),
+          EL('div', {class: "health"},[
+            EL('slot',{name: 'ledbuiltin'}),
+            EL('slot',{name: 'battery'}),
+          ]),
         ]),
-        EL('div', {class: "nodes"},[
+        EL('div', {class: "topics"},[
           EL('slot', {}),
         ]),
       ])
