@@ -322,6 +322,7 @@ class MqttTopic {
     if (!graph.contains(this.graphdataset)) {
       graph.append(this.graphdataset); // calls GDS.loadContent which adds dataset to Graph
     }
+    this.graphdataset.addDataLeft(); // Populate with any back data
   }
   publish(val) {
     // super.onChange(e);
@@ -332,6 +333,7 @@ class MqttTopic {
   addDataFrom(filename, first, cb) {
     //TODO this location may change
     let filepath = `/data/${this.topic}/${filename}`;
+    console.log("XXX72: adding from", filepath);
     //let self = this; // if needed in Promise
     fetch(filepath)
       .then(response => {
@@ -346,34 +348,27 @@ class MqttTopic {
         parse(csvData, (err, newdata) => {
           if (err) {
             console.error(err); // Intentionally not passing error back
+          } else if (newdata.length === 0) {
+            console.log("No data in", filepath);
           } else {
-            console.log("retrieved new records", newdata.length);
+            console.log(`retrieved ${newdata.length} records for ${this.topic}`);
             let newprocdata = newdata.map(r => { return {
               time: parseInt(r[0]),
               value: parseFloat(r[1])  // TODO-72 need function for this as presuming its float
             };});
-            // self.state.data and self.parentElement.datasets[x] are same actual data,
-            // cannot set one to this data as will not affect the other
-            // 25k 10 1227
-            // 305k 73ms 243seconds
-            // 121k 97ms 485secs
             let xxx1 = Date.now();
             let olddata = this.data.splice(0, Infinity);
-            for (let dd of newprocdata) { this.data.push(dd); } // Cant splice as ...newprocdata blows stack
-            // TODO-72 if "first", could put back any newer than latest of newprocdata
-            if (!first) { // If it is the first, do not put data back as will already be in newdata
-              for (let dd of olddata) {
+            console.log(`adding back ${olddata.length} records for ${this.topic}`);
+            for (let dd of newprocdata) { this.data.push(dd); }// Cant splice as ...newprocdata blows stack
+            // Put back the newer data, unless "first" in which case only put back if newer than olddata
+            // TODO-46 TODO-72 this is also good place to trim total number data points if >1000
+            let lastdate = newprocdata[newprocdata.length-1].time;
+            for (let dd of olddata) {
+              if (!first || (dd.time > lastdate)) {
                 this.data.push(dd);
               }
             }
-            /*
-            // 25k 41 3711
-            // 304k 24428 crashed
-            this.data.splice(0,first ? Infinity: 0); // TODO-72 dont remove (replace Infinity with 0) for next day
-            for (let i = data.length-1; i >=0; i--) {
-              this.data.unshift(data[i]);
-            }
-             */
+            console.log(`total data size now ${this.data.length} records for ${this.topic}`);
             if (this.data.length > 1000) {
               this.graphdataset.parentElement.chart.options.animations = false; // Disable animations get slow at scale
             }
@@ -1088,6 +1083,9 @@ class MqttGraph extends MqttElement {
       }
     );
   }
+  graphFileNameForDate(d) {
+    return d.toISOString().substring(0,10) + ".csv";
+  }
   // noinspection JSUnusedLocalSymbols
   graphnavleft(e) {
     // TODO If not first go back x days
@@ -1097,10 +1095,24 @@ class MqttGraph extends MqttElement {
     } else {
       this.state.dateFrom.setDate(this.state.dateFrom.getDate()-1); // Note this rolls over between months ok
     }
-    let filename = this.state.dateFrom.toISOString().substring(0,10) + ".csv";
-    console.log("XXX72: adding from", filename);
+    let filename = this.graphFileNameForDate(this.state.dateFrom);
     this.addDataFrom(filename, first);
   }
+  // Return a list of filenames to allow a newly added GraphDataset to catch up on old data
+  graphNavleftFilenames() {
+    let filenames = [];
+    if (this.state.dateFrom) {
+      let d = new Date();
+      d.setUTCHours(0, 0, 0, 0);
+      filenames.push(this.graphFileNameForDate(d));
+      while (d > this.state.dateFrom) {
+        d.setDate(d.getDate() - 1);
+        filenames.push(this.graphFileNameForDate(d));
+      }
+    }
+    return filenames;
+  }
+
   addDataFrom(filename, first) {
     // TODO-72 should change arrow to hourglass until complete then switch back - but has to be at Graph level
     async.each(this.children, ((ds,cb) => {
@@ -1116,13 +1128,6 @@ class MqttGraph extends MqttElement {
       console.log("XXX72 update took", Date.now()-xxx2);
       // TODO-72 turn arrow back from hourglass here.
     } );
-    /*
-    for (let ds of this.children) {
-      if (ds.addDataFrom) {
-        ds.addDataFrom(filename, first);
-      }
-    }
-     */
   }
 
   // Called when data on one of the datasets has changed, can do an update, (makeChart is for more complex changes)
@@ -1166,6 +1171,7 @@ class MqttGraphDataset extends MqttElement {
   static get integerAttributes() {
     return MqttReceiver.integerAttributes.concat(['min', 'max']) };
 
+  // Called from MqttTopic to create a chartdataset
   makeChartDataset() {
     // Some other priorities that might be useful are at https://www.chartjs.org/docs/latest/samples/line/segments.html
     if (this.chartdataset) {
@@ -1200,7 +1206,15 @@ class MqttGraphDataset extends MqttElement {
     //TODO this location may change
     this.mt.addDataFrom(filename, first, cb);
   }
-
+  // Add any data left to get a new GraphDataSet up to speed with the chart
+  addDataLeft() {
+    let filenames = this.chartEl.graphNavleftFilenames(); // Note in reverse order, latest first.
+    async.eachOfSeries(filenames, (filename, key, cb) => {
+      this.addDataFrom(filename, !key, cb);
+    }, () => {
+      this.dataChanged();
+    });
+  }
   render() {
     return !this.isConnected ? null :
       EL('span', { textContent: this.mt.name}); // TODO-46-line should be controls
