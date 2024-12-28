@@ -348,10 +348,10 @@ class MqttTopic {
             console.error(err); // Intentionally not passing error back
           } else {
             console.log("retrieved new records", newdata.length);
-            newdata.forEach(r => {
-              r[0] = parseInt(r[0]);
-              r[1] = parseFloat(r[1]); // TODO-72 need function for this as presuming its float
-            });
+            let newprocdata = newdata.map(r => { return {
+              time: parseInt(r[0]),
+              value: parseFloat(r[1])  // TODO-72 need function for this as presuming its float
+            };});
             // self.state.data and self.parentElement.datasets[x] are same actual data,
             // cannot set one to this data as will not affect the other
             // 25k 10 1227
@@ -359,7 +359,8 @@ class MqttTopic {
             // 121k 97ms 485secs
             let xxx1 = Date.now();
             let olddata = this.data.splice(0, Infinity);
-            for (let dd of newdata) { this.data.push(dd); }
+            for (let dd of newprocdata) { this.data.push(dd); } // Cant splice as ...newprocdata blows stack
+            // TODO-72 if "first", could put back any newer than latest of newprocdata
             if (!first) { // If it is the first, do not put data back as will already be in newdata
               for (let dd of olddata) {
                 this.data.push(dd);
