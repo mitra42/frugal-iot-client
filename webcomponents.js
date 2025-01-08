@@ -447,10 +447,12 @@ class MqttClient extends HTMLElementExtended {
   // TODO-86 display some more about the client and its status, but probably under an "i"nfo button on Org
   render() {
     return [
-      EL('div', {},[
-        EL('span',{class: 'demo', textContent: "MQTT Client"}),
+      EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
+      EL('details', {class: 'mqtt-client'},[
+        EL('summary', {}, [
+          EL('span', {class: 'status', textContent: this.state.status}),
+            ]),
         EL('span',{class: 'demo', textContent: "server: "+this.state.server}),
-        EL('span',{class: 'demo', textContent: "   status:"+this.state.status}),
       ]),
     ];
   }
@@ -461,7 +463,7 @@ class MqttElement extends HTMLElementExtended {
 }
 
 class MqttReceiver extends MqttElement {
-  static get observedAttributes() { return ['value','color','type']; }
+  static get observedAttributes() { return ['value','color','type','label']; }
   static get boolAttributes() { return []; }
 
   connectedCallback() {
@@ -478,6 +480,8 @@ class MqttReceiver extends MqttElement {
     mt.type = this.state.type;
     mt.topic = this.state.topic;
     mt.element = this;
+    mt.name = this.state.label;
+    mt.color = this.state.color;
     this.mt = mt;
     mt.subscribe();
   }
@@ -991,7 +995,7 @@ class MqttNode extends MqttReceiver {
   render() {
     return !this.isConnected ? null : [
       EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
-      this.state.outerDiv = EL('div', {class: "outer"}, [
+      this.state.outerDiv = EL('div', {class: "outer mqtt-node"}, [
         EL('details', {},[
           EL('summary', {},[
             EL('span',{class: 'name', textContent: this.mt.name}),
@@ -1079,6 +1083,14 @@ class MqttGraph extends MqttElement {
           //zone: "America/Denver", // Comment out to use system time
           responsive: true,
           scales: this.state.scales,
+          elements: { // https://www.chartjs.org/docs/latest/configuration/elements.html
+            point: {
+              radius: 1,
+            },
+            line: {
+              borderWidth: 1,
+            }
+          }
         }
       }
     );
@@ -1189,6 +1201,7 @@ class MqttGraphDataset extends MqttElement {
     // Things that are changed by attributes
     this.chartdataset.label = this.mt.name;
     this.chartdataset.borderColor = this.state.color; // also sets color of point
+    this.chartdataset.backgroundColor =this.state.color;
     this.chartdataset.yAxisID = this.state.yaxisid;
     // Should override display and position and grid of each axis used
   }
@@ -1216,8 +1229,11 @@ class MqttGraphDataset extends MqttElement {
     });
   }
   render() {
+    return null; // Leave blank till can do something to control it
+    /*
     return !this.isConnected ? null :
       EL('span', { textContent: this.mt.name}); // TODO-46-line should be controls
+     */
   }
 }
 customElements.define('mqtt-graphdataset', MqttGraphDataset);
