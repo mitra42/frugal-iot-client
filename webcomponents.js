@@ -159,6 +159,7 @@ class Watchdog {
 }
 
 class MqttTopic {
+  // Manages a single topic - keeps track of data it has seen, and can create UI element or graphdataset for it
   // Note this intentionally does NOT extend HtmlElement or MqttElement etc
   // Encapsulate a single topic, mostly this will be built during discovery process,
   // but could also be built by hard coded UI if doesn't exist
@@ -300,7 +301,8 @@ class MqttTopic {
     return t;
   }
 
-  // Event gets called when graph icon is clicked - adds a line to the graph
+  // Event gets called when graph icon is clicked - adds a line to the graph (which it creates if needed)
+  // It links the datasets of the topic to the dataset.
   createGraph() {
     let graph = MqttGraph.findGraph(); // Side effect of creating if does not exist
     let yaxisid = this.yaxisid;
@@ -329,7 +331,8 @@ class MqttTopic {
     console.log("Publishing ", this.topic, val, this.retain ? "retain": "", this.qos ? `qos=${this.qos}` : "");
     mqtt_client.publish(this.topic, val, { retain: this.retain, qos: this.qos});
   }
-  // TODO would be better if caller updated chart when all complete. Needs Promise.all or similar.
+
+  // Adds historical data to the chart - typically chart updates data for each line, then updates the chart.
   addDataFrom(filename, first, cb) {
     //TODO this location may change
     let filepath = `/data/${this.topic}/${filename}`;
@@ -385,7 +388,7 @@ class MqttTopic {
   }
 }
 
-/* MQTT support */
+/* Manages a connection to a MQTT broker */
 class MqttClient extends HTMLElementExtended {
   // This appears to be reconnecting properly, but if not see mqtt (library I think)'s README
   static get observedAttributes() { return ['server']; }
