@@ -564,8 +564,9 @@ class MqttToggle extends MqttTransmitter {
         EL('input', {type: 'checkbox', id: 'checkbox'+ (++unique_id) ,
           checked: !!this.state.value, indeterminate: typeof(this.state.value) == "undefined",
           onchange: this.onChange.bind(this)}),
-        // TODO check how can test whether value is set and set indeterminate if not set (but not if false)
-        EL('label', {for: 'checkbox'+unique_id }, [
+        EL('img', {class: "icon", src: 'images/icon_graph.svg', onclick: this.opengraph.bind(this)}),
+      ]),
+      EL('label', {for: 'checkbox'+unique_id }, [
           EL('slot', {}),
         ]),
       ]),
