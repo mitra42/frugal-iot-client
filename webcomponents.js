@@ -256,7 +256,20 @@ class MqttTopic {
 
   message_received(message) {
     let value = this.valueFromText(message);
-    this.data.push({value, time: Date.now()}); // Same format as graph dataset expects
+    // TODO this is the place to add NA() or whatever to indicate not known
+    let now = Date.now();
+    /*
+    if (this.type === "bool") {
+      if (this.data.length) {
+        let last = this.data[this.data.length-1].value;
+        if (last !== value) {
+          this.data.push({value: last, time: now-1});
+        }
+      } else {
+        this.data.push({value: null, time: now-1})
+      }
+    } */
+    this.data.push({value, time: now}); // Same format as graph dataset expects
     if (this.element) {
       if (this.element.valueSet(value)) {
         this.element.renderAndReplace(); // TODO note gradually replacing need to rerender by smarter valueSet() on different subclasses
@@ -294,9 +307,9 @@ class MqttTopic {
         text: this.name,
       },
       // noinspection JSUnresolvedReference
-      suggestedMin: this.min,
+      min:  ((this.type === 'bool') ? false : (this.min || 0)),
       // noinspection JSUnresolvedReference
-      suggestedMax: this.max,
+      max: ((this.type === 'bool') ? true : undefined),
     });
     return t;
   }
@@ -560,13 +573,13 @@ class MqttToggle extends MqttTransmitter {
   render() {
     //this.state.changeable.addEventListener('change', this.onChange.bind(this));
     return [
+      EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
       EL('div', {},[
         EL('input', {type: 'checkbox', id: 'checkbox'+ (++unique_id) ,
           checked: !!this.state.value, indeterminate: typeof(this.state.value) == "undefined",
           onchange: this.onChange.bind(this)}),
         EL('img', {class: "icon", src: 'images/icon_graph.svg', onclick: this.opengraph.bind(this)}),
-      ]),
-      EL('label', {for: 'checkbox'+unique_id }, [
+        EL('label', {for: 'checkbox'+unique_id }, [
           EL('slot', {}),
         ]),
       ]),
@@ -1093,6 +1106,7 @@ class MqttGraph extends MqttElement {
             },
             line: {
               borderWidth: 1,
+              spanGaps: false,
             }
           }
         }
@@ -1196,6 +1210,7 @@ class MqttGraphDataset extends MqttElement {
       // Fields only defined once - especially data
       this.chartdataset = {
         data: this.mt.data, // Should be pointer to receiver's data set in MqttReceiver.valueSet
+        stepped: this.mt.type === "bool" ? 'before' : false,
         parsing: {
           xAxisKey: 'time',
           yAxisKey: 'value'
