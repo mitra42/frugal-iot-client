@@ -6,8 +6,6 @@
 import {EL, HTMLElementExtended, toBool, GET} from './node_modules/html-element-extended/htmlelementextended.js';
 import mqtt from './node_modules/mqtt/dist/mqtt.esm.js'; // https://www.npmjs.com/package/mqtt
 import yaml from './node_modules/js-yaml/dist/js-yaml.mjs'; // https://www.npmjs.com/package/js-yaml
-//Fails - reported as https://github.com/caolan/async/issues/2010
-//import { each } from './node_modules/async-es/index.js'; // https://caolan.github.io/async/v3/docs.html
 import async from './node_modules/async/dist/async.mjs'; // https://caolan.github.io/async/v3/docs.html
 import { parse } from "csv-parse"; // https://csv.js.org/parse/distributions/browser_esm/
 import { Chart, registerables, _adapters } from './node_modules/chart.js/dist/chart.js'; // "https://www.chartjs.org"
