@@ -724,8 +724,12 @@ class MqttDropdown extends MqttTransmitter {
   findTopics() {
     let project = this.state.project;
     let nodes = Array.from(project.children);
-    // Note the nodes value is its config
-    return nodes.map(n => n.topicsByType(this.state.options)).flat();
+    // Note each nodes value is its config
+    let allowableTypes = {
+      // Mapping of requested types to valid fields - e.g. if want a float then returning an int will be fine
+      "float": ["float","int"],
+    }
+    return nodes.map(n => n.topicsByType(allowableTypes[this.state.options] || this.state.options)).flat();
   }
   // noinspection JSCheckFunctionSignatures
   valueSet(val) {
@@ -970,8 +974,9 @@ class MqttNode extends MqttReceiver {
     this.state.days = 0;
     this.watchdog = new Watchdog(this);
   }
-  topicsByType(type) {
-    return this.state.value.topics.filter( t => t.type === type).map(t=> { return({name: t.name, topic: this.mt.topic + "/" + t.topic})});
+  // Filter the topics on this node by type e.g. "bool" "float"
+  topicsByType(types) {
+    return this.state.value.topics.filter( t => types.includes(t.type)).map(t=> { return({name: t.name, topic: this.mt.topic + "/" + t.topic})});
   }
   // noinspection JSCheckFunctionSignatures
   valueSet(obj) { // Val is object converted from yaml
