@@ -971,8 +971,12 @@ class MqttNode extends MqttReceiver {
     this.state.days = 0;
     this.watchdog = new Watchdog(this);
   }
-  topicsByType(type) {
-    return this.state.value.topics.filter( t => t.type === type).map(t=> { return({name: t.name, topic: this.mt.topic + "/" + t.topic})});
+  get usableName() {
+    return (this.state.name === "device") ? this.state.id : this.state.name;
+  }
+  topicsByType(type) { // [ { name, topicpath
+    let usableName = this.usableName;
+    return this.state.value.topics.filter( t => t.type === type).map(t=> { return({name: `${usableName}:${t.name}`, topic: this.mt.topic + "/" + t.topic})});
   }
   // noinspection JSCheckFunctionSignatures
   valueSet(obj) { // Val is object converted from yaml
@@ -983,7 +987,8 @@ class MqttNode extends MqttReceiver {
       this.state.value = nodediscover; // Save the object for this node
       ['id', 'description', 'name'].forEach(k => this.state[k] = nodediscover[k]); // Grab top level properties from Discover
       while (this.childNodes.length > 0) this.childNodes[0].remove(); // Remove and replace any existing nodes
-      nodediscover.topics.forEach(t => {
+      if (!nodediscover.topics) { nodediscover.topics = []; } // if no topics, make it an empty array
+        nodediscover.topics.forEach(t => {
         if (!this.state.topics[t.topic]) { // Have we done this already
           let mt = new MqttTopic();
           mt.fromDiscovery(t, this);
@@ -1015,7 +1020,7 @@ class MqttNode extends MqttReceiver {
       this.state.outerDiv = EL('div', {class: "outer mqtt-node"}, [
         EL('details', {},[
           EL('summary', {},[
-            EL('span',{class: 'name', textContent: this.mt.name}),
+            EL('span',{class: 'name', textContent: this.state.name}),
             EL('span',{class: 'nodeid', textContent: this.state.id}),
           ]),
           EL('span',{class: 'description', textContent: this.state.description}),
