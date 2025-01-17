@@ -804,6 +804,7 @@ class MqttWrapper extends HTMLElementExtended {
   }
   addProject(discover) {
     let topic = `${this.state.organization}/${this.state.project}`;
+    // noinspection JSUnresolvedReference
     let elProject = EL('mqtt-project', {discover, id: this.state.project, name: server_config.organizations[this.state.organization].projects[this.state.project].name }, []);
     let mt = new MqttTopic();
     mt.type = "text";
@@ -991,6 +992,7 @@ class MqttNode extends MqttReceiver {
           let leaf = t.topic.split("/").pop();
           let el = mt.createElement();
           if (['battery','ledbuiltin'].includes(leaf)) { // TODO-30 parameterize this
+            // noinspection JSCheckFunctionSignatures
             el.setAttribute('slot', leaf);
           }
           this.append(el);
