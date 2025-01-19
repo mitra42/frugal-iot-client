@@ -876,7 +876,10 @@ class MqttWrapper extends HTMLElementExtended {
           }
         } // drop through with !n p o
         // TODO-69 need to have a human-friendly name, and short project id - will be needed in configuration and elsewhere.
-        this.addProject(true);
+        let projElem = this.addProject(true);
+        let nodes = Object.entries(server_config.organizations[this.state.organization].projects[this.state.project].nodes)
+          .filter(([id,n]) => ((id !== '+') && (n.lastseen))).map(([id,n])=>id); // Filter out the wildcards and any in config but not logger
+        projElem.nodesFromConfig(nodes);
       }
     }
   }
@@ -924,6 +927,18 @@ class MqttProject extends MqttReceiver {
   static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['discover']); }
   static get boolAttributes() { return MqttReceiver.boolAttributes.concat(['discover'])}
 
+  addNode(id) {
+    let topic = `${this.mt.topic}/${id}`;
+    let elNode = EL('mqtt-node', {id, topic, discover: this.state.discover},[]);
+    this.state.nodes[id] = elNode;
+    let mt = new MqttTopic();
+    mt.type = "yaml";
+    mt.topic = topic;
+    mt.element = elNode;
+    elNode.mt = mt;
+    this.append(elNode);
+    mt.subscribe(); // Subscribe to get Discovery
+  }
   // noinspection JSCheckFunctionSignatures
   valueSet(val, force) {  //TODO-REFACTOR maybe dont use "force", (only used by wrapper)
     // val is a node id such as esp8266-12ab3c
@@ -932,20 +947,17 @@ class MqttProject extends MqttReceiver {
         // Already have the node, but reset its watchdog
         this.state.nodes[val].tickle();
       } else {
-        let id = val;
-        let topic = `${this.mt.topic}/${val}`;
-        let elNode = EL('mqtt-node', {id, topic, discover: this.state.discover},[]);
-        this.state.nodes[val] = elNode;
-        let mt = new MqttTopic();
-        mt.type = "yaml";
-        mt.topic = topic;
-        mt.element = elNode;
-        elNode.mt = mt;
-        this.append(elNode);
-        mt.subscribe(); // Subscribe to get Discovery
+        this.addNode(val);
       }
     }
     return false; // Should not need to rerender
+  }
+  nodesFromConfig(nodes) { // { id: { lastseen, ...} }
+    nodes.forEach( id => {
+      if (!this.state.nodes[id]) {
+        this.addNode(id); // Will try and do a discover to fill it in
+      }
+    });
   }
   render() {
     return  !this.isConnected ? null : [
@@ -978,8 +990,8 @@ class MqttNode extends MqttReceiver {
   get usableName() {
     return (this.state.name === "device") ? this.state.id : this.state.name;
   }
-  // Filter the topics on this node by type e.g. "bool" "float"
-  topicsByType(type) { // [ { name, topicpath
+  // Filter the topics on this node by type e.g. "bool" "float" or ["float","int"]
+  topicsByType(types) { // [ { name, topicpath
     let usableName = this.usableName;
     return this.state.value.topics.filter( t => types.includes(t.type)).map(t=> { return({name: `${usableName}:${t.name}`, topic: this.mt.topic + "/" + t.topic})});
   }
