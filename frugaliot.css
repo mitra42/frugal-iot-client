@@ -6,6 +6,7 @@ details.mqtt-client {margin-left: 1em; margin-right: 1em; float: right;}
 /* In MqttNode */
 .mqtt-node .outer { border: 1px,black,solid;  margin: 0.2em; }
 .mqtt-node .name,.mqtt-node .description,.mqtt-node .nodeid { margin-left: 1em; margin-right: 1em; }
+.mqtt-node .lastseen {margin-left: 1em; margin-right: 1em; float: right;}
 div.offline {background-color: #888888;}
 /* In MqttBar */
 .bar {border: 1px,black,solid; background-color: white;margin: 0px;}

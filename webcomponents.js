@@ -142,8 +142,7 @@ class Watchdog {
     this.offlineAfter = undefined;
     this.count = 3; // How many times latest before consider offline
   }
-  tickle() {
-    let now = Date.now();
+  tickle(now) {
     let delta = now-this.latest;
     this.latest = now;
     if (!this.offlineAfter) { this.offlineAfter = delta * this.count; }
@@ -877,8 +876,8 @@ class MqttWrapper extends HTMLElementExtended {
         } // drop through with !n p o
         // TODO-69 need to have a human-friendly name, and short project id - will be needed in configuration and elsewhere.
         let projElem = this.addProject(true);
-        let nodes = Object.entries(server_config.organizations[this.state.organization].projects[this.state.project].nodes)
-          .filter(([id,n]) => ((id !== '+') && (n.lastseen))).map(([id,n])=>id); // Filter out the wildcards and any in config but not logger
+        // noinspection JSUnresolvedReference
+        let nodes = Object.entries(server_config.organizations[this.state.organization].projects[this.state.project].nodes);
         projElem.nodesFromConfig(nodes);
       }
     }
@@ -938,6 +937,7 @@ class MqttProject extends MqttReceiver {
     elNode.mt = mt;
     this.append(elNode);
     mt.subscribe(); // Subscribe to get Discovery
+    return elNode;
   }
   // noinspection JSCheckFunctionSignatures
   valueSet(val, force) {  //TODO-REFACTOR maybe dont use "force", (only used by wrapper)
@@ -953,9 +953,13 @@ class MqttProject extends MqttReceiver {
     return false; // Should not need to rerender
   }
   nodesFromConfig(nodes) { // { id: { lastseen, ...} }
-    nodes.forEach( id => {
-      if (!this.state.nodes[id]) {
-        this.addNode(id); // Will try and do a discover to fill it in
+    nodes.filter(([id,nc]) => ((id !== '+') && (nc.lastseen)))
+      .forEach(([id,nc]) => {
+        if (!this.state.nodes[id]) {
+          let n = this.addNode(id); // Will try and do a discover to fill it in but offline for now
+          n.offline();
+          n.state.lastseen = nc.lastseen;
+          n.updateLastSeenElement();
       }
     });
   }
@@ -986,12 +990,14 @@ class MqttNode extends MqttReceiver {
     this.state.topics = {}; // Index of MqttTopic
     this.state.days = 0;
     this.watchdog = new Watchdog(this);
+    this.state.lastseen = 0;
   }
   get usableName() {
     return (this.state.name === "device") ? this.state.id : this.state.name;
   }
   // Filter the topics on this node by type e.g. "bool" "float" or ["float","int"]
-  topicsByType(types) { // [ { name, topicpath
+  topicsByType(types) { // [ { name, topic: topicpath } ]
+    if (!this.state.value) { return []; } // If have not received discovery do not report any topics
     let usableName = this.usableName;
     return this.state.value.topics.filter( t => types.includes(t.type)).map(t=> { return({name: `${usableName}:${t.name}`, topic: this.mt.topic + "/" + t.topic})});
   }
@@ -1004,6 +1010,7 @@ class MqttNode extends MqttReceiver {
       this.state.value = nodediscover; // Save the object for this node
       ['id', 'description', 'name'].forEach(k => this.state[k] = nodediscover[k]); // Grab top level properties from Discover
       while (this.childNodes.length > 0) this.childNodes[0].remove(); // Remove and replace any existing nodes
+      if (this.state.lastSeenElement) { this.append(this.state.lastSeenElement); } // Re-add the lastseen element
       if (!nodediscover.topics) { nodediscover.topics = []; } // if no topics, make it an empty array
         nodediscover.topics.forEach(t => {
         if (!this.state.topics[t.topic]) { // Have we done this already
@@ -1034,13 +1041,14 @@ class MqttNode extends MqttReceiver {
   render() {
     return !this.isConnected ? null : [
       EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
-      this.state.outerDiv = EL('div', {class: "outer mqtt-node"}, [
+      this.state.outerDiv = EL('div', {class: 'outer mqtt-node'+((this.state.online) ? '' : ' offline')}, [
         EL('details', {},[
           EL('summary', {},[
             EL('span',{class: 'name', textContent: this.state.name}),
             EL('span',{class: 'nodeid', textContent: this.state.id}),
           ]),
           EL('span',{class: 'description', textContent: this.state.description}),
+          EL('slot', {name: 'lastseen', class: 'lastseen'}),
           EL('div', {class: "health"},[
             EL('slot',{name: 'ledbuiltin'}),
             EL('slot',{name: 'battery'}),
@@ -1054,13 +1062,24 @@ class MqttNode extends MqttReceiver {
   }
   //document.getElementsByTagName('body')[0].classList.add('category');
   tickle() {
-    this.watchdog.tickle();
+    let now = Date.now();
+    this.state.lastseen = now;
+    this.updateLastSeenElement();
+    this.watchdog.tickle(now);
     this.state.online = true;
     this.state.outerDiv.classList.remove('offline');
   }
   offline() {
     this.state.outerDiv.classList.add('offline');
     this.state.online = false;
+  }
+  updateLastSeenElement() {
+    if (this.state.lastSeenElement) {
+      this.removeChild(this.state.lastSeenElement);
+    }
+    //TODO-113 could probably also do by replacing inner text if it flickers
+    this.state.lastSeenElement = EL('span', {slot: "lastseen", class: 'lastseen', textContent: this.state.lastseen ? new Date(this.state.lastseen).toLocaleString() : "Never seen"});
+    this.append(this.state.lastSeenElement);
   }
 }
 customElements.define('mqtt-node', MqttNode);
