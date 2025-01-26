@@ -802,7 +802,7 @@ class MqttWrapper extends HTMLElementExtended {
     // TODO-security but that should be trivial if only ever display one org
     // noinspection JSUnresolvedReference
     this.append(
-      EL('mqtt-client', {slot: 'client', server: server_config.mqtt.broker}) // typically "ws://naturalinnovation.org:9012"
+      EL('mqtt-client', {slot: 'client', server: server_config.mqtt.broker}) // typically "wss://frugaliot.naturalinnovation.org/wss"
     )
   }
   addProject(discover) {

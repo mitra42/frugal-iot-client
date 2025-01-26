@@ -16,7 +16,7 @@ which is still the best place to post complex issues involving client / server a
 
 ## Test and demonstration
 
-Connect to http://naturalinnovation:8080  it will server up the current UI.
+Connect to https://frugaliot.naturalinnovation  it will server up the current UI.
 
 ## Installation for development
 
