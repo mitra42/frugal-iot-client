@@ -13,7 +13,8 @@ div.offline {background-color: #888888;}
 .left {display:inline-block; text-align: right;}
 .right {background-color:white; display:inline-block;}
 .val {margin:5px;}
-.icon {height:12px;width:12px;float:right;border: 1px,black,solid}
+.icon {height:12px;width:12px;float:right;border: 1px,black,solid;}
+.batteryimg {height:12px;width:12px;float:right;}
 /* In MqttGraph */
 .leftright{display:flex; align-items:center;}
 .graphnavleft{}

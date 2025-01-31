@@ -267,6 +267,9 @@ class MqttTopic {
       }
     } */
     this.data.push({value, time: now}); // Same format as graph dataset expects
+    let leaf = this.topic.split("/").pop();
+    this.node.topicChanged(leaf, value);
+    // TODO-13-battery now push val to node
     if (this.element) {
       if (this.element.valueSet(value)) {
         this.element.renderAndReplace(); // TODO note gradually replacing need to rerender by smarter valueSet() on different subclasses
@@ -987,7 +990,7 @@ class MqttNode extends MqttReceiver {
 
   constructor() {
     super(); // Will subscribe to topic
-    this.state.topics = {}; // Index of MqttTopic
+    this.state.topics = {}; // Index of MqttTopic - TODO-13 is this topicLeafs or topicPaths ?
     this.state.days = 0;
     this.watchdog = new Watchdog(this);
     this.state.lastseen = 0;
@@ -1012,7 +1015,7 @@ class MqttNode extends MqttReceiver {
       while (this.childNodes.length > 0) this.childNodes[0].remove(); // Remove and replace any existing nodes
       if (this.state.lastSeenElement) { this.append(this.state.lastSeenElement); } // Re-add the lastseen element
       if (!nodediscover.topics) { nodediscover.topics = []; } // if no topics, make it an empty array
-        nodediscover.topics.forEach(t => {
+        nodediscover.topics.forEach(t => { // TODO-13 are these topicLeaf or topicPath ?
         if (!this.state.topics[t.topic]) { // Have we done this already
           let mt = new MqttTopic();
           mt.fromDiscovery(t, this);
@@ -1038,6 +1041,10 @@ class MqttNode extends MqttReceiver {
     return this.state.id && super.shouldLoadWhenConnected() ;
   }
  */
+  // TODO-13 do we just set state here, or change hte render ? 
+  topicChanged(leaf, value) {
+    //
+  }
   render() {
     return !this.isConnected ? null : [
       EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
@@ -1046,6 +1053,8 @@ class MqttNode extends MqttReceiver {
           EL('summary', {},[
             EL('span',{class: 'name', textContent: this.state.name}),
             EL('span',{class: 'nodeid', textContent: this.state.id}),
+            //TODO-13 need to be able to define a small array of icons each with multiple states and change based on topicChange() above
+            EL('img', {class: "batteryimg", src: 'images/battery.png'}),
           ]),
           EL('span',{class: 'description', textContent: this.state.description}),
           EL('slot', {name: 'lastseen', class: 'lastseen'}),
