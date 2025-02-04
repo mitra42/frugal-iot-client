@@ -268,7 +268,9 @@ class MqttTopic {
     } */
     this.data.push({value, time: now}); // Same format as graph dataset expects
     let leaf = this.topic.split("/").pop();
-    this.node.topicChanged(leaf, value);
+    if (this.node) { // There is (currently) no node if its a Projec
+      this.node.topicChanged(leaf, value);
+    }
     // TODO-13-battery now push val to node
     if (this.element) {
       if (this.element.valueSet(value)) {
@@ -1043,7 +1045,12 @@ class MqttNode extends MqttReceiver {
  */
   // TODO-13 do we just set state here, or change hte render ? 
   topicChanged(leaf, value) {
-    //
+    switch (leaf) {
+      case "battery":
+        let bars = Math.floor(parseInt(value) * 6/4200);
+        this.state.batteryIndicator.src = `images/battery${bars}.png`;
+        break;
+    }
   }
   render() {
     return !this.isConnected ? null : [
@@ -1053,8 +1060,8 @@ class MqttNode extends MqttReceiver {
           EL('summary', {},[
             EL('span',{class: 'name', textContent: this.state.name}),
             EL('span',{class: 'nodeid', textContent: this.state.id}),
-            //TODO-13 need to be able to define a small array of icons each with multiple states and change based on topicChange() above
-            EL('img', {class: "batteryimg", src: 'images/battery.png'}),
+            //Starts off as 1px empty image, changed when battery message receive
+            this.state.batteryIndicator = EL('img', {class: "batteryimg", src: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"}),
           ]),
           EL('span',{class: 'description', textContent: this.state.description}),
           EL('slot', {name: 'lastseen', class: 'lastseen'}),

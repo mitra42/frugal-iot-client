@@ -14,7 +14,7 @@ div.offline {background-color: #888888;}
 .right {background-color:white; display:inline-block;}
 .val {margin:5px;}
 .icon {height:12px;width:12px;float:right;border: 1px,black,solid;}
-.batteryimg {height:12px;width:12px;float:right;}
+.batteryimg {height:17px;width:34px;float:right;}
 /* In MqttGraph */
 .leftright{display:flex; align-items:center;}
 .graphnavleft{}
