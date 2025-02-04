@@ -329,7 +329,7 @@ class MqttTopic {
         name: this.name, color: this.color,
         // TODO-46 yaxis should depend on type of graph BUT cant use name as that may end up language dependent
         // noinspection JSUnresolvedReference
-        min: this.min, max: this.max, yaxisid: yaxisid,
+        min: this.min, max: this.max, yaxisid: yaxisid, label: `${this.node.state.name}:${this.name}`
       });
       this.graphdataset.mt = this;
       this.graphdataset.makeChartDataset(); // Links to data above
@@ -1247,7 +1247,7 @@ class MqttGraphDataset extends MqttElement {
   }
   // TODO clean up observedAttributes etc as this is not the superclass
   static get observedAttributes() {
-    return MqttReceiver.observedAttributes.concat(['color', 'min', 'max', 'yaxisid']); }
+    return MqttReceiver.observedAttributes.concat(['color', 'min', 'max', 'yaxisid', 'label']); }
   static get integerAttributes() {
     return MqttReceiver.integerAttributes.concat(['min', 'max']) };
 
@@ -1268,7 +1268,7 @@ class MqttGraphDataset extends MqttElement {
       };
     }
     // Things that are changed by attributes
-    this.chartdataset.label = this.mt.name;
+    this.chartdataset.label = this.state.label; // TODO-80 Needs device name
     this.chartdataset.borderColor = this.state.color; // also sets color of point
     this.chartdataset.backgroundColor =this.state.color;
     this.chartdataset.yAxisID = this.state.yaxisid;
