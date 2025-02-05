@@ -42,7 +42,7 @@ node frugal-iot-server.js
 Point your browser at `https://localhost:8080`
 
 You should see a series of dialogues allowing you to select a project.
-Choosing `dev` and `Lotus Ponds` will often get one of the test nodes I'm running at home.
+Choosing `dev` and `lotus` will often get one of the test nodes I'm running at home.
 
 
 
