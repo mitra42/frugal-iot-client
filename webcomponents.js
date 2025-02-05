@@ -1043,7 +1043,7 @@ class MqttNode extends MqttReceiver {
     switch (leaf) {
       case "battery":
         let bars = Math.floor(parseInt(value) * 6/4200);
-        this.state.batteryIndicator.src = `images/battery${bars}.png`;
+        this.state.batteryIndicator.src = `images/Battery${bars}.png`;
         break;
     }
   }
