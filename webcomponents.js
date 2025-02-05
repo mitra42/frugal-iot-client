@@ -918,17 +918,12 @@ class MqttWrapper extends HTMLElementExtended {
 }
 customElements.define('mqtt-wrapper', MqttWrapper);
 
-const MPstyle = `
-.outer {border: 1px,black,solid;  margin: 0.2em; }
-.projectname, .name { margin-left: 1em; margin-right: 1em; } 
-`;
-
 class MqttProject extends MqttReceiver {
   constructor() {
     super();
     this.state.nodes = {};  // [ MqttNode ]
   }
-  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['discover']); }
+  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['discover', 'name']); }
   static get boolAttributes() { return MqttReceiver.boolAttributes.concat(['discover'])}
 
   addNode(id) {
@@ -970,11 +965,11 @@ class MqttProject extends MqttReceiver {
   }
   render() {
     return  !this.isConnected ? null : [
-      EL('style', {textContent: MPstyle}), // Using styles defined above
-      EL('div', {class: "outer"}, [
+      EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
+      EL('div', {class: "outer mqtt-project"}, [
         EL('div', {class: "title"},[
           EL('span',{class: 'projectname', textContent: this.mt.topic}),
-          EL('span',{class: 'name', textContent: this.mt.name}),
+          EL('span',{class: 'name', textContent: this.state.name}),
         ]),
         EL('div', {class: "nodes"},[
           EL('slot', {}),

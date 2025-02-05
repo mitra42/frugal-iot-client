@@ -3,8 +3,11 @@
 .outer {background-color: white;margin:5px; padding:5px;}
 /* In MqttClient */
 details.mqtt-client {margin-left: 1em; margin-right: 1em; float: right;}
+/* In MqttProject */
+div.mqtt-project { margin: 0.2em;}
+.projectname, .name { margin-left: 1em; margin-right: 1em;}
 /* In MqttNode */
-.mqtt-node .outer { border: 1px,black,solid;  margin: 0.2em; }
+div.mqtt-node { border: 1px,black,solid;  margin: 0.2em; }
 .mqtt-node .name,.mqtt-node .description,.mqtt-node .nodeid { margin-left: 1em; margin-right: 1em; }
 .mqtt-node .lastseen {margin-left: 1em; margin-right: 1em; float: right;}
 div.offline {background-color: #888888;}
@@ -21,3 +24,4 @@ div.offline {background-color: #888888;}
 .right{{}}
 /* In MqttWrapper */
 .wrapper {border: 1px,black,solid;  margin: 0.2em; }
+div.dropdown { margin-top: 5px;}
