@@ -1108,6 +1108,7 @@ class MqttGraph extends MqttElement {
     this.datasets = []; // Child elements will add/remove chartjs datasets here
     this.state.dataFrom = null;
     this.state.yAxisCount = 0; // 0 left, 1 right
+    this.state.leftInProgress = 0;
     this.state.scales = { // Start with an xAxis and add axis as needed
       xAxis: {
         // display: false,
@@ -1202,7 +1203,9 @@ class MqttGraph extends MqttElement {
   }
 
   addDataFrom(filename, first) {
-    // TODO-72 should change arrow to hourglass until complete then switch back - but has to be at Graph level
+    if (!this.state.leftInProgress++) {
+      this.state.imageLeft.textContent = "⌛";
+    }
     async.each(this.children, ((ds,cb) => {
       if (ds.addDataFrom) {
         ds.addDataFrom(filename, first, cb);
@@ -1210,11 +1213,10 @@ class MqttGraph extends MqttElement {
         cb();
       }
     }),() => { // Note ds.addDataFrom does not return an error via cb, if cant read file will just skip that line
-      console.log("XXX72 done all");
-      let xxx2 = Date.now(); // TODO-72 remove when done
       this.chart.update();
-      console.log("XXX72 update took", Date.now()-xxx2);
-      // TODO-72 turn arrow back from hourglass here.
+      if (!--this.state.leftInProgress) {
+        this.state.imageLeft.textContent = "⬅︎";
+      }
     } );
   }
 
@@ -1232,7 +1234,7 @@ class MqttGraph extends MqttElement {
       // TODO see https://www.chartjs.org/docs/latest/configuration/responsive.html#important-note div should ONLY contain canvas
       EL("div", {class: 'outer'}, [ // TODO Move style to sheet
         EL('div',{class: 'leftright'}, [
-          EL('span', {class: "graphnavleft", textContent: "⬅︎", onclick: this.graphnavleft.bind(this)}),
+          this.state.imageLeft = EL('span', {class: "graphnavleft", textContent: "⬅︎", onclick: this.graphnavleft.bind(this)}),
           EL('slot', {name: "chart"}), // This is <div><canvas></div>
         ]),
         EL('slot', {}), // This is the slot where the GraphDatasets get stored
