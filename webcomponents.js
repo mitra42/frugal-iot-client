@@ -441,6 +441,12 @@ class MqttClient extends HTMLElementExtended {
             console.log("Now connected, subscribing to",s.topic);
             mqtt_client.subscribe(s.topic, (err) => { if (err) console.error(err); });
           })
+        } else {
+          /* Can use for debugging - not really that useful and its verbose.
+          mqtt_subscribe("$SYS/#", (msg) => {
+            console.log("SYS", msg);
+          })
+           */
         }
       })
       mqtt_client.on('error', function (error) {
