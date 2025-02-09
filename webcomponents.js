@@ -134,6 +134,8 @@ function mqtt_subscribe(topic, cb) { // cb(message)
     console.log("Delaying till connected");
   }
 }
+// See https://www.chartjs.org/docs/latest/samples/line/segments.html
+const skipped = (ctx, value) => ctx.p0.skip || ctx.p1.skip ? value : undefined;
 
 class Watchdog {
   constructor(el) {
@@ -170,12 +172,16 @@ class MqttTopic {
 
   fromDiscovery(discoveredTopic, node) {
     // topic, name, type, display, rw, min, max, color, options,
-    Object.keys(discoveredTopic).forEach((k) => { this[k] = discoveredTopic[k]; });
+    Object.keys(discoveredTopic).forEach((k) => {
+      this[k] = discoveredTopic[k];
+    });
     this.topic = node.mt.topic + "/" + discoveredTopic.topic; // Expand the topic
     this.node = node;
   }
 
-  get project() { return this.node.project; }
+  get project() {
+    return this.node.project;
+  }
 
   // Create the UX element that displays this
   createElement() {
@@ -232,7 +238,7 @@ class MqttTopic {
   // TODO add opposite - return string or int based on argument, then look at valueGet subclassed many places
   // NOTE same function in frugal-iot-logger and frugal-iot-client if change here, change there
   valueFromText(message) {
-    switch(this.type) {
+    switch (this.type) {
       case "bool":
         return toBool(message);
       case "float":
@@ -288,12 +294,20 @@ class MqttTopic {
     // noinspection JSUnresolvedReference
     let n = this.name.toLowerCase();
     let t = this.topic.split('/').pop().toLowerCase();
-    if (scaleNames.includes(n)) { return n; }
-    if (scaleNames.includes(t)) { return t; }
+    if (scaleNames.includes(n)) {
+      return n;
+    }
+    if (scaleNames.includes(t)) {
+      return t;
+    }
     // noinspection JSAssignmentUsedAsCondition
-    if ( yaxisid = scaleNames.find(tt => tt.includes(n) || n.includes(tt)) ) { return yaxisid; }
+    if (yaxisid = scaleNames.find(tt => tt.includes(n) || n.includes(tt))) {
+      return yaxisid;
+    }
     // noinspection JSAssignmentUsedAsCondition
-    if ( yaxisid = scaleNames.find(tt => tt.includes(n) || n.includes(tt)) ) { return yaxisid; }
+    if (yaxisid = scaleNames.find(tt => tt.includes(n) || n.includes(tt))) {
+      return yaxisid;
+    }
     // TODO-46 - need to turn axis on, and position when used.
     // Not found - lets make one - this might get more parameters (e.g. linear vs exponential could be a attribute of Bar ?
     // noinspection JSUnresolvedReference
@@ -309,7 +323,7 @@ class MqttTopic {
         text: this.name,
       },
       // noinspection JSUnresolvedReference
-      min:  ((this.type === 'bool') ? false : (this.min || 0)),
+      min: ((this.type === 'bool') ? false : (this.min || 0)),
       // noinspection JSUnresolvedReference
       max: ((this.type === 'bool') ? true : undefined),
     });
@@ -341,10 +355,11 @@ class MqttTopic {
     }
     this.graphdataset.addDataLeft(); // Populate with any back data
   }
+
   publish(val) {
     // super.onChange(e);
-    console.log("Publishing ", this.topic, val, this.retain ? "retain": "", this.qos ? `qos=${this.qos}` : "");
-    mqtt_client.publish(this.topic, val, { retain: this.retain, qos: this.qos});
+    console.log("Publishing ", this.topic, val, this.retain ? "retain" : "", this.qos ? `qos=${this.qos}` : "");
+    mqtt_client.publish(this.topic, val, {retain: this.retain, qos: this.qos});
   }
 
   // Adds historical data to the chart - typically chart updates data for each line, then updates the chart.
@@ -370,17 +385,21 @@ class MqttTopic {
             console.log("No data in", filepath);
           } else {
             console.log(`retrieved ${newdata.length} records for ${this.topic}`);
-            let newprocdata = newdata.map(r => { return {
-              time: parseInt(r[0]),
-              value: parseFloat(r[1])  // TODO-72 need function for this as presuming its float
-            };});
+            let newprocdata = newdata.map(r => {
+              return {
+                time: parseInt(r[0]),
+                value: parseFloat(r[1])  // TODO-72 need function for this as presuming its float
+              };
+            });
             let xxx1 = Date.now();
             let olddata = this.data.splice(0, Infinity);
             console.log(`adding back ${olddata.length} records for ${this.topic}`);
-            for (let dd of newprocdata) { this.data.push(dd); }// Cant splice as ...newprocdata blows stack
+            for (let dd of newprocdata) {
+              this.data.push(dd);
+            }// Cant splice as ...newprocdata blows stack
             // Put back the newer data, unless "first" in which case only put back if newer than olddata
             // TODO-46 TODO-72 this is also good place to trim total number data points if >1000
-            let lastdate = newprocdata[newprocdata.length-1].time;
+            let lastdate = newprocdata[newprocdata.length - 1].time;
             for (let dd of olddata) {
               if (!first || (dd.time > lastdate)) {
                 this.data.push(dd);
@@ -391,18 +410,38 @@ class MqttTopic {
               this.graphdataset.parentElement.chart.options.animations = false; // Disable animations get slow at scale
             }
             let xxx2 = Date.now();
-            console.log("XXX72 splice took", xxx2-xxx1);
+            console.log("XXX72 splice took", xxx2 - xxx1);
             cb();
           }
         })
       })
       .catch(err => {
+        let t = new Date(this.graphdataset.chartEl.state.dateFrom) // Have to explicitly copy it else pointer
+          .setUTCHours(0,0,0,0)
+          .valueOf();
+        this.data.splice(0, 0, {
+          time: t,
+          value: null,
+        });
         console.error(err);
         cb(null); // Dont break caller
       }); // May want to report filename here
   }
-}
 
+  removeDataBefore(date) { // note date may be null
+    let i;
+    if (date) {
+      i = this.data.findIndex(d => d.time >= date); // -1 if all older
+    } else {
+      i = -1;
+    }
+    if (i > 0) {
+      this.data.splice(0, i);
+    } else { // No date, or all older
+      this.data.splice(0, Infinity); // delete all
+    }
+  }
+}
 /* Manages a connection to a MQTT broker */
 class MqttClient extends HTMLElementExtended {
   // This appears to be reconnecting properly, but if not see mqtt (library I think)'s README
@@ -1219,7 +1258,26 @@ class MqttGraph extends MqttElement {
       }
     } );
   }
-
+  graphnavright() {
+    // TODO if not last go forward x days
+    if (this.state.dateFrom) {
+      this.state.dateFrom.setDate(this.state.dateFrom.getDate() + 1); // Note this rolls over between months ok
+      if (this.state.dateFrom > new Date()) {
+        this.state.dateFrom = null; // Reset to "first"
+      }
+    }
+    let d = this.state.dateFrom; // maybe null
+    if (d) {
+      d = new Date(this.state.dateFrom);
+      d.setUTCHours(0,0,0,0);
+    }
+    Array.from(this.children).forEach(ds => {
+      if (ds.removeDataBefore) {
+        ds.removeDataBefore(d); // may be null
+      }
+    });
+    this.chart.update();
+  }
   // Called when data on one of the datasets has changed, can do an update, (makeChart is for more complex changes)
   dataChanged() {
     this.chart.update();
@@ -1235,6 +1293,7 @@ class MqttGraph extends MqttElement {
       EL("div", {class: 'outer'}, [ // TODO Move style to sheet
         EL('div',{class: 'leftright'}, [
           this.state.imageLeft = EL('span', {class: "graphnavleft", textContent: "⬅︎", onclick: this.graphnavleft.bind(this)}),
+          EL('span', {class: "graphnavleft", textContent: "↺", onclick: this.graphnavright.bind(this)}),
           EL('slot', {name: "chart"}), // This is <div><canvas></div>
         ]),
         EL('slot', {}), // This is the slot where the GraphDatasets get stored
@@ -1271,6 +1330,11 @@ class MqttGraphDataset extends MqttElement {
       this.chartdataset = {
         data: this.mt.data, // Should be pointer to receiver's data set in MqttReceiver.valueSet
         stepped: this.mt.type === "bool" ? 'before' : false,
+        segment: {
+          borderColor: ctx => skipped(ctx, 'rgb(0,0,0,0.2)'),
+          borderDash: ctx => skipped(ctx, [6, 6]),
+        },
+        spanGaps: true,
         parsing: {
           xAxisKey: 'time',
           yAxisKey: 'value'
@@ -1297,6 +1361,9 @@ class MqttGraphDataset extends MqttElement {
   addDataFrom(filename, first, cb) {
     //TODO this location may change
     this.mt.addDataFrom(filename, first, cb);
+  }
+  removeDataBefore(date) {
+    this.mt.removeDataBefore(date);
   }
   // Add any data left to get a new GraphDataSet up to speed with the chart
   addDataLeft() {
