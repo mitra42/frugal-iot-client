@@ -292,14 +292,10 @@ class MqttTopic {
     let scaleNames = Object.keys(graph.state.scales);
     let yaxisid;
     // noinspection JSUnresolvedReference
-    let n = this.name.toLowerCase();
-    let t = this.topic.split('/').pop().toLowerCase();
-    if (scaleNames.includes(n)) {
-      return n;
-    }
-    if (scaleNames.includes(t)) {
-      return t;
-    }
+    let n = this.name.toLowerCase().replace(/[0-9]+$/,'');
+    let t = this.topic.split('/').pop().toLowerCase().replace(/[0-9]+$/,'');
+    if (scaleNames.includes(n)) { return n; }
+    if (scaleNames.includes(t)) { return t; }
     // noinspection JSAssignmentUsedAsCondition
     if (yaxisid = scaleNames.find(tt => tt.includes(n) || n.includes(tt))) {
       return yaxisid;
@@ -320,7 +316,7 @@ class MqttTopic {
         color: this.color,  // May need to vary so not all e.g. humidity same color
         display: true,
         // noinspection JSUnresolvedReference
-        text: this.name,
+        text: this.name.replace(/[0-9]+$/,''),
       },
       // noinspection JSUnresolvedReference
       min: ((this.type === 'bool') ? false : (this.min || 0)),
