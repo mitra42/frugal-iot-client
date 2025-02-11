@@ -18,6 +18,16 @@ div.offline {background-color: #888888;}
 .val {margin:5px;}
 .icon {height:12px;width:12px;float:right;border: 1px,black,solid;}
 .batteryimg {height:17px;width:34px;float:right;}
+
+/* In MqttSlider */
+.mqtt-slider .pointbar {margin:0px; padding 0px;}
+.mqtt-slider .val {margin:5px;}
+.mqtt-slider .setpoint {position: relative;top: -5px;cursor: pointer;width: max-content;height: max-content;}
+
+/* In MqttDropdown */
+.mqtt-dropdown .outer { border: 0px,black,solid;  margin: 0.2em; }
+.mqtt-dropdown .name,.mqtt-dropdown .description,.mqtt-dropdown .nodeid { margin-left: 1em; margin-right: 1em; }
+
 /* In MqttGraph */
 .leftright{display:flex; align-items:center;}
 .graphnavleft{}
