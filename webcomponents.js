@@ -652,7 +652,7 @@ class MqttBar extends MqttReceiver {
     let width = 100*(this.state.value-this.state.min)/(this.state.max-this.state.min);
     return !(this.isConnected && this.mt) ? null : [
       EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
-      EL('div', {class: "outer"}, [
+      EL('div', {class: "outer mqtt-bar"}, [
         EL('div', {class: "name"}, [ // TODO-30 maybe should use a <label>
           EL('span', {textContent: this.mt.name}),
           EL('img', {class: "icon", src: 'images/icon_graph.svg', onclick: this.opengraph.bind(this)}),
@@ -932,7 +932,7 @@ class MqttWrapper extends HTMLElementExtended {
   render() {
     return [
       EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
-      EL('div', {class: 'outer'}, [
+      EL('div', {class: 'outer mqtt-wrapper'}, [
         EL('slot', {name: 'client'}),
         EL('slot'),
       ]),

@@ -1,16 +1,25 @@
-/* Currently empty - placeholder */
+/* NOTES
+ * Styling in webcomponents is tricky - to style something in the shadow-root i.e. built by "rensder"
+ * style the outside as e.g. class: "outer mqtt-xxx" and stylesheet has .mqtt-xxx .outer
+ * style children intended to be shown via a slot as e.g class: foo and styhlesheet has mqtt-xxx .foo
+ * the slotted children don't see the html they are inside, and the shadow root doesnt know its inside a <mqtt-xxx>
+ */
 /* Multiple places */
 .outer {background-color: white;margin:5px; padding:5px;}
 /* In MqttClient */
 details.mqtt-client {margin-left: 1em; margin-right: 1em; float: right;}
 /* In MqttProject */
-div.mqtt-project { margin: 0.2em;}
-.projectname, .name { margin-left: 1em; margin-right: 1em;}
+.mqtt-project { margin: 0.2em;}
 /* In MqttNode */
-div.mqtt-node { border: 1px,black,solid;  margin: 0.2em; }
-.mqtt-node .name,.mqtt-node .description,.mqtt-node .nodeid { margin-left: 1em; margin-right: 1em; }
-.mqtt-node .lastseen {margin-left: 1em; margin-right: 1em; float: right;}
-div.offline {background-color: #888888;}
+.mqtt-node {
+    { border: 1px,black,solid;  margin: 0.2em; }
+    .name,.description,.nodeid,.projectname { margin-left: 1em; margin-right: 1em; }
+    .lastseen {margin-left: 1em; margin-right: 1em; float: right;}
+    @media (min-width:601px){
+        .name,.description,.nodeid,.projectname, .lastseen {font-size: xx-large;}
+    }
+}
+div.offline {background-color: #888888;} /* Not INSIDE mqtt-node, it is the mqtt-node */
 /* In MqttBar */
 .bar {border: 1px,black,solid; background-color: white;margin: 0px;}
 .left {display:inline-block; text-align: right;}
@@ -26,12 +35,18 @@ div.offline {background-color: #888888;}
 
 /* In MqttDropdown */
 .mqtt-dropdown .outer { border: 0px,black,solid;  margin: 0.2em; }
-.mqtt-dropdown .name,.mqtt-dropdown .description,.mqtt-dropdown .nodeid { margin-left: 1em; margin-right: 1em; }
 
 /* In MqttGraph */
 .leftright{display:flex; align-items:center;}
 .graphnavleft{}
 .right{{}}
 /* In MqttWrapper */
-.wrapper {border: 1px,black,solid;  margin: 0.2em; }
-div.dropdown { margin-top: 5px;}
+/*Not useful: .mqtt-wrapper {border: 1px,black,solid;  margin: 0.2em; } */
+mqtt-wrapper {
+    .dropdown { margin-top: 5px;}
+    select { margin-left: 2em;}
+    @media (min-width:601px){
+        .dropdown {font-size: xxx-large;}
+        select { font-size: xx-large;}
+    }
+}
