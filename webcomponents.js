@@ -648,7 +648,7 @@ class MqttBar extends MqttReceiver {
     let width = 100*(this.state.value-this.state.min)/(this.state.max-this.state.min);
     return !(this.isConnected && this.mt) ? null : [
       EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
-      EL('div', {class: "outer"}, [
+      EL('div', {class: "outer mqtt-bar"}, [
         EL('div', {class: "name"}, [ // TODO-30 maybe should use a <label>
           EL('span', {textContent: this.mt.name}),
           EL('img', {class: "icon", src: 'images/icon_graph.svg', onclick: this.opengraph.bind(this)}),
@@ -665,20 +665,6 @@ class MqttBar extends MqttReceiver {
   }
 }
 customElements.define('mqtt-bar', MqttBar);
-
-
-const MSstyle = `
-.outer {background-color: white;margin:5px; padding:5px;}
-.pointbar {margin:0px; padding 0px;}
-.val {margin:5px;}
-.setpoint {
-    position: relative;
-    top: -5px;
-    cursor: pointer;
-    width: max-content;
-    height: max-content;
-  }
- `;
 
 // TODO Add some way to do numeric display, numbers should change on mousemoves.
 class MqttSlider extends MqttTransmitter {
@@ -742,8 +728,8 @@ class MqttSlider extends MqttTransmitter {
       this.slider.onmousedown = this.onmousedown.bind(this);
     }
     return !this.isConnected ? null : [
-      EL('style', {textContent: MSstyle}), // Using styles defined above
-      EL('div', {class: "outer"}, [
+      EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
+      EL('div', {class: "mqtt-slider outer"}, [
         EL('div', {class: "name"}, [ //TODO maybe use a label
           EL('span', {textContent: this.mt.name}),
           EL('span', {class: "val", textContent: this.state.value}), // TODO restrict number of DP
@@ -754,11 +740,6 @@ class MqttSlider extends MqttTransmitter {
   }
 }
 customElements.define('mqtt-slider', MqttSlider);
-
-const MDDstyle = `
-.outer { border: 0px,black,solid;  margin: 0.2em; }
-.name, .description, .nodeid { margin-left: 1em; margin-right: 1em; } 
-`;
 
 // TODO-43 rename as MqttChooseTopic
 class MqttDropdown extends MqttTransmitter {
@@ -790,8 +771,8 @@ class MqttDropdown extends MqttTransmitter {
 
   render() {
     return !this.isConnected ? null : [
-      EL('style', {textContent: MDDstyle}), // Using styles defined above
-      EL('div', {class: 'outer'}, [
+      EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
+      EL('div', {class: 'outer mqtt-dropdown'}, [
         EL('label', {for: this.mt.topic, textContent: this.mt.name}),
         EL('select', {id: this.mt.topic, onchange: this.onchange.bind(this)}, [
           EL('option', {value: "", textContent: "Unused", selected: !this.state.value}),
@@ -805,8 +786,6 @@ class MqttDropdown extends MqttTransmitter {
   // super.valueGet fine as its text
 }
 customElements.define('mqtt-dropdown', MqttDropdown);
-
-// TODO merge all the styles into a stylesheet and load that and reference in each class
 
 // Outer element of the client - Top Level logic
 // If specifies org / project / node then believe it and build to that
@@ -949,7 +928,7 @@ class MqttWrapper extends HTMLElementExtended {
   render() {
     return [
       EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
-      EL('div', {class: 'outer'}, [
+      EL('div', {class: 'outer mqtt-wrapper'}, [
         EL('slot', {name: 'client'}),
         EL('slot'),
       ]),
@@ -1286,7 +1265,7 @@ class MqttGraph extends MqttElement {
     return ( [
       EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
       // TODO see https://www.chartjs.org/docs/latest/configuration/responsive.html#important-note div should ONLY contain canvas
-      EL("div", {class: 'outer'}, [ // TODO Move style to sheet
+      EL("div", {class: 'outer'}, [
         EL('div',{class: 'leftright'}, [
           this.state.imageLeft = EL('span', {class: "graphnavleft", textContent: "⬅︎", onclick: this.graphnavleft.bind(this)}),
           EL('span', {class: "graphnavleft", textContent: "↺", onclick: this.graphnavright.bind(this)}),
