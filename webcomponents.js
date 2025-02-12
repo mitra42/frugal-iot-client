@@ -211,7 +211,7 @@ class MqttTopic {
           break;
         case 'dropdown':
           // noinspection JSUnresolvedReference
-          el = EL('mqtt-dropdown', {options: this.options, project: this.project});
+          el = EL('mqtt-dropdown', {options: this.options, rw: this.rw, project: this.project});
           this.retain = true;
           this.qos = 1; // This message needs to get through to node
           break;
@@ -338,10 +338,14 @@ class MqttTopic {
       // noinspection JSUnresolvedReference
       this.graphdataset = EL('mqtt-graphdataset', {
         // noinspection JSUnresolvedReference
-        name: this.name, color: this.color,
+        name: this.name,
+        color: this.color,
         // TODO-46 yaxis should depend on type of graph BUT cant use name as that may end up language dependent
         // noinspection JSUnresolvedReference
-        min: this.min, max: this.max, yaxisid: yaxisid, label: `${this.node.state.name}:${this.name}`
+        min: this.min,
+        max: this.max,
+        yaxisid: yaxisid,
+        label: `${this.node.state.name}:${this.name}`
       });
       this.graphdataset.mt = this;
       this.graphdataset.makeChartDataset(); // Links to data above
@@ -659,7 +663,7 @@ class MqttBar extends MqttReceiver {
           ]),
           EL('span', {class: "right", style: "width:"+(100-width)+"%"}),
         ]),
-        EL('slot',{}),
+        EL('slot',{}), // Children would be a setpoint, but not using currently
       ]),
     ];
   }
@@ -744,7 +748,7 @@ customElements.define('mqtt-slider', MqttSlider);
 // TODO-43 rename as MqttChooseTopic
 class MqttDropdown extends MqttTransmitter {
   // options = "bool" for boolean topics (matches t.type on others)
-  static get observedAttributes() { return MqttTransmitter.observedAttributes.concat(['options','project']); }
+  static get observedAttributes() { return MqttTransmitter.observedAttributes.concat(['options','project','rw']); }
 
   // TODO-43 may need to change findTopics to account for other selection criteria
   findTopics() {
@@ -755,7 +759,8 @@ class MqttDropdown extends MqttTransmitter {
       // Mapping of requested types to valid fields - e.g. if want a float then returning an int will be fine
       "float": ["float","int"],
     }
-    return nodes.map(n => n.topicsByType(allowableTypes[this.state.options] || this.state.options)).flat();
+    return nodes.map(n => n.topicsByType(allowableTypes[this.state.options] || this.state.options, this.state.rw))
+      .flat();
   }
   // noinspection JSCheckFunctionSignatures
   valueSet(val) {
@@ -1016,10 +1021,13 @@ class MqttNode extends MqttReceiver {
     return (this.state.name === "device") ? this.state.id : this.state.name;
   }
   // Filter the topics on this node by type e.g. "bool" "float" or ["float","int"]
-  topicsByType(types) { // [ { name, topic: topicpath } ]
+  topicsByType(types, rw) { // [ { name, topic: topicpath } ]
     if (!this.state.value) { return []; } // If have not received discovery do not report any topics
     let usableName = this.usableName;
-    return this.state.value.topics.filter( t => types.includes(t.type)).map(t=> { return({name: `${usableName}:${t.name}`, topic: this.mt.topic + "/" + t.topic})});
+    return this.state.value.topics
+      .filter( t => types.includes(t.type))
+      .filter(t => t.rw.includes(rw))
+      .map(t=> { return({name: `${usableName}:${t.name}`, topic: this.mt.topic + "/" + t.topic})});
   }
   // noinspection JSCheckFunctionSignatures
   valueSet(obj) { // Val is object converted from yaml
@@ -1265,10 +1273,12 @@ class MqttGraph extends MqttElement {
     return ( [
       EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
       // TODO see https://www.chartjs.org/docs/latest/configuration/responsive.html#important-note div should ONLY contain canvas
-      EL("div", {class: 'outer'}, [
+      EL("div", {class: 'outer mqtt-graph'}, [
         EL('div',{class: 'leftright'}, [
-          this.state.imageLeft = EL('span', {class: "graphnavleft", textContent: "⬅︎", onclick: this.graphnavleft.bind(this)}),
-          EL('span', {class: "graphnavleft", textContent: "↺", onclick: this.graphnavright.bind(this)}),
+          EL('div',{},[
+            this.state.imageLeft = EL('span', {class: "graphnavleft", textContent: "⬅︎", onclick: this.graphnavleft.bind(this)}),
+            EL('span', {class: "graphnavright", textContent: "↺", onclick: this.graphnavright.bind(this)}),
+          ]),
           EL('slot', {name: "chart"}), // This is <div><canvas></div>
         ]),
         EL('slot', {}), // This is the slot where the GraphDatasets get stored

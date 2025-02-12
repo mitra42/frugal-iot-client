@@ -6,8 +6,19 @@
  */
 /* Multiple places */
 .outer {background-color: white;margin:5px; padding:5px;}
+.icon { /* mqtt-toggle, mqtt-bar */
+    height:1em;width:1em;float:right;border: 1px,black,solid;
+    @media (max-width:1001px){
+        height:1.5em;width:1.5em;
+    }
+}
 /* In MqttClient */
-details.mqtt-client {margin-left: 1em; margin-right: 1em; float: right;}
+details.mqtt-client {
+    margin-left: 1em; margin-right: 1em; float: right;
+    @media screen and (max-width: 1001px ) {
+        font-size: xx-large;
+    }
+}
 /* In MqttProject */
 .mqtt-project { margin: 0.2em;}
 /* In MqttNode */
@@ -15,38 +26,80 @@ details.mqtt-client {margin-left: 1em; margin-right: 1em; float: right;}
     { border: 1px,black,solid;  margin: 0.2em; }
     .name,.description,.nodeid,.projectname { margin-left: 1em; margin-right: 1em; }
     .lastseen {margin-left: 1em; margin-right: 1em; float: right;}
-    @media (min-width:601px){
-        .name,.description,.nodeid,.projectname, .lastseen {font-size: xx-large;}
+    .batteryimg {height:17px;width:34px;float:right;}
+    @media (max-width: 1001px ) {
+        .name {
+            font-size: xxx-large;
+        }
+        .description, .nodeid, .projectname, .lastseen {
+            font-size: xx-large;
+        }
     }
 }
 div.offline {background-color: #888888;} /* Not INSIDE mqtt-node, it is the mqtt-node */
 /* In MqttBar */
-.bar {border: 1px,black,solid; background-color: white;margin: 0px;}
-.left {display:inline-block; text-align: right;}
-.right {background-color:white; display:inline-block;}
-.val {margin:5px;}
-.icon {height:12px;width:12px;float:right;border: 1px,black,solid;}
-.batteryimg {height:17px;width:34px;float:right;}
-
+.mqtt-bar {
+    .bar {border: 1px,black,solid; background-color: white;margin: 0px;}
+    .left {display:inline-block; text-align: right;}
+    .right {background-color:white; display:inline-block;}
+    .val {margin:5px;}
+    @media (max-width:1001px){
+        .name {font-size: x-large;}
+        .left, .right {height: 2em;}
+        .val {font-size: xx-large;}
+    }
+}
 /* In MqttSlider */
 .mqtt-slider .pointbar {margin:0px; padding 0px;}
 .mqtt-slider .val {margin:5px;}
 .mqtt-slider .setpoint {position: relative;top: -5px;cursor: pointer;width: max-content;height: max-content;}
 
 /* In MqttDropdown */
-.mqtt-dropdown .outer { border: 0px,black,solid;  margin: 0.2em; }
+.mqtt-dropdown {
+    .outer { border: 0px,black,solid;  margin: 0.2em; }
+    @media (max-width:1001px){
+        .dropdown {font-size: x-large;}
+        select { font-size: x-large;}
+        label {font-size: xx-large;}
+    }
+}
+
+.mqtt-graph {
+    .leftright{display:flex; align-items:center;}
+    @media (max-width:1001px) {
+        .graphnavleft, .graphnavright {font-size: xxx-large;}
+    }
+}
 
 /* In MqttGraph */
-.leftright{display:flex; align-items:center;}
-.graphnavleft{}
-.right{{}}
 /* In MqttWrapper */
 /*Not useful: .mqtt-wrapper {border: 1px,black,solid;  margin: 0.2em; } */
 mqtt-wrapper {
     .dropdown { margin-top: 5px;}
     select { margin-left: 2em;}
-    @media (min-width:601px){
-        .dropdown {font-size: xxx-large;}
-        select { font-size: xx-large;}
+    @media screen and (max-width: 1001px ) {
+        .dropdown {
+            font-size: xxx-large;
+        }
+        select {
+            font-size: xx-large;
+        }
     }
 }
+/* Its weird, but at least on my iPhoneXS if I set it smaller than this it doesnt trigger in Safari */
+
+/* Just for testing */
+/*
+mqtt-wrapper {
+
+    @media screen and (max-width: 1001px ) {
+        .dropdown {
+            background-color: red
+        }
+
+        select {
+            font-size: xx-large;
+        }
+    }
+}
+*/
