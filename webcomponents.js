@@ -1024,6 +1024,7 @@ class MqttNode extends MqttReceiver {
     this.state.days = 0;
     this.watchdog = new Watchdog(this);
     this.state.lastseen = 0;
+    this.groups = {}; // Index of groups
   }
   get usableName() {
     return (this.state.name === "device") ? this.state.id : this.state.name;
@@ -1037,6 +1038,17 @@ class MqttNode extends MqttReceiver {
       .filter(t => t.rw.includes(rw))
       .map(t=> { return({name: `${usableName}:${t.name}`, topic: this.mt.topic + "/" + t.topic})});
   }
+  appendGroup(t) { // t = { group, name }
+    if (!this.groups[t.group]) {
+      this.groups[t.group] = EL('details', {class: `group ${t.group}`}, [
+        EL('summary',{},[
+          EL('span', {textContent: t.name || t.group}),
+        ])
+      ]);
+      this.append(this.groups[t.group]);
+    }
+    return this.groups[t.group];
+  }
   // noinspection JSCheckFunctionSignatures
   valueSet(obj) { // Val is object converted from yaml
     if (this.state.discover) { // If do not have "discover" set, then presume have defined what UI we want on this node
@@ -1049,6 +1061,9 @@ class MqttNode extends MqttReceiver {
       if (this.state.lastSeenElement) { this.append(this.state.lastSeenElement); } // Re-add the lastseen element
       if (!nodediscover.topics) { nodediscover.topics = []; } // if no topics, make it an empty array
         nodediscover.topics.forEach(t => { // TODO-13 are these topicLeaf or topicPath ?
+        if (!t.topic && t.group) { //
+          this.appendGroup(t);
+        }
         if (!this.state.topics[t.topic]) { // Have we done this already
           let mt = new MqttTopic();
           mt.fromDiscovery(t, this);
@@ -1060,7 +1075,12 @@ class MqttNode extends MqttReceiver {
             // noinspection JSCheckFunctionSignatures
             el.setAttribute('slot', leaf);
           }
-          this.append(el);
+          if (mt.group) {
+            this.appendGroup({group: mt.group}); // Check it exists and if not create it
+            this.groups[mt.group].append(el);
+          } else {
+            this.append(el);
+          }
         }
       });
       return true; // because change name description etc
