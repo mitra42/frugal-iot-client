@@ -335,6 +335,7 @@ class MqttTopic {
 
     // Create a graphdataset to put in the chart
     if (!this.graphdataset) {
+      let nodename = this.node ? this.node.state.name : "";
       // noinspection JSUnresolvedReference
       this.graphdataset = EL('mqtt-graphdataset', {
         // noinspection JSUnresolvedReference
@@ -345,7 +346,7 @@ class MqttTopic {
         min: this.min,
         max: this.max,
         yaxisid: yaxisid,
-        label: `${this.node.state.name}:${this.name}`
+        label: `${nodename}:${this.name}`
       });
       this.graphdataset.mt = this;
       this.graphdataset.makeChartDataset(); // Links to data above
@@ -661,7 +662,8 @@ class MqttBar extends MqttReceiver {
           EL('span', {class: "left", style: `width:${width}%; background-color:${this.state.color};`},[
             EL('span', {class: "val", textContent: this.state.value}),
           ]),
-          EL('span', {class: "right", style: "width:"+(100-width)+"%"}),
+          //Dont appear to need this - and it sometimes wraps, so if re-ebable, neeed to make sure always horiz next to left
+          //EL('span', {class: "right", style: "width:"+(100-width)+"%"}),
         ]),
         EL('slot',{}), // Children would be a setpoint, but not using currently
       ]),
