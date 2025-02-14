@@ -11,6 +11,12 @@ import { parse } from "csv-parse"; // https://csv.js.org/parse/distributions/bro
 import { Chart, registerables, _adapters } from './node_modules/chart.js/dist/chart.js'; // "https://www.chartjs.org"
 //import 'chartjs-adapter-luxon';
 Chart.register(...registerables); //TODO figure out how to only import that chart types needed
+/* TODO possible partial list of imports needed for chartjs
+import LineElement from '../../elements/element.line.js';
+import {_drawfill} from './filler.drawing.js';
+import {_shouldApplyFill} from './filler.helper.js';
+import {_decodeFill, _resolveTarget} from './filler.options.js';
+*/
 /* This is copied from the chartjs-adapter-luxon, I could not get it to import - gave me an error every time */
 /*!
  * chartjs-adapter-luxon v1.3.1
@@ -1290,6 +1296,9 @@ class MqttGraph extends MqttElement {
 }
 customElements.define('mqtt-graph', MqttGraph);
 
+let lightenablecolors =  ['coral','salmon','pink','salmon','yellow','goldenrodyellow',
+  'green','seagreen','cyan','steelblue','blue','skyblue','gray','slategray'];
+
 class MqttGraphDataset extends MqttElement {
   /*
   chartdataset: { data[{value, time}], parsing: { xAixKey: 'time', yAxisKey: 'value' }
@@ -1317,6 +1326,12 @@ class MqttGraphDataset extends MqttElement {
       this.chartdataset = {
         data: this.mt.data, // Should be pointer to receiver's data set in MqttReceiver.valueSet
         stepped: this.mt.type === "bool" ? 'before' : false,
+        fill:
+          this.mt.type !== "bool" ? false :
+          {
+          target: 'origin',
+          above: lightenablecolors.includes(this.state.color) ? "light"+this.state.color : this.state.color,
+        },
         segment: {
           borderColor: ctx => skipped(ctx, 'rgb(0,0,0,0.2)'),
           borderDash: ctx => skipped(ctx, [6, 6]),
