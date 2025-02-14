@@ -829,11 +829,19 @@ class MqttWrapper extends HTMLElementExtended {
   onOrganization(e) {
     this.state.organization = e.target.value;
     this.setAttribute('organization', this.state.organization);
-    this.appender();
+    this.state.project = null;
+    if (this.state.projectEl) {
+      this.removeChild(this.state.projectEl);
+    }
+    if (this.state.organization) { // Will be false if set to "Not selected"
+      this.appender();
+    }
   }
   onProject(e) {
     this.state.project = e.target.value;
-    this.appender();
+    if (this.state.project) { // Will be false if choose "Not selected"
+      this.appender();
+    }
   }
   appendClient() {
     // TODO-security at some point we'll need one client per org and to use username and password from config.yaml which by then should be in config.d
@@ -880,7 +888,7 @@ class MqttWrapper extends HTMLElementExtended {
             EL('div', {class: 'dropdown'}, [
               EL('label', {for: 'organizations', textContent: "Organization"}),
               EL('select', {id: 'organizations', onchange: this.onOrganization.bind(this)}, [
-                EL('option', {value: null, textContent: "Not selected", selected: !this.state.value}),
+                EL('option', {value: "", textContent: "Not selected", selected: !this.state.value}),
                 Object.entries(server_config.organizations).map( ([oid, o]) =>
                   EL('option', {value: oid, textContent: `${oid}: ${o.name}`, selected: false}),
                 ),
@@ -888,11 +896,11 @@ class MqttWrapper extends HTMLElementExtended {
             ]));
         } else { // !n !p o  // TODO-69 maybe this should be a blank project ?
           // noinspection JSUnresolvedReference
-          this.append(
+          this.append( this.state.projectEl =
             EL('div', {class: 'dropdown'}, [
               EL('label', {for: 'projects', textContent: "Project"}),
               EL('select', {id: 'projects', onchange: this.onProject.bind(this)}, [
-                EL('option', {value: null, textContent: "Not selected", selected: !this.state.value}),
+                EL('option', {value: "", textContent: "Not selected", selected: !this.state.value}),
                 Object.entries(server_config.organizations[this.state.organization].projects).map(([pid,p]) =>
                   EL('option', {value: pid, textContent: (p.name ? `${pid}: ${p.name}` : pid), selected: false})
                 ),
