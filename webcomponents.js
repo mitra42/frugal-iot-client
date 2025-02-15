@@ -1071,8 +1071,7 @@ class MqttNode extends MqttReceiver {
         nodediscover.topics.forEach(t => { // TODO-13 are these topicLeaf or topicPath ?
         if (!t.topic && t.group) { //
           this.appendGroup(t);
-        }
-        if (!this.state.topics[t.topic]) { // Have we done this already
+        } else if (!this.state.topics[t.topic]) { // Have we done this already
           let mt = new MqttTopic();
           mt.fromDiscovery(t, this);
           this.state.topics[t.topic] = mt;

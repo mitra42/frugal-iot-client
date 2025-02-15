@@ -36,6 +36,13 @@ details.mqtt-client {
         }
     }
 }
+/* In the children of an mqtt-node */
+mqtt-node {
+    details.group { border: 1px,black,solid; margin:1px }
+    @media (max-width:1001px){
+        details {font-size: x-large;}
+    }
+}
 div.offline {background-color: #888888;} /* Not INSIDE mqtt-node, it is the mqtt-node */
 /* In MqttBar */
 .mqtt-bar {
@@ -60,7 +67,7 @@ div.offline {background-color: #888888;} /* Not INSIDE mqtt-node, it is the mqtt
     @media (max-width:1001px){
         .dropdown {font-size: x-large;}
         select { font-size: x-large;}
-        label {font-size: xx-large;}
+        label {font-size: x-large;}
     }
 }
 
