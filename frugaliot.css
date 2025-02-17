@@ -6,8 +6,8 @@
  */
 /* Multiple places */
 .outer {background-color: white;margin:5px; padding:5px;}
-.icon { /* mqtt-toggle, mqtt-bar */
-    height:1em;width:1em;float:right;border: 1px,black,solid;
+.icon { /* mqtt-toggle , mqtt-bar (graph) */
+    height:1em;width:1em;float:right;
     @media (max-width:1001px){
         height:1.5em;width:1.5em;
     }
