@@ -975,6 +975,7 @@ class MqttProject extends MqttReceiver {
     mt.type = "yaml";
     mt.topic = topic;
     mt.element = elNode;
+    elNode.state.project = this; // For some reason this can't be set on elNode while mt can be !
     elNode.mt = mt;
     this.append(elNode);
     mt.subscribe(); // Subscribe to get Discovery
@@ -1090,6 +1091,14 @@ class MqttNode extends MqttReceiver {
           }
         }
       });
+      let project = this.state.project;
+      // TODO make this use new functions node.project, project.nodes, node.topics
+      let dropDownElements = Array.from(project.children)
+        .map(n => Object.values(n.state.topics))
+        .flat(1)
+        .map(t => t.element)
+        .filter(el => (el instanceof MqttDropdown))
+        .forEach(el => el.renderAndReplace());
       return true; // because change name description etc
     } else {
       return false;
