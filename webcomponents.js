@@ -324,11 +324,10 @@ class MqttTopic {
     this.graph.addScale(t, {
       // TODO-46 add color
       type: 'linear',
-      display: true,
+      display: (this.type === 'bool') ? false : true,
       title: {
         // noinspection JSUnresolvedReference
         color: this.color,  // May need to vary so not all e.g. humidity same color
-        display: true,
         // noinspection JSUnresolvedReference
         text: this.name.replace(/[0-9]+$/,''),
       },
@@ -552,7 +551,7 @@ class MqttElement extends HTMLElementExtended {
 }
 
 class MqttReceiver extends MqttElement {
-  static get observedAttributes() { return ['value','color','type','label']; }
+  static get observedAttributes() { return ['value','color','type','label','topic']; }
   static get boolAttributes() { return []; }
 
   connectedCallback() {
@@ -562,7 +561,6 @@ class MqttReceiver extends MqttElement {
     }
     super.connectedCallback();
   }
-
   // This should be called when a receiver is created with a topic
   createTopic() {
     let mt = new MqttTopic();
@@ -576,7 +574,6 @@ class MqttReceiver extends MqttElement {
     this.mt = mt;
     mt.subscribe();
   }
-
   valueSet(val) {
     // Note val can be of many types - it will be subclass dependent
     this.state.value = val;
@@ -664,7 +661,7 @@ class MqttToggle extends MqttTransmitter {
 customElements.define('mqtt-toggle', MqttToggle);
 
 class MqttBar extends MqttReceiver {
-  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['min','max','topic']); }
+  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['min','max']); }
   static get floatAttributes() { return MqttReceiver.floatAttributes.concat(['value','min','max']); }
 
   constructor() {
@@ -1420,6 +1417,8 @@ class MqttGraphDataset extends MqttElement {
     this.mt.initialize({
       topic: this.state.topic,
       type: this.state.type,
+      min: this.state.min,
+      max: this.state.max,
       graphdataset: this,
     });
     if (!this.mt.name) {
@@ -1436,6 +1435,7 @@ class MqttGraphDataset extends MqttElement {
     this.chartEl = this.parentElement;
     if (this.state.topic && !this.mt) {
       this.makeTopic();
+      this.state.yaxisid = this.mt.yaxisid; // topic will create an appropriate axis if reqd
       this.mt.createGraph();
     }
     // When creating embeded, this.chartdataset is created by MT.createGraph->MGD.makeChartDataset

@@ -26,18 +26,21 @@
     <mqtt-client server="wss://frugaliot.naturalinnovation.org/wss"></mqtt-client>
 </div>
 <div style="float:right;border:2px,solid,blue;width:50%">
-    <!-- This isn't working it needs a MqttTopic which should probably get created when pass topic as string not MqttTopic -->
     <mqtt-bar max="45" min="0" topic="dev/lotus/esp8266-fb94bb/temperature" label="Temperature" type="float" color="red"></mqtt-bar>
     <!--<mqtt-bar max="45" min="0" topic="dev/lotus/esp32-70c376/soil" label="Soil" type="float" color="brown"></mqtt-bar>-->
 </div>
+<div style="float:left;border:2px,solid,blue;width:10%">
+    <mqtt-toggle topic="dev/lotus/esp8266-fb94bb/ledbuiltin" label="LED" type="bool" color="blue"></mqtt-toggle>
+</div>
 <p>
-    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+    This is a demo of a custom web page with a bar widget; a graph; and a control.
+    These all go to the same device which may or may not always be turned on!
 </p>
 <p>
     <mqtt-graph>
-        <mqtt-graphdataset topic="dev/lotus/esp8266-fb94bb/temperature" color="red" label="Office Temperature" type="float"></mqtt-graphdataset>
-        <mqtt-graphdataset topic="dev/lotus/esp8266-fb94bb/humidity" color="blue" label="Office Humidity" type="float"></mqtt-graphdataset>
-        <mqtt-graphdataset topic="dev/lotus/esp8266-fb94bb/builtinled" color="orange" label="LED" type="bool"></mqtt-graphdataset>
+        <mqtt-graphdataset topic="dev/lotus/esp8266-fb94bb/temperature" color="red" label="Office Temperature" min=0 max=50 type="float"></mqtt-graphdataset>
+        <mqtt-graphdataset topic="dev/lotus/esp8266-fb94bb/humidity" color="blue" label="Office Humidity" min=0 max=100 type="float"></mqtt-graphdataset>
+        <mqtt-graphdataset topic="dev/lotus/esp8266-fb94bb/ledbuiltin" color="orange" label="LED" type="bool"></mqtt-graphdataset>
     </mqtt-graph>
 </p>
 </body>
