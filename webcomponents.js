@@ -123,7 +123,7 @@ let mqtt_client; // MQTT client - talking to server
 // TODO mqtt_subscriptions should be inside the MqttClient class
 let mqtt_subscriptions = [];   // [{topic, cb(message)}]
 let unique_id = 1; // Just used as a label for auto-generated elements
-let graph;  // Will hold a MqttGraph once user chooses to graph anything
+let graph;  // Will hold a default MqttGraph once user chooses to graph anything
 let server_config;
 
 /* Helpers of various kinds */
@@ -170,25 +170,34 @@ class MqttTopic {
   // but could also be built by hard coded UI if doesn't exist
   // Should be indexed in MqttNode
 
+  // Creation & initialization
   constructor() {
     this.data = [];
     this.qos = 0; // Default to send and not care if received
     this.retain = false; // Default to not retain
   }
 
+  initialize(o) {
+    // topic, name, type, display, rw, min, max, color, options, topic, node
+    Object.keys(o).forEach((k) => {
+      this[k] = o[k];
+    });
+  }
   fromDiscovery(discoveredTopic, node) {
     // topic, name, type, display, rw, min, max, color, options,
-    Object.keys(discoveredTopic).forEach((k) => {
-      this[k] = discoveredTopic[k];
-    });
+    this.initialize(discoveredTopic);
     this.topic = node.mt.topic + "/" + discoveredTopic.topic; // Expand the topic
     this.node = node;
   }
 
+  // Gets and related fields
   get project() {
     return this.node.project;
   }
 
+  get leaf() {
+    return this.topic.split("/").pop();
+  }
   // Create the UX element that displays this
   createElement() {
     if (!this.element) {
@@ -279,9 +288,8 @@ class MqttTopic {
       }
     } */
     this.data.push({value, time: now}); // Same format as graph dataset expects
-    let leaf = this.topic.split("/").pop();
-    if (this.node) { // There is (currently) no node if its a Projec
-      this.node.topicChanged(leaf, value);
+    if (this.node) { // There is (currently) no node if its a Project
+      this.node.topicChanged(this.leaf, value);
     }
     // TODO-13-battery now push val to node
     if (this.element) {
@@ -295,7 +303,7 @@ class MqttTopic {
   }
 
   get yaxisid() {
-    let scaleNames = Object.keys(graph.state.scales);
+    let scaleNames = Object.keys(this.graph.state.scales);
     let yaxisid;
     // noinspection JSUnresolvedReference
     let n = this.name.toLowerCase().replace(/[0-9]+$/,'');
@@ -313,7 +321,7 @@ class MqttTopic {
     // TODO-46 - need to turn axis on, and position when used.
     // Not found - lets make one - this might get more parameters (e.g. linear vs exponential could be a attribute of Bar ?
     // noinspection JSUnresolvedReference
-    graph.addScale(t, {
+    this.graph.addScale(t, {
       // TODO-46 add color
       type: 'linear',
       display: true,
@@ -332,10 +340,16 @@ class MqttTopic {
     return t;
   }
 
+  get graph() {
+    if (this.graphdataset) {
+      return this.graphdataset.chartEl;
+    } else {
+      return MqttGraph.defaultGraph(); // Will get default (global) graph, or create one
+    }
+  }
   // Event gets called when graph icon is clicked - adds a line to the graph (which it creates if needed)
   // It links the datasets of the topic to the dataset.
   createGraph() {
-    let graph = MqttGraph.findGraph(); // Side effect of creating if does not exist
     let yaxisid = this.yaxisid;
     // Figure out which scale to use, or build it
 
@@ -346,6 +360,7 @@ class MqttTopic {
       this.graphdataset = EL('mqtt-graphdataset', {
         // noinspection JSUnresolvedReference
         name: this.name,
+        type: this.type,
         color: this.color,
         // TODO-46 yaxis should depend on type of graph BUT cant use name as that may end up language dependent
         // noinspection JSUnresolvedReference
@@ -355,10 +370,14 @@ class MqttTopic {
         label: `${nodename}:${this.name}`
       });
       this.graphdataset.mt = this;
+    }
+    // If its a new graphdataset or this topic was created by an embedded mqtt-chartdataset there will not yet be a chartdataset
+    if (!this.graphdataset.chartdataset) {
       this.graphdataset.makeChartDataset(); // Links to data above
     }
-    if (!graph.contains(this.graphdataset)) {
-      graph.append(this.graphdataset); // calls GDS.loadContent which adds dataset to Graph
+    // Note this is happening after makeChartDataset
+    if (!this.graph.contains(this.graphdataset)) {
+      this.graph.append(this.graphdataset); // calls GDS.loadContent which adds dataset to Graph
     }
     this.graphdataset.addDataLeft(); // Populate with any back data
   }
@@ -547,11 +566,13 @@ class MqttReceiver extends MqttElement {
   // This should be called when a receiver is created with a topic
   createTopic() {
     let mt = new MqttTopic();
-    mt.type = this.state.type;
-    mt.topic = this.state.topic;
-    mt.element = this;
-    mt.name = this.state.label;
-    mt.color = this.state.color;
+    mt.initialize({
+      type: this.state.type,
+      topic: this.state.topic,
+      element: this,
+      name: this.state.label,
+      color: this.state.color,
+    })
     this.mt = mt;
     mt.subscribe();
   }
@@ -855,10 +876,13 @@ class MqttWrapper extends HTMLElementExtended {
     let topic = `${this.state.organization}/${this.state.project}`;
     // noinspection JSUnresolvedReference
     let elProject = EL('mqtt-project', {discover, id: this.state.project, name: server_config.organizations[this.state.organization].projects[this.state.project].name }, []);
+    // The project's topic watches for discover packets for nodes
     let mt = new MqttTopic();
-    mt.type = "text";
-    mt.topic = topic;
-    mt.element = elProject;
+    mt.initialize({
+      type: "text",
+      topic: topic,
+      element: elProject,
+    });
     elProject.mt = mt;
     mt.subscribe();
     this.append(elProject);
@@ -972,9 +996,11 @@ class MqttProject extends MqttReceiver {
     let elNode = EL('mqtt-node', {id, topic, discover: this.state.discover},[]);
     this.state.nodes[id] = elNode;
     let mt = new MqttTopic();
-    mt.type = "yaml";
-    mt.topic = topic;
-    mt.element = elNode;
+    mt.initialize({
+      type: "yaml",
+      topic: topic,
+      element: elNode,
+    });
     elNode.state.project = this; // For some reason this can't be set on elNode while mt can be !
     elNode.mt = mt;
     this.append(elNode);
@@ -1058,6 +1084,7 @@ class MqttNode extends MqttReceiver {
     }
     return this.groups[t.group];
   }
+  // Have received a discovery message for this node - create elements for all topics and subscribe
   // noinspection JSCheckFunctionSignatures
   valueSet(obj) { // Val is object converted from yaml
     if (this.state.discover) { // If do not have "discover" set, then presume have defined what UI we want on this node
@@ -1069,12 +1096,12 @@ class MqttNode extends MqttReceiver {
       while (this.childNodes.length > 0) this.childNodes[0].remove(); // Remove and replace any existing nodes
       if (this.state.lastSeenElement) { this.append(this.state.lastSeenElement); } // Re-add the lastseen element
       if (!nodediscover.topics) { nodediscover.topics = []; } // if no topics, make it an empty array
-        nodediscover.topics.forEach(t => { // TODO-13 are these topicLeaf or topicPath ?
+      nodediscover.topics.forEach(t => { // TODO-13 are these topicLeaf or topicPath ?
         if (!t.topic && t.group) { //
           this.appendGroup(t);
         } else if (!this.state.topics[t.topic]) { // Have we done this already
           let mt = new MqttTopic();
-          mt.fromDiscovery(t, this);
+          mt.fromDiscovery(t);
           this.state.topics[t.topic] = mt;
           mt.subscribe();
           let leaf = t.topic.split("/").pop();
@@ -1189,7 +1216,7 @@ class MqttGraph extends MqttElement {
       }
     };
   }
-  static findGraph() { // TODO-46 probably belongs in MqttReceiver
+  static defaultGraph() { // TODO-46 probably belongs in MqttReceiver
     if (!graph) {
       graph = EL('mqtt-graph');
       document.body.append(graph);
@@ -1348,7 +1375,7 @@ class MqttGraphDataset extends MqttElement {
   }
   // TODO clean up observedAttributes etc as this is not the superclass
   static get observedAttributes() {
-    return MqttReceiver.observedAttributes.concat(['color', 'min', 'max', 'yaxisid', 'label']); }
+      return MqttReceiver.observedAttributes.concat(['color', 'min', 'max', 'yaxisid', 'label','topic', 'type']); }
   static get integerAttributes() {
     return MqttReceiver.integerAttributes.concat(['min', 'max']) };
 
@@ -1386,10 +1413,36 @@ class MqttGraphDataset extends MqttElement {
     this.chartdataset.yAxisID = this.state.yaxisid;
     // Should override display and position and grid of each axis used
   }
-  shouldLoadWhenConnected() {return true;}
+  // Normally the MqttTopic creates the MqttGraphDataset,
+  // However in an embedded case, just hte GraphDataset is created and has to create the topic.
+  makeTopic() {
+    this.mt = new MqttTopic();
+    this.mt.initialize({
+      topic: this.state.topic,
+      type: this.state.type,
+      graphdataset: this,
+    });
+    if (!this.mt.name) {
+      this.mt.name = this.mt.leaf;
+    }
+    this.mt.subscribe();
+  }
+  shouldLoadWhenConnected() {
+    return this.state.type && (this.state.topic || this.mt);
+  }
+
+  // Note this gets called multiple times as the attributes are set
   loadContent() { // Happens when connected
     this.chartEl = this.parentElement;
-    this.chartEl.addDataset(this.chartdataset);
+    if (this.state.topic && !this.mt) {
+      this.makeTopic();
+      this.mt.createGraph();
+    }
+    // When creating embeded, this.chartdataset is created by MT.createGraph->MGD.makeChartDataset
+    // but only once topic is defined
+    if (this.chartdataset) {
+      this.chartEl.addDataset(this.chartdataset);
+    }
   }
   // noinspection JSUnusedGlobalSymbols
   dataChanged() { // Called when creating UX adds data.

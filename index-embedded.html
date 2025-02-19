@@ -4,18 +4,21 @@
     <meta charset="UTF-8">
     <title>Frugal IoT  Demo</title>
     <link href="/frugaliot.css" rel="stylesheet" type="text/css">
+    <!-- this maps files that webcomponents uses, -->
     <script type="importmap">
         {
         "imports": {
-            "@kurkle/color": "/node_modules/@kurkle/color/dist/color.esm.js",
-            "chart.js": "/node_modules/chart.js/dist/Chart.js",
-            "luxon": "/node_modules/luxon/src/luxon.js",
-            "chartjs-adapter-luxon": "/node_modules/chartjs-adapter-luxon/dist/chartjs-adapter-luxon.esm.js",
-            "csv-parse": "/node_modules/csv-parse/dist/esm/index.js"
+            "@kurkle/color": "https://frugaliot.naturalinnovation.org/node_modules/@kurkle/color/dist/color.esm.js",
+            "chart.js": "https://frugaliot.naturalinnovation.org/node_modules/chart.js/dist/Chart.js",
+            "luxon": "https://frugaliot.naturalinnovation.org/node_modules/luxon/src/luxon.js",
+            "chartjs-adapter-luxon": "https://frugaliot.naturalinnovation.org/node_modules/chartjs-adapter-luxon/dist/chartjs-adapter-luxon.esm.js",
+            "csv-parse": "https://frugaliot.naturalinnovation.org/node_modules/csv-parse/dist/esm/index.js"
             }
         }
     </script>
-    <script src="./webcomponents.js" type="module"></script>
+    <!-- load webcomponents.js either from local server, or from frugaliot.naturalinnovation.org -->
+    <script src="https://frugaliot.naturalinnovation.org/webcomponents.js" type="module"></script>
+    <!--<script src="./webcomponents.js" type="module"></script>-->
 </head>
 <body>
 <h1>This is an example of embedding a widget in a page</h1>
@@ -24,10 +27,18 @@
 </div>
 <div style="float:right;border:2px,solid,blue;width:50%">
     <!-- This isn't working it needs a MqttTopic which should probably get created when pass topic as string not MqttTopic -->
-    <mqtt-bar max="45" min="0" topic="dev/lotus/esp8266-85ea2b/temperature" label="Temperature" type="float" color="red"></mqtt-bar>
+    <mqtt-bar max="45" min="0" topic="dev/lotus/esp8266-fb94bb/temperature" label="Temperature" type="float" color="red"></mqtt-bar>
+    <!--<mqtt-bar max="45" min="0" topic="dev/lotus/esp32-70c376/soil" label="Soil" type="float" color="brown"></mqtt-bar>-->
 </div>
 <p>
     Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+</p>
+<p>
+    <mqtt-graph>
+        <mqtt-graphdataset topic="dev/lotus/esp8266-fb94bb/temperature" color="red" label="Office Temperature" type="float"></mqtt-graphdataset>
+        <mqtt-graphdataset topic="dev/lotus/esp8266-fb94bb/humidity" color="blue" label="Office Humidity" type="float"></mqtt-graphdataset>
+        <mqtt-graphdataset topic="dev/lotus/esp8266-fb94bb/builtinled" color="orange" label="LED" type="bool"></mqtt-graphdataset>
+    </mqtt-graph>
 </p>
 </body>
 </html>
