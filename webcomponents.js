@@ -349,9 +349,13 @@ class MqttTopic {
   // Event gets called when graph icon is clicked - adds a line to the graph (which it creates if needed)
   // It links the datasets of the topic to the dataset.
   createGraph() {
-    let yaxisid = this.yaxisid;
     // Figure out which scale to use, or build it
+    let yaxisid = this.yaxisid;
 
+    // Make sure there is a graph to work with,
+    // Must do before partially create the graphdataset which breaks this.graph temporarily
+    let graph = this.graph;
+    
     // Create a graphdataset to put in the chart
     if (!this.graphdataset) {
       let nodename = this.node ? this.node.state.name : "";
@@ -375,8 +379,8 @@ class MqttTopic {
       this.graphdataset.makeChartDataset(); // Links to data above
     }
     // Note this is happening after makeChartDataset
-    if (!this.graph.contains(this.graphdataset)) {
-      this.graph.append(this.graphdataset); // calls GDS.loadContent which adds dataset to Graph
+    if (!graph.contains(this.graphdataset)) {
+      graph.append(this.graphdataset); // calls GDS.loadContent which adds dataset to Graph and sets GDS.chartEL (enabling this.graph to work)
     }
     this.graphdataset.addDataLeft(); // Populate with any back data
   }
@@ -1098,7 +1102,7 @@ class MqttNode extends MqttReceiver {
           this.appendGroup(t);
         } else if (!this.state.topics[t.topic]) { // Have we done this already
           let mt = new MqttTopic();
-          mt.fromDiscovery(t);
+          mt.fromDiscovery(t, this);
           this.state.topics[t.topic] = mt;
           mt.subscribe();
           let leaf = t.topic.split("/").pop();
