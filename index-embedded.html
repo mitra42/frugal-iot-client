@@ -17,11 +17,12 @@
         }
     </script>
     <!-- load webcomponents.js either from local server, or from frugaliot.naturalinnovation.org -->
-    <script src="https://frugaliot.naturalinnovation.org/webcomponents.js" type="module"></script>
-    <!--<script src="./webcomponents.js" type="module"></script>-->
+    <!--<script src="https://frugaliot.naturalinnovation.org/webcomponents.js" type="module"></script>-->
+    <script src="./webcomponents.js" type="module"></script>
 </head>
 <body>
 <h1>This is an example of embedding a widget in a page</h1>
+<!-- The page needs a MQTT client, but it can be hidden -->
 <div style="display:none">
     <mqtt-client server="wss://frugaliot.naturalinnovation.org/wss"></mqtt-client>
 </div>

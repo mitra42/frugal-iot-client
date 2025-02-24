@@ -674,7 +674,9 @@ class MqttBar extends MqttReceiver {
   // noinspection JSCheckFunctionSignatures
   valueSet(val) {
     super.valueSet(val); // TODO could get smarter about setting with in span rather than rerender
-    return true; // Note will not re-render children like a MqttSlider because these are inserted into DOM via a "slot"
+    this.state.meter.setAttribute('value', this.state.value);
+    this.state.valuespan.innerText="   "+this.state.value;
+    return false; // Note will not re-render children like a MqttSlider because these are inserted into DOM via a "slot"
   }
   render() {
     //this.state.changeable.addEventListener('change', this.onChange.bind(this));
@@ -682,10 +684,18 @@ class MqttBar extends MqttReceiver {
     return !(this.isConnected && this.mt) ? null : [
       EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
       EL('div', {class: "outer mqtt-bar"}, [
-        EL('div', {class: "name"}, [ // TODO-30 maybe should use a <label>
-          EL('span', {textContent: this.mt.name}),
-          EL('img', {class: "icon", src: 'images/icon_graph.svg', onclick: this.opengraph.bind(this)}),
+        EL('div', {class: "bar",},[
+          EL('label', {for: 'meter'+ ++unique_id, class: "name", textContent: this.mt.name},[
+            this.state.valuespan = EL('span', {class: "val", textContent: this.state.value}),
+            EL('img', {class: "icon", src: 'images/icon_graph.svg', onclick: this.opengraph.bind(this)}),
+            ]),
+          this.state.meter = EL('meter', {
+            id: 'meter'+ unique_id, min: this.state.min, max: this.state.max, value: this.state.value,
+            style: `meter::-webkit-meter-optimum-value {background:purple;}`
+          },[
+          ])
         ]),
+        /*
         EL('div', {class: "bar",},[
           EL('span', {class: "left", style: `width:${width}%; background-color:${this.state.color};`},[
             EL('span', {class: "val", textContent: this.state.value}),
@@ -693,6 +703,7 @@ class MqttBar extends MqttReceiver {
           //Dont appear to need this - and it sometimes wraps, so if re-ebable, neeed to make sure always horiz next to left
           //EL('span', {class: "right", style: "width:"+(100-width)+"%"}),
         ]),
+         */
         EL('slot',{}), // Children would be a setpoint, but not using currently
       ]),
     ];
@@ -788,6 +799,7 @@ class MqttDropdown extends MqttTransmitter {
     let allowableTypes = {
       // Mapping of requested types to valid fields - e.g. if want a float then returning an int will be fine
       "float": ["float","int"],
+      "text": ["float","int","bool","text"],
     }
     return nodes.map(n => n.topicsByType(allowableTypes[this.state.options] || this.state.options, this.state.rw))
       .flat();

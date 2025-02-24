@@ -46,6 +46,12 @@ mqtt-node {
 div.offline {background-color: #888888;} /* Not INSIDE mqtt-node, it is the mqtt-node */
 /* In MqttBar */
 .mqtt-bar {
+    meter {width:100%; }
+    /* Changes the 'progress bar' colour */
+    /* Haven't figured out yet, how to do this programmatically */
+    meter::-webkit-meter-optimum-value { background: red;}
+
+    /* Old styles - prob not needed */
     .bar {border: 1px,black,solid; background-color: white;margin: 0px;}
     .left {display:inline-block; text-align: right;}
     .right {background-color:white; display:inline-block;}
@@ -53,7 +59,7 @@ div.offline {background-color: #888888;} /* Not INSIDE mqtt-node, it is the mqtt
     @media (max-width:1001px){
         .name {font-size: x-large;}
         .left, .right {height: 2em;}
-        .val {font-size: xx-large;}
+        .val {font-size: x-large;}
     }
 }
 /* In MqttSlider */
