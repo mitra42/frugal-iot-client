@@ -552,13 +552,24 @@ class MqttClient extends HTMLElementExtended {
 customElements.define('mqtt-client', MqttClient);
 
 class MqttLogin extends HTMLElementExtended { // TODO-89 may depend on organization
+  constructor(props) {
+    super(props);
+    this.state = {register: false};
+  }
+  observedAttributes() { return ['register']; }
+  boolAttributes() { return ['register']; }
+  tabRegister(register) {
+    this.changeAttribute('register', register);
+    this.renderAndReplace();
+  }
   render() { //TODO-89 needs styles
     // TODO-89 organization should be dropdown
     // TODO-89 merge login & register
     return [
       EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
       EL('div', {class: 'mqtt-login'},[
-        EL('span', {class: 'header', textContent: "Sign In"}),
+        EL('span', {class: 'tab' + (!this.state.register ? ' active' : ' inactive'), onclick: this.tabRegister.bind(this, false), textContent: "Sign In"}),
+        EL('span', {class: 'tab' + (this.state.register ? ' active' : ' inactive'), onclick: this.tabRegister.bind(this, true), textContent: "Register"}),
         EL('form', {action: "/login", method: "post"}, [
           EL('section', {}, [
             EL('label', {for: "username", textContent: "Username"}),
