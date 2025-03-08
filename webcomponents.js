@@ -570,7 +570,7 @@ class MqttLogin extends HTMLElementExtended { // TODO-89 may depend on organizat
       EL('div', {class: 'mqtt-login'},[
         EL('span', {class: 'tab' + (!this.state.register ? ' active' : ' inactive'), onclick: this.tabRegister.bind(this, false), textContent: "Sign In"}),
         EL('span', {class: 'tab' + (this.state.register ? ' active' : ' inactive'), onclick: this.tabRegister.bind(this, true), textContent: "Register"}),
-        EL('form', {action: "/login", method: "post"}, [
+        EL('form', {action:  (this.state.register ? '/register' : '/login'), method: "post"}, [
           EL('section', {}, [
             EL('label', {for: "username", textContent: "Username"}),
             EL('input', {id: "username", name: "username", type: "text", autocomplete: "username", required: true, autofocus: true}),
@@ -580,12 +580,14 @@ class MqttLogin extends HTMLElementExtended { // TODO-89 may depend on organizat
             EL('input', {id: "password", name: "password", type: "password", autocomplete: "current-password", required: true}),
           ]),
 
+          // TODO-22 organization should be a drop-down
           EL('section', {}, [
             EL('label', {for: "organization", textContent: "Organization"}),
             EL('input', {id: "organization", name: "organization", type: "text", autocomplete: "organization", required: true}),
           ]),
 
-          EL('button', {type: "submit", textContent: "Sign in"}),
+          EL('button', {class: "submit", type: "submit",
+            textContent: (this.state.register ? 'Register' : 'Sign In')}),
           ]),
       ]),
     ];
