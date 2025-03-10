@@ -341,9 +341,9 @@ class MqttTopic {
 
   get graph() {
     if (this.graphdataset) {
-      return this.graphdataset.chartEl;
+      return this.graphdataset.graph;
     } else {
-      return MqttGraph.defaultGraph(); // Will get default (global) graph, or create one
+      return MqttGraph.graph; // Will get default (global) graph, or create one
     }
   }
   // Event gets called when graph icon is clicked - adds a line to the graph (which it creates if needed)
@@ -380,7 +380,7 @@ class MqttTopic {
     }
     // Note this is happening after makeChartDataset
     if (!graph.contains(this.graphdataset)) {
-      graph.append(this.graphdataset); // calls GDS.loadContent which adds dataset to Graph and sets GDS.chartEL (enabling this.graph to work)
+      graph.append(this.graphdataset); // calls GDS.loadContent which adds dataset to Graph and sets GDS.graph (enabling this.graph to work)
     }
     this.graphdataset.addDataLeft(); // Populate with any back data
   }
@@ -436,7 +436,7 @@ class MqttTopic {
             }
             console.log(`total data size now ${this.data.length} records for ${this.topic}`);
             if (this.data.length > 1000) {
-              this.graphdataset.parentElement.chart.options.animations = false; // Disable animations get slow at scale
+              this.graph.chart.options.animations = false; // Disable animations get slow at scale
             }
             let xxx2 = Date.now();
             console.log("XXX72 splice took", xxx2 - xxx1);
@@ -445,7 +445,7 @@ class MqttTopic {
         })
       })
       .catch(err => {
-        let t = new Date(this.graphdataset.chartEl.state.dateFrom) // Have to explicitly copy it else pointer
+        let t = new Date(this.graph.state.dateFrom) // Have to explicitly copy it else pointer
           .setUTCHours(0,0,0,0)
           .valueOf();
         this.data.splice(0, 0, {
@@ -1217,8 +1217,8 @@ class MqttGraph extends MqttElement {
       }
     };
   }
-  static defaultGraph() { // TODO-46 probably belongs in MqttReceiver
-    if (!graph) {
+  static get graph() { // TODO-46 probably belongs in MqttReceiver
+    if (!graph) { // global
       graph = EL('mqtt-graph');
       document.body.append(graph);
     }
@@ -1366,13 +1366,16 @@ let lightenablecolors =  ['coral','salmon','pink','salmon','yellow','goldenrodye
 class MqttGraphDataset extends MqttElement {
   /*
   chartdataset: { data[{value, time}], parsing: { xAixKey: 'time', yAxisKey: 'value' }
-  chartEL: MqttGraph
+  graph: MqttGraph
   state: { data[{value, time}], name, color, min, max, yaxisid }
    */
 
   constructor() {
     super();
     // Do not make chartDataset here, as do not have attributes yet
+  }
+  get graph() {
+    return this.parentElement;
   }
   // TODO clean up observedAttributes etc as this is not the superclass
   static get observedAttributes() {
@@ -1436,7 +1439,6 @@ class MqttGraphDataset extends MqttElement {
 
   // Note this gets called multiple times as the attributes are set
   loadContent() { // Happens when connected
-    this.chartEl = this.parentElement;
     if (this.state.topic && !this.mt) {
       this.makeTopic();
       this.state.yaxisid = this.mt.yaxisid; // topic will create an appropriate axis if reqd
@@ -1445,12 +1447,12 @@ class MqttGraphDataset extends MqttElement {
     // When creating embeded, this.chartdataset is created by MT.createGraph->MGD.makeChartDataset
     // but only once topic is defined
     if (this.chartdataset) {
-      this.chartEl.addDataset(this.chartdataset);
+      this.graph.addDataset(this.chartdataset);
     }
   }
   // noinspection JSUnusedGlobalSymbols
   dataChanged() { // Called when creating UX adds data.
-    this.chartEl.dataChanged();
+    this.graph.dataChanged();
   }
   // Note this will not update the chart, but the caller will be fetching multiple data files and update all.
   addDataFrom(filename, first, cb) {
@@ -1462,7 +1464,7 @@ class MqttGraphDataset extends MqttElement {
   }
   // Add any data left to get a new GraphDataSet up to speed with the chart
   addDataLeft() {
-    let filenames = this.chartEl.graphNavleftFilenames(); // Note in reverse order, latest first.
+    let filenames = this.graph.graphNavleftFilenames(); // Note in reverse order, latest first.
     async.eachOfSeries(filenames, (filename, key, cb) => {
       this.addDataFrom(filename, !key, cb);
     }, () => {
