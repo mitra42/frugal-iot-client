@@ -1027,8 +1027,7 @@ class MqttProject extends MqttReceiver {
         if (!this.state.nodes[id]) {
           let n = this.addNode(id); // Will try and do a discover to fill it in but offline for now
           n.offline();
-          n.state.lastseen = nc.lastseen;
-          n.updateLastSeenElement();
+          n.updateLastSeen(nc.lastseen); // Creates lastseen element
       }
     });
   }
@@ -1174,8 +1173,7 @@ class MqttNode extends MqttReceiver {
   //document.getElementsByTagName('body')[0].classList.add('category');
   tickle() {
     let now = Date.now();
-    this.state.lastseen = now;
-    this.updateLastSeenElement();
+    this.updateLastSeen(now);
     this.watchdog.tickle(now);
     this.state.online = true;
     this.state.outerDiv.classList.remove('offline');
@@ -1184,12 +1182,13 @@ class MqttNode extends MqttReceiver {
     this.state.outerDiv.classList.add('offline');
     this.state.online = false;
   }
-  updateLastSeenElement() {
+  updateLastSeen(lastseentime) {
+    this.state.lastseen = lastseentime;
     if (this.state.lastSeenElement) {
       this.removeChild(this.state.lastSeenElement);
     }
     //TODO-113 could probably also do by replacing inner text if it flickers
-    this.state.lastSeenElement = EL('span', {slot: "lastseen", class: 'lastseen', textContent: this.state.lastseen ? new Date(this.state.lastseen).toLocaleString() : "Never seen"});
+    this.state.lastSeenElement = EL('span', {slot: "lastseen", class: 'lastseen', textContent: lastseentime ? new Date(lastseentime).toLocaleString() : "Never seen"});
     this.append(this.state.lastSeenElement);
   }
 }
