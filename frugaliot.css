@@ -51,9 +51,9 @@ div.offline {background-color: #888888;} /* Not INSIDE mqtt-node, it is the mqtt
     .right {background-color:white; display:inline-block;}
     .val {margin:5px;}
     @media (max-width:1001px){
-        .name {font-size: x-large;}
         .left, .right {height: 2em;}
         .val {font-size: xx-large;}
+        label {font-size: x-large;}
     }
 }
 /* In MqttSlider */

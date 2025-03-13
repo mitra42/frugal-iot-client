@@ -682,11 +682,12 @@ class MqttBar extends MqttReceiver {
     return !(this.isConnected && this.mt) ? null : [
       EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
       EL('div', {class: "outer mqtt-bar"}, [
-        EL('div', {class: "name"}, [ // TODO-30 maybe should use a <label>
-          EL('span', {textContent: this.mt.name}),
+
+        EL('div', {class: "name"}, [
+          EL('label', {for: this.mt.topic, textContent: this.mt.name}),
           EL('img', {class: "icon", src: 'images/icon_graph.svg', onclick: this.opengraph.bind(this)}),
         ]),
-        EL('div', {class: "bar",},[
+        EL('div', {class: "bar", id: this.mt.topic},[
           EL('span', {class: "left", style: `width:${width}%; background-color:${this.state.color};`},[
             EL('span', {class: "val", textContent: this.state.value}),
           ]),
