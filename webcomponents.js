@@ -3,12 +3,12 @@
  *
  */
 // noinspection ES6PreferShortImport
-import {EL, HTMLElementExtended, toBool, GET} from './node_modules/html-element-extended/htmlelementextended.js';
-import mqtt from './node_modules/mqtt/dist/mqtt.esm.js'; // https://www.npmjs.com/package/mqtt
-import yaml from './node_modules/js-yaml/dist/js-yaml.mjs'; // https://www.npmjs.com/package/js-yaml
-import async from './node_modules/async/dist/async.mjs'; // https://caolan.github.io/async/v3/docs.html
+import {EL, HTMLElementExtended, toBool, GET} from '/node_modules/html-element-extended/htmlelementextended.js';
+import mqtt from '/node_modules/mqtt/dist/mqtt.esm.js'; // https://www.npmjs.com/package/mqtt
+import yaml from '/node_modules/js-yaml/dist/js-yaml.mjs'; // https://www.npmjs.com/package/js-yaml
+import async from '/node_modules/async/dist/async.mjs'; // https://caolan.github.io/async/v3/docs.html
 import { parse } from "csv-parse"; // https://csv.js.org/parse/distributions/browser_esm/
-import { Chart, registerables, _adapters } from './node_modules/chart.js/dist/chart.js'; // "https://www.chartjs.org"
+import { Chart, registerables, _adapters } from '/node_modules/chart.js/dist/chart.js'; // "https://www.chartjs.org"
 //import 'chartjs-adapter-luxon';
 Chart.register(...registerables); //TODO figure out how to only import that chart types needed
 /* TODO possible partial list of imports needed for chartjs
@@ -555,9 +555,11 @@ class MqttLogin extends HTMLElementExtended { // TODO-89 may depend on organizat
   constructor(props) {
     super(props);
     this.state = {register: false};
+    this.loadAttributesFromURL(); // Overrides register if in URL
   }
-  observedAttributes() { return ['register']; }
-  boolAttributes() { return ['register']; }
+  static get observedAttributes() { return ['register','message','url']; }
+  static get boolAttributes() { return ['register']; }
+
   tabRegister(register) {
     this.changeAttribute('register', register);
     this.renderAndReplace();
@@ -568,8 +570,11 @@ class MqttLogin extends HTMLElementExtended { // TODO-89 may depend on organizat
     return [
       EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
       EL('div', {class: 'mqtt-login'},[
-        EL('span', {class: 'tab' + (!this.state.register ? ' active' : ' inactive'), onclick: this.tabRegister.bind(this, false), textContent: "Sign In"}),
-        EL('span', {class: 'tab' + (this.state.register ? ' active' : ' inactive'), onclick: this.tabRegister.bind(this, true), textContent: "Register"}),
+        EL('div',{class: 'message'},[
+          EL('span', {textContent: this.state.message}),
+          ]),
+        EL('button', {class: 'tab' + (!this.state.register ? ' active' : ' inactive'), onclick: this.tabRegister.bind(this, false), textContent: "Sign In"}),
+        EL('button', {class: 'tab' + (this.state.register ? ' active' : ' inactive'), onclick: this.tabRegister.bind(this, true), textContent: "Register"}),
         EL('form', {action:  (this.state.register ? '/register' : '/login'), method: "post"}, [
           EL('section', {}, [
             EL('label', {for: "username", textContent: "Username"}),
@@ -579,13 +584,12 @@ class MqttLogin extends HTMLElementExtended { // TODO-89 may depend on organizat
             EL('label', {for: "password", textContent: "Password"}),
             EL('input', {id: "password", name: "password", type: "password", autocomplete: "current-password", required: true}),
           ]),
-
           // TODO-22 organization should be a drop-down
           EL('section', {}, [
             EL('label', {for: "organization", textContent: "Organization"}),
             EL('input', {id: "organization", name: "organization", type: "text", autocomplete: "organization", required: true}),
           ]),
-
+          EL('input', {id: "url", name: "url", type: "hidden", value: this.state.url}),
           EL('button', {class: "submit", type: "submit",
             textContent: (this.state.register ? 'Register' : 'Sign In')}),
           ]),
