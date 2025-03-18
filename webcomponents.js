@@ -789,6 +789,7 @@ class MqttDropdown extends MqttTransmitter {
     let allowableTypes = {
       // Mapping of requested types to valid fields - e.g. if want a float then returning an int will be fine
       "float": ["float","int"],
+      "text": ["text","float","int","bool"],An
     }
     return nodes.map(n => n.topicsByType(allowableTypes[this.state.options] || this.state.options, this.state.rw))
       .flat();
