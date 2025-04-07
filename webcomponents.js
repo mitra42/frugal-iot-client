@@ -850,6 +850,10 @@ class MqttWrapper extends HTMLElementExtended {
   // Note this is not using the standard connectedCallBack which loads content and re-renders,
   // it is going to instead add things to the slot
 
+  message(msg) {
+    console.error(msg);
+    this.append(EL('div', {class: 'message', textContent: msg}));
+  }
   onOrganization(e) {
     this.state.organization = e.target.value;
     this.setAttribute('organization', this.state.organization);
@@ -897,8 +901,7 @@ class MqttWrapper extends HTMLElementExtended {
       if (!this.state.organization || !this.state.project) {   // n, !(o,p)
         let [o,p] = nodeId2OrgProject(this.state.node);
         if (!o) {
-          console.error("Unable to find node=", this.state.node);
-          // TODO-69 display error to user, not just console
+          this.message(`Unable to find node=${this.state.node}`);
           return;
         } else {
           this.state.organization = o;
@@ -938,13 +941,12 @@ class MqttWrapper extends HTMLElementExtended {
         // noinspection JSUnresolvedReference
         if (!this.state.organization) {
           // noinspection JSUnresolvedReference
-          let o = server_config.organizations.find(o => o.projects[this.state.project]);
+          let o = Object.entries(server_config.organizations).find( o => o[1].projects[this.state.project]);
           if (!o) {
-            console.error("Unable to find project:", this.state.project);
-            // TODO-69 display error to user, not just console
+            this.message(`Unable to find project=${this.state.project}`);
             return;
           } else {
-            this.state.organization = o.name;
+            this.state.organization = o[0];
           }
         } // drop through with !n p o
         // TODO-69 need to have a human-friendly name, and short project id - will be needed in configuration and elsewhere.
@@ -960,8 +962,7 @@ class MqttWrapper extends HTMLElementExtended {
     //  that is public, but in the same format, so safe to build on this for now
     GET("/config.json", {}, (err, json) => {
       if (err) {
-        console.error(err);
-        // TODO-69 display error to user, not just console
+        this.message(err);
         return;
       } else { // got config
         server_config = json;
