@@ -9,6 +9,7 @@ import yaml from '/node_modules/js-yaml/dist/js-yaml.mjs'; // https://www.npmjs.
 import async from '/node_modules/async/dist/async.mjs'; // https://caolan.github.io/async/v3/docs.html
 import { parse } from "csv-parse"; // https://csv.js.org/parse/distributions/browser_esm/
 import { Chart, registerables, _adapters } from '/node_modules/chart.js/dist/chart.js'; // "https://www.chartjs.org"
+import { DialGauge } from "dial-gauge";
 //import 'chartjs-adapter-luxon';
 Chart.register(...registerables); //TODO figure out how to only import that chart types needed
 /* TODO possible partial list of imports needed for chartjs
@@ -214,6 +215,9 @@ class MqttTopic {
         case 'bar':
           // noinspection JSUnresolvedReference
           el = EL('mqtt-bar', {max: this.max, min: this.min, color: this.color}, []);
+          break;
+        case 'guage':
+          el = EL('mqtt-gauge', {max: this.max, min: this.min, color: this.color}, []);
           break;
         case 'text':
           el = EL('mqtt-text', {}, []);
@@ -748,6 +752,41 @@ class MqttBar extends MqttReceiver {
   }
 }
 customElements.define('mqtt-bar', MqttBar);
+
+class MqttGauge extends MqttReceiver {
+  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['min','max']); }
+  static get floatAttributes() { return MqttReceiver.floatAttributes.concat(['value','min','max']); }
+
+  constructor() {
+    super();
+  }
+  // noinspection JSCheckFunctionSignatures
+  valueSet(val) {
+    super.valueSet(val); // TODO could get smarter about setting with in span rather than rerender
+    this.dg.setAttribute('value',val);
+    return false; // Note will not re-render children like a MqttSlider because these are inserted into DOM via a "slot"
+  }
+  render() {
+    //this.state.changeable.addEventListener('change', this.onChange.bind(this));
+    //let width = 100*(this.state.value-this.state.min)/(this.state.max-this.state.min);
+    return !(this.isConnected && this.mt) ? null : [
+      EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
+      EL('div', {class: "outer mqtt-gauge"}, [
+        this.dg = EL('dial-gauge', {
+          "main-title": this.mt.name,
+          "sub-title": "",
+          "scale-start": this.state.min,
+          "scale-end": this.state.max,
+          "value": this.state.value,
+          "scale-offset": 45,
+          "style": `--dg-arc-color:${this.state.color}`,
+        }),
+        EL('img', {class: "icon", src: 'images/icon_graph.svg', onclick: this.opengraph.bind(this)}),
+      ]),
+    ];
+  }
+}
+customElements.define('mqtt-gauge', MqttGauge);
 
 // TODO Add some way to do numeric display, numbers should change on mousemoves.
 class MqttSlider extends MqttTransmitter {
