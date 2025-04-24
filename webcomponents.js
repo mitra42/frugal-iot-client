@@ -591,7 +591,7 @@ class MqttLogin extends HTMLElementExtended { // TODO-89 may depend on organizat
           ]),
           EL('input', {id: "url", name: "url", type: "hidden", value: this.state.url}),
           EL('button', {class: "submit", type: "submit",
-            textContent: (this.state.register ? 'Register' : 'Sign In')}),
+            textContent: (this.state.register ? 'Submit' : 'Submit')}),
           ]),
       ]),
     ];
