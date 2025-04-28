@@ -576,9 +576,11 @@ class MqttLogin extends HTMLElementExtended { // TODO-89 may depend on organizat
       EL('div', {class: 'mqtt-login'},[
         EL('div',{class: 'message'},[
           EL('span', {textContent: this.state.message}),
-          ]),
-        EL('button', {class: 'tab' + (!this.state.register ? ' active' : ' inactive'), onclick: this.tabRegister.bind(this, false), textContent: "Sign In"}),
-        EL('button', {class: 'tab' + (this.state.register ? ' active' : ' inactive'), onclick: this.tabRegister.bind(this, true), textContent: "Register"}),
+        ]),
+        EL('section', {class: 'tabs'}, [
+          EL('button', {class: 'tab' + (!this.state.register ? ' active' : ' inactive'), onclick: this.tabRegister.bind(this, false), textContent: "Sign In"}),
+          EL('button', {class: 'tab' + (this.state.register ? ' active' : ' inactive'), onclick: this.tabRegister.bind(this, true), textContent: "Register"}),
+        ]),
         EL('form', {action:  (this.state.register ? '/register' : '/login'), method: "post"}, [
           EL('section', {}, [
             EL('label', {for: "username", textContent: "Username"}),
@@ -589,10 +591,11 @@ class MqttLogin extends HTMLElementExtended { // TODO-89 may depend on organizat
             EL('input', {id: "password", name: "password", type: "password", autocomplete: "current-password", required: true}),
           ]),
           // TODO-22 organization should be a drop-down
-          EL('section', {}, [
-            EL('label', {for: "organization", textContent: "Organization"}),
-            EL('input', {id: "organization", name: "organization", type: "text", autocomplete: "organization", required: true}),
-          ]),
+          !this.state.register ? null :
+            EL('section', {}, [
+              EL('label', {for: "organization", textContent: "Organization"}),
+              EL('input', {id: "organization", name: "organization", type: "text", autocomplete: "organization", required: true}),
+            ]),
           EL('input', {id: "url", name: "url", type: "hidden", value: this.state.url}),
           EL('button', {class: "submit", type: "submit",
             textContent: (this.state.register ? 'Submit' : 'Submit')}),
