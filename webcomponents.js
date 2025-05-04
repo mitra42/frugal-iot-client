@@ -259,22 +259,27 @@ class MqttTopic {
   // TODO add opposite - return string or int based on argument, then look at valueGet subclassed many places
   // NOTE same function in frugal-iot-logger and frugal-iot-client if change here, change there
   valueFromText(message) {
-    switch (this.type) {
-      case "bool":
-        return toBool(message);
-      case "float":
-        return Number(message)
-      case "int":
-        return Number(message)
-      case "topic":
-        return message;
-      case "text":
-        return message;
-      case "yaml":
-        // noinspection JSUnusedGlobalSymbols
-        return yaml.loadAll(message, {onWarning: (warn) => console.log('Yaml warning:', warn)});
-      default:
-        console.error(`Unrecognized message type: ${this.type}`);
+    try {
+      switch (this.type) {
+        case "bool":
+          return toBool(message);
+        case "float":
+          return Number(message)
+        case "int":
+          return Number(message)
+        case "topic":
+          return message;
+        case "text":
+          return message;
+        case "yaml":
+          // noinspection JSUnusedGlobalSymbols
+          return yaml.loadAll(message, {onWarning: (warn) => console.log('Yaml warning:', warn)});
+        default:
+          console.error(`Unrecognized message type: ${this.type}`);
+      }
+    } catch (e) {
+      console.error("Error parsing message", message, e);
+      return null;  // TODO its unclear how this error will be handled - catch specific cases (like unparseable yaml)
     }
   }
 
@@ -451,6 +456,7 @@ class MqttTopic {
         })
       })
       .catch(err => {
+        // Didnt get any data, draw dotted line from begininng of day to now (and end of prev data to start this day)
         let t = new Date(this.graph.state.dateFrom) // Have to explicitly copy it else pointer
           .setUTCHours(0,0,0,0)
           .valueOf();
@@ -458,7 +464,7 @@ class MqttTopic {
           time: t,
           value: null,
         });
-        console.error(err);
+        //console.error(err); - dont need error - the fetch will also report it so its just a repeat.
         cb(null); // Dont break caller
       }); // May want to report filename here
   }
