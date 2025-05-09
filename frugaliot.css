@@ -99,10 +99,51 @@ mqtt-wrapper {
 
 /* Related to authentication */
 .mqtt-login {
-    .tab {border: 1px,black,solid; margin: 0.2em; }
-    .active {background-color: #ffffff; font-weight: bolder;}
-    .inactive {background-color: #888888; font-weight: lighter;}
-    .message {margin: 0.5em; font-weight: bold;}
+    .tabs {  
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        margin-bottom: 0em; 
+        padding-bottom: 0em;
+    }
+    .tab {
+        border: 2px,black,solid;
+        width: 50%;
+        font-size: x-large; 
+        margin-bottom: 0.2em; margin-bottom: 0em;
+        padding: 0.6em;
+        border-top-left-radius: 20px;
+        border-top-right-radius: 20px;
+    }
+    .active {
+        background-color: #ffffff; 
+        font-weight: bolder;
+        border-bottom: 0px;
+    }
+    .inactive {
+        background-color: #888888; 
+        font-weight: lighter;
+    }
+    .message {margin: 0.5em; font-weight: bold; font-size: x-large; }
+    form { 
+        padding: 10px;
+        border: black solid 2px;
+        border-top: 0px;
+        border-bottom-left-radius: 20px;
+        border-bottom-right-radius: 20px;
+        label {
+            font-size: xx-large;
+            display: block;
+        }
+        section {
+            margin: 0.5em;
+            input {
+                font-size: xx-large;
+                margin: 0.5em;
+            }
+        }
+        button { font-size: x-large; padding: 10px; border-radius: 10px; }
+    }
 }
 
 /* Its weird, but at least on my iPhoneXS if I set it smaller than this it doesnt trigger in Safari */

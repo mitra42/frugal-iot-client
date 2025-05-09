@@ -40,6 +40,8 @@ const FORMATS = {
   year: {year: 'numeric'}
 };
 
+const CssUrl = './frugaliot.css';
+
 // noinspection JSCheckFunctionSignatures
 _adapters._date.override({
   _id: 'luxon', // DEBUG
@@ -257,22 +259,27 @@ class MqttTopic {
   // TODO add opposite - return string or int based on argument, then look at valueGet subclassed many places
   // NOTE same function in frugal-iot-logger and frugal-iot-client if change here, change there
   valueFromText(message) {
-    switch (this.type) {
-      case "bool":
-        return toBool(message);
-      case "float":
-        return Number(message)
-      case "int":
-        return Number(message)
-      case "topic":
-        return message;
-      case "text":
-        return message;
-      case "yaml":
-        // noinspection JSUnusedGlobalSymbols
-        return yaml.loadAll(message, {onWarning: (warn) => console.log('Yaml warning:', warn)});
-      default:
-        console.error(`Unrecognized message type: ${this.type}`);
+    try {
+      switch (this.type) {
+        case "bool":
+          return toBool(message);
+        case "float":
+          return Number(message)
+        case "int":
+          return Number(message)
+        case "topic":
+          return message;
+        case "text":
+          return message;
+        case "yaml":
+          // noinspection JSUnusedGlobalSymbols
+          return yaml.loadAll(message, {onWarning: (warn) => console.log('Yaml warning:', warn)});
+        default:
+          console.error(`Unrecognized message type: ${this.type}`);
+      }
+    } catch (e) {
+      console.error("Error parsing message", message, e);
+      return null;  // TODO its unclear how this error will be handled - catch specific cases (like unparseable yaml)
     }
   }
 
@@ -449,6 +456,7 @@ class MqttTopic {
         })
       })
       .catch(err => {
+        // Didnt get any data, draw dotted line from begininng of day to now (and end of prev data to start this day)
         let t = new Date(this.graph.state.dateFrom) // Have to explicitly copy it else pointer
           .setUTCHours(0,0,0,0)
           .valueOf();
@@ -456,7 +464,7 @@ class MqttTopic {
           time: t,
           value: null,
         });
-        console.error(err);
+        //console.error(err); - dont need error - the fetch will also report it so its just a repeat.
         cb(null); // Dont break caller
       }); // May want to report filename here
   }
@@ -543,7 +551,7 @@ class MqttClient extends HTMLElementExtended {
   // TODO-86 display some more about the client and its status, but probably under an "i"nfo button on Org
   render() {
     return [
-      EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
+      EL('link', {rel: 'stylesheet', href: CssUrl}),
       EL('details', {class: 'mqtt-client'},[
         EL('summary', {}, [
           EL('span', {class: 'status', textContent: this.state.status}),
@@ -572,13 +580,15 @@ class MqttLogin extends HTMLElementExtended { // TODO-89 may depend on organizat
     // TODO-89 organization should be dropdown
     // TODO-89 merge login & register
     return [
-      EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
+      EL('link', {rel: 'stylesheet', href: CssUrl}),
       EL('div', {class: 'mqtt-login'},[
         EL('div',{class: 'message'},[
           EL('span', {textContent: this.state.message}),
-          ]),
-        EL('button', {class: 'tab' + (!this.state.register ? ' active' : ' inactive'), onclick: this.tabRegister.bind(this, false), textContent: "Sign In"}),
-        EL('button', {class: 'tab' + (this.state.register ? ' active' : ' inactive'), onclick: this.tabRegister.bind(this, true), textContent: "Register"}),
+        ]),
+        EL('section', {class: 'tabs'}, [
+          EL('button', {class: 'tab' + (!this.state.register ? ' active' : ' inactive'), onclick: this.tabRegister.bind(this, false), textContent: "Sign In"}),
+          EL('button', {class: 'tab' + (this.state.register ? ' active' : ' inactive'), onclick: this.tabRegister.bind(this, true), textContent: "Register"}),
+        ]),
         EL('form', {action:  (this.state.register ? '/register' : '/login'), method: "post"}, [
           EL('section', {}, [
             EL('label', {for: "username", textContent: "Username"}),
@@ -589,10 +599,11 @@ class MqttLogin extends HTMLElementExtended { // TODO-89 may depend on organizat
             EL('input', {id: "password", name: "password", type: "password", autocomplete: "current-password", required: true}),
           ]),
           // TODO-22 organization should be a drop-down
-          EL('section', {}, [
-            EL('label', {for: "organization", textContent: "Organization"}),
-            EL('input', {id: "organization", name: "organization", type: "text", autocomplete: "organization", required: true}),
-          ]),
+          !this.state.register ? null :
+            EL('section', {}, [
+              EL('label', {for: "organization", textContent: "Organization"}),
+              EL('input', {id: "organization", name: "organization", type: "text", autocomplete: "organization", required: true}),
+            ]),
           EL('input', {id: "url", name: "url", type: "hidden", value: this.state.url}),
           EL('button', {class: "submit", type: "submit",
             textContent: (this.state.register ? 'Submit' : 'Submit')}),
@@ -701,7 +712,7 @@ class MqttToggle extends MqttTransmitter {
   render() {
     //this.state.changeable.addEventListener('change', this.onChange.bind(this));
     return [
-      EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
+      EL('link', {rel: 'stylesheet', href: CssUrl}),
       EL('div', {},[
         EL('input', {type: 'checkbox', id: 'checkbox'+ (++unique_id) ,
           checked: !!this.state.value, indeterminate: typeof(this.state.value) == "undefined",
@@ -732,7 +743,7 @@ class MqttBar extends MqttReceiver {
     //this.state.changeable.addEventListener('change', this.onChange.bind(this));
     let width = 100*(this.state.value-this.state.min)/(this.state.max-this.state.min);
     return !(this.isConnected && this.mt) ? null : [
-      EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
+      EL('link', {rel: 'stylesheet', href: CssUrl}),
       EL('div', {class: "outer mqtt-bar"}, [
 
         EL('div', {class: "name"}, [
@@ -770,7 +781,7 @@ class MqttGauge extends MqttReceiver {
     //this.state.changeable.addEventListener('change', this.onChange.bind(this));
     //let width = 100*(this.state.value-this.state.min)/(this.state.max-this.state.min);
     return !(this.isConnected && this.mt) ? null : [
-      EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
+      EL('link', {rel: 'stylesheet', href: CssUrl}),
       EL('div', {class: "outer mqtt-gauge"}, [
         this.dg = EL('dial-gauge', {
           "main-title": this.mt.name,
@@ -850,7 +861,7 @@ class MqttSlider extends MqttTransmitter {
       this.slider.onmousedown = this.onmousedown.bind(this);
     }
     return !this.isConnected ? null : [
-      EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
+      EL('link', {rel: 'stylesheet', href: CssUrl}),
       EL('div', {class: "mqtt-slider outer"}, [
         EL('div', {class: "name"}, [ //TODO maybe use a label
           EL('span', {textContent: this.mt.name}),
@@ -895,7 +906,7 @@ class MqttDropdown extends MqttTransmitter {
 
   render() {
     return !this.isConnected ? null : [
-      EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
+      EL('link', {rel: 'stylesheet', href: CssUrl}),
       EL('div', {class: 'outer mqtt-dropdown'}, [
         EL('label', {for: this.mt.topic, textContent: this.mt.name}),
         EL('select', {id: this.mt.topic, onchange: this.onchange.bind(this)}, [
@@ -1063,7 +1074,7 @@ class MqttWrapper extends HTMLElementExtended {
   }
   render() {
     return [
-      EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
+      EL('link', {rel: 'stylesheet', href: CssUrl}),
       EL('div', {class: 'outer mqtt-wrapper'}, [
         EL('slot', {name: 'client'}),
         EL('slot'),
@@ -1123,7 +1134,7 @@ class MqttProject extends MqttReceiver {
   }
   render() {
     return  !this.isConnected ? null : [
-      EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
+      EL('link', {rel: 'stylesheet', href: CssUrl}),
       EL('div', {class: "outer mqtt-project"}, [
         EL('div', {class: "title"},[
           EL('span',{class: 'projectname', textContent: this.mt.topic}),
@@ -1238,7 +1249,7 @@ class MqttNode extends MqttReceiver {
   }
   render() {
     return !this.isConnected ? null : [
-      EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
+      EL('link', {rel: 'stylesheet', href: CssUrl}),
       this.state.outerDiv = EL('div', {class: 'outer mqtt-node'+((this.state.online) ? '' : ' offline')}, [
         EL('details', {},[
           EL('summary', {},[
@@ -1432,7 +1443,7 @@ class MqttGraph extends MqttElement {
   }
   render() {
     return ( [
-      EL('link', {rel: 'stylesheet', href: '/frugaliot.css'}),
+      EL('link', {rel: 'stylesheet', href: CssUrl}),
       // TODO see https://www.chartjs.org/docs/latest/configuration/responsive.html#important-note div should ONLY contain canvas
       EL("div", {class: 'outer mqtt-graph'}, [
         EL('div',{class: 'leftright'}, [
