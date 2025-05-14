@@ -599,11 +599,24 @@ class MqttLogin extends HTMLElementExtended { // TODO-89 may depend on organizat
             EL('input', {id: "password", name: "password", type: "password", autocomplete: "current-password", required: true}),
           ]),
           // TODO-22 organization should be a drop-down
-          !this.state.register ? null :
+          !this.state.register ? null : [
             EL('section', {}, [
               EL('label', {for: "organization", textContent: "Organization"}),
               EL('input', {id: "organization", name: "organization", type: "text", autocomplete: "organization", required: true}),
             ]),
+            EL('section', {}, [
+              EL('label', {for: "name", textContent: "Name"}),
+              EL('input', {id: "name", name: "name", type: "text", autocomplete: "name", required: true}),
+            ]),
+            EL('section', {}, [
+              EL('label', {for: "email", textContent: "Email"}),
+              EL('input', {id: "email", name: "email", type: "text", autocomplete: "email", required: true}),
+            ]),
+            EL('section', {}, [
+              EL('label', {for: "phone", textContent: "Phone or Whatsapp"}),
+              EL('input', {id: "phone", name: "phone", type: "text", autocomplete: "phone", required: true}),
+            ]),
+          ],
           EL('input', {id: "url", name: "url", type: "hidden", value: this.state.url}),
           EL('button', {class: "submit", type: "submit",
             textContent: (this.state.register ? 'Submit' : 'Submit')}),
