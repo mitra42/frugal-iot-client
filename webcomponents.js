@@ -190,7 +190,9 @@ class MqttTopic {
   fromDiscovery(discoveredTopic, node) {
     // topic, name, type, display, rw, min, max, color, options,
     this.initialize(discoveredTopic);
-    this.topic = node.mt.topic + "/" + discoveredTopic.topic; // Expand the topic
+    // "topic" is ambiguous - currently in discovery it is "twig" e.g. sht/temperature
+    this.twig = discoveredTopic.topic;
+    // getters defined for leaf
     this.node = node;
   }
 
@@ -198,9 +200,21 @@ class MqttTopic {
   get project() {
     return this.node.project;
   }
-
   get leaf() {
-    return this.topic.split("/").pop();
+    return this.twig.split("/").pop();
+  }
+  get topicPath() {
+    return (this.node ? this.node.mt.topicPath + "/" : "") + this.twig;
+  }
+  get topicSetPath() {
+    // "set" path is meaningless (I think) for a node or project
+    return this.node.mt.topicPath + "/set/" + this.twig;
+  }
+  get topicSubscribePath() {
+    switch (this.rw) { // Note for node and project this will be undefined
+      case 'w': return this.topicSetPath;
+      default: return this.topicPath;
+    }
   }
   // Create the UX element that displays this
   createElement() {
@@ -253,7 +267,7 @@ class MqttTopic {
     }
     if (!this.subscribed) {
       this.subscribed = true;
-      mqtt_subscribe(this.topic, this.message_received.bind(this));
+      mqtt_subscribe(this.topicSubscribePath, this.message_received.bind(this));
     }
   }
 
@@ -321,7 +335,7 @@ class MqttTopic {
     let yaxisid;
     // noinspection JSUnresolvedReference
     let n = this.name.toLowerCase().replace(/[0-9]+$/,'');
-    let t = this.topic.split('/').pop().toLowerCase().replace(/[0-9]+$/,'');
+    let t = this.leaf.toLowerCase().replace(/[0-9]+$/,'');
     if (scaleNames.includes(n)) { return n; }
     if (scaleNames.includes(t)) { return t; }
     // noinspection JSAssignmentUsedAsCondition
@@ -401,14 +415,14 @@ class MqttTopic {
 
   publish(val) {
     // super.onChange(e);
-    console.log("Publishing ", this.topic, val, this.retain ? "retain" : "", this.qos ? `qos=${this.qos}` : "");
-    mqtt_client.publish(this.topic, val, {retain: this.retain, qos: this.qos});
+    console.log("Publishing ", this.topicSetPath, val, this.retain ? "retain" : "", this.qos ? `qos=${this.qos}` : "");
+    mqtt_client.publish(this.topicSetPath, val, {retain: this.retain, qos: this.qos});
   }
 
   // Adds historical data to the chart - typically chart updates data for each line, then updates the chart.
   addDataFrom(filename, first, cb) {
     //TODO this location may change
-    let filepath = `/data/${this.topic}/${filename}`;
+    let filepath = `${server_config.logger.url}/${this.topicPath}/${filename}`;
     console.log("XXX72: adding from", filepath);
     //let self = this; // if needed in Promise
     fetch(filepath)
@@ -427,7 +441,7 @@ class MqttTopic {
           } else if (newdata.length === 0) {
             console.log("No data in", filepath);
           } else {
-            console.log(`retrieved ${newdata.length} records for ${this.topic}`);
+            console.log(`retrieved ${newdata.length} records for ${this.topicPath}`);
             let newprocdata = newdata.map(r => {
               return {
                 time: parseInt(r[0]),
@@ -436,7 +450,7 @@ class MqttTopic {
             });
             let xxx1 = Date.now();
             let olddata = this.data.splice(0, Infinity);
-            console.log(`adding back ${olddata.length} records for ${this.topic}`);
+            console.log(`adding back ${olddata.length} records for ${this.topicPath}`);
             for (let dd of newprocdata) {
               this.data.push(dd);
             }// Cant splice as ...newprocdata blows stack
@@ -448,7 +462,7 @@ class MqttTopic {
                 this.data.push(dd);
               }
             }
-            console.log(`total data size now ${this.data.length} records for ${this.topic}`);
+            console.log(`total data size now ${this.data.length} records for ${this.topicPath}`);
             if (this.data.length > 1000) {
               this.graph.chart.options.animations = false; // Disable animations get slow at scale
             }
@@ -522,6 +536,7 @@ class MqttClient extends HTMLElementExtended {
         if (mqtt_subscriptions.length > 0) {
           mqtt_subscriptions.forEach((s) => {
             console.log("Now connected, subscribing to",s.topic);
+            // TODO-130 maybe change in subscriptions to be explicit
             mqtt_client.subscribe(s.topic, (err) => { if (err) console.error(err); });
           })
         } else {
@@ -639,13 +654,16 @@ class MqttReceiver extends MqttElement {
 
   connectedCallback() {
     if (this.state.topic && !this.mt) {
-      // Created with a topic string, so create the MqttTopic
+      // Created with a topic string- which should be a path, so create the MqttTopic
       this.createTopic();
     }
     super.connectedCallback();
   }
-  // This should be called when a receiver is created with a topic
+  // This should be called when a receiver is created with a topic (which should be a path)
+  // But not sure how this still works because the mt will not have a node, which is presumed.
+  // TODO-130 test embedded examples - doubt this will work now, without a node.
   createTopic() {
+    console.error("TODO-130 Not expecting MqttReceiver.createTopic to work");
     let mt = new MqttTopic();
     mt.initialize({
       type: this.state.type,
@@ -685,7 +703,7 @@ class MqttText extends MqttReceiver {
   render() {
     return [
       EL('div', {},[
-        EL('span',{class: 'demo', textContent: this.mt.topic + ": "}),
+        EL('span',{class: 'demo', textContent: this.mt.leaf + ": "}),
         EL('span',{class: 'demo', textContent: this.state.value || ""}),
       ])
     ]
@@ -741,7 +759,7 @@ class MqttToggle extends MqttTransmitter {
     ];
   }
 }
-customElements.define('mqtt-toggle', MqttToggle);
+customElements.define(  'mqtt-toggle', MqttToggle);
 
 class MqttBar extends MqttReceiver {
   static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['min','max']); }
@@ -764,10 +782,10 @@ class MqttBar extends MqttReceiver {
       EL('div', {class: "outer mqtt-bar"}, [
 
         EL('div', {class: "name"}, [
-          EL('label', {for: this.mt.topic, textContent: this.mt.name}),
+          EL('label', {for: this.mt.topicPath, textContent: this.mt.name}),
           EL('img', {class: "icon", src: 'images/icon_graph.svg', onclick: this.opengraph.bind(this)}),
         ]),
-        EL('div', {class: "bar", id: this.mt.topic},[
+        EL('div', {class: "bar", id: this.mt.topicPath},[
           EL('span', {class: "left", style: `width:${width}%; background-color:${this.state.color};`},[
             EL('span', {class: "val", textContent: this.state.value}),
           ]),
@@ -927,11 +945,11 @@ class MqttDropdown extends MqttTransmitter {
     return !this.isConnected ? null : [
       EL('link', {rel: 'stylesheet', href: CssUrl}),
       EL('div', {class: 'outer mqtt-dropdown'}, [
-        EL('label', {for: this.mt.topic, textContent: this.mt.name}),
-        EL('select', {id: this.mt.topic, onchange: this.onchange.bind(this)}, [
+        EL('label', {for: this.mt.topicPath, textContent: this.mt.name}),
+        EL('select', {id: this.mt.topicPath, onchange: this.onchange.bind(this)}, [
           EL('option', {value: "", textContent: "Unused", selected: !this.state.value}),
           this.findTopics().map( t => // { name, type etc. }
-            EL('option', {value: t.topic, textContent: t.name, selected: t.topic === this.state.value}),
+            EL('option', {value: t.topicPath, textContent: t.name, selected: t.topicPath === this.state.value}),
           ),
         ]),
       ]),
@@ -997,14 +1015,14 @@ class MqttWrapper extends HTMLElementExtended {
     )
   }
   addProject(discover) {
-    let topic = `${this.state.organization}/${this.state.project}`;
+    let twig = `${this.state.organization}/${this.state.project}`;
     // noinspection JSUnresolvedReference
     let elProject = EL('mqtt-project', {discover, id: this.state.project, name: server_config.organizations[this.state.organization].projects[this.state.project].name }, []);
     // The project's topic watches for discover packets for nodes
     let mt = new MqttTopic();
     mt.initialize({
       type: "text",
-      topic: topic,
+      twig: twig,
       element: elProject,
     });
     elProject.mt = mt;
@@ -1113,13 +1131,14 @@ class MqttProject extends MqttReceiver {
   static get boolAttributes() { return MqttReceiver.boolAttributes.concat(['discover'])}
 
   addNode(id) {
-    let topic = `${this.mt.topic}/${id}`;
-    let elNode = EL('mqtt-node', {id, topic, discover: this.state.discover},[]);
+    // TODO-130 make sure topicPath is set , not topic - look for caller
+    let topicPath = `${this.mt.topicPath}/${id}`; // twig is e.g. dev/lotus
+    let elNode = EL('mqtt-node', {id, topic: topicPath, discover: this.state.discover},[]);
     this.state.nodes[id] = elNode;
     let mt = new MqttTopic();
     mt.initialize({
       type: "yaml",
-      topic: topic,
+      twig: topicPath,
       element: elNode,
     });
     elNode.state.project = this; // For some reason, this cannot be set on elNode while mt can be!
@@ -1156,7 +1175,7 @@ class MqttProject extends MqttReceiver {
       EL('link', {rel: 'stylesheet', href: CssUrl}),
       EL('div', {class: "outer mqtt-project"}, [
         EL('div', {class: "title"},[
-          EL('span',{class: 'projectname', textContent: this.mt.topic}),
+          EL('span',{class: 'projectname', textContent: this.mt.twig }), // twig should be e.g. dev/lotus
           EL('span',{class: 'name', textContent: this.state.name}),
         ]),
         EL('div', {class: "nodes"},[
@@ -1191,7 +1210,8 @@ class MqttNode extends MqttReceiver {
     return this.state.value.topics
       .filter( t => types.includes(t.type))
       .filter(t => t.rw.includes(rw))
-      .map(t=> { return({name: `${usableName}:${t.name}`, topic: this.mt.topic + "/" + t.topic})});
+      // TODO-130 this will currently work since t.topic is a twig but wont in future - test it (dropdown only i presume)
+      .map(t=> { return({name: `${usableName}:${t.name}`, topic: this.mt.topicPath + "/" + t.topic})});
   }
   appendGroup(t) { // t = { group, name }
     if (!this.groups[t.group]) {
@@ -1216,19 +1236,18 @@ class MqttNode extends MqttReceiver {
       while (this.childNodes.length > 0) this.childNodes[0].remove(); // Remove and replace any existing nodes
       if (this.state.lastSeenElement) { this.append(this.state.lastSeenElement); } // Re-add the lastseen element
       if (!nodediscover.topics) { nodediscover.topics = []; } // if no topics, make it an empty array
-      nodediscover.topics.forEach(t => { // TODO-13 are these topicLeaf or topicPath ?
-        if (!t.topic && t.group) { //
+      nodediscover.topics.forEach(t => {  // Note t.topic in discovery is twig // TODO-130 may not always be twigs
+        if (!t.topic && t.group) {
           this.appendGroup(t);
         } else if (!this.state.topics[t.topic]) { // Have we done this already?
           let mt = new MqttTopic();
           mt.fromDiscovery(t, this);
           this.state.topics[t.topic] = mt;
           mt.subscribe();
-          let leaf = t.topic.split("/").pop();
           let el = mt.createElement();
-          if (['battery','ledbuiltin'].includes(leaf)) { // TODO-30 parameterize this
+          if (['battery','ledbuiltin'].includes(mt.leaf)) { // TODO-30 parameterize this
             // noinspection JSCheckFunctionSignatures
-            el.setAttribute('slot', leaf);
+            el.setAttribute('slot', mt.leaf);
           }
           // noinspection JSUnresolvedReference
           if (mt.group) {
@@ -1547,7 +1566,7 @@ class MqttGraphDataset extends MqttElement {
   makeTopic() {
     this.mt = new MqttTopic();
     this.mt.initialize({
-      topic: this.state.topic,
+      topic: this.state.topic, // TODO-130 check this handles "set" correctly
       type: this.state.type,
       min: this.state.min,
       max: this.state.max,
@@ -1565,7 +1584,7 @@ class MqttGraphDataset extends MqttElement {
 
   // Note this gets called multiple times as the attributes are set
   loadContent() { // Happens when connected
-    if (this.state.topic && !this.mt) {
+    if (this.state.topic && !this.mt) { // When embedded
       this.makeTopic();
       this.state.yaxisid = this.mt.yaxisid; // topic will create an appropriate axis if reqd
       this.mt.createGraph();

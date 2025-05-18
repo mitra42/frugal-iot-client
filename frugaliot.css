@@ -20,7 +20,10 @@ details.mqtt-client {
     }
 }
 /* In MqttProject */
-.mqtt-project { margin: 0.2em;}
+.mqtt-project {
+    { margin: 0.2em; }
+    .projectname {margin-right: 2em; }
+}
 /* In MqttNode */
 .mqtt-node {
     { border: 1px,black,solid;  margin: 0.2em; }
