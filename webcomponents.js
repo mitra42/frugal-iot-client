@@ -9,7 +9,8 @@ import yaml from '/node_modules/js-yaml/dist/js-yaml.mjs'; // https://www.npmjs.
 import async from '/node_modules/async/dist/async.mjs'; // https://caolan.github.io/async/v3/docs.html
 import { parse } from "csv-parse"; // https://csv.js.org/parse/distributions/browser_esm/
 import { Chart, registerables, _adapters } from '/node_modules/chart.js/dist/chart.js'; // "https://www.chartjs.org"
-import { DialGauge } from "dial-gauge";
+// noinspection ES6UnusedImports
+import { DialGauge } from "dial-gauge"; // Complains about unused import, but it actually uses "dial-gauge" the web component
 //import 'chartjs-adapter-luxon';
 Chart.register(...registerables); //TODO figure out how to only import that chart types needed
 /* TODO possible partial list of imports needed for chartjs
@@ -218,7 +219,7 @@ class MqttTopic {
           // noinspection JSUnresolvedReference
           el = EL('mqtt-bar', {max: this.max, min: this.min, color: this.color}, []);
           break;
-        case 'guage':
+        case 'gauge':
           el = EL('mqtt-gauge', {max: this.max, min: this.min, color: this.color}, []);
           break;
         case 'text':
@@ -260,6 +261,7 @@ class MqttTopic {
   // NOTE same function in frugal-iot-logger and frugal-iot-client if change here, change there
   valueFromText(message) {
     try {
+      // noinspection JSUnresolvedReference
       switch (this.type) {
         case "bool":
           return toBool(message);
@@ -275,6 +277,7 @@ class MqttTopic {
           // noinspection JSUnusedGlobalSymbols
           return yaml.loadAll(message, {onWarning: (warn) => console.log('Yaml warning:', warn)});
         default:
+          // noinspection JSUnresolvedReference
           console.error(`Unrecognized message type: ${this.type}`);
       }
     } catch (e) {
@@ -299,7 +302,7 @@ class MqttTopic {
       }
     } */
     this.data.push({value, time: now}); // Same format as graph dataset expects
-    if (this.node) { // There is (currently) no node if its a Project
+    if (this.node) { // There is (currently) no node if it is a Project
       this.node.topicChanged(this.leaf, value);
     }
     // TODO-13-battery now push val to node
@@ -335,7 +338,7 @@ class MqttTopic {
     this.graph.addScale(t, {
       // TODO-46 add color
       type: 'linear',
-      display: (this.type === 'bool') ? false : true,
+      display: this.type !== 'bool',
       title: {
         // noinspection JSUnresolvedReference
         color: this.color,  // May need to vary so not all e.g. humidity same color
@@ -385,7 +388,7 @@ class MqttTopic {
       });
       this.graphdataset.mt = this;
     }
-    // If its a new graphdataset or this topic was created by an embedded mqtt-chartdataset there will not yet be a chartdataset
+    // If it is a new graphdataset or this topic was created by an embedded mqtt-chartdataset, there will not yet be a chartdataset
     if (!this.graphdataset.chartdataset) {
       this.graphdataset.makeChartDataset(); // Links to data above
     }
@@ -455,8 +458,8 @@ class MqttTopic {
           }
         })
       })
-      .catch(err => {
-        // Didnt get any data, draw dotted line from begininng of day to now (and end of prev data to start this day)
+      .catch(ignored => {
+        // Did not get any data, draw dotted line from beginning of day to now (and end of prev data to start this day)
         let t = new Date(this.graph.state.dateFrom) // Have to explicitly copy it else pointer
           .setUTCHours(0,0,0,0)
           .valueOf();
@@ -464,7 +467,7 @@ class MqttTopic {
           time: t,
           value: null,
         });
-        //console.error(err); - dont need error - the fetch will also report it so its just a repeat.
+        //console.error(err); - dont need error - the fetch will also report it, so it is just a repeat.
         cb(null); // Dont break caller
       }); // May want to report filename here
   }
@@ -522,7 +525,7 @@ class MqttClient extends HTMLElementExtended {
             mqtt_client.subscribe(s.topic, (err) => { if (err) console.error(err); });
           })
         } else {
-          /* Can use for debugging - not really that useful and its verbose.
+          /* Can use for debugging - not really that useful, and it is verbose.
           mqtt_subscribe("$SYS/#", (msg) => {
             console.log("SYS", msg);
           })
@@ -755,6 +758,7 @@ class MqttBar extends MqttReceiver {
   render() {
     //this.state.changeable.addEventListener('change', this.onChange.bind(this));
     let width = 100*(this.state.value-this.state.min)/(this.state.max-this.state.min);
+    // noinspection JSUnresolvedReference
     return !(this.isConnected && this.mt) ? null : [
       EL('link', {rel: 'stylesheet', href: CssUrl}),
       EL('div', {class: "outer mqtt-bar"}, [
@@ -767,7 +771,7 @@ class MqttBar extends MqttReceiver {
           EL('span', {class: "left", style: `width:${width}%; background-color:${this.state.color};`},[
             EL('span', {class: "val", textContent: this.state.value}),
           ]),
-          //Dont appear to need this - and it sometimes wraps, so if re-ebable, neeed to make sure always horiz next to left
+          //Do not appear to need this - and it sometimes wraps, so if re-enable, need to make sure always horiz next to left
           //EL('span', {class: "right", style: "width:"+(100-width)+"%"}),
         ]),
         EL('slot',{}), // Children would be a setpoint, but not using currently
@@ -877,6 +881,7 @@ class MqttSlider extends MqttTransmitter {
       EL('link', {rel: 'stylesheet', href: CssUrl}),
       EL('div', {class: "mqtt-slider outer"}, [
         EL('div', {class: "name"}, [ //TODO maybe use a label
+          // noinspection JSUnresolvedReference
           EL('span', {textContent: this.mt.name}),
           EL('span', {class: "val", textContent: this.state.value}), // TODO restrict number of DP
         ]),
@@ -896,7 +901,7 @@ class MqttDropdown extends MqttTransmitter {
   findTopics() {
     let project = this.state.project;
     let nodes = Array.from(project.children);
-    // Note each nodes value is its config
+    // Note each node's value is its config
     let allowableTypes = {
       // Mapping of requested types to valid fields - e.g. if want a float then returning an int will be fine
       "float": ["float","int"],
@@ -918,6 +923,7 @@ class MqttDropdown extends MqttTransmitter {
   }
 
   render() {
+    // noinspection JSUnresolvedReference
     return !this.isConnected ? null : [
       EL('link', {rel: 'stylesheet', href: CssUrl}),
       EL('div', {class: 'outer mqtt-dropdown'}, [
@@ -1116,7 +1122,7 @@ class MqttProject extends MqttReceiver {
       topic: topic,
       element: elNode,
     });
-    elNode.state.project = this; // For some reason this can't be set on elNode while mt can be !
+    elNode.state.project = this; // For some reason, this cannot be set on elNode while mt can be!
     elNode.mt = mt;
     this.append(elNode);
     mt.subscribe(); // Subscribe to get Discovery
@@ -1180,7 +1186,7 @@ class MqttNode extends MqttReceiver {
   }
   // Filter the topics on this node by type e.g. "bool" "float" or ["float","int"]
   topicsByType(types, rw) { // [ { name, topic: topicpath } ]
-    if (!this.state.value) { return []; } // If have not received discovery do not report any topics
+    if (!this.state.value) { return []; } // If have not received discovery, do not report any topics
     let usableName = this.usableName;
     return this.state.value.topics
       .filter( t => types.includes(t.type))
@@ -1200,7 +1206,7 @@ class MqttNode extends MqttReceiver {
   }
   // Have received a discovery message for this node - create elements for all topics and subscribe
   // noinspection JSCheckFunctionSignatures
-  valueSet(obj) { // Val is object converted from yaml
+  valueSet(obj) { // Val is object converted from Yaml
     if (this.state.discover) { // If do not have "discover" set, then presume have defined what UI we want on this node
       this.state.discover = false; // Only want "discover" once, if change then need to get smart about not redrawing working UI as may be relying on data[]
       console.log(obj); // Useful for debugging to see this
@@ -1213,7 +1219,7 @@ class MqttNode extends MqttReceiver {
       nodediscover.topics.forEach(t => { // TODO-13 are these topicLeaf or topicPath ?
         if (!t.topic && t.group) { //
           this.appendGroup(t);
-        } else if (!this.state.topics[t.topic]) { // Have we done this already
+        } else if (!this.state.topics[t.topic]) { // Have we done this already?
           let mt = new MqttTopic();
           mt.fromDiscovery(t, this);
           this.state.topics[t.topic] = mt;
@@ -1224,8 +1230,11 @@ class MqttNode extends MqttReceiver {
             // noinspection JSCheckFunctionSignatures
             el.setAttribute('slot', leaf);
           }
+          // noinspection JSUnresolvedReference
           if (mt.group) {
+            // noinspection JSUnresolvedReference
             this.appendGroup({group: mt.group}); // Check it exists and if not create it
+            // noinspection JSUnresolvedReference
             this.groups[mt.group].append(el);
           } else {
             this.append(el);
@@ -1233,14 +1242,15 @@ class MqttNode extends MqttReceiver {
         }
       });
       let project = this.state.project;
+      // Rerender any dropdown elements based on this discovery.
       // TODO make this use new functions node.project, project.nodes, node.topics
-      let dropDownElements = Array.from(project.children)
+      Array.from(project.children)
         .map(n => Object.values(n.state.topics))
         .flat(1)
         .map(t => t.element)
         .filter(el => (el instanceof MqttDropdown))
         .forEach(el => el.renderAndReplace());
-      return true; // because change name description etc
+      return true; // because change name description etc.
     } else {
       return false;
     }
@@ -1268,7 +1278,7 @@ class MqttNode extends MqttReceiver {
           EL('summary', {},[
             EL('span',{class: 'name', textContent: this.state.name}),
             EL('span',{class: 'nodeid', textContent: this.state.id}),
-            //Starts off as 1px empty image, changed when battery message receive
+            //Starts off as 1px empty image, changed when battery message received
             this.state.batteryIndicator = EL('img', {class: "batteryimg", src: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"}),
           ]),
           EL('span',{class: 'description', textContent: this.state.description}),
@@ -1314,7 +1324,7 @@ class MqttGraph extends MqttElement {
     super();
     this.datasets = []; // Child elements will add/remove chartjs datasets here
     this.state.dataFrom = null;
-    this.state.yAxisCount = 0; // 0 left, 1 right
+    this.state.yAxisCount = 0; // 0=left, 1=right
     this.state.leftInProgress = 0;
     this.state.scales = { // Start with an xAxis and add axis as needed
       xAxis: {
@@ -1339,7 +1349,7 @@ class MqttGraph extends MqttElement {
   }
 
   // Note - makeChart is really fussy, the canvas must be inside something with a size.
-  // For some reason this does not work by adding inside the render - i.e. to the virtual Dom.
+  // For some reason, this does not work by adding inside the render - i.e. to the virtual Dom.
   loadContent() {
     this.canvas = EL('canvas');
     this.append(EL('div', {slot: "chart", style: "width: 80vw; height: 60vw; position: relative;"},[this.canvas]));
@@ -1419,7 +1429,7 @@ class MqttGraph extends MqttElement {
       } else {
         cb();
       }
-    }),() => { // Note ds.addDataFrom does not return an error via cb, if cant read file will just skip that line
+    }),() => { // Note ds.addDataFrom does not return an error via cb, if cannot read file will just skip that line
       this.chart.update();
       if (!--this.state.leftInProgress) {
         this.state.imageLeft.textContent = "⬅︎";
@@ -1441,7 +1451,7 @@ class MqttGraph extends MqttElement {
     }
     Array.from(this.children).forEach(ds => {
       if (ds.removeDataBefore) {
-        ds.removeDataBefore(d); // may be null
+        ds.removeDataBefore(d); // maybe null
       }
     });
     this.chart.update();
@@ -1503,6 +1513,8 @@ class MqttGraphDataset extends MqttElement {
       console.error("Trying to create chartdataset twice");
     } else {
       // Fields only defined once - especially data
+      // Unclear why reports unused for borderDash, which clear is used
+      // noinspection JSUnusedGlobalSymbols,JSUnresolvedReference
       this.chartdataset = {
         data: this.mt.data, // Should be pointer to receiver's data set in MqttReceiver.valueSet
         stepped: this.mt.type === "bool" ? 'before' : false,
@@ -1531,7 +1543,7 @@ class MqttGraphDataset extends MqttElement {
     // Should override display and position and grid of each axis used
   }
   // Normally the MqttTopic creates the MqttGraphDataset,
-  // However in an embedded case, just hte GraphDataset is created and has to create the topic.
+  // However, in an embedded case, just the GraphDataset is created and has to create the topic.
   makeTopic() {
     this.mt = new MqttTopic();
     this.mt.initialize({
@@ -1541,6 +1553,7 @@ class MqttGraphDataset extends MqttElement {
       max: this.state.max,
       graphdataset: this,
     });
+    // noinspection JSUnresolvedReference
     if (!this.mt.name) {
       this.mt.name = this.mt.leaf;
     }
@@ -1557,7 +1570,7 @@ class MqttGraphDataset extends MqttElement {
       this.state.yaxisid = this.mt.yaxisid; // topic will create an appropriate axis if reqd
       this.mt.createGraph();
     }
-    // When creating embeded, this.chartdataset is created by MT.createGraph->MGD.makeChartDataset
+    // When creating embedded, this.chartdataset is created by MT.createGraph->MGD.makeChartDataset
     // but only once topic is defined
     if (this.chartdataset) {
       this.graph.addDataset(this.chartdataset);
