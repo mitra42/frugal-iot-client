@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Frugal IoT  Demo</title>
-    <link href="/frugaliot.css" rel="stylesheet" type="text/css">
+    <link href="./frugaliot.css" rel="stylesheet" type="text/css">
     <!-- this maps files that webcomponents uses, -->
     <script type="importmap">
         {
@@ -18,7 +18,7 @@
         }
     </script>
     <!-- load webcomponents.js either from local server, or from frugaliot.naturalinnovation.org -->
-    <script src="https://frugaliot.naturalinnovation.org/webcomponents.js" type="module"></script>
+    <script src="./webcomponents.js" type="module"></script>
     <!--<script src="./webcomponents.js" type="module"></script>-->
 </head>
 <body>
@@ -29,12 +29,12 @@
 </div>
 <div style="float:right;border:2px,solid,blue;width:50%">
     <!-- this is a simple display widget - in this case a meter bar -->
-    <mqtt-bar max="45" min="0" topic="dev/lotus/esp8266-fb94bb/temperature" label="Temperature" type="float" color="red"></mqtt-bar>
+    <mqtt-bar max="45" min="0" topic="dev/lotus/esp8266-fb94bb/sht/temperature" label="Temperature" type="float" color="red"></mqtt-bar>
     <!--<mqtt-bar max="45" min="0" topic="dev/lotus/esp32-70c376/soil" label="Soil" type="float" color="brown"></mqtt-bar>-->
 </div>
 <div style="float:left;border:2px,solid,blue;width:10%">
     <!-- this is a simple control widget - in this case toggles an LED on a device at my office -->
-    <mqtt-toggle topic="dev/lotus/esp8266-fb94bb/ledbuiltin" label="LED" type="bool" color="blue"></mqtt-toggle>
+    <mqtt-toggle topic="dev/lotus/esp8266-fb94bb/ledbuiltin/on" label="LED" type="bool" color="blue"></mqtt-toggle>
 </div>
 <p>
     This is a demo of a custom web page with a bar widget; a graph; and a control.
@@ -45,9 +45,9 @@
     <!-- display any topic -->
     <!-- Note - I think there is an issue with back button if loaded from a different server, will fix -->
     <mqtt-graph>
-        <mqtt-graphdataset topic="dev/lotus/esp8266-fb94bb/temperature" color="red" label="Office Temperature" min=0 max=50 type="float"></mqtt-graphdataset>
-        <mqtt-graphdataset topic="dev/lotus/esp8266-fb94bb/humidity" color="blue" label="Office Humidity" min=0 max=100 type="float"></mqtt-graphdataset>
-        <mqtt-graphdataset topic="dev/lotus/esp8266-fb94bb/ledbuiltin" color="orange" label="LED" type="bool"></mqtt-graphdataset>
+        <mqtt-graphdataset topic="dev/lotus/esp8266-fb94bb/sht/temperature" color="red" label="Office Temperature" min=0 max=50 type="float"></mqtt-graphdataset>
+        <mqtt-graphdataset topic="dev/lotus/esp8266-fb94bb/sht/humidity" color="blue" label="Office Humidity" min=0 max=100 type="float"></mqtt-graphdataset>
+        <mqtt-graphdataset topic="dev/lotus/esp8266-fb94bb/ledbuiltin/on" color="orange" label="LED" type="bool"></mqtt-graphdataset>
     </mqtt-graph>
 </p>
 </body>
