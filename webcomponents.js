@@ -305,6 +305,7 @@ class MqttTopic {
     }
   }
 
+  // Note sometimes called from MqttClient and sometimes from node.topicValueSet
   message_received(topic, message) {
     if (this.element) {
       if (this.element.topicValueSet(topic, message)) {
@@ -677,9 +678,10 @@ class MqttReceiver extends MqttElement {
     this.mt = mt;
     mt.subscribe(); //TODO-130 check embedded case,
   }
+  // Note overridden in MqttNode and MqttProject
   topicValueSet(topic, message) {
     // TODO-130 I think this is where we catch "set" (at topicSetPath
-    if (topic === this.mt.topicPath) {
+    if ((topic === this.mt.topicPath) || (topic === this.mt.topicSetPath)) {
       let value = this.mt.valueFromText(message);
       let now = Date.now();
       this.mt.data.push({value, time: now}); // Same format as graph dataset expects
@@ -687,16 +689,24 @@ class MqttReceiver extends MqttElement {
         this.node.topicChanged(this.mt.leaf, value);
       }
       return this.valueSet(value);
+    } else if (topic.startsWith(this.mt.topicSetPath)) {
+      // topic like org/project/node/set/temperature/max
+      let parameter = topic.split("/").pop();
+      this.parameterSet(parameter, message);
+    } else {
+      console.error("Unhandled topicValueSet", topic, message);
+      return false;
     }
-    console.error("Unhandled topicValueSet", topic, message);
-    return false;
   }
   valueSet(val) {
     // Note val can be of many types - it will be subclass dependent
     this.state.value = val;
     return true; // Rerender by default - subclass will often return false
   }
-
+  // Override anywhere expecting incoming parameters
+  parameterSet(parameter, message) {
+    console.log("parameterSet ignoring", parameter, message);
+  }
   get project() { // Note this will only work once the element is connected
     // noinspection CssInvalidHtmlTagReference
     return this.closest("mqtt-project");
@@ -1157,6 +1167,7 @@ class MqttProject extends MqttReceiver {
     mt.subscribe(); // Subscribe (for node) to get Discovery - note subscribes to wild card
     return elNode;
   }
+  // Overrides topicValueSet in MqttReceiver
   topicValueSet(topic, message) {
     // value is going to be a discovery message, so should be a node id
     // At the moment since not wild-carding, topic will be "org/project"
@@ -1244,6 +1255,7 @@ class MqttNode extends MqttReceiver {
     return this.groups[t.group];
   }
   // Have received a discovery message for this node - create elements for all topics and subscribe
+  // Overrides topicValueSet in MqttReceiver
   // noinspection JSCheckFunctionSignatures
   topicValueSet(topic, message) {
     if (topic === this.mt.topicPath) { // Its discover for this Node, not a sub-element
@@ -1259,6 +1271,7 @@ class MqttNode extends MqttReceiver {
       return false; // Do not rerender as waiting for discovery
     } else { // Its a sub-topic
       let leaf = topic.substring(this.mt.topicPath.length+1);
+      if (leaf.startsWith("set/")) { leaf = leaf.substring(4); } // Remove "set/" prefix if present
       if (this.state.topics[leaf]) {
         this.state.topics[leaf].message_received(topic, message);
       }
