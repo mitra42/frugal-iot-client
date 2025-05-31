@@ -64,8 +64,8 @@ div.offline {background-color: #888888;} /* Not INSIDE mqtt-node, it is the mqtt
 .mqtt-slider .val {margin:5px;}
 .mqtt-slider .setpoint {position: relative;top: -5px;cursor: pointer;width: max-content;height: max-content;}
 
-/* In MqttDropdown */
-.mqtt-dropdown {
+/* In MqttChoosetopic */
+.mqtt-choosetopic {
     .outer { border: 0px,black,solid;  margin: 0.2em; }
     @media (max-width:1001px){
         .dropdown {font-size: x-large;}

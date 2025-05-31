@@ -209,6 +209,9 @@ class MqttTopic {
     // "set" path is meaningless (I think) for a node or project
     return this.node.mt.topicPath + "/set/" + this.twig;
   }
+  get topicWiredPath() {
+    return this.topicSetPath + "/wired";
+  }
   get topicSubscribePath() {
     if (this.element && this.element.isNode) {
       return this.topicPath + "/#"; // Subscribe to all subtopics
@@ -245,14 +248,18 @@ class MqttTopic {
           el = EL('mqtt-text', {}, []);
           break;
         case 'slider':
+          //TODO-130 testing use of text - without changing node
+          el = EL('mqtt-text', {}, []);
+          /*
           // noinspection JSUnresolvedReference
+          // TODO possibly deprecate this
           el = EL('mqtt-slider', {min: this.min, max: this.max, value: (this.max + this.min) / 2}, [
             EL('span', {textContent: "△"}, []),
           ]);
+           */
           break;
-        case 'dropdown':
-          // noinspection JSUnresolvedReference
-          el = EL('mqtt-dropdown', {options: this.options, rw: this.rw, project: this.project});
+        case 'inputbox':
+          el = EL('mqtt-inputbox', {}, []);
           this.retain = true;
           this.qos = 1; // This message needs to get through to node
           break;
@@ -407,9 +414,13 @@ class MqttTopic {
   publish(val) {
     // super.onChange(e);
     console.log("Publishing ", this.topicSetPath, val, this.retain ? "retain" : "", this.qos ? `qos=${this.qos}` : "");
+    if (typeof val === 'number') { val = val.toString(); } // Convert to string if number
     mqtt_client.publish(this.topicSetPath, val, {retain: this.retain, qos: this.qos});
   }
-
+  publishWired(val) {
+    console.log("Publishing ", this.topicWiredPath, val, this.retain ? "retain" : "", this.qos ? `qos=${this.qos}` : "");
+    mqtt_client.publish(this.topicWiredPath, val, {retain: true, qos: 1});
+  }
   // Adds historical data to the chart - typically chart updates data for each line, then updates the chart.
   addDataFrom(filename, first, cb) {
     //TODO this location may change
@@ -719,19 +730,6 @@ class MqttReceiver extends MqttElement {
   }
 }
 
-class MqttText extends MqttReceiver {
-  // constructor() { super(); }
-  render() {
-    return [
-      EL('div', {},[
-        EL('span',{class: 'demo', textContent: this.mt.leaf + ": "}),
-        EL('span',{class: 'demo', textContent: this.state.value || ""}),
-      ])
-    ]
-  }
-}
-customElements.define('mqtt-text', MqttText);
-
 class MqttTransmitter extends MqttReceiver {
   // TODO - make sure this doesn't get triggered by a message from server.
   valueGet() { // Needs to return an integer or a string
@@ -743,6 +741,47 @@ class MqttTransmitter extends MqttReceiver {
     this.mt.publish(this.valueGet());
   }
 }
+
+class MqttText extends MqttTransmitter {
+  // constructor() { super(); }
+  // TODO - make sure this doesn't get triggered by a message from server.
+  onChange(e) {
+    //console.log("Changed"+e.target.checked);
+    this.state.value = e.target.valueAsNumber; // Number - TODO-130 check if works as float // TODO make work for stuff other than numbers e.g. text
+    this.publish();
+  }
+  onwiredchange(e) {
+    this.mt.wired = e.target.value; // e.target.value is 'w' or 'r'
+    this.mt.publishWired(e.target.value);
+    this.renderAndReplace();
+  }
+  render() {
+    let wiredTopic = this.mt.wired ? this.mt.project.findTopic(this.mt.wired) : undefined;
+    let wiredTopicName = wiredTopic ? `${wiredTopic.node.usableName}:${wiredTopic.name}` : undefined;
+    let wiredTopicValue = wiredTopic ? wiredTopic.element.state.value.toString() : undefined; // TODO-130 maybe error prone if value can be undefined
+    return [
+      EL('div', {},this.mt.rw === 'r' ? [
+        EL('span',{class: 'demo', textContent: this.mt.leaf + ": "}),
+        EL('span',{class: 'demo', textContent: this.state.value || ""}),
+        // Note have not handled possibility of "Text" being output and wireable
+      ] : [ // rw==='w'
+        EL('details', {} , [
+          EL('summary', {}, [
+            EL('label', {for: this.mt.topicPath, textContent: this.mt.name}),
+            this.mt.wired
+              ? [
+                EL('span', {class: 'wired', textContent: wiredTopicValue}),
+                EL('span', {class: 'wired', textContent: wiredTopicName}),
+                ]
+              : EL('input', {id: this.mt.topicPath, name: this.mt.topicPath, value: this.state.value, type: "number", min: this.mt.min, max: this.mt.max, onchange: this.onChange.bind(this)}),
+          ]),
+          EL('mqtt-choosetopic', {name: this.mt.name, type: this.mt.type, value: this.mt.wired, rw: (this.mt.rw === 'r' ? 'w' : 'r'), project: this.mt.project, onchange: this.onwiredchange.bind(this)})
+        ])
+      ])
+    ]
+  }
+}
+customElements.define('mqtt-text', MqttText);
 
 class MqttToggle extends MqttTransmitter {
   valueSet(val) {
@@ -931,10 +970,11 @@ class MqttSlider extends MqttTransmitter {
 }
 customElements.define('mqtt-slider', MqttSlider);
 
-// TODO-43 rename as MqttChooseTopic
-class MqttDropdown extends MqttTransmitter {
+class MqttChooseTopic extends MqttElement {
   // options = "bool" for boolean topics (matches t.type on others)
-  static get observedAttributes() { return MqttTransmitter.observedAttributes.concat(['options','project','rw']); }
+  // TODO-130 maybe just triggr a "onChange" event on the topic, and let the parent handle it
+  // TODO-130 trap this and see what happens to a function attribute like onchange
+  static get observedAttributes() { return MqttTransmitter.observedAttributes.concat(['name', 'type','value', 'project','rw','onchange']); }
 
   // TODO-43 may need to change findTopics to account for other selection criteria
   findTopics() {
@@ -946,39 +986,39 @@ class MqttDropdown extends MqttTransmitter {
       "float": ["float","int"],
       "text": ["text","float","int","bool"],
     }
-    return nodes.map(n => n.topicsByType(allowableTypes[this.state.options] || this.state.options, this.state.rw))
+    return nodes.map(n => n.topicsByType(allowableTypes[this.state.type] || this.state.type, this.state.rw))
       .flat();
   }
   // noinspection JSCheckFunctionSignatures
-  valueSet(val) {
-    super.valueSet(val);
-    // TODO get smarter about setting "selected" instead of rerendering
-    return true; // Rerenders on moving based on any received value to change selected topic
+  valueSet(val) { // TODO-130 need to catch income set/foo/bar/wired and trigger this (separate from other set/foo/bar/xxx
+    this.state.value = (val);
+    this.renderAndReplace(); // TODO-130 could get smarter about setting with in span rather than rerender
   }
-  onchange(e) {
+  /*
+  onchangex(e) {
     //console.log("Dropdown onchange");
     this.state.value = e.target.value; // Want the value
-    this.publish();
+    //this.mt.publishWired(this.state.value);
+    //TODO-130 probably call this element's onchange - presuming set
   }
-
+*/
   render() {
     // noinspection JSUnresolvedReference
     return !this.isConnected ? null : [
       EL('link', {rel: 'stylesheet', href: CssUrl}),
-      EL('div', {class: 'outer mqtt-dropdown'}, [
-        EL('label', {for: this.mt.topicPath, textContent: this.mt.name}),
-        EL('select', {id: this.mt.topicPath, onchange: this.onchange.bind(this)}, [
+      EL('div', {class: 'outer mqtt-choosetopic'}, [
+        EL('label', {for: 'choosetopic' + (++unique_id), textContent: name}),
+        EL('select', {id: 'choosetopic' + unique_id, onchange: this.onchange}, [
           EL('option', {value: "", textContent: "Unused", selected: !this.state.value}),
           this.findTopics().map( t => // { name, type etc. }
-            EL('option', {value: t.topicPath, textContent: t.name, selected: t.topicPath === this.state.value}),
+            EL('option', {value: t.topic, textContent: t.name, selected: t.topic === this.state.value}),
           ),
         ]),
       ]),
     ];
   }
-  // super.valueGet fine as its text
 }
-customElements.define('mqtt-dropdown', MqttDropdown);
+customElements.define('mqtt-choosetopic', MqttChooseTopic);
 
 // Outer element of the client - Top Level logic
 // If specifies org / project / node then believe it and build to that
@@ -1197,6 +1237,10 @@ class MqttProject extends MqttReceiver {
       }
     });
   }
+  findTopic(topicPath) {
+    let parts = topicPath.split("/");
+    return this.state.nodes[parts[2]].state.topics[`${parts[3]}/${parts[4]}`];
+  }
   render() {
     return  !this.isConnected ? null : [
       EL('link', {rel: 'stylesheet', href: CssUrl}),
@@ -1318,7 +1362,7 @@ class MqttNode extends MqttReceiver {
         .map(n => Object.values(n.state.topics))
         .flat(1)
         .map(t => t.element)
-        .filter(el => (el instanceof MqttDropdown))
+        .filter(el => (el instanceof MqttChooseTopic))
         .forEach(el => el.renderAndReplace());
       return true; // because change name description etc.
     } else {
