@@ -755,29 +755,75 @@ class MqttText extends MqttTransmitter {
     this.mt.publishWired(e.target.value);
     this.renderAndReplace();
   }
-  render() {
-    let wiredTopic = this.mt.wired ? this.mt.project.findTopic(this.mt.wired) : undefined;
+  // Handle cases ....
+  // r/!wireable - text value
+  // r/wireable/!wired - text value + hidden dropdown NOT DONE YET
+  // r/wireable/wired - text value and wired topic name and hidden dropdown NOT DONE YET
+  // w/!wireable - input box with value
+  // w/wireable/!wired - input box with value + hidden dropdown
+  // w/wireable/wired - text value(from wire) and wired topic name and hidden dropdown
+
+  renderLabel() {
+    return EL('label', {for: this.mt.topicPath, textContent: this.mt.name});
+  }
+  renderInput() {
+    return EL('input', {id: this.mt.topicPath, name: this.mt.topicPath, value: this.state.value, type: "number", min: this.mt.min, max: this.mt.max, onchange: this.onChange.bind(this)});
+  }
+  renderValue(val) {
+    return EL('span',{textContent: val || ""});
+  }
+  renderWiredName(wiredTopic) {
     let wiredTopicName = wiredTopic ? `${wiredTopic.node.usableName}:${wiredTopic.name}` : undefined;
+    return EL('span', {class: 'wired', textContent: wiredTopicName})
+  }
+  renderDropdown() {
+    return EL('mqtt-choosetopic', {name: this.mt.name, type: this.mt.type, value: this.mt.wired, rw: (this.mt.rw === 'r' ? 'w' : 'r'), project: this.mt.project, onchange: this.onwiredchange.bind(this)});
+  }
+render() {
+    let wiredTopic = this.mt.wired ? this.mt.project.findTopic(this.mt.wired) : undefined;
     let wiredTopicValue = wiredTopic ? wiredTopic.element.state.value.toString() : undefined; // TODO-130 maybe error prone if value can be undefined
     return [
-      EL('div', {},this.mt.rw === 'r' ? [
-        EL('span',{class: 'demo', textContent: this.mt.leaf + ": "}),
-        EL('span',{class: 'demo', textContent: this.state.value || ""}),
-        // Note have not handled possibility of "Text" being output and wireable
-      ] : [ // rw==='w'
-        EL('details', {} , [
-          EL('summary', {}, [
-            EL('label', {for: this.mt.topicPath, textContent: this.mt.name}),
-            this.mt.wired
-              ? [
-                EL('span', {class: 'wired', textContent: wiredTopicValue}),
-                EL('span', {class: 'wired', textContent: wiredTopicName}),
-                ]
-              : EL('input', {id: this.mt.topicPath, name: this.mt.topicPath, value: this.state.value, type: "number", min: this.mt.min, max: this.mt.max, onchange: this.onChange.bind(this)}),
-          ]),
-          EL('mqtt-choosetopic', {name: this.mt.name, type: this.mt.type, value: this.mt.wired, rw: (this.mt.rw === 'r' ? 'w' : 'r'), project: this.mt.project, onchange: this.onwiredchange.bind(this)})
+      EL('div', {},
+        this.mt.rw === 'r'
+        ? [
+          this.mt.wireable
+            ? // rw==r && wireable
+            EL('details', {} , [
+              EL('summary', {}, [
+                this.renderLabel(),
+                this.mt.wired
+                ? [
+                  this.renderValue(this.state.value),
+                  this.renderWiredName(wiredTopic),
+                  ]
+                : this.renderValue(this.state.value),
+              ]),
+              this.renderDropdown(),
+            ])
+          : [
+            this.renderLabel(),
+            this.renderValue(this.state.value),
+            ]
+        ] : [ // rw==='w'
+          this.mt.wireable
+          ? // rw==w && wireable
+            EL('details', {} , [
+              EL('summary', {}, [
+                this.renderLabel(),
+                this.mt.wired
+                  ? [
+                    this.renderValue(wiredTopicValue),
+                    this.renderWiredName(wiredTopic),
+                    ]
+                  : this.renderInput(),
+              ]),
+              this.renderDropdown(),
+            ])
+          : [ // rw==w !wireable
+              this.renderLabel(),
+              this.renderInput(),
+            ]
         ])
-      ])
     ]
   }
 }
