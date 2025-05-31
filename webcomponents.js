@@ -210,7 +210,7 @@ class MqttTopic {
     return this.node.mt.topicPath + "/set/" + this.twig;
   }
   get topicWiredPath() {
-    return this.topicSetPath + "/wired";
+    return this.topicSetPath + "/wire"; // Path to set wired valu
   }
   get topicSubscribePath() {
     if (this.element && this.element.isNode) {
@@ -233,7 +233,7 @@ class MqttTopic {
       // noinspection JSUnresolvedReference
       switch (this.display) {
         case 'toggle':
-          el = EL('mqtt-toggle', {}, [name]);
+          el = EL('mqtt-toggle', {});
           this.retain = true;
           this.qos = 1;
           break;
@@ -728,6 +728,75 @@ class MqttReceiver extends MqttElement {
   opengraph(e) {
     this.mt.createGraph();
   }
+  onwiredchange(e) {
+    this.mt.wired = e.target.value;
+    let newPath = e.target.value;
+    if ((this.mt.rw === 'r') && e.target.value) {
+      let parts = e.target.value.split("/");
+      parts.splice(3,0,"set");
+      newPath = parts.join("/");
+    }
+    this.mt.publishWired(newPath);
+    this.renderAndReplace();
+  }
+  renderLabel() {
+    return EL('label', {for: this.mt.topicPath, textContent: this.mt.name});
+  }
+  renderWiredName(wiredTopic) {
+    let wiredTopicName = wiredTopic ? `${wiredTopic.node.usableName}:${wiredTopic.name}` : undefined;
+    return EL('span', {class: 'wired', textContent: wiredTopicName})
+  }
+  renderDropdown() {
+    return EL('mqtt-choosetopic', {name: this.mt.name, type: this.mt.type, value: this.mt.wired, rw: (this.mt.rw === 'r' ? 'w' : 'r'), project: this.mt.project, onchange: this.onwiredchange.bind(this)});
+  }
+  renderMaybeWired() {
+    let wiredTopic = this.mt.wired ? this.mt.project.findTopic(this.mt.wired) : undefined;
+    let wiredTopicValue = wiredTopic ? wiredTopic.element.state.value.toString() : undefined; // TODO-130 maybe error prone if value can be undefined
+    return [
+      EL('link', {rel: 'stylesheet', href: CssUrl}),
+      EL('div', {},
+        this.mt.rw === 'r'
+          ? [
+            this.mt.wireable
+              ? // rw==r && wireable
+              EL('details', {} , [
+                EL('summary', {}, [
+                  this.renderLabel(),
+                  this.mt.wired
+                    ? [
+                      this.renderValue(this.state.value),
+                      this.renderWiredName(wiredTopic),
+                    ]
+                    : this.renderValue(this.state.value),
+                ]),
+                this.renderDropdown(),
+              ])
+              : [
+                this.renderLabel(),
+                this.renderValue(this.state.value),
+              ]
+          ] : [ // rw==='w'
+            this.mt.wireable
+              ? // rw==w && wireable
+              EL('details', {} , [
+                EL('summary', {}, [
+                  this.renderLabel(),
+                  this.mt.wired
+                    ? [
+                      this.renderValue(wiredTopicValue),
+                      this.renderWiredName(wiredTopic),
+                    ]
+                    : this.renderInput(),
+                ]),
+                this.renderDropdown(),
+              ])
+              : [ // rw==w !wireable
+                this.renderLabel(),
+                this.renderInput(),
+              ]
+          ])
+    ]
+  }
 }
 
 class MqttTransmitter extends MqttReceiver {
@@ -750,82 +819,16 @@ class MqttText extends MqttTransmitter {
     this.state.value = e.target.valueAsNumber; // Number - TODO-130 check if works as float // TODO make work for stuff other than numbers e.g. text
     this.publish();
   }
-  onwiredchange(e) {
-    this.mt.wired = e.target.value; // e.target.value is 'w' or 'r'
-    this.mt.publishWired(e.target.value);
-    this.renderAndReplace();
-  }
-  // Handle cases ....
-  // r/!wireable - text value
-  // r/wireable/!wired - text value + hidden dropdown NOT DONE YET
-  // r/wireable/wired - text value and wired topic name and hidden dropdown NOT DONE YET
-  // w/!wireable - input box with value
-  // w/wireable/!wired - input box with value + hidden dropdown
-  // w/wireable/wired - text value(from wire) and wired topic name and hidden dropdown
-
-  renderLabel() {
-    return EL('label', {for: this.mt.topicPath, textContent: this.mt.name});
-  }
   renderInput() {
     return EL('input', {id: this.mt.topicPath, name: this.mt.topicPath, value: this.state.value, type: "number", min: this.mt.min, max: this.mt.max, onchange: this.onChange.bind(this)});
   }
   renderValue(val) {
     return EL('span',{textContent: val || ""});
   }
-  renderWiredName(wiredTopic) {
-    let wiredTopicName = wiredTopic ? `${wiredTopic.node.usableName}:${wiredTopic.name}` : undefined;
-    return EL('span', {class: 'wired', textContent: wiredTopicName})
+  render() {
+    return this.renderMaybeWired();
   }
-  renderDropdown() {
-    return EL('mqtt-choosetopic', {name: this.mt.name, type: this.mt.type, value: this.mt.wired, rw: (this.mt.rw === 'r' ? 'w' : 'r'), project: this.mt.project, onchange: this.onwiredchange.bind(this)});
-  }
-render() {
-    let wiredTopic = this.mt.wired ? this.mt.project.findTopic(this.mt.wired) : undefined;
-    let wiredTopicValue = wiredTopic ? wiredTopic.element.state.value.toString() : undefined; // TODO-130 maybe error prone if value can be undefined
-    return [
-      EL('div', {},
-        this.mt.rw === 'r'
-        ? [
-          this.mt.wireable
-            ? // rw==r && wireable
-            EL('details', {} , [
-              EL('summary', {}, [
-                this.renderLabel(),
-                this.mt.wired
-                ? [
-                  this.renderValue(this.state.value),
-                  this.renderWiredName(wiredTopic),
-                  ]
-                : this.renderValue(this.state.value),
-              ]),
-              this.renderDropdown(),
-            ])
-          : [
-            this.renderLabel(),
-            this.renderValue(this.state.value),
-            ]
-        ] : [ // rw==='w'
-          this.mt.wireable
-          ? // rw==w && wireable
-            EL('details', {} , [
-              EL('summary', {}, [
-                this.renderLabel(),
-                this.mt.wired
-                  ? [
-                    this.renderValue(wiredTopicValue),
-                    this.renderWiredName(wiredTopic),
-                    ]
-                  : this.renderInput(),
-              ]),
-              this.renderDropdown(),
-            ])
-          : [ // rw==w !wireable
-              this.renderLabel(),
-              this.renderInput(),
-            ]
-        ])
-    ]
-  }
+
 }
 customElements.define('mqtt-text', MqttText);
 
@@ -848,21 +851,28 @@ class MqttToggle extends MqttTransmitter {
     this.state.value = e.target.checked; // Boolean
     this.publish();
   }
+  // Handle cases ....
+  // r/!wireable - text value
+  // r/wireable/!wired - text value + hidden dropdown NOT DONE YET
+  // r/wireable/wired - text value and wired topic name and hidden dropdown NOT DONE YET
+  // w/!wireable - input box with value
+  // w/wireable/!wired - input box with value + hidden dropdown
+  // w/wireable/wired - text value(from wire) and wired topic name and hidden dropdown
 
+  // For Bool all same except:
+  // renderInput - checkbox with value
+  // renderValue - check mark if value true, empty if false
+
+  renderInput() {
+    return EL('input', {type: 'checkbox', id: this.mt.topicPath,
+      checked: !!this.state.value, indeterminate: typeof(this.state.value) == "undefined",
+      onchange: this.onChange.bind(this)});
+  }
+  renderValue(val) {
+    return EL('span',{textContent: val ? '✓' : '✗'}); // TODO-130 not showing indeterminate
+  }
   render() {
-    //this.state.changeable.addEventListener('change', this.onChange.bind(this));
-    return [
-      EL('link', {rel: 'stylesheet', href: CssUrl}),
-      EL('div', {},[
-        EL('input', {type: 'checkbox', id: 'checkbox'+ (++unique_id) ,
-          checked: !!this.state.value, indeterminate: typeof(this.state.value) == "undefined",
-          onchange: this.onChange.bind(this)}),
-        EL('img', {class: "icon", src: 'images/icon_graph.svg', onclick: this.opengraph.bind(this)}),
-        EL('label', {for: 'checkbox'+unique_id }, [
-          EL('slot', {}),
-        ]),
-      ]),
-    ];
+    return this.renderMaybeWired();
   }
 }
 customElements.define(  'mqtt-toggle', MqttToggle);
@@ -1040,14 +1050,6 @@ class MqttChooseTopic extends MqttElement {
     this.state.value = (val);
     this.renderAndReplace(); // TODO-130 could get smarter about setting with in span rather than rerender
   }
-  /*
-  onchangex(e) {
-    //console.log("Dropdown onchange");
-    this.state.value = e.target.value; // Want the value
-    //this.mt.publishWired(this.state.value);
-    //TODO-130 probably call this element's onchange - presuming set
-  }
-*/
   render() {
     // noinspection JSUnresolvedReference
     return !this.isConnected ? null : [
