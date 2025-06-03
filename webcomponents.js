@@ -147,6 +147,33 @@ function mqtt_subscribe(topic, cb) { // cb(message)
 // See https://www.chartjs.org/docs/latest/samples/line/segments.html
 const skipped = (ctx, value) => ctx.p0.skip || ctx.p1.skip ? value : undefined;
 
+let languages = yaml.load(`
+#Language configuration - will be read from files at some point
+EN:
+  _thisLanguage: English
+  preferedLanguage: Prefered language
+  test: Test text
+  test2: More test text
+FR:
+  _thisLanguage: French
+  preferedLanguage: lang prefere
+  test: je teste
+  test2: je deteste
+`);
+
+function preferedLanguages() { return ["FR","D"]; } // TODO-34 pick up a global, remember it etc
+
+function getString(tag) {
+  for (let lang of preferedLanguages()) {
+    let foo
+    if (foo = languages[lang] && languages[lang][tag]) {
+      return foo;
+    }
+    return (languages.EN[tag] || "???" + tag + "???");
+  }
+}
+console.log(getString("preferedLanguage"), ": ", getString("_thisLanguage"));
+
 class Watchdog {
   constructor(el) {
     this.el = el;
