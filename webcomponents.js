@@ -151,14 +151,76 @@ let languages = yaml.load(`
 #Language configuration - will be read from files at some point
 EN:
   _thisLanguage: English
+  connect: connect
+  Not Selected: Not Selected
+  Organization: Organization
+  Password: Password
+  Please login: Please login
   preferedLanguage: Prefered language
-  test: Test text
-  test2: More test text
+  Register: Register
+  server: server
+  Sign In: Sign In
+  Submit: Submit
+  Username: Username
+  connecting: connecting
+  Project: Project
+  offline: offline
+  close: close
+  reconnect: reconnect
 FR:
-  _thisLanguage: French
+  _thisLanguage: Francaise
+  close: fermer
+  connect: connecter
+  connecting: connexion
+  Not selected: Non sélectionné
+  offline: hors ligne
+  Organization: Organisation
+  Password: Mot de passe
+  Please login: Veuillez vous connecter
   preferedLanguage: lang prefere
-  test: je teste
-  test2: je deteste
+  Project: Projet
+  reconnect: reconnecter
+  Register: Registre
+  server: serveur
+  Sign In: Se connecter
+  Submit: Soumettre
+  Username: Nom de User
+HI:
+  _thisLanguage: हिंदी
+  close: बंद करें
+  connect: कनेक्ट करें
+  connecting: कनेक्ट हो रहा है
+  Not Selected: चयनित नहीं
+  offline: ऑफ़लाइन
+  Organization: संगठन
+  Password: पासवर्ड
+  Please login: कृपया लॉगिन करें
+  preferedLanguage: पसंदीदा भाषा
+  reconnect: पुनः कनेक्ट करें
+  Register: पंजीकरण करें
+  server: सर्वर
+  Sign In: साइन इन करें
+  Submit: जमा करें
+  Username: उपयोगकर्ता नाम
+  Project: परियोजना
+ID:
+  _thisLanguage: Bahasa Indonesia
+  close: tutup
+  connect: sambungkan
+  connecting: menghubungkan
+  Not Selected: Tidak dipilih
+  offline: offline
+  Organization: Organisasi
+  Password: Kata Sandi
+  Please login: Silakan masuk
+  preferedLanguage: Bahasa yang dipilih
+  Project: Proyek
+  reconnect: sambungkan kembali
+  Register: Daftar
+  server: server
+  Sign In: Masuk
+  Submit: Kirim
+  Username: Nama Pengguna
 `);
 
 function preferedLanguages() { return ["FR","D"]; } // TODO-34 pick up a global, remember it etc
@@ -169,14 +231,40 @@ function getString(tag) {
     if (foo = languages[lang] && languages[lang][tag]) {
       return foo;
     }
-    return (languages.EN[tag] || "???" + tag + "???");
+    console.log("Cannot translate ", tag, ' into ', lang);
+    return (languages.EN[tag] || tag);
   }
 }
 console.log(getString("preferedLanguage"), ": ", getString("_thisLanguage"));
 
+let i8ntags = {
+  label: ["textContent"],
+  button: ["textContent"],
+  span: ["textContent"],
+  option: ["textContent"],
+}
+// Local version of EL
+function el(tag, attributes = {}, children) {
+  //console.log(attributes);
+  if (attributes['i8n'] != false) { // Add i8n: false if know the field is untranslateable (e.g. a name)
+    Object.entries(attributes)
+      .filter(([k, v]) => i8ntags[tag] && i8ntags[tag].includes(k))
+      .filter(([k, v]) => (
+        v &&
+        !v.includes(':') &&  // e.g.  dev: Development
+        !v.includes('/') && // e.g. dev/developers
+        'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'.includes(v[0])
+      ))
+      .forEach(([k, v]) => {
+        attributes[k] = getString(v)
+      });
+  }
+  return EL(tag, attributes, children);
+}
+
 class Watchdog {
-  constructor(el) {
-    this.el = el;
+  constructor(elx) {
+    this.elx = elx;
     this.latest = Date.now();
     this.offlineAfter = undefined;
     this.count = 3; // How many times latest before consider offline
@@ -190,7 +278,7 @@ class Watchdog {
     this.timer = setTimeout(this.offline.bind(this), this.offlineAfter);
   }
   offline() {
-    this.el.offline();
+    this.elx.offline();
   }
 }
 
@@ -260,33 +348,33 @@ class MqttTopic {
       // noinspection JSUnresolvedReference
       switch (this.display) {
         case 'toggle':
-          el = EL('mqtt-toggle', {});
+          elx = el('mqtt-toggle', {});
           this.retain = true;
           this.qos = 1;
           break;
         case 'bar':
           // noinspection JSUnresolvedReference
-          el = EL('mqtt-bar', {max: this.max, min: this.min, color: this.color}, []);
+          elx = el('mqtt-bar', {max: this.max, min: this.min, color: this.color}, []);
           break;
         case 'gauge':
-          el = EL('mqtt-gauge', {max: this.max, min: this.min, color: this.color}, []);
+          elx = el('mqtt-gauge', {max: this.max, min: this.min, color: this.color}, []);
           break;
         case 'text':
-          el = EL('mqtt-text', {}, []);
+          elx = el('mqtt-text', {}, []);
           break;
         case 'slider':
           //TODO-130 testing use of text - without changing node
-          el = EL('mqtt-text', {}, []);
+          elx = el('mqtt-text', {}, []);
           /*
           // noinspection JSUnresolvedReference
           // TODO possibly deprecate this
-          el = EL('mqtt-slider', {min: this.min, max: this.max, value: (this.max + this.min) / 2}, [
-            EL('span', {textContent: "△"}, []),
+          elx = el('mqtt-slider', {min: this.min, max: this.max, value: (this.max + this.min) / 2}, [
+            el('span', {textContent: "△"}, []),
           ]);
            */
           break;
         case 'inputbox':
-          el = EL('mqtt-inputbox', {}, []);
+          elx = el('mqtt-inputbox', {}, []);
           this.retain = true;
           this.qos = 1; // This message needs to get through to node
           break;
@@ -294,8 +382,8 @@ class MqttTopic {
           // noinspection JSUnresolvedReference
           console.log("do not know how to display a ", this.display);
       }
-      if (el) el.mt = this;
-      this.element = el;
+      if (elx) elx.mt = this;
+      this.element = elx;
     }
     return this.element;
   }
@@ -413,7 +501,7 @@ class MqttTopic {
     if (!this.graphdataset) {
       let nodename = this.node ? this.node.state.name : "";
       // noinspection JSUnresolvedReference
-      this.graphdataset = EL('mqtt-graphdataset', {
+      this.graphdataset = el('mqtt-graphdataset', {
         // noinspection JSUnresolvedReference
         name: this.name,
         type: this.type,
@@ -600,12 +688,14 @@ class MqttClient extends HTMLElementExtended {
   // TODO-86 display some more about the client and its status, but probably under an "i"nfo button on Org
   render() {
     return [
-      EL('link', {rel: 'stylesheet', href: CssUrl}),
-      EL('details', {class: 'mqtt-client'},[
-        EL('summary', {}, [
-          EL('span', {class: 'status', textContent: this.state.status}),
+      el('link', {rel: 'stylesheet', href: CssUrl}),
+      el('details', {class: 'mqtt-client'},[
+        el('summary', {}, [
+          el('span', {class: 'status', textContent: this.state.status}),
             ]),
-        EL('span',{class: 'demo', textContent: "server: "+this.state.server}),
+        el('span',{textContent: "server"}),
+        el('span',{textContent: ": "}),
+        el('span',{textContent: this.state.server}),
       ]),
     ];
   }
@@ -629,45 +719,45 @@ class MqttLogin extends HTMLElementExtended { // TODO-89 may depend on organizat
     // TODO-89 organization should be dropdown
     // TODO-89 merge login & register
     return [
-      EL('link', {rel: 'stylesheet', href: CssUrl}),
-      EL('div', {class: 'mqtt-login'},[
-        EL('div',{class: 'message'},[
-          EL('span', {textContent: this.state.message}),
+      el('link', {rel: 'stylesheet', href: CssUrl}),
+      el('div', {class: 'mqtt-login'},[
+        el('div',{class: 'message'},[
+          el('span', {textContent: this.state.message}),
         ]),
-        EL('section', {class: 'tabs'}, [
-          EL('button', {class: 'tab' + (!this.state.register ? ' active' : ' inactive'), onclick: this.tabRegister.bind(this, false), textContent: "Sign In"}),
-          EL('button', {class: 'tab' + (this.state.register ? ' active' : ' inactive'), onclick: this.tabRegister.bind(this, true), textContent: "Register"}),
+        el('section', {class: 'tabs'}, [
+          el('button', {class: 'tab' + (!this.state.register ? ' active' : ' inactive'), onclick: this.tabRegister.bind(this, false), textContent: "Sign In"}),
+          el('button', {class: 'tab' + (this.state.register ? ' active' : ' inactive'), onclick: this.tabRegister.bind(this, true), textContent: "Register"}),
         ]),
-        EL('form', {action:  (this.state.register ? '/register' : '/login'), method: "post"}, [
-          EL('section', {}, [
-            EL('label', {for: "username", textContent: "Username"}),
-            EL('input', {id: "username", name: "username", type: "text", autocomplete: "username", required: true, autofocus: true}),
+        el('form', {action:  (this.state.register ? '/register' : '/login'), method: "post"}, [
+          el('section', {}, [
+            el('label', {for: "username", textContent: 'Username'}),
+            el('input', {id: "username", name: "username", type: "text", autocomplete: "username", required: true, autofocus: true}),
           ]),
-          EL('section', {}, [
-            EL('label', {for: "password", textContent: "Password"}),
-            EL('input', {id: "password", name: "password", type: "password", autocomplete: "current-password", required: true}),
+          el('section', {}, [
+            el('label', {for: "password", textContent: "Password"}),
+            el('input', {id: "password", name: "password", type: "password", autocomplete: "current-password", required: true}),
           ]),
           // TODO-22 organization should be a drop-down
           !this.state.register ? null : [
-            EL('section', {}, [
-              EL('label', {for: "organization", textContent: "Organization"}),
-              EL('input', {id: "organization", name: "organization", type: "text", autocomplete: "organization", required: true}),
+            el('section', {}, [
+              el('label', {for: "organization", textContent: "Organization"}),
+              el('input', {id: "organization", name: "organization", type: "text", autocomplete: "organization", required: true}),
             ]),
-            EL('section', {}, [
-              EL('label', {for: "name", textContent: "Name"}),
-              EL('input', {id: "name", name: "name", type: "text", autocomplete: "name", required: true}),
+            el('section', {}, [
+              el('label', {for: "name", textContent: "Name"}),
+              el('input', {id: "name", name: "name", type: "text", autocomplete: "name", required: true}),
             ]),
-            EL('section', {}, [
-              EL('label', {for: "email", textContent: "Email"}),
-              EL('input', {id: "email", name: "email", type: "text", autocomplete: "email", required: true}),
+            el('section', {}, [
+              el('label', {for: "email", textContent: "Email"}),
+              el('input', {id: "email", name: "email", type: "text", autocomplete: "email", required: true}),
             ]),
-            EL('section', {}, [
-              EL('label', {for: "phone", textContent: "Phone or Whatsapp"}),
-              EL('input', {id: "phone", name: "phone", type: "text", autocomplete: "phone", required: true}),
+            el('section', {}, [
+              el('label', {for: "phone", textContent: "Phone or Whatsapp"}),
+              el('input', {id: "phone", name: "phone", type: "text", autocomplete: "phone", required: true}),
             ]),
           ],
-          EL('input', {id: "url", name: "url", type: "hidden", value: this.state.url}),
-          EL('button', {class: "submit", type: "submit",
+          el('input', {id: "url", name: "url", type: "hidden", value: this.state.url}),
+          el('button', {class: "submit", type: "submit",
             textContent: (this.state.register ? 'Submit' : 'Submit')}),
           ]),
       ]),
@@ -767,27 +857,27 @@ class MqttReceiver extends MqttElement {
     this.renderAndReplace();
   }
   renderLabel() {
-    return EL('label', {for: this.mt.topicPath, textContent: this.mt.name});
+    return el('label', {for: this.mt.topicPath, textContent: this.mt.name});
   }
   renderWiredName(wiredTopic) {
     let wiredTopicName = wiredTopic ? `${wiredTopic.node.usableName}:${wiredTopic.name}` : undefined;
-    return EL('span', {class: 'wired', textContent: wiredTopicName})
+    return el('span', {class: 'wired', textContent: wiredTopicName})
   }
   renderDropdown() {
-    return EL('mqtt-choosetopic', {name: this.mt.name, type: this.mt.type, value: this.mt.wired, rw: (this.mt.rw === 'r' ? 'w' : 'r'), project: this.mt.project, onchange: this.onwiredchange.bind(this)});
+    return el('mqtt-choosetopic', {name: this.mt.name, type: this.mt.type, value: this.mt.wired, rw: (this.mt.rw === 'r' ? 'w' : 'r'), project: this.mt.project, onchange: this.onwiredchange.bind(this)});
   }
   renderMaybeWired() {
     let wiredTopic = this.mt.wired ? this.mt.project.findTopic(this.mt.wired) : undefined;
     let wiredTopicValue = wiredTopic ? wiredTopic.element.state.value.toString() : undefined; // TODO-130 maybe error prone if value can be undefined
     return [
-      EL('link', {rel: 'stylesheet', href: CssUrl}),
-      EL('div', {},
+      el('link', {rel: 'stylesheet', href: CssUrl}),
+      el('div', {},
         this.mt.rw === 'r'
           ? [
             this.mt.wireable
               ? // rw==r && wireable
-              EL('details', {} , [
-                EL('summary', {}, [
+              el('details', {} , [
+                el('summary', {}, [
                   this.renderLabel(),
                   this.mt.wired
                     ? [
@@ -805,8 +895,8 @@ class MqttReceiver extends MqttElement {
           ] : [ // rw==='w'
             this.mt.wireable
               ? // rw==w && wireable
-              EL('details', {} , [
-                EL('summary', {}, [
+              el('details', {} , [
+                el('summary', {}, [
                   this.renderLabel(),
                   this.mt.wired
                     ? [
@@ -847,10 +937,10 @@ class MqttText extends MqttTransmitter {
     this.publish();
   }
   renderInput() {
-    return EL('input', {id: this.mt.topicPath, name: this.mt.topicPath, value: this.state.value, type: "number", min: this.mt.min, max: this.mt.max, onchange: this.onChange.bind(this)});
+    return el('input', {id: this.mt.topicPath, name: this.mt.topicPath, value: this.state.value, type: "number", min: this.mt.min, max: this.mt.max, onchange: this.onChange.bind(this)});
   }
   renderValue(val) {
-    return EL('span',{textContent: val || ""});
+    return el('span',{textContent: val || ""});
   }
   render() {
     return this.renderMaybeWired();
@@ -891,12 +981,12 @@ class MqttToggle extends MqttTransmitter {
   // renderValue - check mark if value true, empty if false
 
   renderInput() {
-    return EL('input', {type: 'checkbox', id: this.mt.topicPath,
+    return el('input', {type: 'checkbox', id: this.mt.topicPath,
       checked: !!this.state.value, indeterminate: typeof(this.state.value) == "undefined",
       onchange: this.onChange.bind(this)});
   }
   renderValue(val) {
-    return EL('span',{textContent: val ? '✓' : '✗'}); // TODO-130 not showing indeterminate
+    return el('span',{textContent: val ? '✓' : '✗'}); // TODO-130 not showing indeterminate
   }
   render() {
     return this.renderMaybeWired();
@@ -921,21 +1011,21 @@ class MqttBar extends MqttReceiver {
     let width = 100*(this.state.value-this.state.min)/(this.state.max-this.state.min);
     // noinspection JSUnresolvedReference
     return !(this.isConnected && this.mt) ? null : [
-      EL('link', {rel: 'stylesheet', href: CssUrl}),
-      EL('div', {class: "outer mqtt-bar"}, [
+      el('link', {rel: 'stylesheet', href: CssUrl}),
+      el('div', {class: "outer mqtt-bar"}, [
 
-        EL('div', {class: "name"}, [
-          EL('label', {for: this.mt.topicPath, textContent: this.mt.name}),
-          EL('img', {class: "icon", src: 'images/icon_graph.svg', onclick: this.opengraph.bind(this)}),
+        el('div', {class: "name"}, [
+          el('label', {for: this.mt.topicPath, textContent: this.mt.name}),
+          el('img', {class: "icon", src: 'images/icon_graph.svg', onclick: this.opengraph.bind(this)}),
         ]),
-        EL('div', {class: "bar", id: this.mt.topicPath},[
-          EL('span', {class: "left", style: `width:${width}%; background-color:${this.state.color};`},[
-            EL('span', {class: "val", textContent: this.state.value}),
+        el('div', {class: "bar", id: this.mt.topicPath},[
+          el('span', {class: "left", style: `width:${width}%; background-color:${this.state.color};`},[
+            el('span', {class: "val", textContent: this.state.value}),
           ]),
           //Do not appear to need this - and it sometimes wraps, so if re-enable, need to make sure always horiz next to left
-          //EL('span', {class: "right", style: "width:"+(100-width)+"%"}),
+          //el('span', {class: "right", style: "width:"+(100-width)+"%"}),
         ]),
-        EL('slot',{}), // Children would be a setpoint, but not using currently
+        el('slot',{}), // Children would be a setpoint, but not using currently
       ]),
     ];
   }
@@ -959,9 +1049,9 @@ class MqttGauge extends MqttReceiver {
     //this.state.changeable.addEventListener('change', this.onChange.bind(this));
     //let width = 100*(this.state.value-this.state.min)/(this.state.max-this.state.min);
     return !(this.isConnected && this.mt) ? null : [
-      EL('link', {rel: 'stylesheet', href: CssUrl}),
-      EL('div', {class: "outer mqtt-gauge"}, [
-        this.dg = EL('dial-gauge', {
+      el('link', {rel: 'stylesheet', href: CssUrl}),
+      el('div', {class: "outer mqtt-gauge"}, [
+        this.dg = el('dial-gauge', {
           "main-title": this.mt.name,
           "sub-title": "",
           "scale-start": this.state.min,
@@ -970,7 +1060,7 @@ class MqttGauge extends MqttReceiver {
           "scale-offset": 45,
           "style": `--dg-arc-color:${this.state.color}`,
         }),
-        EL('img', {class: "icon", src: 'images/icon_graph.svg', onclick: this.opengraph.bind(this)}),
+        el('img', {class: "icon", src: 'images/icon_graph.svg', onclick: this.opengraph.bind(this)}),
       ]),
     ];
   }
@@ -1034,17 +1124,17 @@ class MqttSlider extends MqttTransmitter {
   render() {
     if ((!this.slider) && (this.children.length > 0)) {
       // Build once as don't want re-rendered - but do not render till after children added (end of EL)
-      this.thumb = EL('div', {class: "setpoint"}, this.children);
-      this.slider = EL('div', {class: "pointbar",},[this.thumb]);
+      this.thumb = el('div', {class: "setpoint"}, this.children);
+      this.slider = el('div', {class: "pointbar",},[this.thumb]);
       this.slider.onmousedown = this.onmousedown.bind(this);
     }
     return !this.isConnected ? null : [
-      EL('link', {rel: 'stylesheet', href: CssUrl}),
-      EL('div', {class: "mqtt-slider outer"}, [
-        EL('div', {class: "name"}, [ //TODO maybe use a label
+      el('link', {rel: 'stylesheet', href: CssUrl}),
+      el('div', {class: "mqtt-slider outer"}, [
+        el('div', {class: "name"}, [ //TODO maybe use a label
           // noinspection JSUnresolvedReference
-          EL('span', {textContent: this.mt.name}),
-          EL('span', {class: "val", textContent: this.state.value}), // TODO restrict number of DP
+          el('span', {textContent: this.mt.name}),
+          el('span', {class: "val", textContent: this.state.value}), // TODO restrict number of DP
         ]),
         this.slider,  // <div.setpoint><child></div
       ])
@@ -1080,13 +1170,13 @@ class MqttChooseTopic extends MqttElement {
   render() {
     // noinspection JSUnresolvedReference
     return !this.isConnected ? null : [
-      EL('link', {rel: 'stylesheet', href: CssUrl}),
-      EL('div', {class: 'outer mqtt-choosetopic'}, [
-        EL('label', {for: 'choosetopic' + (++unique_id), textContent: name}),
-        EL('select', {id: 'choosetopic' + unique_id, onchange: this.onchange}, [
-          EL('option', {value: "", textContent: "Unused", selected: !this.state.value}),
+      el('link', {rel: 'stylesheet', href: CssUrl}),
+      el('div', {class: 'outer mqtt-choosetopic'}, [
+        el('label', {for: 'choosetopic' + (++unique_id), textContent: name}),
+        el('select', {id: 'choosetopic' + unique_id, onchange: this.onchange}, [
+          el('option', {value: "", textContent: "Unused", selected: !this.state.value}),
           this.findTopics().map( t => // { name, type etc. }
-            EL('option', {value: t.topic, textContent: t.name, selected: t.topic === this.state.value}),
+            el('option', {value: t.topic, textContent: t.name, selected: t.topic === this.state.value}),
           ),
         ]),
       ]),
@@ -1123,7 +1213,7 @@ class MqttWrapper extends HTMLElementExtended {
 
   message(msg) {
     console.error(msg);
-    this.append(EL('div', {class: 'message', textContent: msg}));
+    this.append(el('div', {class: 'message', textContent: msg}));
   }
   onOrganization(e) {
     this.state.organization = e.target.value;
@@ -1147,13 +1237,13 @@ class MqttWrapper extends HTMLElementExtended {
     // TODO-security but that should be trivial if only ever display one org
     // noinspection JSUnresolvedReference
     this.append(
-      EL('mqtt-client', {slot: 'client', server: server_config.mqtt.broker}) // typically "wss://frugaliot.naturalinnovation.org/wss"
+      el('mqtt-client', {slot: 'client', server: server_config.mqtt.broker}) // typically "wss://frugaliot.naturalinnovation.org/wss"
     )
   }
   addProject(discover) {
     let twig = `${this.state.organization}/${this.state.project}`;
     // noinspection JSUnresolvedReference
-    let elProject = EL('mqtt-project', {discover, id: this.state.project, name: server_config.organizations[this.state.organization].projects[this.state.project].name }, []);
+    let elProject = el('mqtt-project', {discover, id: this.state.project, name: server_config.organizations[this.state.organization].projects[this.state.project].name }, []);
     // The project's topic watches for discover packets for nodes
     let mt = new MqttTopic();
     mt.initialize({
@@ -1186,24 +1276,24 @@ class MqttWrapper extends HTMLElementExtended {
         if (!this.state.organization) { // !n !p !o
           // noinspection JSUnresolvedReference
           this.append(
-            EL('div', {class: 'dropdown'}, [
-              EL('label', {for: 'organizations', textContent: "Organization"}),
-              EL('select', {id: 'organizations', onchange: this.onOrganization.bind(this)}, [
-                EL('option', {value: "", textContent: "Not selected", selected: !this.state.value}),
+            el('div', {class: 'dropdown'}, [
+              el('label', {for: 'organizations', textContent: "Organization"}),
+              el('select', {id: 'organizations', onchange: this.onOrganization.bind(this)}, [
+                el('option', {value: "", textContent: "Not selected", selected: !this.state.value}),
                 Object.entries(server_config.organizations).map( ([oid, o]) =>
-                  EL('option', {value: oid, textContent: `${oid}: ${o.name}`, selected: false}),
+                  el('option', {value: oid, textContent: `${oid}: ${o.name}`, selected: false}),
                 ),
               ]),
             ]));
         } else { // !n !p o  // TODO-69 maybe this should be a blank project ?
           // noinspection JSUnresolvedReference
           this.append( this.state.projectEl =
-            EL('div', {class: 'dropdown'}, [
-              EL('label', {for: 'projects', textContent: "Project"}),
-              EL('select', {id: 'projects', onchange: this.onProject.bind(this)}, [
-                EL('option', {value: "", textContent: "Not selected", selected: !this.state.value}),
+            el('div', {class: 'dropdown'}, [
+              el('label', {for: 'projects', textContent: "Project"}),
+              el('select', {id: 'projects', onchange: this.onProject.bind(this)}, [
+                el('option', {value: "", textContent: "Not selected", selected: !this.state.value}),
                 Object.entries(server_config.organizations[this.state.organization].projects).map(([pid,p]) =>
-                  EL('option', {value: pid, textContent: (p.name ? `${pid}: ${p.name}` : pid), selected: false})
+                  el('option', {value: pid, textContent: (p.name ? `${pid}: ${p.name}` : pid), selected: false})
                 ),
               ]),
             ]));
@@ -1247,10 +1337,10 @@ class MqttWrapper extends HTMLElementExtended {
   }
   render() {
     return [
-      EL('link', {rel: 'stylesheet', href: CssUrl}),
-      EL('div', {class: 'outer mqtt-wrapper'}, [
-        EL('slot', {name: 'client'}),
-        EL('slot'),
+      el('link', {rel: 'stylesheet', href: CssUrl}),
+      el('div', {class: 'outer mqtt-wrapper'}, [
+        el('slot', {name: 'client'}),
+        el('slot'),
       ]),
     ];
 
@@ -1268,7 +1358,7 @@ class MqttProject extends MqttReceiver {
 
   addNode(id) {
     let topicPath = `${this.mt.topicPath}/${id}`;
-    let elNode = EL('mqtt-node', {id, topic: topicPath, discover: this.state.discover},[]);
+    let elNode = el('mqtt-node', {id, topic: topicPath, discover: this.state.discover},[]);
     this.state.nodes[id] = elNode;
     let mt = new MqttTopic();
     mt.initialize({
@@ -1318,14 +1408,14 @@ class MqttProject extends MqttReceiver {
   }
   render() {
     return  !this.isConnected ? null : [
-      EL('link', {rel: 'stylesheet', href: CssUrl}),
-      EL('div', {class: "outer mqtt-project"}, [
-        EL('div', {class: "title"},[
-          EL('span',{class: 'projectname', textContent: this.mt.twig }), // twig should be e.g. dev/lotus
-          EL('span',{class: 'name', textContent: this.state.name}),
+      el('link', {rel: 'stylesheet', href: CssUrl}),
+      el('div', {class: "outer mqtt-project"}, [
+        el('div', {class: "title"},[
+          el('span',{class: 'projectname', textContent: this.mt.twig }), // twig should be e.g. dev/lotus
+          el('span',{class: 'name', i8n: false, textContent: this.state.name}),
         ]),
-        EL('div', {class: "nodes"},[
-          EL('slot', {}),
+        el('div', {class: "nodes"},[
+          el('slot', {}),
         ]),
       ])
     ];
@@ -1364,9 +1454,9 @@ class MqttNode extends MqttReceiver {
   }
   appendGroup(t) { // t = { group, name }
     if (!this.groups[t.group]) {
-      this.groups[t.group] = EL('details', {class: `group ${t.group}`}, [
-        EL('summary',{},[
-          EL('span', {textContent: t.name || t.group}),
+      this.groups[t.group] = el('details', {class: `group ${t.group}`}, [
+        el('summary',{},[
+          el('span', {textContent: t.name || t.group}),
         ])
       ]);
       this.append(this.groups[t.group]);
@@ -1414,19 +1504,19 @@ class MqttNode extends MqttReceiver {
           mt.fromDiscovery(t, this);
           this.state.topics[t.topic] = mt;
           // mt.subscribe(); Node will forward to sub topics
-          let el = mt.createElement();
+          let elx = mt.createElement();
           if (['battery','ledbuiltin'].includes(mt.leaf)) { // TODO-30 parameterize this
             // noinspection JSCheckFunctionSignatures
-            el.setAttribute('slot', mt.leaf);
+            elx.setAttribute('slot', mt.leaf);
           }
           // noinspection JSUnresolvedReference
           if (mt.group) {
             // noinspection JSUnresolvedReference
             this.appendGroup({group: mt.group}); // Check it exists and if not create it
             // noinspection JSUnresolvedReference
-            this.groups[mt.group].append(el);
+            this.groups[mt.group].append(elx);
           } else {
-            this.append(el);
+            this.append(elx);
           }
         }
       });
@@ -1437,8 +1527,8 @@ class MqttNode extends MqttReceiver {
         .map(n => Object.values(n.state.topics))
         .flat(1)
         .map(t => t.element)
-        .filter(el => (el instanceof MqttChooseTopic))
-        .forEach(el => el.renderAndReplace());
+        .filter(elx => (elx instanceof MqttChooseTopic))
+        .forEach(elx => elx.renderAndReplace());
       return true; // because change name description etc.
     } else {
       return false;
@@ -1461,24 +1551,24 @@ class MqttNode extends MqttReceiver {
   }
   render() {
     return !this.isConnected ? null : [
-      EL('link', {rel: 'stylesheet', href: CssUrl}),
-      this.state.outerDiv = EL('div', {class: 'outer mqtt-node'+((this.state.online) ? '' : ' offline')}, [
-        EL('details', {},[
-          EL('summary', {},[
-            EL('span',{class: 'name', textContent: this.state.name}),
-            EL('span',{class: 'nodeid', textContent: this.state.id}),
+      el('link', {rel: 'stylesheet', href: CssUrl}),
+      this.state.outerDiv = el('div', {class: 'outer mqtt-node'+((this.state.online) ? '' : ' offline')}, [
+        el('details', {},[
+          el('summary', {},[
+            el('span',{class: 'name', textContent: this.state.name}),
+            el('span',{class: 'nodeid', textContent: this.state.id}),
             //Starts off as 1px empty image, changed when battery message received
-            this.state.batteryIndicator = EL('img', {class: "batteryimg", src: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"}),
+            this.state.batteryIndicator = el('img', {class: "batteryimg", src: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"}),
           ]),
-          EL('span',{class: 'description', textContent: this.state.description}),
-          EL('slot', {name: 'lastseen', class: 'lastseen'}),
-          EL('div', {class: "health"},[
-            EL('slot',{name: 'ledbuiltin'}),
-            EL('slot',{name: 'battery'}),
+          el('span',{class: 'description', textContent: this.state.description}),
+          el('slot', {name: 'lastseen', class: 'lastseen'}),
+          el('div', {class: "health"},[
+            el('slot',{name: 'ledbuiltin'}),
+            el('slot',{name: 'battery'}),
           ]),
         ]),
-        EL('div', {class: "topics"},[
-          EL('slot', {}),
+        el('div', {class: "topics"},[
+          el('slot', {}),
         ]),
       ])
     ]
@@ -1501,7 +1591,7 @@ class MqttNode extends MqttReceiver {
       this.removeChild(this.state.lastSeenElement);
     }
     //TODO-113 could probably also do by replacing inner text if it flickers
-    this.state.lastSeenElement = EL('span', {slot: "lastseen", class: 'lastseen', textContent: lastseentime ? new Date(lastseentime).toLocaleString() : "Never seen"});
+    this.state.lastSeenElement = el('span', {slot: "lastseen", class: 'lastseen', textContent: lastseentime ? new Date(lastseentime).toLocaleString() : "Never seen"});
     this.append(this.state.lastSeenElement);
   }
 }
@@ -1531,7 +1621,7 @@ class MqttGraph extends MqttElement {
   }
   static get graph() { // TODO-46 probably belongs in MqttReceiver
     if (!graph) { // global
-      graph = EL('mqtt-graph');
+      graph = el('mqtt-graph');
       document.body.append(graph);
     }
     return graph;
@@ -1540,8 +1630,8 @@ class MqttGraph extends MqttElement {
   // Note - makeChart is really fussy, the canvas must be inside something with a size.
   // For some reason, this does not work by adding inside the render - i.e. to the virtual Dom.
   loadContent() {
-    this.canvas = EL('canvas');
-    this.append(EL('div', {slot: "chart", style: "width: 80vw; height: 60vw; position: relative;"},[this.canvas]));
+    this.canvas = el('canvas');
+    this.append(el('div', {slot: "chart", style: "width: 80vw; height: 60vw; position: relative;"},[this.canvas]));
     this.makeChart();
   }
   shouldLoadWhenConnected() {return true;}
@@ -1655,17 +1745,17 @@ class MqttGraph extends MqttElement {
   }
   render() {
     return ( [
-      EL('link', {rel: 'stylesheet', href: CssUrl}),
+      el('link', {rel: 'stylesheet', href: CssUrl}),
       // TODO see https://www.chartjs.org/docs/latest/configuration/responsive.html#important-note div should ONLY contain canvas
-      EL("div", {class: 'outer mqtt-graph'}, [
-        EL('div',{class: 'leftright'}, [
-          EL('div',{},[
-            this.state.imageLeft = EL('span', {class: "graphnavleft", textContent: "⬅︎", onclick: this.graphnavleft.bind(this)}),
-            EL('span', {class: "graphnavright", textContent: "↺", onclick: this.graphnavright.bind(this)}),
+      el("div", {class: 'outer mqtt-graph'}, [
+        el('div',{class: 'leftright'}, [
+          el('div',{},[
+            this.state.imageLeft = el('span', {class: "graphnavleft", textContent: "⬅︎", onclick: this.graphnavleft.bind(this)}),
+            el('span', {class: "graphnavright", textContent: "↺", onclick: this.graphnavright.bind(this)}),
           ]),
-          EL('slot', {name: "chart"}), // This is <div><canvas></div>
+          el('slot', {name: "chart"}), // This is <div><canvas></div>
         ]),
-        EL('slot', {}), // This is the slot where the GraphDatasets get stored
+        el('slot', {}), // This is the slot where the GraphDatasets get stored
       ])
     ] );
   }
@@ -1797,7 +1887,7 @@ class MqttGraphDataset extends MqttElement {
     return null; // Leave blank till can do something to control it
     /*
     return !this.isConnected ? null :
-      EL('span', { textContent: this.mt.name}); // TODO-46-line should be controls
+      el('span', { textContent: this.mt.name}); // TODO-46-line should be controls
      */
   }
 }
