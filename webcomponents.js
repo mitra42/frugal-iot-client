@@ -181,6 +181,7 @@ EN:
   Not selected: Not selected
   Now: Now
   offline: offline
+  On: On
   Organization: Organization
   Out: Out
   Password: Password
@@ -216,6 +217,7 @@ FR:
   Not selected: Non sélectionné
   Now: Maintenant
   offline: hors ligne
+  On: Allumé
   Organization: Organisation
   Out: Sortie
   Password: Mot de passe
@@ -251,6 +253,7 @@ HI:
   Not selected: चयनित नहीं
   Now: अभी
   offline: ऑफ़लाइन
+  On: चालू
   Organization: संगठन
   Out: आउट
   Password: पासवर्ड
@@ -286,6 +289,7 @@ ID:
   Not selected: Tidak dipilih
   Now: Sekarang
   offline: offline
+  On: Hidup
   Organization: Organisasi
   Out: Keluar
   Password: Kata Sandi
@@ -586,7 +590,7 @@ class MqttTopic {
         // noinspection JSUnresolvedReference
         color: this.color,  // May need to vary so not all e.g. humidity same color
         // noinspection JSUnresolvedReference
-        text: this.name.replace(/[0-9]+$/,''),
+        text: getString(this.name.replace(/[0-9]+$/,'')),
       },
       // noinspection JSUnresolvedReference
       min: ((this.type === 'bool') ? false : (this.min || 0)),
@@ -627,7 +631,7 @@ class MqttTopic {
         min: this.min,
         max: this.max,
         yaxisid: yaxisid,
-        label: `${nodename}:${this.name}`
+        label: `${getString(nodename)}:${getString(this.name)}`
       });
       this.graphdataset.mt = this;
     }
