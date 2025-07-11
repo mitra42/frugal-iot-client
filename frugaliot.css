@@ -1,7 +1,7 @@
 /* NOTES
- * Styling in webcomponents is tricky - to style something in the shadow-root i.e. built by "rensder"
+ * Styling in webcomponents is tricky - to style something in the shadow-root i.e. built by "render"
  * style the outside as e.g. class: "outer mqtt-xxx" and stylesheet has .mqtt-xxx .outer
- * style children intended to be shown via a slot as e.g class: foo and styhlesheet has mqtt-xxx .foo
+ * style children intended to be shown via a slot as e.g class: foo and stylesheet has mqtt-xxx .foo
  * the slotted children don't see the html they are inside, and the shadow root doesnt know its inside a <mqtt-xxx>
  */
 /* Multiple places */
@@ -10,6 +10,14 @@
     height:1em;width:1em;float:right;
     @media (max-width:1001px){
         height:1.5em;width:1.5em;
+    }
+}
+.language-picker, language-picker, .language-picker select {
+    float: right;
+    text-align: right;
+    border: 0px;
+    @media screen and (max-width: 1001px ) {
+        font-size: x-large;
     }
 }
 /* In MqttClient */

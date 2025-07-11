@@ -132,6 +132,21 @@ let server_config;
 
 /* Helpers of various kinds */
 
+// Move to a new location by just changing one parameter in the URL
+function locationParameterChange(name, value) {
+  const url = new URL(window.location.href);
+  url.searchParams.set(name, value); // Replace with desired param and value
+  const newUrlString = url.toString();
+  window.location = newUrlString;
+}
+// Remove v if present, then unshift to front
+function unshiftUnique(arr, v) {
+  const idx = arr.indexOf(v);
+  if (idx !== -1) arr.splice(idx, 1);
+  arr.unshift(v);
+  return arr;
+}
+
 // Subscribe to a topic (no wild cards as topic not passed to cb),
 function mqtt_subscribe(topic, cb) { // cb(message)
   console.log("Subscribing to ", topic);
@@ -151,91 +166,160 @@ let languages = yaml.load(`
 #Language configuration - will be read from files at some point
 EN:
   _thisLanguage: English
-  connect: connect
-  Not Selected: Not Selected
-  Organization: Organization
-  Password: Password
-  Please login: Please login
-  preferedLanguage: Prefered language
-  Register: Register
-  server: server
-  Sign In: Sign In
-  Submit: Submit
-  Username: Username
-  connecting: connecting
-  Project: Project
-  offline: offline
+  _nameAndFlag: English 🇬🇧
+  Built in LED: Built in LED
   close: close
+  connect: connect
+  connecting: connecting
+  Email: Email
+  Humidity: Humidity
+  Humidity control: Humidity control
+  Hysterisis: Hysterisis
+  Limit: Limit
+  Name: Name
+  Never seen: Never seen
+  Not selected: Not selected
+  Now: Now
+  offline: offline
+  Organization: Organization
+  Out: Out
+  Password: Password
+  Phone or Whatsapp: Phone or Whatsapp
+  Please login: Please login
+  Project: Project
   reconnect: reconnect
+  Register: Register
+  Relay: Relay
+  server: server
+  SHT: SHT
+  SHT30: SHT30
+  Sign In: Sign In
+  Sonoff switch: Sonoff switch
+  Sonoff R2 switch: Sonoff R2 switch
+  Submit: Submit
+  Temperature: Temperature
+  Username: Username
 FR:
   _thisLanguage: Francaise
+  _nameAndFlag: Français 🇫🇷
+  Built in LED: LED intégrée
   close: fermer
   connect: connecter
   connecting: connexion
+  Email: Email
+  Humidity: Humidité
+  Humidity control: Contrôle de l'humidité
+  Hysterisis: Hystérésis
+  Limit: Limite
+  Name: Nom 
+  Never seen: Jamais vu
   Not selected: Non sélectionné
+  Now: Maintenant
   offline: hors ligne
   Organization: Organisation
+  Out: Sortie
   Password: Mot de passe
+  Phone or Whatsapp: Téléphone ou Whatsapp
   Please login: Veuillez vous connecter
-  preferedLanguage: lang prefere
   Project: Projet
   reconnect: reconnecter
   Register: Registre
+  Relay: Relais
   server: serveur
+  SHT: SHT
+  SHT30: SHT30
   Sign In: Se connecter
+  Sonoff switch: Interrupteur Sonoff
+  Sonoff R2 switch: Interrupteur Sonoff R2
   Submit: Soumettre
+  Temperature: Température
   Username: Nom de User
 HI:
   _thisLanguage: हिंदी
+  _nameAndFlag: हिंदी 🇮🇳
+  Built in LED: बिल्ट-इन एलईडी
   close: बंद करें
   connect: कनेक्ट करें
   connecting: कनेक्ट हो रहा है
-  Not Selected: चयनित नहीं
+  Email: ईमेल
+  Humidity: आर्द्रता
+  Humidity control: आर्द्रता नियंत्रण
+  Hysterisis: हिस्टेरिसिस
+  Limit: सीमा
+  Name: नाम
+  Never seen: कभी नहीं देखा
+  Not selected: चयनित नहीं
+  Now: अभी
   offline: ऑफ़लाइन
   Organization: संगठन
+  Out: आउट
   Password: पासवर्ड
+  Phone or Whatsapp: फ़ोन या व्हाट्सएप
   Please login: कृपया लॉगिन करें
-  preferedLanguage: पसंदीदा भाषा
   reconnect: पुनः कनेक्ट करें
   Register: पंजीकरण करें
+  Relay: रिले
   server: सर्वर
+  SHT: एसएचटी
+  SHT30: एसएचटी30
+  Sonoff switch: सोनऑफ स्विच
+  Sonoff R2 switch: सोनऑफ R2 स्विच
   Sign In: साइन इन करें
   Submit: जमा करें
+  Temperature: तापमान
   Username: उपयोगकर्ता नाम
   Project: परियोजना
 ID:
   _thisLanguage: Bahasa Indonesia
+  _nameAndFlag: Bahasa Indonesia 🇮🇩
+  Built in LED: LED bawaan
   close: tutup
   connect: sambungkan
   connecting: menghubungkan
-  Not Selected: Tidak dipilih
+  Email: Email
+  Humidity: Kelembapan
+  Humidity control: Kontrol kelembapan
+  Hysterisis: Histeresis
+  Limit: Batas
+  Name: Nama
+  Never seen: Belum pernah terlihat
+  Not selected: Tidak dipilih
+  Now: Sekarang
   offline: offline
   Organization: Organisasi
+  Out: Keluar
   Password: Kata Sandi
+  Phone or Whatsapp: Telepon atau Whatsapp
   Please login: Silakan masuk
-  preferedLanguage: Bahasa yang dipilih
   Project: Proyek
   reconnect: sambungkan kembali
   Register: Daftar
+  Relay: Relay
   server: server
+  SHT: SHT
+  SHT30: SHT30
   Sign In: Masuk
+  Sonoff switch: Saklar Sonoff
+  Sonoff R2 switch: Saklar Sonoff R2
   Submit: Kirim
+  Temperature: Suhu
   Username: Nama Pengguna
 `);
 
-function preferedLanguages() { return ["FR","D"]; } // TODO-34 pick up a global, remember it etc
-
+let preferedLanguages = [ ];
+function languageNamesAndFlags() {
+  return Object.entries(languages).map(([k,v]) => [k,v._nameAndFlag]);
+}
 function getString(tag) {
-  for (let lang of preferedLanguages()) {
+  for (let lang of preferedLanguages) {
     let foo
     if (foo = languages[lang] && languages[lang][tag]) {
       return foo;
     }
     console.log("Cannot translate ", tag, ' into ', lang);
-    return (languages.EN[tag] || tag);
   }
+  return (languages.EN[tag] || tag);
 }
-console.log(getString("preferedLanguage"), ": ", getString("_thisLanguage"));
 
 let i8ntags = {
   label: ["textContent"],
@@ -250,7 +334,7 @@ function el(tag, attributes = {}, children) {
     Object.entries(attributes)
       .filter(([k, v]) => i8ntags[tag] && i8ntags[tag].includes(k))
       .filter(([k, v]) => (
-        v &&
+        v && typeof v === 'string' &&
         !v.includes(':') &&  // e.g.  dev: Development
         !v.includes('/') && // e.g. dev/developers
         'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'.includes(v[0])
@@ -261,6 +345,38 @@ function el(tag, attributes = {}, children) {
   }
   return EL(tag, attributes, children);
 }
+
+// Set v as prefered language, but remove if already there
+// Note this does not redraw anything, that is a function of the caller
+function preferedLanguageSet(v) {
+  const idx = preferedLanguages.indexOf(v);
+  if (idx !== -1) preferedLanguages.splice(idx, 1);
+  preferedLanguages.unshift(v);
+}
+
+class LanguagePicker extends HTMLElementExtended {
+
+  constructor() {
+    super();
+    this.state={};
+  }
+  // TODO-34 (maybe) pull language files from server
+  onchange(ev) {
+    preferedLanguageSet(ev.target.value);
+    locationParameterChange("lang", preferedLanguages.join(','));
+  }
+  render() {
+    // TODO-34 build from available languages
+    return [
+      el('link', {rel: 'stylesheet', href: CssUrl}),
+      el('select', {class: "language-picker", onchange: this.onchange.bind(this)},
+        languageNamesAndFlags().map(([k,v]) =>
+          EL('option', {value: k, textContent: v, selected: k==preferedLanguages[0]}))
+      ),
+    ];
+  }
+}
+customElements.define('language-picker', LanguagePicker);
 
 class Watchdog {
   constructor(elx) {
@@ -344,7 +460,7 @@ class MqttTopic {
     if (!this.element) {
       // noinspection JSUnresolvedReference
       let name = this.name; // comes from discovery
-      let el;
+      let elx;
       // noinspection JSUnresolvedReference
       switch (this.display) {
         case 'toggle':
@@ -706,10 +822,24 @@ class MqttLogin extends HTMLElementExtended { // TODO-89 may depend on organizat
   constructor(props) {
     super(props);
     this.state = {register: false};
-    this.loadAttributesFromURL(); // Overrides register if in URL
   }
-  static get observedAttributes() { return ['register','message','url']; }
+  static get observedAttributes() { return ['register','message','url','lang']; }
   static get boolAttributes() { return ['register']; }
+
+  connectedCallback() {
+    this.loadAttributesFromURL();
+    super.connectedCallback();
+  }
+  changeAttribute(name, value) {
+    if (name == "lang") {
+      if (value.includes(',')) {
+        preferedLanguages = (value.split(',')).map(v => v.toUpperCase());
+      } else {
+        preferedLanguageSet(value.toUpperCase());
+      }
+    }
+    super.changeAttribute(name, value);
+  }
 
   tabRegister(register) {
     this.changeAttribute('register', register);
@@ -723,6 +853,7 @@ class MqttLogin extends HTMLElementExtended { // TODO-89 may depend on organizat
       el('div', {class: 'mqtt-login'},[
         el('div',{class: 'message'},[
           el('span', {textContent: this.state.message}),
+          el('language-picker'),
         ]),
         el('section', {class: 'tabs'}, [
           el('button', {class: 'tab' + (!this.state.register ? ' active' : ' inactive'), onclick: this.tabRegister.bind(this, false), textContent: "Sign In"}),
@@ -756,7 +887,7 @@ class MqttLogin extends HTMLElementExtended { // TODO-89 may depend on organizat
               el('input', {id: "phone", name: "phone", type: "text", autocomplete: "phone", required: true}),
             ]),
           ],
-          el('input', {id: "url", name: "url", type: "hidden", value: this.state.url}),
+          el('input', {id: "url", name: "url", type: "hidden", value: (this.state.url + "?lang=" + preferedLanguages.join(','))}),
           el('button', {class: "submit", type: "submit",
             textContent: (this.state.register ? 'Submit' : 'Submit')}),
           ]),
@@ -1204,7 +1335,7 @@ function nodeId2OrgProject(nodeid) {
   return [null, null];
 }
 class MqttWrapper extends HTMLElementExtended {
-  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['organization','project','node']); }
+  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['organization','project','node','lang']); }
   // Maybe add 'discover' but think thru interactions
   //static get boolAttributes() { return MqttReceiver.boolAttributes.concat(['discover'])}
 
@@ -1334,6 +1465,18 @@ class MqttWrapper extends HTMLElementExtended {
       this.renderAndReplace(); // TODO check, but should not need to renderAndReplace as render is (currently) fully static
     });
     //super.connectedCallback(); // Not doing as finishes with a re-render.
+  }
+  changeAttribute(name, value) {
+    if (name == "lang") {
+      if (value.includes(',')) {
+        preferedLanguages = (value.split(',')).map(v => v.toUpperCase());
+      } else if(!value) {
+        preferedLanguageSet('EN');
+      } else {
+        preferedLanguageSet(value.toUpperCase());
+      }
+    }
+    super.changeAttribute(name, value);
   }
   render() {
     return [
@@ -1556,7 +1699,7 @@ class MqttNode extends MqttReceiver {
         el('details', {},[
           el('summary', {},[
             el('span',{class: 'name', textContent: this.state.name}),
-            el('span',{class: 'nodeid', textContent: this.state.id}),
+            el('span',{class: 'nodeid', textContent: this.state.id, i8n: false}),
             //Starts off as 1px empty image, changed when battery message received
             this.state.batteryIndicator = el('img', {class: "batteryimg", src: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"}),
           ]),
