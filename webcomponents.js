@@ -19,6 +19,12 @@ import {_drawfill} from './filler.drawing.js';
 import {_shouldApplyFill} from './filler.helper.js';
 import {_decodeFill, _resolveTarget} from './filler.options.js';
 */
+const CssUrl = './frugaliot.css';
+function XXX(args) {
+  if (args) { console.log(...args); }
+  return false;
+} // Put a breakpoint here for debuggign and intersperce XXX() in code.
+
 /* This is copied from the chartjs-adapter-luxon, I could not get it to import - gave me an error every time */
 /*!
  * chartjs-adapter-luxon v1.3.1
@@ -40,8 +46,6 @@ const FORMATS = {
   quarter: "'Q'q - yyyy",
   year: {year: 'numeric'}
 };
-
-const CssUrl = './frugaliot.css';
 
 // noinspection JSCheckFunctionSignatures
 _adapters._date.override({
@@ -120,7 +124,7 @@ _adapters._date.override({
     return this._create(time).endOf(unit).valueOf();
   }
 });
-/* End of code copied from chartjs-adapter-luxon.esm.js */
+/* =============== End of code copied from chartjs-adapter-luxon.esm.js ==================== */
 
 // TODO mqtt_client should be inside the MqttClient class
 let mqtt_client; // MQTT client - talking to server
@@ -130,6 +134,221 @@ let unique_id = 1; // Just used as a label for auto-generated elements
 let graph;  // Will hold a default MqttGraph once user chooses to graph anything
 let server_config;
 
+// TODO-37 shoudn't really use the id as for example if multiple soil sensors maybe look for prefix (starts soil)
+// TODO-37 translate name's below
+let discover_io = yaml.load(`
+analog:
+  leaf: analog
+  type:   int
+  dispay: bar
+  rw:       r
+button:
+  leaf:  button
+  name:   Button
+  type:   bool
+  display: toggle
+  rw:       r
+humidity:
+  leaf:  humidity
+  name:   Humidity
+  type:   float
+  display: bar
+  min:    0
+  max:    100
+  color:  blue
+  rw:       r
+pressure:
+  leaf:  pressure
+  name:     Pressure
+  type:     float
+  display:  bar
+  min:      0
+  max:      99
+  color:   blue
+  rw:       r
+on:
+  leaf:     on
+  name:     On
+  type:     bool
+  display:  toggle
+  color:    black
+  rw:       w
+temperature:
+  leaf:  temperature
+  name:     Temperature
+  type:     float
+  display:  bar
+  rw:       r
+  min:      0
+  max:      50
+  color:    red
+  wireable: false   
+controltext:
+  #[leaf, name] should be overridden
+  min:      0
+  max:      100
+  type:     float
+  display:  text
+  color:    black
+  wireable: true
+  rw:       w
+controlintoggle:
+  #[leaf, name] should be overridden
+  type:     bool
+  display:  toggle
+  color:    black
+  rw:       w
+  wireable: false
+controlouttoggle:
+  #[leaf, name] should be overridden
+  type:     bool
+  display:  toggle
+  color:    black
+  rw:       r
+  wireable: true
+`);
+let discover_mod = yaml.load(`
+# Each module contains inputs &/o outputs, each of which should have 
+# name  Capitalized English (and add translation below in 'languages'
+# max   For guages, slider
+# min   For guages, slider
+# color can be a name or a #RRGGBB
+# display One of bar,gauge,text,slider,inputbox
+# type One of bool,float,int,topic,text,yaml
+# rw  r for outputs w for inputs
+# wireable true,false, generally only  controls are wireable
+# wired not valid in this context, it will come from MQTT broker
+# Note battery gets special cased
+battery:
+ name: "Battery"
+ topics:
+  - leaf:   battery
+    name:   Voltage
+    type:   int
+    display: text
+    min:    3000
+    max:    5000
+    color:  green
+    rw:       r
+ensaht:
+ name: "ENS AHT"
+ topics:
+  - leaf:  temperature
+    name:   Temperature
+    type:   float
+    display: bar
+    min:    0
+    max:    50
+    color:  red
+    wireable: false
+    rw:       r
+  - leaf:  humidity
+    name:     Humidity
+    type:     float
+    display:  bar
+    min:      0
+    max:      100
+    color:    blue
+    rw:       r
+  - leaf:  aqi
+    name:     AQI
+    type:     int
+    display:  bar
+    min:      0
+    max:      255
+    color:    purple
+    rw:       r
+  - leaf:  tvoc
+    name:     TVOC
+    type:     int
+    display:  bar
+    min:      0
+    max:      99
+    color:    green
+    rw:       r
+  - leaf:  eco2
+    name:     eCO2
+    type:     int
+    display:  bar
+    min:      300
+    max:      900
+    color:    brown
+    rw:       r
+  - leaf:  agi500
+    name:     AQI500
+    type:     int
+    display:  bar
+    min:      0
+    max:      99
+    color:    brown
+    rw:       r
+frugal_iot:
+  name: XXX
+  topics:
+  - leaf: name
+    name: 
+    type: text
+    display:  text
+    rw: r
+  - leaf: description
+    description:
+    type: text
+    display:  text
+    rw: r
+loadcell:
+ name: Load Cell
+ topics:
+  - leaf:  loadcell
+    name: Load Cell
+    type:   float
+    display: text
+    min:    0
+    max:    65000
+    color:  yellow
+    rw:       r
+lux:
+ name: Light meter
+ topics:
+  - leaf:  lux
+    name: Lux
+    type:   float
+    display: bar
+    min:    0
+    max:    65000
+    color:  yellow
+    rw:       r
+ota:
+  name: OTA
+  topics:
+    - leaf: key
+      name: Key
+      type: text
+      display: text
+      rw: r
+`);
+function d_io_v(io_id, variants) {
+  let io = {}
+  Object.entries(discover_io[io_id]).forEach(([key, value]) => {io[key] = value});
+  if (variants) {
+    Object.entries(variants).forEach(([key, value]) => {io[key] = value});
+  }
+  return io;
+}
+discover_mod["button"] = { name: "Button", topics: [d_io_v("button")]};
+discover_mod["ht"] = { name: "HT",   topics: [ d_io_v("temperature"), d_io_v("humidity")]};
+discover_mod["sht"] = { name: "SHT", topics: [ d_io_v("temperature"), d_io_v("humidity")]};
+discover_mod["dht"] = { name: "DHT", topics: [ d_io_v("temperature"), d_io_v("humidity")]};
+discover_mod["ms5803"] = { name: "MS5803", topics: [ d_io_v("pressure"), d_io_v("temperature")]};
+discover_mod["relay"] = { name: "Relay", topics: [ d_io_v("on")]};
+discover_mod["ledbuiltin"] = { name: "LED", topics: [ d_io_v("on")]};
+discover_mod["soil"] = { name: "Soil", topics: [ d_io_v("analog", {min: 0, max: 100, color: "brown"})]};
+discover_mod["controlhysterisis"] = { name: "Control", topics: [
+  d_io_v('controltext', {leaf: "now", name: "Now"}),
+  d_io_v('controlintoggle', {leaf: "greater", name: "Greater Than"}),
+  d_io_v('controltext', {leaf: "limit", name: "Limit"}),
+  d_io_v('controltext', {leaf: "hysterisis", name: "Hysterisis", max: 100, wireable: false}),
+  d_io_v('controlouttoggle', {leaf: "out", name: "Out"}),
+]};
 /* Helpers of various kinds */
 
 // Move to a new location by just changing one parameter in the URL
@@ -161,6 +380,14 @@ function mqtt_subscribe(topic, cb) { // cb(message)
 }
 // See https://www.chartjs.org/docs/latest/samples/line/segments.html
 const skipped = (ctx, value) => ctx.p0.skip || ctx.p1.skip ? value : undefined;
+
+function topicMatches(subscriptionTopic, messageTopic) {
+  if (subscriptionTopic.endsWith('/#')) {
+    return (messageTopic.startsWith(subscriptionTopic.substring(0, subscriptionTopic.length - 2)));
+  } else {
+    return (subscriptionTopic === messageTopic);
+  }
+}
 
 let languages = yaml.load(`
 #Language configuration - will be read from files at some point
@@ -200,6 +427,7 @@ EN:
   Submit: Submit
   Temperature: Temperature
   Username: Username
+  Load Cell: Load Cell
 FR:
   _thisLanguage: Francaise
   _nameAndFlag: Français 🇫🇷
@@ -320,7 +548,7 @@ function getString(tag) {
     if (foo = languages[lang] && languages[lang][tag]) {
       return foo;
     }
-    console.log("Cannot translate ", tag, ' into ', lang);
+    XXX(["Cannot translate ", tag, ' into ', lang]);
   }
   return (languages.EN[tag] || tag);
 }
@@ -417,7 +645,7 @@ class MqttTopic {
   }
 
   initialize(o) {
-    // topic, name, type, display, rw, min, max, color, options, topic, node
+    // topic, name, type, display, rw, min, max, color, options, node
     Object.keys(o).forEach((k) => {
       this[k] = o[k];
     });
@@ -468,7 +696,7 @@ class MqttTopic {
       // noinspection JSUnresolvedReference
       switch (this.display) {
         case 'toggle':
-          elx = el('mqtt-toggle', {});
+          elx = el('mqtt-toggle', {color: this.color });
           this.retain = true;
           this.qos = 1;
           break;
@@ -480,11 +708,11 @@ class MqttTopic {
           elx = el('mqtt-gauge', {max: this.max, min: this.min, color: this.color}, []);
           break;
         case 'text':
-          elx = el('mqtt-text', {}, []);
+          elx = el('mqtt-text', {max: this.max, min: this.min, color: this.color}, []);
           break;
         case 'slider':
           //TODO-130 testing use of text - without changing node
-          elx = el('mqtt-text', {}, []);
+          elx = el('mqtt-text', {max: this.max, min: this.min, color: this.color}, []);
           /*
           // noinspection JSUnresolvedReference
           // TODO possibly deprecate this
@@ -500,7 +728,7 @@ class MqttTopic {
           break;
         default:
           // noinspection JSUnresolvedReference
-          console.log("do not know how to display a ", this.display);
+          XXX(["do not know how to display a ", this.display]);
       }
       if (elx) elx.mt = this;
       this.element = elx;
@@ -676,7 +904,7 @@ class MqttTopic {
           if (err) {
             console.error(err); // Intentionally not passing error back
           } else if (newdata.length === 0) {
-            console.log("No data in", filepath);
+            XXX(["No data in", filepath]);
           } else {
             console.log(`retrieved ${newdata.length} records for ${this.topicPath}`);
             let newprocdata = newdata.map(r => {
@@ -744,13 +972,6 @@ class MqttClient extends HTMLElementExtended {
   }
   shouldLoadWhenConnected() { return !!this.state.server; } /* Only load when has a server specified */
 
-  topicMatches(subscriptionTopic, messageTopic) {
-    if (subscriptionTopic.endsWith('/#')) {
-      return (messageTopic.startsWith(subscriptionTopic.substring(0, subscriptionTopic.length - 2)));
-    } else {
-      return (subscriptionTopic === messageTopic);
-    }
-  }
   loadContent() {
     //console.log("loadContent", this.state.server);
     if (!mqtt_client) {
@@ -789,13 +1010,15 @@ class MqttClient extends HTMLElementExtended {
         console.log(error);
         this.setStatus("Error:" + error.message);
       }.bind(this));
+      // Message received, iterate over mqtt_subscriptions and call cb of subscription if matches
       mqtt_client.on('message', (topic, message) => {
         // message is Buffer
         // TODO - check whether topic is string or buffer.
         let msg = message.toString();
         console.log("Received", topic, " ", msg);
+        // The subscriptions are all going to be MqttNode which will then look at rest of topic
         for (let o of mqtt_subscriptions) {
-          if (this.topicMatches(o.topic, topic)) {
+          if (topicMatches(o.topic, topic)) { // Matches trailing wildcards, but not middle ones
             o.cb(topic, msg);
           }
         }
@@ -902,6 +1125,24 @@ class MqttLogin extends HTMLElementExtended { // TODO-89 may depend on organizat
 customElements.define('mqtt-login', MqttLogin);
 
 class MqttElement extends HTMLElementExtended {
+  // TODO - maybe move this to HTMElementExtended
+  // Called whenever an attribute is added or changed,
+  // https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements#using_the_lifecycle_callbacks
+  // unlikely to be subclassed except to change behavior of when calls renderAndReplace
+  attributeChangedCallback(name, oldValue, newValue) {
+    // console.log(this.localName, 'Attribute Changed', name); // uncomment for debugging
+    if (oldValue !== newValue) {
+      let needReRender = this.changeAttribute(name, newValue); // Sets state{} may also munge value (e.g. string to boolean)
+      // reconsider if now have sufficient data to load content
+      if (this.isConnected && this.constructor.observedAttributes.includes(name) && this.shouldLoadWhenConnected()) {
+        this.loadContent();
+      }
+      // note this render happens before the loadContent completes
+      if (needReRender !== false) {  // Testing this way as old changeAttributes returned undefined and assumed a reRender
+        this.renderAndReplace();
+      };
+    }
+  }
 }
 
 class MqttReceiver extends MqttElement {
@@ -941,6 +1182,7 @@ class MqttReceiver extends MqttElement {
     this.mt = mt;
     mt.subscribe(); //TODO-130 check embedded case,
   }
+  // Return true if need to rerender
   // Note overridden in MqttNode and MqttProject
   topicValueSet(topic, message) {
     // TODO-130 I think this is where we catch "set" (at topicSetPath
@@ -952,23 +1194,31 @@ class MqttReceiver extends MqttElement {
         this.node.topicChanged(this.mt.leaf, value);
       }
       return this.valueSet(value);
-    } else if (topic.startsWith(this.mt.topicSetPath)) {
-      // topic like org/project/node/set/temperature/max
+    } else if ((topic.startsWith(this.mt.topicPath)) || (topic.startsWith(this.mt.topicSetPath))) {
+      // topic like org/project/node/set/sht/temperature or ...set/sht/temperature/max
       let parameter = topic.split("/").pop();
-      this.parameterSet(parameter, message);
+      this.parameterSet(parameter, message); // True if need to rerender
+      return false; // parameterSet will have rerendered if needed
     } else {
       console.error("Unhandled topicValueSet", topic, message);
       return false;
     }
   }
+  //TODO maybe able to just setAttribute("value", val) - which would also do type conversion string to number
   valueSet(val) {
     // Note val can be of many types - it will be subclass dependent
     this.state.value = val;
     return true; // Rerender by default - subclass will often return false
   }
-  // Override anywhere expecting incoming parameters
+  // Subclass "changeAttribute" to edit rendered elements and return true if do not want to rerender
   parameterSet(parameter, message) {
-    console.log("parameterSet ignoring", parameter, message);
+    // Note this will be silently ignored if parameter is not "observed"
+    //this.mt[parameter] = Number(message); // Not setting on topic as not needed and dont know HERE if number or string
+    // causes a re-render (setAttribute->attributeChangedCallback->changeAttribute->renderAndReplace)
+    if (!this.getAttribute(parameter)) {
+      XXX(["Good chance parameter is not observed:", parameter]);
+    }
+    this.setAttribute(parameter, message); // Type will be set in changeAttribute
   }
   get project() { // Note this will only work once the element is connected
     // noinspection CssInvalidHtmlTagReference
@@ -1002,6 +1252,9 @@ class MqttReceiver extends MqttElement {
     return el('mqtt-choosetopic', {name: this.mt.name, type: this.mt.type, value: this.mt.wired, rw: (this.mt.rw === 'r' ? 'w' : 'r'), project: this.mt.project, onchange: this.onwiredchange.bind(this)});
   }
   renderMaybeWired() {
+    if (!this.mt) {
+      return []; // Dont render till have mt set
+    }
     let wiredTopic = this.mt.wired ? this.mt.project.findTopic(this.mt.wired) : undefined;
     let wiredTopicValue = wiredTopic ? wiredTopic.element.state.value.toString() : undefined; // TODO-130 maybe error prone if value can be undefined
     return [
@@ -1065,6 +1318,9 @@ class MqttTransmitter extends MqttReceiver {
 
 class MqttText extends MqttTransmitter {
   // constructor() { super(); }
+  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['min','max']); }
+  static get floatAttributes() { return MqttReceiver.floatAttributes.concat(['min','max']); }
+
   // TODO - make sure this doesn't get triggered by a message from server.
   onChange(e) {
     //console.log("Changed"+e.target.checked);
@@ -1072,7 +1328,7 @@ class MqttText extends MqttTransmitter {
     this.publish();
   }
   renderInput() {
-    return el('input', {id: this.mt.topicPath, name: this.mt.topicPath, value: this.state.value, type: "number", min: this.mt.min, max: this.mt.max, onchange: this.onChange.bind(this)});
+    return el('input', {id: this.mt.topicPath, name: this.mt.topicPath, value: this.state.value, type: "number", min: this.state.min, max: this.state.max, onchange: this.onChange.bind(this)});
   }
   renderValue(val) {
     return el('span',{textContent: val || ""});
@@ -1140,6 +1396,11 @@ class MqttBar extends MqttReceiver {
   valueSet(val) {
     super.valueSet(val); // TODO could get smarter about setting with in span rather than rerender
     return true; // Note will not re-render children like a MqttSlider because these are inserted into DOM via a "slot"
+  }
+  changeAttribute(name, valueString) {
+    super.changeAttribute(name, valueString); // Change from string to number etc and store on this.state
+    // TODO - could set width, color, name, on sub-elements and return false then copy this to other elements
+    return true;
   }
   render() {
     //this.state.changeable.addEventListener('change', this.onChange.bind(this));
@@ -1506,6 +1767,7 @@ class MqttProject extends MqttReceiver {
   addNode(id) {
     let topicPath = `${this.mt.topicPath}/${id}`;
     let elNode = el('mqtt-node', {id, topic: topicPath, discover: this.state.discover},[]);
+    elNode.addStandardChildren(); // Cant be done in constructor
     this.state.nodes[id] = elNode;
     let mt = new MqttTopic();
     mt.initialize({
@@ -1550,8 +1812,9 @@ class MqttProject extends MqttReceiver {
     });
   }
   findTopic(topicPath) {
+    // Currently only used in renderMaybeWired
     let parts = topicPath.split("/");
-    return this.state.nodes[parts[2]].state.topics[`${parts[3]}/${parts[4]}`];
+    return this.state.nodes[parts[2]].state.topics[`${parts[3]}/${parts[4]}/#`]; //TODO-154 check this
   }
   render() {
     return  !this.isConnected ? null : [
@@ -1571,18 +1834,32 @@ class MqttProject extends MqttReceiver {
 customElements.define('mqtt-project', MqttProject);
 
 class MqttNode extends MqttReceiver {
-  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['id', 'discover']); }
+  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['id', 'name', 'description','discover']); }
   static get boolAttributes() { return MqttReceiver.boolAttributes.concat(['discover'])}
   static get integerAttributes() { return MqttReceiver.integerAttributes.concat(['days'])}
 
   constructor() {
-    super(); // Will subscribe to topic
+    super(); // (Comment used to say "subscribes to topic" but doesn't look like it
     this.state.topics = {}; // Index of MqttTopic - TODO-13 is this topicLeafs or topicPaths ?
+    this.state.elements = {}; // Pointer to specific elements (for special case updates)
     this.state.days = 0;
     this.watchdog = new Watchdog(this);
     this.state.lastseen = 0;
     this.groups = {}; // Index of groups
     this.queue = []; // Queue of topics to process when discovery received
+    // Special case elements whose text is changed at top level , not inside a group or the ShadowRoot
+  }
+  addStandardChildren() {
+    this.append(this.state.elements.name = el('span', {slot: "name", class: 'name', textContent: this.state.name}));
+    this.append(this.state.elements.description = el('span', {slot: "description", class: 'description', textContent: this.state.description}));
+    this.append(this.state.elements.id = el('span',{class: 'nodeid', textContent: this.state.id, i8n: false}));
+  }
+  changeAttribute(leaf, valueString) {
+    super.changeAttribute(leaf, valueString);
+    if (this.state.elements[leaf]) { // This will be false during constructor
+      this.state.elements[leaf].textContent = this.state[leaf];
+    }
+    return false;
   }
   get isNode() { return true; } // Overrides suprclass in MqttReceiver
 
@@ -1591,14 +1868,13 @@ class MqttNode extends MqttReceiver {
   }
   // Filter the topics on this node by type e.g. "bool" "float" or ["float","int"]
   topicsByType(types, rw) { // [ { name, topic: topicpath } ]
-    if (!this.state.value) { return []; } // If have not received discovery, do not report any topics
-    let usableName = this.usableName;
-    return this.state.value.topics
+    let usableName = this.usableName; // TODO-154
+    return Object.values(this.state.topics)
       .filter( t => types.includes(t.type))
       .filter(t => t.rw.includes(rw))
-      // TODO-130 this will currently work since t.topic is a twig but wont in future - test it (dropdown only i presume)
-      .map(t=> { return({name: `${usableName}:${t.name}`, topic: this.mt.topicPath + "/" + t.topic})});
+      .map(t=> { return({name: `${usableName}:${t.name}`, topic: t.topicPath})});
   }
+  // Append group and return the HTML element (details)
   appendGroup(t) { // t = { group, name }
     if (!this.groups[t.group]) {
       this.groups[t.group] = el('details', {class: `group ${t.group}`}, [
@@ -1606,67 +1882,131 @@ class MqttNode extends MqttReceiver {
           el('span', {textContent: t.name || t.group}),
         ])
       ]);
-      this.append(this.groups[t.group]);
+      this.append(this.groups[t.group]); // Adds the group as a dropdown
     }
     return this.groups[t.group];
   }
-  // Have received a discovery message for this node - create elements for all topics and subscribe
   // Overrides topicValueSet in MqttReceiver
   // noinspection JSCheckFunctionSignatures
-  topicValueSet(topic, message) {
-    if (topic === this.mt.topicPath) { // Its discover for this Node, not a sub-element
+  topicValueSet(topicPath, message) {
+    if (topicPath === this.mt.topicPath) { // Its discover for this Node, not a sub-element
       let rerender = this.valueSet(this.mt.valueFromText(message));
       let i;
       while (i = this.queue.shift()) {
         this.topicValueSet(i.topic, i.message);
       }
       return rerender;
-    } else if (this.state.discover) { // queue if waiting for discovery
+    /*
+    } else if (this.state.discover) { // queue if waiting for discovery  // TODO-37 - no longer, do self-discovery
       // Still waiting on discovery.
-      this.queue.push({topic, message});
+      this.queue.push({topic: topicPath, message});
       return false; // Do not rerender as waiting for discovery
+   */
     } else { // Its a sub-topic
-      let leaf = topic.substring(this.mt.topicPath.length+1);
-      if (leaf.startsWith("set/")) { leaf = leaf.substring(4); } // Remove "set/" prefix if present
-      if (this.state.topics[leaf]) {
-        this.state.topics[leaf].message_received(topic, message);
+      let twig = topicPath.substring(this.mt.topicPath.length+1);
+      if (twig.startsWith("set/")) { twig = twig.substring(4); } // Remove "set/" prefix if present
+      // TODO-37 ignore some legacy and/or buggy nodes - probably will go away when server restarted
+      if ([
+        "relay",
+      ].includes(twig)
+        || twig.startsWith("set") // Sonoff esp8266-243053 (note that is a 2nd "set")
+        || twig.startsWith("control/") // Old name for controlhysterisis
+        || twig.startsWith("humidity/") // esp8266-243053 Old name for controlhysterisis
+        || !twig.includes('/')
+      ) { return false }
+
+      // Special case twigs
+      if (twig.startsWith("frugal_iot/")) {
+        let leaf = twig.substring(11);
+        if (!this.getAttribute(leaf)) {
+          XXX(["Probably not a valid leaf of frugal_iot", leaf]);
+        }
+        this.setAttribute(leaf, message); // Will update state and rerender if needed
+        /*
+        if (this.state.elements[leaf]) {
+          this.state.elements[leaf].textContent = message;
+        } else {
+          XXX(["XXX Unknown part of frugal_iot", topicPath]);
+        }
+         */
+      } else if (this.state.topics[twig]) {
+        // TODO-154 - should do same match as below
+        this.state.topics[twig].message_received(topicPath, message);
+      } else {
+        // Check if its a group we haven't seen for this node, if so add it - checking first for a template
+        let groupId = twig.split("/")[0];
+        if (!this.groups[groupId]) {
+          let groupName = discover_mod[groupId] ? discover_mod[groupId].name : groupId;
+          this.appendGroup({group: groupId, name: groupName});
+          if (discover_mod[groupId]) {
+            this.addDiscoveredTopicsToNode(discover_mod[groupId].topics, groupId);
+          } else {
+            XXX(["Unknown group - for now can't guess"]);
+          }
+        }
+        // Check if its a group we haven't seen for this node, if so add it - checking first for a template
+        let groupElement = this.groups[groupId]; // Element "details" to which can append something
+        //TODO-37 now have a group element - need to build   then append topic, to groupElement - if discover above fails
+        // e.g. have "sht/temperature but how do we know its a bar with a min and max
+        let matched=false;
+        Object.entries(this.state.topics)
+          .filter(([subscriptionTopic,node]) => topicMatches(subscriptionTopic, twig))
+            .forEach(([subscriptionTopic, module]) => {
+                matched = true;
+                module.message_received(topicPath, message);
+              });
+        if (!matched) {
+          XXX(["Unrecognized twig at ", topicPath]);
+        }
       }
     }
   }
-  valueSet(obj) { // Val is object converted from Yaml
-    if (this.state.discover) { // If do not have "discover" set, then presume have defined what UI we want on this node
+
+  addDiscoveredTopicsToNode(topics, groupId) {
+    topics.forEach(t => {  // Note t.topic in discovery is twig // TODO-130 may not always be twigs
+      if (groupId) t.group = groupId;
+      if (t.leaf && !t.topic && groupId) { t.topic = groupId + "/" + t.leaf;  delete t.leaf; }
+      if (!t.topic && t.group) {   // Groups are currently (Aug2024 1.2.14) a topic like { group, name }
+        this.appendGroup(t);
+      } else if (!this.state.topics[t.topic]) { // Have we done this already?
+        let mt = new MqttTopic();
+        mt.fromDiscovery(t, this);
+        if (groupId) t.group = groupId; // This is the case when called from topicValueSet, not (yet) from valueSet
+        this.state.topics[t.topic + "/#"] = mt; // TODO-154 watch for topic (e.g. sht/temperature or leaflet of it e.g. sht/temperature/color
+        // mt.subscribe(); Node will forward to sub topics
+        let elx = mt.createElement();
+        if (['battery','ledbuiltin','description'].includes(mt.leaf)) { // TODO-30 parameterize this - these are "slots" in MqttNode.render
+          // noinspection JSCheckFunctionSignatures
+          elx.setAttribute('slot', mt.leaf);
+        }
+        // noinspection JSUnresolvedReference
+        if (mt.group) {
+          // noinspection JSUnresolvedReference
+          let groupId = t.topic.split("/")[0];
+          this.appendGroup({group: groupId, name: mt.group}); // Check it exists and if not create it
+          // noinspection JSUnresolvedReference
+          this.groups[groupId].append(elx);
+        } else {
+          this.append(elx);
+        }
+      }
+    });
+  }
+  // Have received a discovery message for this node - create elements for all topics and subscribe
+  // TODO-152 this is old style being replaced by the discovery as messages come in
+  valueSet(obj) { // obj is object converted from Yaml
+    // TODO-37 reenable this when above tested
+    if (false && this.state.discover) { // If do not have "discover" set, then presume have defined what UI we want on this node
       this.state.discover = false; // Only want "discover" once, if change then need to get smart about not redrawing working UI as may be relying on data[]
       console.log(obj); // Useful for debugging to see this
       let nodediscover = obj[0]; // Should only ever be one of them
       this.state.value = nodediscover; // Save the object for this node
+      // TODO-37 these (id, description, name) should be within topics - esp frugal-iot
       ['id', 'description', 'name'].forEach(k => this.state[k] = nodediscover[k]); // Grab top level properties from Discover
       while (this.childNodes.length > 0) this.childNodes[0].remove(); // Remove and replace any existing nodes
       if (this.state.lastSeenElement) { this.append(this.state.lastSeenElement); } // Re-add the lastseen element
       if (!nodediscover.topics) { nodediscover.topics = []; } // if no topics, make it an empty array
-      nodediscover.topics.forEach(t => {  // Note t.topic in discovery is twig // TODO-130 may not always be twigs
-        if (!t.topic && t.group) {
-          this.appendGroup(t);
-        } else if (!this.state.topics[t.topic]) { // Have we done this already?
-          let mt = new MqttTopic();
-          mt.fromDiscovery(t, this);
-          this.state.topics[t.topic] = mt;
-          // mt.subscribe(); Node will forward to sub topics
-          let elx = mt.createElement();
-          if (['battery','ledbuiltin'].includes(mt.leaf)) { // TODO-30 parameterize this
-            // noinspection JSCheckFunctionSignatures
-            elx.setAttribute('slot', mt.leaf);
-          }
-          // noinspection JSUnresolvedReference
-          if (mt.group) {
-            // noinspection JSUnresolvedReference
-            this.appendGroup({group: mt.group}); // Check it exists and if not create it
-            // noinspection JSUnresolvedReference
-            this.groups[mt.group].append(elx);
-          } else {
-            this.append(elx);
-          }
-        }
-      });
+      addDiscoveredTopicsToNode(nodediscover.topics);
       let project = this.state.project;
       // Rerender any dropdown elements based on this discovery.
       // TODO make this use new functions node.project, project.nodes, node.topics
@@ -1702,12 +2042,12 @@ class MqttNode extends MqttReceiver {
       this.state.outerDiv = el('div', {class: 'outer mqtt-node'+((this.state.online) ? '' : ' offline')}, [
         el('details', {},[
           el('summary', {},[
-            el('span',{class: 'name', textContent: this.state.name}),
-            el('span',{class: 'nodeid', textContent: this.state.id, i8n: false}),
+            el('slot',{name: 'name', class: 'name'}),
+            el('slot',{name: 'id', class: 'nodeid'}),
             //Starts off as 1px empty image, changed when battery message received
             this.state.batteryIndicator = el('img', {class: "batteryimg", src: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"}),
           ]),
-          el('span',{class: 'description', textContent: this.state.description}),
+          el('slot',{name: 'description', class: 'description'}),
           el('slot', {name: 'lastseen', class: 'lastseen'}),
           el('div', {class: "health"},[
             el('slot',{name: 'ledbuiltin'}),
@@ -1717,7 +2057,7 @@ class MqttNode extends MqttReceiver {
         el('div', {class: "topics"},[
           el('slot', {}),
         ]),
-      ])
+  ])
     ]
   }
   //document.getElementsByTagName('body')[0].classList.add('category');
