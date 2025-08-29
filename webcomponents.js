@@ -428,6 +428,12 @@ EN:
   Temperature: Temperature
   Username: Username
   Load Cell: Load Cell
+  LED: LED
+  Control: Control
+  Unused: Unused
+  Greater Than: Greater Than
+  OTA: OTA
+  Key: Key
 FR:
   _thisLanguage: Francaise
   _nameAndFlag: Français 🇫🇷
@@ -673,7 +679,7 @@ class MqttTopic {
     return this.node.mt.topicPath + "/set/" + this.twig;
   }
   get topicWiredPath() {
-    return this.topicSetPath + "/wire"; // Path to set wired valu
+    return this.topicSetPath + "/wired"; // Path to set wired valu
   }
   get topicSubscribePath() {
     if (this.element && this.element.isNode) {
@@ -711,15 +717,12 @@ class MqttTopic {
           elx = el('mqtt-text', {max: this.max, min: this.min, color: this.color}, []);
           break;
         case 'slider':
-          //TODO-130 testing use of text - without changing node
-          elx = el('mqtt-text', {max: this.max, min: this.min, color: this.color}, []);
-          /*
+          // Not currently being used, UI for controls works better as mqtt-text, this should still work though.
           // noinspection JSUnresolvedReference
           // TODO possibly deprecate this
           elx = el('mqtt-slider', {min: this.min, max: this.max, value: (this.max + this.min) / 2}, [
             el('span', {textContent: "△"}, []),
           ]);
-           */
           break;
         case 'inputbox':
           elx = el('mqtt-inputbox', {}, []);
@@ -1146,6 +1149,10 @@ class MqttElement extends HTMLElementExtended {
 }
 
 class MqttReceiver extends MqttElement {
+  constructor() {
+    super();
+    this.state.elements = {}; // Pointer to specific elements (for special case updates)
+  }
   static get observedAttributes() { return ['value','color','type','label','topic']; }
   static get boolAttributes() { return []; }
 
@@ -1162,9 +1169,9 @@ class MqttReceiver extends MqttElement {
   }
   // This should be called when a receiver is created with a topic (which should be a path)
   // But not sure how this still works because the mt will not have a node, which is presumed.
-  // TODO-130 test embedded examples - doubt this will work now, without a node.
+  // TODO-155 test embedded examples - doubt this will work now, without a node.
   createTopic() {
-    console.error("TODO-130 Not expecting MqttReceiver.createTopic to work");
+    XXX("TODO-155 Not expecting MqttReceiver.createTopic to work");
     let mt = new MqttTopic();
     let tt = this.state.topic.split("/");
     let org = tt.shift();
@@ -1180,12 +1187,25 @@ class MqttReceiver extends MqttElement {
       node: { mt: { topicPath: `${org}/${projectId}/${nodeId}`} }
     })
     this.mt = mt;
-    mt.subscribe(); //TODO-130 check embedded case,
+    mt.subscribe(); //TODO-155 check embedded case,
+  }
+  changeAttribute(name, valueString) {
+    super.changeAttribute(name, valueString); // Change from string to number etc and store on this.state
+    // TODO - could set width, color, name, on sub-elements and return false then copy this to other elements
+    if (name === 'wired') {
+      if (this.state.elements.chooseTopic) {
+        this.state.elements.chooseTopic.setAttribute('value', valueString); // Update the dropdown if it exists
+      } else {
+        XXX("received 'wired' but no dropdown to pass it to");
+      }
+      return false; // ChooseTopic will re-render if needed
+    } else {
+      return true;
+    }
   }
   // Return true if need to rerender
   // Note overridden in MqttNode and MqttProject
   topicValueSet(topic, message) {
-    // TODO-130 I think this is where we catch "set" (at topicSetPath
     if ((topic === this.mt.topicPath) || (topic === this.mt.topicSetPath)) {
       let value = this.mt.valueFromText(message);
       let now = Date.now();
@@ -1215,7 +1235,7 @@ class MqttReceiver extends MqttElement {
     // Note this will be silently ignored if parameter is not "observed"
     //this.mt[parameter] = Number(message); // Not setting on topic as not needed and dont know HERE if number or string
     // causes a re-render (setAttribute->attributeChangedCallback->changeAttribute->renderAndReplace)
-    if (!this.getAttribute(parameter)) {
+    if (!this.constructor.observedAttributes.includes(parameter)) {
       XXX(["Good chance parameter is not observed:", parameter]);
     }
     this.setAttribute(parameter, message); // Type will be set in changeAttribute
@@ -1249,14 +1269,26 @@ class MqttReceiver extends MqttElement {
     return el('span', {class: 'wired', textContent: wiredTopicName})
   }
   renderDropdown() {
-    return el('mqtt-choosetopic', {name: this.mt.name, type: this.mt.type, value: this.mt.wired, rw: (this.mt.rw === 'r' ? 'w' : 'r'), project: this.mt.project, onchange: this.onwiredchange.bind(this)});
+    return el('mqtt-choosetopic', {name: this.mt.name, type: this.mt.type, value: this.getAttribute('wired'), rw: (this.mt.rw === 'r' ? 'w' : 'r'), project: this.mt.project, onchange: this.onwiredchange.bind(this)});
   }
+  // Handle cases ....
+  // r/!wireable - text value
+  // r/wireable/!wired - text value + hidden dropdown NOT DONE YET
+  // r/wireable/wired - text value and wired topic name and hidden dropdown NOT DONE YET
+  // w/!wireable - input box with value
+  // w/wireable/!wired - input box with value + hidden dropdown
+  // w/wireable/wired - text value(from wired) and wired topic name and hidden dropdown
+
+  // For Bool all same except:
+  // renderInput - checkbox with value
+  // renderValue - check mark if value true, empty if false
+
   renderMaybeWired() {
     if (!this.mt) {
       return []; // Dont render till have mt set
     }
     let wiredTopic = this.mt.wired ? this.mt.project.findTopic(this.mt.wired) : undefined;
-    let wiredTopicValue = wiredTopic ? wiredTopic.element.state.value.toString() : undefined; // TODO-130 maybe error prone if value can be undefined
+    let wiredTopicValue = wiredTopic ? wiredTopic.element.state.value.toString() : undefined; // TODO-154 maybe error prone if value can be undefined
     return [
       el('link', {rel: 'stylesheet', href: CssUrl}),
       el('div', {},
@@ -1274,7 +1306,7 @@ class MqttReceiver extends MqttElement {
                     ]
                     : this.renderValue(this.state.value),
                 ]),
-                this.renderDropdown(),
+                this.state.elements.chooseTopic = this.renderDropdown(),
               ])
               : [
                 this.renderLabel(),
@@ -1293,7 +1325,7 @@ class MqttReceiver extends MqttElement {
                     ]
                     : this.renderInput(),
                 ]),
-                this.renderDropdown(),
+                this.state.elements.chooseTopic = this.renderDropdown(),
               ])
               : [ // rw==w !wireable
                 this.renderLabel(),
@@ -1318,20 +1350,20 @@ class MqttTransmitter extends MqttReceiver {
 
 class MqttText extends MqttTransmitter {
   // constructor() { super(); }
-  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['min','max']); }
+  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['min','max','wired']); }
   static get floatAttributes() { return MqttReceiver.floatAttributes.concat(['min','max']); }
 
   // TODO - make sure this doesn't get triggered by a message from server.
   onChange(e) {
     //console.log("Changed"+e.target.checked);
-    this.state.value = e.target.valueAsNumber; // Number - TODO-130 check if works as float // TODO make work for stuff other than numbers e.g. text
+    this.state.value = e.target.valueAsNumber; // Number - TODO-154 check if works as float // TODO make work for stuff other than numbers e.g. text
     this.publish();
   }
   renderInput() {
     return el('input', {id: this.mt.topicPath, name: this.mt.topicPath, value: this.state.value, type: "number", min: this.state.min, max: this.state.max, onchange: this.onChange.bind(this)});
   }
   renderValue(val) {
-    return el('span',{textContent: val || ""});
+    return el('span',{textContent: val || "", i8n: false});
   }
   render() {
     return this.renderMaybeWired();
@@ -1351,9 +1383,15 @@ class MqttToggle extends MqttTransmitter {
     return (+this.state.value).toString(); // Implicit conversion from bool to int then to String.
   }
   static get observedAttributes() {
-    return MqttTransmitter.observedAttributes.concat(['checked','indeterminate']);
+    return MqttTransmitter.observedAttributes.concat(['checked','indeterminate','wired']);
   }
-  // TODO - make sure this doesn't get triggered by a message from server.
+  changeAttribute(name, valueString) {
+    super.changeAttribute(name, valueString); // Change from string to number etc and store on this.state
+    // TODO - could set width, color, name, on sub-elements and return false then copy this to other elements
+    return true;
+  }
+
+    // TODO - make sure this doesn't get triggered by a message from server.
   onChange(e) {
     //console.log("Changed"+e.target.checked);
     this.state.value = e.target.checked; // Boolean
@@ -1365,7 +1403,7 @@ class MqttToggle extends MqttTransmitter {
   // r/wireable/wired - text value and wired topic name and hidden dropdown NOT DONE YET
   // w/!wireable - input box with value
   // w/wireable/!wired - input box with value + hidden dropdown
-  // w/wireable/wired - text value(from wire) and wired topic name and hidden dropdown
+  // w/wireable/wired - text value(from wired) and wired topic name and hidden dropdown
 
   // For Bool all same except:
   // renderInput - checkbox with value
@@ -1377,7 +1415,7 @@ class MqttToggle extends MqttTransmitter {
       onchange: this.onChange.bind(this)});
   }
   renderValue(val) {
-    return el('span',{textContent: val ? '✓' : '✗'}); // TODO-130 not showing indeterminate
+    return el('span',{textContent: (val === undefined) ? '?' : (val ? '✓' : '✗')});
   }
   render() {
     return this.renderMaybeWired();
@@ -1541,8 +1579,8 @@ customElements.define('mqtt-slider', MqttSlider);
 
 class MqttChooseTopic extends MqttElement {
   // options = "bool" for boolean topics (matches t.type on others)
-  // TODO-130 maybe just triggr a "onChange" event on the topic, and let the parent handle it
-  // TODO-130 trap this and see what happens to a function attribute like onchange
+  // TODO-154 maybe just triggr a "onChange" event on the topic, and let the parent handle it
+  // TODO-154 trap this and see what happens to a function attribute like onchange
   static get observedAttributes() { return MqttTransmitter.observedAttributes.concat(['name', 'type','value', 'project','rw','onchange']); }
 
   // TODO-43 may need to change findTopics to account for other selection criteria
@@ -1559,9 +1597,14 @@ class MqttChooseTopic extends MqttElement {
       .flat();
   }
   // noinspection JSCheckFunctionSignatures
-  valueSet(val) { // TODO-130 need to catch income set/foo/bar/wired and trigger this (separate from other set/foo/bar/xxx
+  valueSet(val) { // TODO-154 need to catch incoming set/foo/bar/wired and trigger this (separate from other set/foo/bar/xxx
     this.state.value = (val);
-    this.renderAndReplace(); // TODO-130 could get smarter about setting with in span rather than rerender
+    this.renderAndReplace(); // TODO-154 could get smarter about setting with in span rather than rerender
+  }
+  changeAttribute(name, valueString) {
+    super.changeAttribute(name, valueString); // convert and store on state
+    return true; // Rerender - will use new value, name etc
+    // Note that value is expected to change when topic is rewired
   }
   render() {
     // noinspection JSUnresolvedReference
@@ -1766,7 +1809,7 @@ class MqttProject extends MqttReceiver {
 
   addNode(id) {
     let topicPath = `${this.mt.topicPath}/${id}`;
-    let elNode = el('mqtt-node', {id, topic: topicPath, discover: this.state.discover},[]);
+    let elNode = el('mqtt-node', {id, topic: topicPath, discover: this.state.discover, name: "", description: ""},[]);
     elNode.addStandardChildren(); // Cant be done in constructor
     this.state.nodes[id] = elNode;
     let mt = new MqttTopic();
@@ -1841,7 +1884,6 @@ class MqttNode extends MqttReceiver {
   constructor() {
     super(); // (Comment used to say "subscribes to topic" but doesn't look like it
     this.state.topics = {}; // Index of MqttTopic - TODO-13 is this topicLeafs or topicPaths ?
-    this.state.elements = {}; // Pointer to specific elements (for special case updates)
     this.state.days = 0;
     this.watchdog = new Watchdog(this);
     this.state.lastseen = 0;
@@ -1912,13 +1954,15 @@ class MqttNode extends MqttReceiver {
         || twig.startsWith("set") // Sonoff esp8266-243053 (note that is a 2nd "set")
         || twig.startsWith("control/") // Old name for controlhysterisis
         || twig.startsWith("humidity/") // esp8266-243053 Old name for controlhysterisis
+        || twig.endsWith('/wire') // replaced with "/wired"
+        || twig.endsWith('/device_name') // replaced with "/name"
         || !twig.includes('/')
       ) { return false }
 
       // Special case twigs
       if (twig.startsWith("frugal_iot/")) {
         let leaf = twig.substring(11);
-        if (!this.getAttribute(leaf)) {
+        if (!this.constructor.observedAttributes.includes(leaf)) {
           XXX(["Probably not a valid leaf of frugal_iot", leaf]);
         }
         this.setAttribute(leaf, message); // Will update state and rerender if needed
@@ -1963,7 +2007,7 @@ class MqttNode extends MqttReceiver {
   }
 
   addDiscoveredTopicsToNode(topics, groupId) {
-    topics.forEach(t => {  // Note t.topic in discovery is twig // TODO-130 may not always be twigs
+    topics.forEach(t => {  // Note t.topic in discovery is twig // TODO-155 are these always be twigs
       if (groupId) t.group = groupId;
       if (t.leaf && !t.topic && groupId) { t.topic = groupId + "/" + t.leaf;  delete t.leaf; }
       if (!t.topic && t.group) {   // Groups are currently (Aug2024 1.2.14) a topic like { group, name }
@@ -2330,7 +2374,7 @@ class MqttGraphDataset extends MqttElement {
     if (!this.mt.name) {
       this.mt.name = this.mt.leaf;
     }
-    this.mt.subscribe(); // TODO-130 check embedded, may have to create a node.
+    this.mt.subscribe(); // TODO-155 check embedded, may have to create a node.
   }
   shouldLoadWhenConnected() {
     return this.state.type && (this.state.topic || this.mt);
