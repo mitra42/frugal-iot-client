@@ -134,8 +134,6 @@ let unique_id = 1; // Just used as a label for auto-generated elements
 let graph;  // Will hold a default MqttGraph once user chooses to graph anything
 let server_config;
 
-// TODO-37 shoudn't really use the id as for example if multiple soil sensors maybe look for prefix (starts soil)
-// TODO-37 translate name's below
 let discover_io = yaml.load(`
 analog:
   leaf: analog
@@ -470,6 +468,13 @@ FR:
   Submit: Soumettre
   Temperature: Température
   Username: Nom de User
+  Load Cell: Cellule de charge
+  LED: LED
+  Control: Contrôle
+  Unused: Inutilisé
+  Greater Than: Supérieur à
+  OTA: OTA
+  Key: Clé
 HI:
   _thisLanguage: हिंदी
   _nameAndFlag: हिंदी 🇮🇳
@@ -506,6 +511,13 @@ HI:
   Temperature: तापमान
   Username: उपयोगकर्ता नाम
   Project: परियोजना
+  Load Cell: लोड सेल
+  LED: एलईडी
+  Control: नियंत्रण
+  Unused: अप्रयुक्त
+  Greater Than: इससे बड़ा
+  OTA: ओटीए
+  Key: कुंजी
 ID:
   _thisLanguage: Bahasa Indonesia
   _nameAndFlag: Bahasa Indonesia 🇮🇩
@@ -542,6 +554,13 @@ ID:
   Submit: Kirim
   Temperature: Suhu
   Username: Nama Pengguna
+  Load Cell: Sel Beban
+  LED: LED
+  Control: Kontrol
+  Unused: Tidak digunakan
+  Greater Than: Lebih dari
+  OTA: OTA
+  Key: Kunci
 `);
 
 let preferedLanguages = [ ];
@@ -1283,15 +1302,15 @@ class MqttReceiver extends MqttElement {
   // renderInput - checkbox with value
   // renderValue - check mark if value true, empty if false
 
-  renderMaybeWired() {
+  renderMaybeWired(className) {
     if (!this.mt) {
       return []; // Dont render till have mt set
     }
     let wiredTopic = this.mt.wired ? this.mt.project.findTopic(this.mt.wired) : undefined;
-    let wiredTopicValue = wiredTopic ? wiredTopic.element.state.value.toString() : undefined; // TODO-154 maybe error prone if value can be undefined
+    let wiredTopicValue = wiredTopic ? wiredTopic.element.state.value.toString() : undefined; // Works - but maybe error prone if value can be undefined
     return [
       el('link', {rel: 'stylesheet', href: CssUrl}),
-      el('div', {},
+      el('div', {class: className + " outer"},
         this.mt.rw === 'r'
           ? [
             this.mt.wireable
@@ -1356,17 +1375,17 @@ class MqttText extends MqttTransmitter {
   // TODO - make sure this doesn't get triggered by a message from server.
   onChange(e) {
     //console.log("Changed"+e.target.checked);
-    this.state.value = e.target.valueAsNumber; // Number - TODO-154 check if works as float // TODO make work for stuff other than numbers e.g. text
+    this.state.value = e.target.valueAsNumber; // Number -// TODO-154 probably wont work for stuff other than numbers e.g. text
     this.publish();
   }
   renderInput() {
-    return el('input', {id: this.mt.topicPath, name: this.mt.topicPath, value: this.state.value, type: "number", min: this.state.min, max: this.state.max, onchange: this.onChange.bind(this)});
+    return el('input', {class: "val", id: this.mt.topicPath, name: this.mt.topicPath, value: this.state.value, type: "number", min: this.state.min, max: this.state.max, onchange: this.onChange.bind(this)});
   }
   renderValue(val) {
-    return el('span',{textContent: val || "", i8n: false});
+    return el('span',{class: "val", textContent: val || "", i8n: false});
   }
   render() {
-    return this.renderMaybeWired();
+    return this.renderMaybeWired("mqtt-text");
   }
 
 }
@@ -1410,15 +1429,15 @@ class MqttToggle extends MqttTransmitter {
   // renderValue - check mark if value true, empty if false
 
   renderInput() {
-    return el('input', {type: 'checkbox', id: this.mt.topicPath,
+    return el('input', {class: 'val', type: 'checkbox', id: this.mt.topicPath,
       checked: !!this.state.value, indeterminate: typeof(this.state.value) == "undefined",
       onchange: this.onChange.bind(this)});
   }
   renderValue(val) {
-    return el('span',{textContent: (val === undefined) ? '?' : (val ? '✓' : '✗')});
+    return el('span',{class: 'val', textContent: (val === undefined) ? '?' : (val ? '✓' : '✗')});
   }
   render() {
-    return this.renderMaybeWired();
+    return this.renderMaybeWired("mqtt-toggle");
   }
 }
 customElements.define(  'mqtt-toggle', MqttToggle);
@@ -1579,8 +1598,6 @@ customElements.define('mqtt-slider', MqttSlider);
 
 class MqttChooseTopic extends MqttElement {
   // options = "bool" for boolean topics (matches t.type on others)
-  // TODO-154 maybe just triggr a "onChange" event on the topic, and let the parent handle it
-  // TODO-154 trap this and see what happens to a function attribute like onchange
   static get observedAttributes() { return MqttTransmitter.observedAttributes.concat(['name', 'type','value', 'project','rw','onchange']); }
 
   // TODO-43 may need to change findTopics to account for other selection criteria
@@ -1597,9 +1614,9 @@ class MqttChooseTopic extends MqttElement {
       .flat();
   }
   // noinspection JSCheckFunctionSignatures
-  valueSet(val) { // TODO-154 need to catch incoming set/foo/bar/wired and trigger this (separate from other set/foo/bar/xxx
+  valueSet(val) {
     this.state.value = (val);
-    this.renderAndReplace(); // TODO-154 could get smarter about setting with in span rather than rerender
+    this.renderAndReplace();
   }
   changeAttribute(name, valueString) {
     super.changeAttribute(name, valueString); // convert and store on state
@@ -1857,7 +1874,7 @@ class MqttProject extends MqttReceiver {
   findTopic(topicPath) {
     // Currently only used in renderMaybeWired
     let parts = topicPath.split("/");
-    return this.state.nodes[parts[2]].state.topics[`${parts[3]}/${parts[4]}/#`]; //TODO-154 check this
+    return this.state.nodes[parts[2]].state.topics[`${parts[3]}/${parts[4]}/#`];
   }
   render() {
     return  !this.isConnected ? null : [
@@ -1910,10 +1927,11 @@ class MqttNode extends MqttReceiver {
   }
   // Filter the topics on this node by type e.g. "bool" "float" or ["float","int"]
   topicsByType(types, rw) { // [ { name, topic: topicpath } ]
-    let usableName = this.usableName; // TODO-154
+    let usableName = this.usableName;
     return Object.values(this.state.topics)
       .filter( t => types.includes(t.type))
       .filter(t => t.rw.includes(rw))
+      // TODO-154 when have groups as a Webcomponent - use the groups name, and be clever e.g. ledbuiltin/on is LED, but temperature/max is Temperature Max
       .map(t=> { return({name: `${usableName}:${t.name}`, topic: t.topicPath})});
   }
   // Append group and return the HTML element (details)
@@ -1931,83 +1949,68 @@ class MqttNode extends MqttReceiver {
   // Overrides topicValueSet in MqttReceiver
   // noinspection JSCheckFunctionSignatures
   topicValueSet(topicPath, message) {
-    if (topicPath === this.mt.topicPath) { // Its discover for this Node, not a sub-element
-      let rerender = this.valueSet(this.mt.valueFromText(message));
-      let i;
-      while (i = this.queue.shift()) {
-        this.topicValueSet(i.topic, i.message);
-      }
-      return rerender;
-    /*
-    } else if (this.state.discover) { // queue if waiting for discovery  // TODO-37 - no longer, do self-discovery
-      // Still waiting on discovery.
-      this.queue.push({topic: topicPath, message});
-      return false; // Do not rerender as waiting for discovery
-   */
-    } else { // Its a sub-topic
-      let twig = topicPath.substring(this.mt.topicPath.length+1);
-      if (twig.startsWith("set/")) { twig = twig.substring(4); } // Remove "set/" prefix if present
-      // TODO-37 ignore some legacy and/or buggy nodes - probably will go away when server restarted
-      if ([
-        "relay",
-      ].includes(twig)
-        || twig.startsWith("set") // Sonoff esp8266-243053 (note that is a 2nd "set")
-        || twig.startsWith("control/") // Old name for controlhysterisis
-        || twig.startsWith("humidity/") // esp8266-243053 Old name for controlhysterisis
-        || twig.endsWith('/wire') // replaced with "/wired"
-        || twig.endsWith('/device_name') // replaced with "/name"
-        || !twig.includes('/')
-      ) { return false }
 
-      // Special case twigs
-      if (twig.startsWith("frugal_iot/")) {
-        let leaf = twig.substring(11);
-        if (!this.constructor.observedAttributes.includes(leaf)) {
-          XXX(["Probably not a valid leaf of frugal_iot", leaf]);
-        }
-        this.setAttribute(leaf, message); // Will update state and rerender if needed
-        /*
-        if (this.state.elements[leaf]) {
-          this.state.elements[leaf].textContent = message;
-        } else {
-          XXX(["XXX Unknown part of frugal_iot", topicPath]);
-        }
-         */
-      } else if (this.state.topics[twig]) {
-        // TODO-154 - should do same match as below
-        this.state.topics[twig].message_received(topicPath, message);
+    let twig = topicPath.substring(this.mt.topicPath.length+1);
+    if (twig.startsWith("set/")) { twig = twig.substring(4); } // Remove "set/" prefix if present
+    // TODO-37 ignore some legacy and/or buggy nodes - probably will go away when server restarted
+    if (
+      (topicPath === this.mt.topicPath) // Its discover for this Node, not a sub-element (old nodes or in DB)
+      ||  [
+      "relay",
+      ].includes(twig) // Its JUST "relay"
+      || twig.startsWith("set") // Sonoff esp8266-243053 (note that is a 2nd "set")
+      || twig.startsWith("control/") // Old name for controlhysterisis
+      || twig.startsWith("humidity/") // esp8266-243053 Old name for controlhysterisis
+      || twig.endsWith('/wire') // replaced with "/wired"
+      || twig.endsWith('/device_name') // replaced with "/name"
+      || !twig.includes('/')
+    ) { return false }
+
+    // Special case twigs
+    if (twig.startsWith("frugal_iot/")) {
+      let leaf = twig.substring(11);
+      if (!this.constructor.observedAttributes.includes(leaf)) {
+        XXX(["Probably not a valid leaf of frugal_iot", leaf]);
+      }
+      this.setAttribute(leaf, message); // Will update state and rerender if needed
+      /*
+      if (this.state.elements[leaf]) {
+        this.state.elements[leaf].textContent = message;
       } else {
-        // Check if its a group we haven't seen for this node, if so add it - checking first for a template
-        let groupId = twig.split("/")[0];
-        if (!this.groups[groupId]) {
-          let groupName = discover_mod[groupId] ? discover_mod[groupId].name : groupId;
-          this.appendGroup({group: groupId, name: groupName});
-          if (discover_mod[groupId]) {
-            this.addDiscoveredTopicsToNode(discover_mod[groupId].topics, groupId);
-          } else {
-            XXX(["Unknown group - for now can't guess"]);
-          }
+        XXX(["XXX Unknown part of frugal_iot", topicPath]);
+      }
+       */
+    } else if (this.state.topics[twig]) {
+      this.state.topics[twig].message_received(topicPath, message);
+    } else {
+      // Check if its a group we haven't seen for this node, if so add it - checking first for a template
+      let groupId = twig.split("/")[0];
+      if (!this.groups[groupId]) {
+        let groupName = discover_mod[groupId] ? discover_mod[groupId].name : groupId;
+        this.appendGroup({group: groupId, name: groupName});
+        if (discover_mod[groupId]) {
+          this.addDiscoveredTopicsToNode(discover_mod[groupId].topics, groupId);
+        } else {
+          XXX(["Unknown group - for now can't guess"]);
         }
-        // Check if its a group we haven't seen for this node, if so add it - checking first for a template
-        let groupElement = this.groups[groupId]; // Element "details" to which can append something
-        //TODO-37 now have a group element - need to build   then append topic, to groupElement - if discover above fails
-        // e.g. have "sht/temperature but how do we know its a bar with a min and max
-        let matched=false;
-        Object.entries(this.state.topics)
-          .filter(([subscriptionTopic,node]) => topicMatches(subscriptionTopic, twig))
-            .forEach(([subscriptionTopic, module]) => {
-                matched = true;
-                module.message_received(topicPath, message);
-              });
-        if (!matched) {
-          XXX(["Unrecognized twig at ", topicPath]);
-        }
+      }
+      // Check if its a group we haven't seen for this node, if so add it - checking first for a template
+      let groupElement = this.groups[groupId]; // Element "details" to which can append something
+      let matched=false;
+      Object.entries(this.state.topics)
+        .filter(([subscriptionTopic,node]) => topicMatches(subscriptionTopic, twig))
+          .forEach(([subscriptionTopic, module]) => {
+              matched = true;
+              module.message_received(topicPath, message);
+            });
+      if (!matched) {
+        XXX(["Unrecognized twig at ", topicPath]);
       }
     }
   }
 
   addDiscoveredTopicsToNode(topics, groupId) {
-    topics.forEach(t => {  // Note t.topic in discovery is twig // TODO-155 are these always be twigs
+    topics.forEach(t => {  // Note t.topic in discovery is twig
       if (groupId) t.group = groupId;
       if (t.leaf && !t.topic && groupId) { t.topic = groupId + "/" + t.leaf;  delete t.leaf; }
       if (!t.topic && t.group) {   // Groups are currently (Aug2024 1.2.14) a topic like { group, name }
@@ -2016,7 +2019,7 @@ class MqttNode extends MqttReceiver {
         let mt = new MqttTopic();
         mt.fromDiscovery(t, this);
         if (groupId) t.group = groupId; // This is the case when called from topicValueSet, not (yet) from valueSet
-        this.state.topics[t.topic + "/#"] = mt; // TODO-154 watch for topic (e.g. sht/temperature or leaflet of it e.g. sht/temperature/color
+        this.state.topics[t.topic + "/#"] = mt; // Watch for topic (e.g. sht/temperature or leaflet of it e.g. sht/temperature/color
         // mt.subscribe(); Node will forward to sub topics
         let elx = mt.createElement();
         if (['battery','ledbuiltin','description'].includes(mt.leaf)) { // TODO-30 parameterize this - these are "slots" in MqttNode.render
@@ -2035,35 +2038,6 @@ class MqttNode extends MqttReceiver {
         }
       }
     });
-  }
-  // Have received a discovery message for this node - create elements for all topics and subscribe
-  // TODO-152 this is old style being replaced by the discovery as messages come in
-  valueSet(obj) { // obj is object converted from Yaml
-    // TODO-37 reenable this when above tested
-    if (false && this.state.discover) { // If do not have "discover" set, then presume have defined what UI we want on this node
-      this.state.discover = false; // Only want "discover" once, if change then need to get smart about not redrawing working UI as may be relying on data[]
-      console.log(obj); // Useful for debugging to see this
-      let nodediscover = obj[0]; // Should only ever be one of them
-      this.state.value = nodediscover; // Save the object for this node
-      // TODO-37 these (id, description, name) should be within topics - esp frugal-iot
-      ['id', 'description', 'name'].forEach(k => this.state[k] = nodediscover[k]); // Grab top level properties from Discover
-      while (this.childNodes.length > 0) this.childNodes[0].remove(); // Remove and replace any existing nodes
-      if (this.state.lastSeenElement) { this.append(this.state.lastSeenElement); } // Re-add the lastseen element
-      if (!nodediscover.topics) { nodediscover.topics = []; } // if no topics, make it an empty array
-      addDiscoveredTopicsToNode(nodediscover.topics);
-      let project = this.state.project;
-      // Rerender any dropdown elements based on this discovery.
-      // TODO make this use new functions node.project, project.nodes, node.topics
-      Array.from(project.children)
-        .map(n => Object.values(n.state.topics))
-        .flat(1)
-        .map(t => t.element)
-        .filter(elx => (elx instanceof MqttChooseTopic))
-        .forEach(elx => elx.renderAndReplace());
-      return true; // because change name description etc.
-    } else {
-      return false;
-    }
   }
   /*
   shouldLoadWhenConnected() {

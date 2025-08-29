@@ -67,10 +67,6 @@ div.offline {background-color: #888888;} /* Not INSIDE mqtt-node, it is the mqtt
         label {font-size: x-large;}
     }
 }
-/* In MqttSlider */
-.mqtt-slider .pointbar {margin:0px; padding 0px;}
-.mqtt-slider .val {margin:5px;}
-.mqtt-slider .setpoint {position: relative;top: -5px;cursor: pointer;width: max-content;height: max-content;}
 
 /* In MqttChoosetopic */
 .mqtt-choosetopic {
@@ -82,16 +78,38 @@ div.offline {background-color: #888888;} /* Not INSIDE mqtt-node, it is the mqtt
     }
 }
 
+.mqtt-gauge {
+    dial-gauge {--dg-title-font-size: 1em;--dg-numeric-font-size: 1.5em;}
+}
+
 .mqtt-graph {
     .leftright{display:flex; align-items:center;}
     @media (max-width:1001px) {
         .graphnavleft, .graphnavright {font-size: xxx-large;}
     }
 }
-.mqtt-gauge {
-    dial-gauge {--dg-title-font-size: 1em;--dg-numeric-font-size: 1.5em;}
-}
 
+/* In MqttSlider */
+.mqtt-slider .pointbar {margin:0px; padding 0px;}
+.mqtt-slider .val {margin:5px;}
+.mqtt-slider .setpoint {position: relative;top: -5px;cursor: pointer;width: max-content;height: max-content;}
+
+.mqtt-text {
+    .val {margin:5px;}
+    .wired {margin:5px;}
+    @media (max-width:1001px){
+        .val {font-size: xx-large;}
+        label {font-size: x-large;}
+    }
+}
+.mqtt-toggle {
+    .val {margin:5px;}
+    .wired {margin:5px;}
+    @media (max-width:1001px){
+        .val {font-size: xx-large;}
+        label {font-size: x-large;}
+    }
+}
 /* In MqttGraph */
 /* In MqttWrapper */
 /*Not useful: .mqtt-wrapper {border: 1px,black,solid;  margin: 0.2em; } */
