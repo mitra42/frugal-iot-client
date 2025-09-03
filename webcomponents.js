@@ -332,6 +332,7 @@ function d_io_v(io_id, variants) {
   }
   return io;
 }
+// TO-ADD-SENSOR TO-ADD-ACTUATOR TO-ADD-CONTROL
 discover_mod["button"] = { name: "Button", topics: [d_io_v("button")]};
 discover_mod["ht"] = { name: "HT",   topics: [ d_io_v("temperature"), d_io_v("humidity")]};
 discover_mod["sht"] = { name: "SHT", topics: [ d_io_v("temperature"), d_io_v("humidity")]};
@@ -339,7 +340,9 @@ discover_mod["dht"] = { name: "DHT", topics: [ d_io_v("temperature"), d_io_v("hu
 discover_mod["ms5803"] = { name: "MS5803", topics: [ d_io_v("pressure"), d_io_v("temperature")]};
 discover_mod["relay"] = { name: "Relay", topics: [ d_io_v("on")]};
 discover_mod["ledbuiltin"] = { name: "LED", topics: [ d_io_v("on")]};
-discover_mod["soil"] = { name: "Soil", topics: [ d_io_v("analog", {min: 0, max: 100, color: "brown"})]};
+discover_mod["soil"] = { name: "Soil", topics: [
+  d_io_v("analog", {min: 0, max: 100, color: "brown"})
+]};
 discover_mod["controlhysterisis"] = { name: "Control", topics: [
   d_io_v('controltext', {leaf: "now", name: "Now"}),
   d_io_v('controlintoggle', {leaf: "greater", name: "Greater Than"}),
