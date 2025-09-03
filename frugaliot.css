@@ -54,6 +54,15 @@ mqtt-node {
         details {font-size: x-large;}
     }
 }
+
+.mqtt-group {
+    border: 1px, black, solid;
+    margin: 1px;
+    @media (max-width: 1001px) {
+        font-size: x-large;
+    }
+}
+
 div.offline {background-color: #888888;} /* Not INSIDE mqtt-node, it is the mqtt-node */
 /* In MqttBar */
 .mqtt-bar {

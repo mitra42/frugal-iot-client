@@ -1940,11 +1940,7 @@ class MqttNode extends MqttReceiver {
   // Append group and return the HTML element (details)
   appendGroup(t) { // t = { group, name }
     if (!this.groups[t.group]) {
-      this.groups[t.group] = el('details', {class: `group ${t.group}`}, [
-        el('summary',{},[
-          el('span', {textContent: t.name || t.group}),
-        ])
-      ]);
+      this.groups[t.group] = el('mqtt-group', {class: `group ${t.group}`, group: t.group, name: t.name}, [ ]);
       this.append(this.groups[t.group]); // Adds the group as a dropdown
     }
     return this.groups[t.group];
@@ -2104,6 +2100,26 @@ class MqttNode extends MqttReceiver {
   }
 }
 customElements.define('mqtt-node', MqttNode);
+
+class MqttGroup extends MqttElement { // TODO-40 may extend MqttReceiver if needed ....
+  constructor() {
+    super();
+    this.topics = {}
+  }
+  static get observedAttributes() { return ['group','name']; }
+  render () {
+    return !this.isConnected ? null : [
+      el('link', {rel: 'stylesheet', href: CssUrl}),
+      el('details', {class: `mqtt-group ${this.state.group}`}, [
+        el('summary',{},[
+          el('span', {textContent: this.state.name || this.state.group})
+        ]),
+        el('slot'), // Children go here
+      ]),
+    ];
+  }
+}
+customElements.define('mqtt-group', MqttGroup);
 
 /* This could be part of MqttBar, but maybe better standalone */
 class MqttGraph extends MqttElement {
