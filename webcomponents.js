@@ -23,7 +23,7 @@ const CssUrl = './frugaliot.css';
 function XXX(args) {
   if (args) { console.log(...args); }
   return false;
-} // Put a breakpoint here for debuggign and intersperce XXX() in code.
+} // Put a breakpoint here for debugging and intersperse XXX() in code.
 
 /* This is copied from the chartjs-adapter-luxon, I could not get it to import - gave me an error every time */
 /*!
@@ -138,7 +138,7 @@ let discover_io = yaml.load(`
 analog:
   leaf: analog
   type:   int
-  dispay: bar
+  display: bar
   rw:       r
 button:
   leaf:  button
@@ -181,7 +181,7 @@ temperature:
   max:      50
   color:    red
   wireable: false   
-controltext:
+controlfloat:
   #[leaf, name] should be overridden
   min:      0
   max:      100
@@ -190,6 +190,17 @@ controltext:
   color:    black
   wireable: true
   rw:       w
+  retain:   true
+controltext:
+  #[leaf, name] should be overridden
+  min:      0
+  max:      100
+  type:     text
+  display:  text
+  color:    black
+  wireable: true
+  rw:       w
+  retain:   true
 controlintoggle:
   #[leaf, name] should be overridden
   type:     bool
@@ -208,8 +219,8 @@ controlouttoggle:
 let discover_mod = yaml.load(`
 # Each module contains inputs &/o outputs, each of which should have 
 # name  Capitalized English (and add translation below in 'languages'
-# max   For guages, slider
-# min   For guages, slider
+# max   For gauges, slider
+# min   For gauges, slider
 # color can be a name or a #RRGGBB
 # display One of bar,gauge,text,slider,inputbox
 # type One of bool,float,int,topic,text,yaml
@@ -283,46 +294,62 @@ ensaht:
 frugal_iot:
   name: XXX
   topics:
-  - leaf: name
-    name: 
-    type: text
+  - leaf:     id
+    slot:     id
+    name:     Node ID
+    type:     text
     display:  text
-    rw: r
-  - leaf: description
-    description:
-    type: text
+    rw:       r
+  - leaf:     name
+    slot:     name
+    name:     Node Name
+    type:     text
     display:  text
-    rw: r
+    rw:       w
+    retain:   true
+  - leaf:     description
+    slot:     description
+    name:     Description
+    type:     text
+    display:  text
+    rw:       w
+    retain:   true
+  - leaf:     lastseen
+    slot:     lastseen
+    name:     Last Seen
+    type:     text
+    display:  text
+    rw:       r
 loadcell:
  name: Load Cell
  topics:
-  - leaf:  loadcell
-    name: Load Cell
-    type:   float
-    display: text
-    min:    0
-    max:    65000
-    color:  yellow
+  - leaf:     loadcell
+    name:     Load Cell
+    type:     float
+    display:  text
+    min:      0
+    max:      65000
+    color:    yellow
     rw:       r
 lux:
  name: Light meter
  topics:
-  - leaf:  lux
-    name: Lux
-    type:   float
-    display: bar
-    min:    0
-    max:    65000
-    color:  yellow
+  - leaf:     lux
+    name:     Lux
+    type:     float
+    display:  bar
+    min:      0
+    max:      65000
+    color:    yellow
     rw:       r
 ota:
   name: OTA
   topics:
-    - leaf: key
-      name: Key
-      type: text
-      display: text
-      rw: r
+  - leaf:     key
+    name:     Key
+    type:     text
+    display:  text
+    rw:       r
 `);
 function d_io_v(io_id, variants) {
   let io = {}
@@ -344,10 +371,10 @@ discover_mod["soil"] = { name: "Soil", topics: [
   d_io_v("analog", {min: 0, max: 100, color: "brown"})
 ]};
 discover_mod["controlhysterisis"] = { name: "Control", topics: [
-  d_io_v('controltext', {leaf: "now", name: "Now"}),
+  d_io_v('controlfloat', {leaf: "now", name: "Now"}),
   d_io_v('controlintoggle', {leaf: "greater", name: "Greater Than"}),
-  d_io_v('controltext', {leaf: "limit", name: "Limit"}),
-  d_io_v('controltext', {leaf: "hysterisis", name: "Hysterisis", max: 100, wireable: false}),
+  d_io_v('controlfloat', {leaf: "limit", name: "Limit"}),
+  d_io_v('controlfloat', {leaf: "hysterisis", name: "Hysterisis", max: 100, wireable: false}),
   d_io_v('controlouttoggle', {leaf: "out", name: "Out"}),
 ]};
 /* Helpers of various kinds */
@@ -356,16 +383,17 @@ discover_mod["controlhysterisis"] = { name: "Control", topics: [
 function locationParameterChange(name, value) {
   const url = new URL(window.location.href);
   url.searchParams.set(name, value); // Replace with desired param and value
-  const newUrlString = url.toString();
-  window.location = newUrlString;
+  window.location = url.toString();
 }
 // Remove v if present, then unshift to front
+/* UNUSED
 function unshiftUnique(arr, v) {
   const idx = arr.indexOf(v);
   if (idx !== -1) arr.splice(idx, 1);
   arr.unshift(v);
   return arr;
 }
+ */
 
 // Subscribe to a topic (no wild cards as topic not passed to cb),
 function mqtt_subscribe(topic, cb) { // cb(message)
@@ -435,6 +463,10 @@ EN:
   Greater Than: Greater Than
   OTA: OTA
   Key: Key
+  Description: Description
+  Last Seen: Last Seen
+  Node ID:  Node ID
+  Node Name:  Node Name
 FR:
   _thisLanguage: Francaise
   _nameAndFlag: Français 🇫🇷
@@ -478,6 +510,8 @@ FR:
   Greater Than: Supérieur à
   OTA: OTA
   Key: Clé
+  Node ID: Node ID
+  Node Name: Node Name
 HI:
   _thisLanguage: हिंदी
   _nameAndFlag: हिंदी 🇮🇳
@@ -521,6 +555,8 @@ HI:
   Greater Than: इससे बड़ा
   OTA: ओटीए
   Key: कुंजी
+  Node ID: Node ID
+  Node Name: Node Name
 ID:
   _thisLanguage: Bahasa Indonesia
   _nameAndFlag: Bahasa Indonesia 🇮🇩
@@ -564,10 +600,13 @@ ID:
   Greater Than: Lebih dari
   OTA: OTA
   Key: Kunci
+  Node ID: Node ID
+  Node Name: Node Name
 `);
 
 let preferedLanguages = [ ];
 function languageNamesAndFlags() {
+  //noinspection JSUnresolvedVariable
   return Object.entries(languages).map(([k,v]) => [k,v._nameAndFlag]);
 }
 function getString(tag) {
@@ -578,6 +617,7 @@ function getString(tag) {
     }
     XXX(["Cannot translate ", tag, ' into ', lang]);
   }
+  //noinspection JSUnresolvedVariable
   return (languages.EN[tag] || tag);
 }
 
@@ -590,10 +630,10 @@ let i8ntags = {
 // Local version of EL
 function el(tag, attributes = {}, children) {
   //console.log(attributes);
-  if (attributes['i8n'] != false) { // Add i8n: false if know the field is untranslateable (e.g. a name)
+  if (attributes['i8n'] !== false) { // Add i8n: false if know the field is untranslatable (e.g. a name)
     Object.entries(attributes)
-      .filter(([k, v]) => i8ntags[tag] && i8ntags[tag].includes(k))
-      .filter(([k, v]) => (
+      .filter(([k, unused]) => i8ntags[tag] && i8ntags[tag].includes(k))
+      .filter(([unused, v]) => (
         v && typeof v === 'string' &&
         !v.includes(':') &&  // e.g.  dev: Development
         !v.includes('/') && // e.g. dev/developers
@@ -631,7 +671,7 @@ class LanguagePicker extends HTMLElementExtended {
       el('link', {rel: 'stylesheet', href: CssUrl}),
       el('select', {class: "language-picker", onchange: this.onchange.bind(this)},
         languageNamesAndFlags().map(([k,v]) =>
-          EL('option', {value: k, textContent: v, selected: k==preferedLanguages[0]}))
+          EL('option', {value: k, textContent: v, selected: k === preferedLanguages[0]}))
       ),
     ];
   }
@@ -701,12 +741,13 @@ class MqttTopic {
     return this.node.mt.topicPath + "/set/" + this.twig;
   }
   get topicWiredPath() {
-    return this.topicSetPath + "/wired"; // Path to set wired valu
+    return this.topicSetPath + "/wired"; // Path to set wired value
   }
   get topicSubscribePath() {
     if (this.element && this.element.isNode) {
       return this.topicPath + "/#"; // Subscribe to all subtopics
     } else {
+      //noinspection JSUnresolvedVariable
       switch (this.rw) { // Note for project this will be undefined
         case 'w': // Note should not be happening as subscribing at node level
           return this.topicSetPath;
@@ -719,11 +760,12 @@ class MqttTopic {
   createElement() {
     if (!this.element) {
       // noinspection JSUnresolvedReference
-      let name = this.name; // comes from discovery
+      // let name = this.name; // comes from discovery
       let elx;
       // noinspection JSUnresolvedReference
       switch (this.display) {
         case 'toggle':
+          //noinspection JSUnresolvedVariable
           elx = el('mqtt-toggle', {color: this.color });
           this.retain = true;
           this.qos = 1;
@@ -733,23 +775,20 @@ class MqttTopic {
           elx = el('mqtt-bar', {max: this.max, min: this.min, color: this.color}, []);
           break;
         case 'gauge':
+          //noinspection JSUnresolvedVariable
           elx = el('mqtt-gauge', {max: this.max, min: this.min, color: this.color}, []);
           break;
         case 'text':
+          // noinspection JSUnresolvedVariable
           elx = el('mqtt-text', {max: this.max, min: this.min, color: this.color}, []);
           break;
         case 'slider':
           // Not currently being used, UI for controls works better as mqtt-text, this should still work though.
-          // noinspection JSUnresolvedReference
           // TODO possibly deprecate this
+          // noinspection JSUnresolvedVariable
           elx = el('mqtt-slider', {min: this.min, max: this.max, value: (this.max + this.min) / 2}, [
             el('span', {textContent: "△"}, []),
           ]);
-          break;
-        case 'inputbox':
-          elx = el('mqtt-inputbox', {}, []);
-          this.retain = true;
-          this.qos = 1; // This message needs to get through to node
           break;
         default:
           // noinspection JSUnresolvedReference
@@ -771,6 +810,21 @@ class MqttTopic {
     }
   }
 
+  get inputType() {
+    // Valid responses for <input type=> are: USED text, number, checkbox or UNUSED password, checkbox, radio, submit, file, date, email, , url, color, range, search, tel, time, week, month
+    switch (this.type) {
+      case "text":
+        return "text"
+      case "bool":
+        return "checkbox";
+      case "float":
+      case "int":
+        return "number"
+      default: // e.g. topic, yaml
+        XXX("Unsupported type - if called from MqttText")
+        return "undefined";
+    }
+  }
   // TODO add opposite - return string or int based on argument, then look at valueGet subclassed many places
   // NOTE same function in frugal-iot-logger and frugal-iot-client if change here, change there
   valueFromText(message) {
@@ -912,6 +966,7 @@ class MqttTopic {
   // Adds historical data to the chart - typically chart updates data for each line, then updates the chart.
   addDataFrom(filename, first, cb) {
     //TODO this location may change
+    // noinspection JSUnresolvedReference
     let filepath = `${server_config.logger.url}/${this.topicPath}/${filename}`;
     console.log("Adding from", filepath);
     //let self = this; // if needed in Promise
@@ -1083,7 +1138,7 @@ class MqttLogin extends HTMLElementExtended { // TODO-89 may depend on organizat
     super.connectedCallback();
   }
   changeAttribute(name, value) {
-    if (name == "lang") {
+    if (name === "lang") {
       if (value.includes(',')) {
         preferedLanguages = (value.split(',')).map(v => v.toUpperCase());
       } else {
@@ -1165,7 +1220,7 @@ class MqttElement extends HTMLElementExtended {
       // note this render happens before the loadContent completes
       if (needReRender !== false) {  // Testing this way as old changeAttributes returned undefined and assumed a reRender
         this.renderAndReplace();
-      };
+      }
     }
   }
 }
@@ -1184,7 +1239,8 @@ class MqttReceiver extends MqttElement {
   }
   connectedCallback() {
     if (this.state.topic && !this.mt) {
-      // Created with a topic string- which should be a path, so create the MqttTopic
+      // Created with a topic string, which should be a path, so create the MqttTopic
+      XXX("TODO-155 Not expecting connectCallback to work - see createTopic");
       this.createTopic();
     }
     super.connectedCallback();
@@ -1255,7 +1311,7 @@ class MqttReceiver extends MqttElement {
   // Subclass "changeAttribute" to edit rendered elements and return true if do not want to rerender
   parameterSet(parameter, message) {
     // Note this will be silently ignored if parameter is not "observed"
-    //this.mt[parameter] = Number(message); // Not setting on topic as not needed and dont know HERE if number or string
+    //this.mt[parameter] = Number(message); // Not setting on topic as not needed and do not know HERE if number or string
     // causes a re-render (setAttribute->attributeChangedCallback->changeAttribute->renderAndReplace)
     if (!this.constructor.observedAttributes.includes(parameter)) {
       XXX(["Good chance parameter is not observed:", parameter]);
@@ -1275,6 +1331,7 @@ class MqttReceiver extends MqttElement {
   onwiredchange(e) {
     this.mt.wired = e.target.value;
     let newPath = e.target.value;
+    // noinspection JSUnresolvedVariable
     if ((this.mt.rw === 'r') && e.target.value) {
       let parts = e.target.value.split("/");
       parts.splice(3,0,"set");
@@ -1284,6 +1341,7 @@ class MqttReceiver extends MqttElement {
     this.renderAndReplace();
   }
   renderLabel() {
+    // noinspection JSUnresolvedVariable
     return el('label', {for: this.mt.topicPath, textContent: this.mt.name});
   }
   renderWiredName(wiredTopic) {
@@ -1291,6 +1349,7 @@ class MqttReceiver extends MqttElement {
     return el('span', {class: 'wired', textContent: wiredTopicName})
   }
   renderDropdown() {
+    // noinspection JSUnresolvedVariable
     return el('mqtt-choosetopic', {name: this.mt.name, type: this.mt.type, value: this.getAttribute('wired'), rw: (this.mt.rw === 'r' ? 'w' : 'r'), project: this.mt.project, onchange: this.onwiredchange.bind(this)});
   }
   // Handle cases ....
@@ -1305,22 +1364,26 @@ class MqttReceiver extends MqttElement {
   // renderInput - checkbox with value
   // renderValue - check mark if value true, empty if false
 
-  renderMaybeWired(className) {
+    renderMaybeWired(className) {
     if (!this.mt) {
       return []; // Dont render till have mt set
     }
+    // noinspection JSUnresolvedVariable
     let wiredTopic = this.mt.wired ? this.mt.project.findTopic(this.mt.wired) : undefined;
-    let wiredTopicValue = wiredTopic ? wiredTopic.element.state.value.toString() : undefined; // Works - but maybe error prone if value can be undefined
+    let wiredTopicValue = wiredTopic ? wiredTopic.element.state.value.toString() : undefined; // Works - but maybe error-prone if value can be undefined
     return [
       el('link', {rel: 'stylesheet', href: CssUrl}),
       el('div', {class: className + " outer"},
+        // noinspection JSUnresolvedVariable
         this.mt.rw === 'r'
           ? [
+            // noinspection JSUnresolvedVariable
             this.mt.wireable
               ? // rw==r && wireable
               el('details', {} , [
                 el('summary', {}, [
                   this.renderLabel(),
+                  // noinspection JSUnresolvedVariable
                   this.mt.wired
                     ? [
                       this.renderValue(this.state.value),
@@ -1378,17 +1441,21 @@ class MqttText extends MqttTransmitter {
   // TODO - make sure this doesn't get triggered by a message from server.
   onChange(e) {
     //console.log("Changed"+e.target.checked);
-    this.state.value = e.target.valueAsNumber; // Number -// TODO-154 probably wont work for stuff other than numbers e.g. text
+    this.state.value = this.mt.valueFromText(e.target.value); // Convert for example to float
     this.publish();
   }
+  /*
+  onClick(e) {
+  }
+   */
   renderInput() {
-    return el('input', {class: "val", id: this.mt.topicPath, name: this.mt.topicPath, value: this.state.value, type: "number", min: this.state.min, max: this.state.max, onchange: this.onChange.bind(this)});
+    return el('input', {class: "val", id: this.mt.topicPath, name: this.mt.topicPath, value: this.state.value, type: this.mt.inputType, min: this.state.min, max: this.state.max, onchange: this.onChange.bind(this)});
   }
   renderValue(val) {
-    return el('span',{class: "val", textContent: val || "", i8n: false});
+    return el('span',{class: "val", textContent: val || "", i8n: false, /*onclick: this.onClick.bind(this)*/});
   }
   render() {
-    return this.renderMaybeWired("mqtt-text");
+    return this.renderMaybeWired("mqtt-text "+(this.mt && this.mt.twig && this.mt.twig.replaceAll('/','_') || ""));
   }
 
 }
@@ -1478,7 +1545,7 @@ class MqttBar extends MqttReceiver {
           el('span', {class: "left", style: `width:${width}%; background-color:${this.state.color};`},[
             el('span', {class: "val", textContent: this.state.value}),
           ]),
-          //Do not appear to need this - and it sometimes wraps, so if re-enable, need to make sure always horiz next to left
+          //Do not appear to need this - and it sometimes wraps, so if re-enabled, need to make sure always horiz next to left
           //el('span', {class: "right", style: "width:"+(100-width)+"%"}),
         ]),
         el('slot',{}), // Children would be a setpoint, but not using currently
@@ -1623,7 +1690,7 @@ class MqttChooseTopic extends MqttElement {
   }
   changeAttribute(name, valueString) {
     super.changeAttribute(name, valueString); // convert and store on state
-    return true; // Rerender - will use new value, name etc
+    return true; // Rerender - will use new value, name etc.
     // Note that value is expected to change when topic is rewired
   }
   render() {
@@ -1795,7 +1862,7 @@ class MqttWrapper extends HTMLElementExtended {
     //super.connectedCallback(); // Not doing as finishes with a re-render.
   }
   changeAttribute(name, value) {
-    if (name == "lang") {
+    if (name === "lang") {
       if (value.includes(',')) {
         preferedLanguages = (value.split(',')).map(v => v.toUpperCase());
       } else if(!value) {
@@ -1895,7 +1962,6 @@ class MqttProject extends MqttReceiver {
   }
 }
 customElements.define('mqtt-project', MqttProject);
-
 class MqttNode extends MqttReceiver {
   static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['id', 'name', 'description','discover']); }
   static get boolAttributes() { return MqttReceiver.boolAttributes.concat(['discover'])}
@@ -1908,13 +1974,21 @@ class MqttNode extends MqttReceiver {
     this.watchdog = new Watchdog(this);
     this.state.lastseen = 0;
     this.groups = {}; // Index of groups
-    this.queue = []; // Queue of topics to process when discovery received
     // Special case elements whose text is changed at top level , not inside a group or the ShadowRoot
   }
   addStandardChildren() {
-    this.append(this.state.elements.name = el('span', {slot: "name", class: 'name', textContent: this.state.name}));
-    this.append(this.state.elements.description = el('span', {slot: "description", class: 'description', textContent: this.state.description}));
-    this.append(this.state.elements.id = el('span',{class: 'nodeid', textContent: this.state.id, i8n: false}));
+    // These go in slots in the Node's render.
+    /*
+    this.groups.frugal_iot.append(this.state.elements.name = el('span', {slot: "name", class: 'name', textContent: this.state.name}));
+    this.groups.frugal_iot.append(this.state.elements.description =
+      el('mqtt-text', {slot: "description", class: 'description', value: this.state.description, rw: 'w', type: 'text', min: 0, max: 30}));
+    this.groups.frugal_iot.append(this.state.elements.description);
+    this.groups.frugal_iot.append(this.state.elements.id = el('span',{class: 'nodeid', textContent: this.state.id, i8n: false}));
+     */
+    // Need the group firs,t else the addDiscoveredTopicsToNode will create a new group.
+    this.groups.frugal_iot = el('mqtt-groupfrugaliot', {class: 'group frugal_iot', group: 'frugal_iot', name: 'XXX123'});
+    this.addDiscoveredTopicsToNode(discover_mod["frugal_iot"].topics, "frugal_iot");
+    this.state.topics["frugal_iot/id/#"].element.valueSet(this.state.id);
   }
   changeAttribute(leaf, valueString) {
     super.changeAttribute(leaf, valueString);
@@ -1923,7 +1997,7 @@ class MqttNode extends MqttReceiver {
     }
     return false;
   }
-  get isNode() { return true; } // Overrides suprclass in MqttReceiver
+  get isNode() { return true; } // Overrides superclass in MqttReceiver
 
   get usableName() {
     return (this.state.name === "device") ? this.state.id : this.state.name;
@@ -1972,17 +2046,14 @@ class MqttNode extends MqttReceiver {
         XXX(["Probably not a valid leaf of frugal_iot", leaf]);
       }
       this.setAttribute(leaf, message); // Will update state and rerender if needed
-      /*
-      if (this.state.elements[leaf]) {
-        this.state.elements[leaf].textContent = message;
-      } else {
-        XXX(["XXX Unknown part of frugal_iot", topicPath]);
-      }
-       */
-    } else if (this.state.topics[twig]) {
+      // Need to drop through and also look for topics that match in the frugal_iot group
+    }
+    // I don't expect this next match to ever succeed - as topics is usually like set/temperature/# but the test happens below in the loop through this.state.topic
+    if (this.state.topics[twig]) {
+      XXX(["Unexpected exact match for twig", twig])
       this.state.topics[twig].message_received(topicPath, message);
     } else {
-      // Check if its a group we haven't seen for this node, if so add it - checking first for a template
+      // Check if it is a group we haven't seen for this node, if so add it - checking first for a template
       let groupId = twig.split("/")[0];
       if (!this.groups[groupId]) {
         let groupName = discover_mod[groupId] ? discover_mod[groupId].name : groupId;
@@ -1993,12 +2064,10 @@ class MqttNode extends MqttReceiver {
           XXX(["Unknown group - for now can't guess"]);
         }
       }
-      // Check if its a group we haven't seen for this node, if so add it - checking first for a template
-      let groupElement = this.groups[groupId]; // Element "details" to which can append something
       let matched=false;
       Object.entries(this.state.topics)
-        .filter(([subscriptionTopic,node]) => topicMatches(subscriptionTopic, twig))
-          .forEach(([subscriptionTopic, module]) => {
+        .filter(([subscriptionTopic,unusedNode]) => topicMatches(subscriptionTopic, twig))
+          .forEach(([unusedSubscriptionTopic, module]) => {
               matched = true;
               module.message_received(topicPath, message);
             });
@@ -2007,6 +2076,10 @@ class MqttNode extends MqttReceiver {
       }
     }
   }
+
+  // from addDiscoveredTopicsToNode
+
+
 
   addDiscoveredTopicsToNode(topics, groupId) {
     topics.forEach(t => {  // Note t.topic in discovery is twig
@@ -2021,7 +2094,15 @@ class MqttNode extends MqttReceiver {
         this.state.topics[t.topic + "/#"] = mt; // Watch for topic (e.g. sht/temperature or leaflet of it e.g. sht/temperature/color
         // mt.subscribe(); Node will forward to sub topics
         let elx = mt.createElement();
-        if (['battery','ledbuiltin','description'].includes(mt.leaf)) { // TODO-30 parameterize this - these are "slots" in MqttNode.render
+        //TODO-30 remove ALTERNATIVE-SLOT-2 following when parameterized and using ALTERNATIVE SLOT-1
+        // ALTERNATIVE SLOT-1
+        if (t.slot) {
+          elx.setAttribute('slot', mt.slot);
+          elx.setAttribute('class', mt.slot);
+          if (groupId === "frugal_iot") { this.state.elements[t.slot] = elx}
+        }
+        // ALTERNATIVE SLOT-2
+        if (['battery','ledbuiltin'].includes(mt.leaf)) { // TODO-30 parameterize this - these are "slots" in MqttNode.render
           // noinspection JSCheckFunctionSignatures
           elx.setAttribute('slot', mt.leaf);
         }
@@ -2057,22 +2138,9 @@ class MqttNode extends MqttReceiver {
     return !this.isConnected ? null : [
       el('link', {rel: 'stylesheet', href: CssUrl}),
       this.state.outerDiv = el('div', {class: 'outer mqtt-node'+((this.state.online) ? '' : ' offline')}, [
-        el('details', {},[
-          el('summary', {},[
-            el('slot',{name: 'name', class: 'name'}),
-            el('slot',{name: 'id', class: 'nodeid'}),
-            //Starts off as 1px empty image, changed when battery message received
-            this.state.batteryIndicator = el('img', {class: "batteryimg", src: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"}),
-          ]),
-          el('slot',{name: 'description', class: 'description'}),
-          el('slot', {name: 'lastseen', class: 'lastseen'}),
-          el('div', {class: "health"},[
-            el('slot',{name: 'ledbuiltin'}),
-            el('slot',{name: 'battery'}),
-          ]),
-        ]),
+        this.groups.frugal_iot,
         el('div', {class: "topics"},[
-          el('slot', {}),
+          el('slot', {}), // Groups are children of Node
         ]),
   ])
     ]
@@ -2091,12 +2159,16 @@ class MqttNode extends MqttReceiver {
   }
   updateLastSeen(lastseentime) {
     this.state.lastseen = lastseentime;
-    if (this.state.lastSeenElement) {
-      this.removeChild(this.state.lastSeenElement);
+    let value = lastseentime ? new Date(lastseentime).toLocaleString() : "Never seen";
+    this.state.elements.lastseen.setAttribute('value', value);
+    /*
+    if (this.state.elements.lastSeen) {
+      this.groups.frugal_iot.removeChild(this.state.elements.lastSeen);
     }
     //TODO-113 could probably also do by replacing inner text if it flickers
-    this.state.lastSeenElement = el('span', {slot: "lastseen", class: 'lastseen', textContent: lastseentime ? new Date(lastseentime).toLocaleString() : "Never seen"});
-    this.append(this.state.lastSeenElement);
+    this.state.elements.lastSeen = el('span', {slot: "lastseen", class: 'lastseen', textContent: value});
+    this.groups.frugal_iot.append(this.state.elements.lastSeen);
+    */
   }
 }
 customElements.define('mqtt-node', MqttNode);
@@ -2120,6 +2192,32 @@ class MqttGroup extends MqttElement { // TODO-40 may extend MqttReceiver if need
   }
 }
 customElements.define('mqtt-group', MqttGroup);
+
+class MqttGroupFrugalIot extends MqttGroup {
+  render() {
+    return !this.isConnected ? null : [
+      el('link', {rel: 'stylesheet', href: CssUrl}),
+      el('details', {}, [
+        el('summary', {}, [
+          el('slot', {name: 'name', class: 'name'}),
+          //Starts off as 1px empty image, changed when battery message received
+          this.state.batteryIndicator = el('img', {
+            class: "batteryimg",
+            src: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+          }),
+        ]),
+        el('slot', {name: 'description', class: 'description'}),
+        el('slot', {name: 'lastseen', class: 'lastseen'}),
+        el('slot', {name: 'id', class: 'id'}),
+        el('div', {class: "health"}, [
+          el('slot', {name: 'ledbuiltin'}),
+          el('slot', {name: 'battery'}),
+        ]),
+      ]),
+    ];
+  }
+}
+customElements.define('mqtt-groupfrugaliot', MqttGroupFrugalIot);
 
 /* This could be part of MqttBar, but maybe better standalone */
 class MqttGraph extends MqttElement {

@@ -4,183 +4,216 @@
  * style children intended to be shown via a slot as e.g class: foo and stylesheet has mqtt-xxx .foo
  * the slotted children don't see the html they are inside, and the shadow root doesnt know its inside a <mqtt-xxx>
  */
-/* Multiple places */
-.outer {background-color: white;margin:5px; padding:5px;}
-.icon { /* mqtt-toggle , mqtt-bar (graph) */
-    height:1em;width:1em;float:right;
-    @media (max-width:1001px){
-        height:1.5em;width:1.5em;
-    }
+/* TO-DO sort and file */
+/*WORKS :host-context(.frugal_iot) label { display: none; } /* Hide labels inside the frugal_iot group */
+/*WORKS :host-context(summary) label { color: green; } /* Hide labels inside the frugal_iot group */
+/*:host-context(details[open]) label {  color: green; } /*WORKS */
+/* summary slot {display: inline-block;} */ /* WORKS but for all cos inside shadow root */
+/* :host-context(details:not(open)) label { color: red; } /*WORKS */
+div.frugal_iot_name {
+    display: inline-block !important;
+    label {  display: none !important;} /* Dont display label for noide id */
 }
-.language-picker, language-picker, .language-picker select {
-    float: right;
-    text-align: right;
-    border: 0px;
-    @media screen and (max-width: 1001px ) {
-        font-size: x-large;
-    }
+:host-context(details[open]) {
+    /* This is working on the shadow_route of the mqtt_text inside the group's details/summary */
+    div {  display: block; } /*WORKS and overrides div.mqtt-text when open */
+    label {  display: inline-block; } /*WORKS and overrides div.mqtt-text when open */
+    summary label {  color: red; } /* FAILS */
+    :host-context(.name) label { color: blue; }
 }
-/* In MqttClient */
-details.mqtt-client {
-    margin-left: 1em; margin-right: 1em; float: right;
-    @media screen and (max-width: 1001px ) {
-        font-size: xx-large;
-    }
+
+div.mqtt-text {
+    display: inline-block; /* display all on same line when closed */
+    label {  display: none; } /* Hide labels inside the frugal_iot group */
 }
-/* In MqttProject */
-.mqtt-project {
+
+    /*details[open] summary slot {display: block; color: red} */
+    /*details:not(open) summary slot {display: inline-block;} */
+    /*details:not(open) summary slot mqtt-text { color: purple} */
+    /* .mqtt-text label {color: purple} /* Works as entirely within shadow_root */
+    /*:host-context(.frugal_iot) label {color: green} /* Works as mqtt-text is within .frugal-iot*/
+    /* :host-context:not(open) label {color: green} /* fails - none of the parents are open or closed */
+    /*mqtt-groupfrugaliot mqtt-text { display: inline-block; } */
+
+    /*.name mqtt-text { display: inline; }*/
+    /* Multiple places */
+    .outer {background-color: white;margin:5px; padding:5px;}
+    .icon { /* mqtt-toggle , mqtt-bar (graph) */
+        height:1em;width:1em;float:right;
+        @media (max-width:1001px){
+            height:1.5em;width:1.5em;
+        }
+    }
+    .language-picker, language-picker, .language-picker select {
+        float: right;
+        text-align: right;
+        border: 0px;
+        @media screen and (max-width: 1001px ) {
+            font-size: x-large;
+        }
+    }
+    /* In MqttClient */
+    details.mqtt-client {
+        margin-left: 1em; margin-right: 1em; float: right;
+        @media screen and (max-width: 1001px ) {
+            font-size: xx-large;
+        }
+    }
+    /* In MqttProject */
+    .mqtt-project {
     { margin: 0.2em; }
-    .projectname {margin-right: 2em; }
-}
-/* In MqttNode */
-.mqtt-node {
+        .projectname {margin-right: 2em; }
+    }
+    /* In MqttNode */
+    .mqtt-node {
     { border: 1px,black,solid;  margin: 0.2em; }
-    .name,.description,.nodeid,.projectname { margin-left: 1em; margin-right: 1em; }
-    .lastseen {margin-left: 1em; margin-right: 1em; float: right;}
-    .batteryimg {height:17px;width:34px;float:right;}
-    @media (max-width: 1001px ) {
-        .name {
-            font-size: xxx-large;
-        }
-        .description, .nodeid, .projectname, .lastseen {
-            font-size: xx-large;
-        }
-    }
-}
-/* In the children of an mqtt-node */
-mqtt-node {
-    details.group { border: 1px,black,solid; margin:1px }
-    @media (max-width:1001px){
-        details {font-size: x-large;}
-    }
-}
-
-.mqtt-group {
-    border: 1px, black, solid;
-    margin: 1px;
-    @media (max-width: 1001px) {
-        font-size: x-large;
-    }
-}
-
-div.offline {background-color: #888888;} /* Not INSIDE mqtt-node, it is the mqtt-node */
-/* In MqttBar */
-.mqtt-bar {
-    .bar {border: 1px,black,solid; background-color: white;margin: 0px;}
-    .left {display:inline-block; text-align: right;}
-    .right {background-color:white; display:inline-block;}
-    .val {margin:5px;}
-    @media (max-width:1001px){
-        .left, .right {height: 2em;}
-        .val {font-size: xx-large;}
-        label {font-size: x-large;}
-    }
-}
-
-/* In MqttChoosetopic */
-.mqtt-choosetopic {
-    .outer { border: 0px,black,solid;  margin: 0.2em; }
-    @media (max-width:1001px){
-        .dropdown {font-size: x-large;}
-        select { font-size: x-large;}
-        label {font-size: x-large;}
-    }
-}
-
-.mqtt-gauge {
-    dial-gauge {--dg-title-font-size: 1em;--dg-numeric-font-size: 1.5em;}
-}
-
-.mqtt-graph {
-    .leftright{display:flex; align-items:center;}
-    @media (max-width:1001px) {
-        .graphnavleft, .graphnavright {font-size: xxx-large;}
-    }
-}
-
-/* In MqttSlider */
-.mqtt-slider .pointbar {margin:0px; padding 0px;}
-.mqtt-slider .val {margin:5px;}
-.mqtt-slider .setpoint {position: relative;top: -5px;cursor: pointer;width: max-content;height: max-content;}
-
-.mqtt-text {
-    .val {margin:5px;}
-    .wired {margin:5px;}
-    @media (max-width:1001px){
-        .val {font-size: xx-large;}
-        label {font-size: x-large;}
-    }
-}
-.mqtt-toggle {
-    .val {margin:5px;}
-    .wired {margin:5px;}
-    @media (max-width:1001px){
-        .val {font-size: xx-large;}
-        label {font-size: x-large;}
-    }
-}
-/* In MqttGraph */
-/* In MqttWrapper */
-/*Not useful: .mqtt-wrapper {border: 1px,black,solid;  margin: 0.2em; } */
-mqtt-wrapper {
-    .dropdown { margin-top: 5px;}
-    select { margin-left: 2em;}
-    @media screen and (max-width: 1001px ) {
-        .dropdown {
-            font-size: xxx-large;
-        }
-        select {
-            font-size: xx-large;
-        }
-    }
-}
-
-/* Related to authentication */
-.mqtt-login {
-    .tabs {  
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        margin-bottom: 0em; 
-        padding-bottom: 0em;
-    }
-    .tab {
-        border: 2px,black,solid;
-        width: 50%;
-        font-size: x-large; 
-        margin-bottom: 0.2em; margin-bottom: 0em;
-        padding: 0.6em;
-        border-top-left-radius: 20px;
-        border-top-right-radius: 20px;
-    }
-    .active {
-        background-color: #ffffff; 
-        font-weight: bolder;
-        border-bottom: 0px;
-    }
-    .inactive {
-        background-color: #888888; 
-        font-weight: lighter;
-    }
-    .message {margin: 0.5em; font-weight: bold; font-size: x-large; }
-    form { 
-        padding: 10px;
-        border: black solid 2px;
-        border-top: 0px;
-        border-bottom-left-radius: 20px;
-        border-bottom-right-radius: 20px;
-        label {
-            font-size: xx-large;
-            display: block;
-        }
-        section {
-            margin: 0.5em;
-            input {
+        /*.name,.description,.nodeid,.projectname { margin-left: 1em; margin-right: 1em; }*/
+        /*.lastseen {margin-left: 1em; margin-right: 1em; float: right;} */
+        /*.batteryimg {height:17px;width:34px;float:right;}*/
+        @media (max-width: 1001px ) {
+            .name {
+                font-size: xxx-large;
+            }
+            .description, .nodeid, .projectname, .lastseen {
                 font-size: xx-large;
-                margin: 0.5em;
             }
         }
-        button { font-size: x-large; padding: 10px; border-radius: 10px; }
+    }
+    /* In the children of an mqtt-node */
+    mqtt-node {
+        details.group { border: 1px,black,solid; margin:1px }
+        @media (max-width:1001px){
+            details {font-size: x-large;}
+        }
+    }
+
+    .mqtt-group {
+        border: 1px, black, solid;
+        margin: 1px;
+        @media (max-width: 1001px) {
+            font-size: x-large;
+        }
+    }
+
+    div.offline {background-color: #888888;} /* Not INSIDE mqtt-node, it is the mqtt-node */
+    /* In MqttBar */
+    .mqtt-bar {
+        .bar {border: 1px,black,solid; background-color: white;margin: 0px;}
+        .left {display:inline-block; text-align: right;}
+        .right {background-color:white; display:inline-block;}
+        .val {margin:5px;}
+        @media (max-width:1001px){
+            .left, .right {height: 2em;}
+            .val {font-size: xx-large;}
+            label {font-size: x-large;}
+        }
+    }
+
+    /* In MqttChoosetopic */
+    .mqtt-choosetopic {
+        .outer { border: 0px,black,solid;  margin: 0.2em; }
+        @media (max-width:1001px){
+            .dropdown {font-size: x-large;}
+            select { font-size: x-large;}
+            label {font-size: x-large;}
+        }
+    }
+
+    .mqtt-gauge {
+        dial-gauge {--dg-title-font-size: 1em;--dg-numeric-font-size: 1.5em;}
+    }
+
+    .mqtt-graph {
+        .leftright{display:flex; align-items:center;}
+        @media (max-width:1001px) {
+            .graphnavleft, .graphnavright {font-size: xxx-large;}
+        }
+    }
+
+    /* In MqttSlider */
+    .mqtt-slider .pointbar {margin:0px; padding 0px;}
+    .mqtt-slider .val {margin:5px;}
+    .mqtt-slider .setpoint {position: relative;top: -5px;cursor: pointer;width: max-content;height: max-content;}
+
+    .mqtt-text {
+        .val {margin:5px;}
+        .wired {margin:5px;}
+        @media (max-width:1001px){
+            .val {font-size: xx-large;}
+            label {font-size: x-large;}
+        }
+    }
+    .mqtt-toggle {
+        .val {margin:5px;}
+        .wired {margin:5px;}
+        @media (max-width:1001px){
+            .val {font-size: xx-large;}
+            label {font-size: x-large;}
+        }
+    }
+    /* In MqttGraph */
+    /* In MqttWrapper */
+    /*Not useful: .mqtt-wrapper {border: 1px,black,solid;  margin: 0.2em; } */
+    mqtt-wrapper {
+        .dropdown { margin-top: 5px;}
+        select { margin-left: 2em;}
+        @media screen and (max-width: 1001px ) {
+            .dropdown {
+                font-size: xxx-large;
+            }
+            select {
+                font-size: xx-large;
+            }
+        }
+    }
+
+    /* Related to authentication */
+    .mqtt-login {
+        .tabs {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            margin-bottom: 0em;
+            padding-bottom: 0em;
+        }
+        .tab {
+            border: 2px,black,solid;
+            width: 50%;
+            font-size: x-large;
+            margin-bottom: 0.2em; margin-bottom: 0em;
+            padding: 0.6em;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+        }
+        .active {
+            background-color: #ffffff;
+            font-weight: bolder;
+            border-bottom: 0px;
+        }
+        .inactive {
+            background-color: #888888;
+            font-weight: lighter;
+        }
+        .message {margin: 0.5em; font-weight: bold; font-size: x-large; }
+        form {
+            padding: 10px;
+            border: black solid 2px;
+            border-top: 0px;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            label {
+                font-size: xx-large;
+                display: block;
+            }
+            section {
+                margin: 0.5em;
+                input {
+                    font-size: xx-large;
+                    margin: 0.5em;
+                }
+            }
+            button { font-size: x-large; padding: 10px; border-radius: 10px; }
+        }
     }
 }
 
