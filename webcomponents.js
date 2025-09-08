@@ -127,6 +127,7 @@ _adapters._date.override({
 /* =============== End of code copied from chartjs-adapter-luxon.esm.js ==================== */
 
 // TODO mqtt_client should be inside the MqttClient class
+// https://github.com/mitra42/frugal-iot-client/issues/41
 let mqtt_client; // MQTT client - talking to server
 // TODO mqtt_subscriptions should be inside the MqttClient class
 let mqtt_subscriptions = [];   // [{topic, cb(message)}]
@@ -366,7 +367,7 @@ discover_mod["sht"] = { name: "SHT", topics: [ d_io_v("temperature"), d_io_v("hu
 discover_mod["dht"] = { name: "DHT", topics: [ d_io_v("temperature"), d_io_v("humidity")]};
 discover_mod["ms5803"] = { name: "MS5803", topics: [ d_io_v("pressure"), d_io_v("temperature")]};
 discover_mod["relay"] = { name: "Relay", topics: [ d_io_v("on")]};
-discover_mod["ledbuiltin"] = { name: "LED", topics: [ d_io_v("on")]};
+discover_mod["ledbuiltin"] = { name: "LED", slot: "ledbuiltin", topics: [ d_io_v("on")]};
 discover_mod["soil"] = { name: "Soil", topics: [
   d_io_v("analog", {min: 0, max: 100, color: "brown"})
 ]};
@@ -377,6 +378,7 @@ discover_mod["controlhysterisis"] = { name: "Control", topics: [
   d_io_v('controlfloat', {leaf: "hysterisis", name: "Hysterisis", max: 100, wireable: false}),
   d_io_v('controlouttoggle', {leaf: "out", name: "Out"}),
 ]};
+let discover_groupsInsideFrugalIot = ["ledbuiltin", "ota", "battery"];
 /* Helpers of various kinds */
 
 // Move to a new location by just changing one parameter in the URL
@@ -938,7 +940,7 @@ class MqttTopic {
         min: this.min,
         max: this.max,
         yaxisid: yaxisid,
-        label: `${getString(nodename)}:${getString(this.name)}`
+        label: `${nodename}:${this.name}`
       });
       this.graphdataset.mt = this;
     }
@@ -1986,9 +1988,8 @@ class MqttNode extends MqttReceiver {
     this.groups.frugal_iot.append(this.state.elements.id = el('span',{class: 'nodeid', textContent: this.state.id, i8n: false}));
      */
     // Need the group firs,t else the addDiscoveredTopicsToNode will create a new group.
-    this.groups.frugal_iot = el('mqtt-groupfrugaliot', {class: 'group frugal_iot', group: 'frugal_iot', name: 'XXX123'});
-    this.addDiscoveredTopicsToNode(discover_mod["frugal_iot"].topics, "frugal_iot");
-    this.state.topics["frugal_iot/id/#"].element.valueSet(this.state.id);
+    this.addGroupFromTemplate("frugal_iot"); // Add group and topics
+    this.state.topics["frugal_iot/id/#"].element.valueSet(this.state.id); // Set manually as its not a message its a field
   }
   changeAttribute(leaf, valueString) {
     super.changeAttribute(leaf, valueString);
@@ -2011,14 +2012,7 @@ class MqttNode extends MqttReceiver {
       // TODO-154 when have groups as a Webcomponent - use the groups name, and be clever e.g. ledbuiltin/on is LED, but temperature/max is Temperature Max
       .map(t=> { return({name: `${usableName}:${t.name}`, topic: t.topicPath})});
   }
-  // Append group and return the HTML element (details)
-  appendGroup(t) { // t = { group, name }
-    if (!this.groups[t.group]) {
-      this.groups[t.group] = el('mqtt-group', {class: `group ${t.group}`, group: t.group, name: t.name}, [ ]);
-      this.append(this.groups[t.group]); // Adds the group as a dropdown
-    }
-    return this.groups[t.group];
-  }
+
   // Overrides topicValueSet in MqttReceiver
   // noinspection JSCheckFunctionSignatures
   topicValueSet(topicPath, message) {
@@ -2054,16 +2048,7 @@ class MqttNode extends MqttReceiver {
       this.state.topics[twig].message_received(topicPath, message);
     } else {
       // Check if it is a group we haven't seen for this node, if so add it - checking first for a template
-      let groupId = twig.split("/")[0];
-      if (!this.groups[groupId]) {
-        let groupName = discover_mod[groupId] ? discover_mod[groupId].name : groupId;
-        this.appendGroup({group: groupId, name: groupName});
-        if (discover_mod[groupId]) {
-          this.addDiscoveredTopicsToNode(discover_mod[groupId].topics, groupId);
-        } else {
-          XXX(["Unknown group - for now can't guess"]);
-        }
-      }
+      this.addGroupFromTemplate(twig.split("/")[0]);
       let matched=false;
       Object.entries(this.state.topics)
         .filter(([subscriptionTopic,unusedNode]) => topicMatches(subscriptionTopic, twig))
@@ -2076,49 +2061,52 @@ class MqttNode extends MqttReceiver {
       }
     }
   }
-
-  // from addDiscoveredTopicsToNode
-
-
-
-  addDiscoveredTopicsToNode(topics, groupId) {
-    topics.forEach(t => {  // Note t.topic in discovery is twig
-      if (groupId) t.group = groupId;
-      if (t.leaf && !t.topic && groupId) { t.topic = groupId + "/" + t.leaf;  delete t.leaf; }
-      if (!t.topic && t.group) {   // Groups are currently (Aug2024 1.2.14) a topic like { group, name }
-        this.appendGroup(t);
-      } else if (!this.state.topics[t.topic]) { // Have we done this already?
-        let mt = new MqttTopic();
-        mt.fromDiscovery(t, this);
-        if (groupId) t.group = groupId; // This is the case when called from topicValueSet, not (yet) from valueSet
-        this.state.topics[t.topic + "/#"] = mt; // Watch for topic (e.g. sht/temperature or leaflet of it e.g. sht/temperature/color
-        // mt.subscribe(); Node will forward to sub topics
-        let elx = mt.createElement();
-        //TODO-30 remove ALTERNATIVE-SLOT-2 following when parameterized and using ALTERNATIVE SLOT-1
-        // ALTERNATIVE SLOT-1
-        if (t.slot) {
-          elx.setAttribute('slot', mt.slot);
-          elx.setAttribute('class', mt.slot);
-          if (groupId === "frugal_iot") { this.state.elements[t.slot] = elx}
-        }
-        // ALTERNATIVE SLOT-2
-        if (['battery','ledbuiltin'].includes(mt.leaf)) { // TODO-30 parameterize this - these are "slots" in MqttNode.render
-          // noinspection JSCheckFunctionSignatures
-          elx.setAttribute('slot', mt.leaf);
-        }
-        // noinspection JSUnresolvedReference
-        if (mt.group) {
-          // noinspection JSUnresolvedReference
-          let groupId = t.topic.split("/")[0];
-          this.appendGroup({group: groupId, name: mt.group}); // Check it exists and if not create it
-          // noinspection JSUnresolvedReference
-          this.groups[groupId].append(elx);
-        } else {
-          this.append(elx);
-        }
+// Add a group (if not already there) and its topics
+  addGroupFromTemplate(groupId) {
+    // Check if we already have added the group
+    if (!this.groups[groupId]) {
+      let dm = discover_mod[groupId];
+        let groupName = dm ? dm.name : groupId;
+      if (groupId === "frugal_iot") {
+        this.groups.frugal_iot = el('mqtt-groupfrugaliot', {class: 'group frugal_iot', group: groupId, name: groupName});
+      } else {
+        this.groups[groupId] = el('mqtt-group', {class: `group ${groupId}`, group: groupId, name: groupName, slot: (dm.slot || null)}, []);
       }
-    });
+      if (discover_groupsInsideFrugalIot.includes(groupId)) { // ledbuiltin or ota
+        this.groups["frugal_iot"].append(this.groups[groupId]); // Add the new group to the frugal_iot node.
+      } else {
+        this.append(this.groups[groupId]); // Adds the group to the node - typically it will be a dropdown
+      }
+      if (!dm) {
+        XXX(["Unknown group - for now can't guess"]);
+      } else {
+        dm.topics.forEach(t => {  // Note t.topic in discovery is twig
+          t.group = groupId;
+          if (t.leaf && !t.topic && groupId) {
+            t.topic = groupId + "/" + t.leaf;
+            delete t.leaf;
+          }
+          if (!this.state.topics[t.topic]) { // Have we done this already?
+            let mt = new MqttTopic();
+            mt.fromDiscovery(t, this);
+            this.state.topics[t.topic + "/#"] = mt; // Watch for topic (e.g. sht/temperature or leaflet of it e.g. sht/temperature/color
+            // mt.subscribe(); Node will forward to sub topics
+            let elx = mt.createElement();
+            // If topic specifies a slot - typically these are inside frugal_iot i.e. name, description, id, lastseen
+            if (t.slot) {
+              elx.setAttribute('slot', mt.slot);
+              elx.setAttribute('class', mt.slot);
+              if (groupId === "frugal_iot") {
+                this.state.elements[t.slot] = elx
+              }
+            }
+            this.groups[groupId].append(elx);
+          }
+        });
+      }
+    }
   }
+
   /*
   shouldLoadWhenConnected() {
   // For now relying on retention of advertisement by broker
@@ -2213,6 +2201,8 @@ class MqttGroupFrugalIot extends MqttGroup {
           el('slot', {name: 'ledbuiltin'}),
           el('slot', {name: 'battery'}),
         ]),
+        el('slot', {name: 'ota', class: 'ota'}),
+        el('slot'), // Should probably be unused slot for any other children
       ]),
     ];
   }

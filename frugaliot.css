@@ -4,12 +4,9 @@
  * style children intended to be shown via a slot as e.g class: foo and stylesheet has mqtt-xxx .foo
  * the slotted children don't see the html they are inside, and the shadow root doesnt know its inside a <mqtt-xxx>
  */
-/* TO-DO sort and file */
-/*WORKS :host-context(.frugal_iot) label { display: none; } /* Hide labels inside the frugal_iot group */
-/*WORKS :host-context(summary) label { color: green; } /* Hide labels inside the frugal_iot group */
-/*:host-context(details[open]) label {  color: green; } /*WORKS */
+/* Do the generic styles for the CLOSED version, then override for the open */
+/* :host-context(details:not(open)) label { color: red; } /* or can use this */
 /* summary slot {display: inline-block;} */ /* WORKS but for all cos inside shadow root */
-/* :host-context(details:not(open)) label { color: red; } /*WORKS */
 div.frugal_iot_name {
     display: inline-block !important;
     label {  display: none !important;} /* Dont display label for noide id */
@@ -18,8 +15,8 @@ div.frugal_iot_name {
     /* This is working on the shadow_route of the mqtt_text inside the group's details/summary */
     div {  display: block; } /*WORKS and overrides div.mqtt-text when open */
     label {  display: inline-block; } /*WORKS and overrides div.mqtt-text when open */
-    summary label {  color: red; } /* FAILS */
-    :host-context(.name) label { color: blue; }
+    /* summary label {  color: red; } /* FAILS */
+    /* :host-context(.name) label { color: blue; } /* Not clear if works or fails */
 }
 
 div.mqtt-text {
