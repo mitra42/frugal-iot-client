@@ -147,6 +147,12 @@ button:
   type:   bool
   display: toggle
   rw:       r
+color:
+  leaf: color
+  name: Color
+  type: color
+  display:  color
+  rw: w
 humidity:
   leaf:  humidity
   name:   Humidity
@@ -367,7 +373,7 @@ discover_mod["sht"] = { name: "SHT", topics: [ d_io_v("temperature"), d_io_v("hu
 discover_mod["dht"] = { name: "DHT", topics: [ d_io_v("temperature"), d_io_v("humidity")]};
 discover_mod["ms5803"] = { name: "MS5803", topics: [ d_io_v("pressure"), d_io_v("temperature")]};
 discover_mod["relay"] = { name: "Relay", topics: [ d_io_v("on")]};
-discover_mod["ledbuiltin"] = { name: "LED", slot: "ledbuiltin", topics: [ d_io_v("on")]};
+discover_mod["ledbuiltin"] = { name: "LED", slot: "ledbuiltin", topics: [ d_io_v("on"), d_io_v("color")]};
 discover_mod["soil"] = { name: "Soil", topics: [
   d_io_v("analog", {min: 0, max: 100, color: "brown"})
 ]};
@@ -469,6 +475,7 @@ EN:
   Last Seen: Last Seen
   Node ID:  Node ID
   Node Name:  Node Name
+  Color:  Color
 FR:
   _thisLanguage: Francaise
   _nameAndFlag: Français 🇫🇷
@@ -784,6 +791,10 @@ class MqttTopic {
           // noinspection JSUnresolvedVariable
           elx = el('mqtt-text', {max: this.max, min: this.min, color: this.color}, []);
           break;
+        case 'color':
+          // noinspection JSUnresolvedVariable
+          elx = el('mqtt-color', {color: this.color}, []);
+          break;
         case 'slider':
           // Not currently being used, UI for controls works better as mqtt-text, this should still work though.
           // TODO possibly deprecate this
@@ -836,19 +847,17 @@ class MqttTopic {
         case "bool":
           return toBool(message);
         case "float":
-          return Number(message)
         case "int":
           return Number(message)
-        case "topic":
-          return message;
         case "text":
+        case "topic":
+        case "color":
           return message;
         case "yaml":
           // noinspection JSUnusedGlobalSymbols
           return yaml.loadAll(message, {onWarning: (warn) => console.log('Yaml warning:', warn)});
         default:
-          // noinspection JSUnresolvedReference
-          console.error(`Unrecognized message type: ${this.type}`);
+          XXX([`Unrecognized message type: ${this.type}`]);
       }
     } catch (e) {
       console.error("Error parsing message", message, e);
@@ -1462,6 +1471,34 @@ class MqttText extends MqttTransmitter {
 
 }
 customElements.define('mqtt-text', MqttText);
+
+class MqttColor extends MqttTransmitter {
+  // constructor() { super(); }
+  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['wired']); }
+  ; static get floatAttributes() { return MqttReceiver.floatAttributes.concat(['min','max']); }
+
+  // TODO - make sure this doesn't get triggered by a message from server.
+  onChange(e) {
+    //console.log("Changed"+e.target.checked);
+    this.state.value = this.mt.valueFromText(e.target.value); // Convert for example to float
+    this.publish();
+  }
+  /*
+  onClick(e) {
+  }
+   */
+  renderInput() {
+    return el('input', {class: "val", id: this.mt.topicPath, name: this.mt.topicPath, value: this.state.value, type: "color", onchange: this.onChange.bind(this)});
+  }
+  renderValue(val) {
+    return el('span',{class: "val", textContent: val || "", i8n: false, /*onclick: this.onClick.bind(this)*/});
+  }
+  render() {
+    return this.renderMaybeWired("mqtt-text "+(this.mt && this.mt.twig && this.mt.twig.replaceAll('/','_') || ""));
+  }
+
+}
+customElements.define('mqtt-color', MqttColor);
 
 class MqttToggle extends MqttTransmitter {
   valueSet(val) {
