@@ -129,11 +129,13 @@ _adapters._date.override({
 // TODO mqtt_client should be inside the MqttClient class
 // https://github.com/mitra42/frugal-iot-client/issues/41
 let mqtt_client; // MQTT client - talking to server
-// TODO mqtt_subscriptions should be inside the MqttClient class
+// TODO mqtt_subscriptions should be inside the MqttClient class but its non trivial as currently have no way to find that class
 let mqtt_subscriptions = [];   // [{topic, cb(message)}]
 let unique_id = 1; // Just used as a label for auto-generated elements
 let graph;  // Will hold a default MqttGraph once user chooses to graph anything
 let server_config;
+
+// ==========TODO-44 === CODE REVIEW FROM HERE DOWN: getters#26; const vs let; globals;TODO's; Problems; Comments
 
 let discover_io = yaml.load(`
 analog:
