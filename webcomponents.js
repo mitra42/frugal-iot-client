@@ -405,7 +405,7 @@ function unshiftUnique(arr, v) {
 }
  */
 
-// Subscribe to a topic (no wild cards as topic not passed to cb),
+// Subscribe to a topic (no wild cards as topic not passed to cb) << TODO is this still true
 function mqtt_subscribe(topic, cb) { // cb(message)
   console.log("Subscribing to ", topic);
   mqtt_subscriptions.push({topic, cb});
@@ -414,7 +414,7 @@ function mqtt_subscribe(topic, cb) { // cb(message)
       if (err) console.error(err);
     })
   } else {
-    console.log("Delaying till connected");
+    console.log("Delaying till connected"); // It will resubscribe from "subscriptions"
   }
 }
 // See https://www.chartjs.org/docs/latest/samples/line/segments.html
@@ -1065,8 +1065,8 @@ class MqttClient extends HTMLElementExtended {
   }
   shouldLoadWhenConnected() { return !!this.state.server; } /* Only load when has a server specified */
 
+  // Called from connectedCallBack when MqttWrapper.appendClient called to add MqttClient
   loadContent() {
-    //console.log("loadContent", this.state.server);
     if (!mqtt_client) {
       // See https://stackoverflow.com/questions/69709461/mqtt-websocket-connection-failed
       this.setStatus("connecting");
@@ -1077,7 +1077,8 @@ class MqttClient extends HTMLElementExtended {
         // Remainder do not appear to be needed
         //hostname: "127.0.0.1",
         //port: 9012, // Has to be configured in mosquitto configuration
-        //path: "/mqtt",
+        //path: "/wss",
+        // resubscribe: true // seems to be default
       });
       for (let k of ['disconnect','reconnect','close','offline','end']) {
         mqtt_client.on(k, () => {
@@ -1085,11 +1086,17 @@ class MqttClient extends HTMLElementExtended {
         });
       }
       mqtt_client.on('connect', () => {
+        // TODO - can be smarter about this - dont want to re-subscribe as will do this automatically, BUT do want to subscribe if didn't because not connected
+        // Looks like client ignores subscription BECAUSE in mqtt_client._resubscribeTopics
         this.setStatus('connect');
         if (mqtt_subscriptions.length > 0) {
           mqtt_subscriptions.forEach((s) => {
-            console.log("Now connected, subscribing to",s.topic);
-            mqtt_client.subscribe(s.topic, (err) => { if (err) console.error(err); });
+            if (!mqtt_client._resubscribeTopics[s.topic]) { // Not really public interface but cleaner console as not needed
+              console.log("Now connected, subscribing to", s.topic);
+              mqtt_client.subscribe(s.topic, (err) => {
+                if (err) console.error(err);
+              });
+            }
           })
         } else {
           /* Can use for debugging - not really that useful, and it is verbose.
