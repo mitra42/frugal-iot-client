@@ -365,7 +365,7 @@ lux:
  topics:
   - leaf:     lux
     name:     Lux
-    type:     float
+    type:     exponential
     display:  bar
     min:      0
     max:      65000
@@ -802,11 +802,11 @@ class MqttTopic {
           break;
         case 'bar':
           // noinspection JSUnresolvedReference
-          elx = el('mqtt-bar', {max: this.max, min: this.min, color: this.color, graphable: this.graphable}, []);
+          elx = el('mqtt-bar', {max: this.max, min: this.min, color: this.color, graphable: this.graphable, type: this.type}, []);
           break;
         case 'gauge':
           //noinspection JSUnresolvedVariable
-          elx = el('mqtt-gauge', {max: this.max, min: this.min, color: this.color, graphable: this.graphable}, []);
+          elx = el('mqtt-gauge', {max: this.max, min: this.min, color: this.color, graphable: this.graphable, type: this.type}, []);
           break;
         case 'text':
           // noinspection JSUnresolvedVariable
@@ -820,7 +820,7 @@ class MqttTopic {
           // Not currently being used, UI for controls works better as mqtt-text, this should still work though.
           // TODO possibly deprecate this
           // noinspection JSUnresolvedVariable
-          elx = el('mqtt-slider', {min: this.min, max: this.max, value: (this.max + this.min) / 2, graphable: this.graphable}, [
+          elx = el('mqtt-slider', {min: this.min, max: this.max, value: (this.max + this.min) / 2, graphable: this.graphable, type: this.type}, [
             el('span', {textContent: "△"}, []),
           ]);
           break;
@@ -862,6 +862,7 @@ class MqttTopic {
         return "checkbox";
       case "float":
       case "int":
+      case "exponential":
         return "number"
       default: // e.g. topic, yaml
         XXX("Unsupported type - if called from MqttText")
@@ -878,6 +879,7 @@ class MqttTopic {
           return toBool(message);
         case "float":
         case "int":
+        case "exponential":
           return Number(message)
         case "text":
         case "topic":
@@ -1613,7 +1615,10 @@ class MqttBar extends MqttReceiver {
   }
   render() {
     //this.state.changeable.addEventListener('change', this.onChange.bind(this));
-    let width = 100*(this.state.value-this.state.min)/(this.state.max-this.state.min);
+    let width = this.state.type === "exponential"
+      ? 100*(Math.log(this.state.value/(this.state.min||1))/Math.log(this.state.max/(this.state.min||1)))
+      : 100*(this.state.value-this.state.min)/(this.state.max-this.state.min)
+      ;
     // noinspection JSUnresolvedReference
     return !(this.isConnected && this.mt) ? null : [
       el('link', {rel: 'stylesheet', href: CssUrl}),
@@ -1695,7 +1700,10 @@ class MqttSlider extends MqttTransmitter {
     return (l+this.thumb.offsetWidth/2)/this.slider.offsetWidth * (this.state.max-this.state.min) + this.state.min;
   }
   leftOffset() {
-    return ((this.state.value-this.state.min)/(this.state.max-this.state.min)) * (this.slider.offsetWidth) - this.thumb.offsetWidth/2;
+    return ((this.state.type === "exponential")
+      ? (Math.log(this.state.value/(this.state.min||1))/Math.log(this.state.max/(this.state.min||1)))
+      : ((this.state.value-this.state.min)/(this.state.max-this.state.min))
+    ) * (this.slider.offsetWidth) - this.thumb.offsetWidth/2;
   }
   onmousedown(event) {
     event.preventDefault();
@@ -1761,8 +1769,8 @@ class MqttChooseTopic extends MqttElement {
     // Note each node's value is its config
     let allowableTypes = {
       // Mapping of requested types to valid fields - e.g. if want a float then returning an int will be fine
-      "float": ["float","int"],
-      "text": ["text","float","int","bool"],
+      "float": ["float", "int", "exponential"],
+      "text": ["text", "float", "exponential", "int", "bool"],
     }
     return nodes.map(n => n.topicsByType(allowableTypes[this.state.type] || this.state.type, this.state.rw))
       .flat();
