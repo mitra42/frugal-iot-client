@@ -139,15 +139,22 @@ let server_config;
 
 let discover_io = yaml.load(`
 analog:
-  leaf: analog
-  type:   int
-  display: bar
+  leaf:     analog
+  type:     int
+  display:  bar
   rw:       r
+  graphable:  true
+brightness:
+  leaf:     brightness
+  name:     Brightness
+  type:     int
+  display:  slider
+  rw:       w
 button:
-  leaf:  button
-  name:   Button
-  type:   bool
-  display: toggle
+  leaf:     button
+  name:     Button
+  type:     bool
+  display:  toggle
   rw:       r
 color:
   leaf: color
@@ -164,6 +171,7 @@ humidity:
   max:    100
   color:  blue
   rw:       r
+  graphable:  true
 pressure:
   leaf:  pressure
   name:     Pressure
@@ -173,6 +181,7 @@ pressure:
   max:      99
   color:   blue
   rw:       r
+  graphable:  true
 on:
   leaf:     on
   name:     On
@@ -180,6 +189,16 @@ on:
   display:  toggle
   color:    black
   rw:       w
+  graphable:  true
+soil:
+  leaf:     soil
+  type:     int
+  display:  bar
+  min:      0
+  max:      100
+  color:    brown
+  rw:       r
+  graphable:  true
 temperature:
   leaf:  temperature
   name:     Temperature
@@ -189,7 +208,8 @@ temperature:
   min:      0
   max:      50
   color:    red
-  wireable: false   
+  wireable: false
+  graphable:  true 
 controlfloat:
   #[leaf, name] should be overridden
   min:      0
@@ -375,10 +395,8 @@ discover_mod["sht"] = { name: "SHT", topics: [ d_io_v("temperature"), d_io_v("hu
 discover_mod["dht"] = { name: "DHT", topics: [ d_io_v("temperature"), d_io_v("humidity")]};
 discover_mod["ms5803"] = { name: "MS5803", topics: [ d_io_v("pressure"), d_io_v("temperature")]};
 discover_mod["relay"] = { name: "Relay", topics: [ d_io_v("on")]};
-discover_mod["ledbuiltin"] = { name: "LED", slot: "ledbuiltin", topics: [ d_io_v("on"), d_io_v("color")]};
-discover_mod["soil"] = { name: "Soil", topics: [
-  d_io_v("analog", {min: 0, max: 100, color: "brown"})
-]};
+discover_mod["ledbuiltin"] = { name: "LED", slot: "ledbuiltin", topics: [ d_io_v("on"), d_io_v("color"), d_io_v("brightness")]};
+discover_mod["soil"] = { name: "Soil", topics: [d_io_v("soil")]};
 discover_mod["controlhysterisis"] = { name: "Control", topics: [
   d_io_v('controlfloat', {leaf: "now", name: "Now"}),
   d_io_v('controlintoggle', {leaf: "greater", name: "Greater Than"}),
@@ -478,6 +496,7 @@ EN:
   Node ID:  Node ID
   Node Name:  Node Name
   Color:  Color
+  Brightness: Brightness
 FR:
   _thisLanguage: Francaise
   _nameAndFlag: Français 🇫🇷
@@ -777,21 +796,21 @@ class MqttTopic {
       switch (this.display) {
         case 'toggle':
           //noinspection JSUnresolvedVariable
-          elx = el('mqtt-toggle', {color: this.color });
+          elx = el('mqtt-toggle', {color: this.color, graphable: this.graphable });
           this.retain = true;
           this.qos = 1;
           break;
         case 'bar':
           // noinspection JSUnresolvedReference
-          elx = el('mqtt-bar', {max: this.max, min: this.min, color: this.color}, []);
+          elx = el('mqtt-bar', {max: this.max, min: this.min, color: this.color, graphable: this.graphable}, []);
           break;
         case 'gauge':
           //noinspection JSUnresolvedVariable
-          elx = el('mqtt-gauge', {max: this.max, min: this.min, color: this.color}, []);
+          elx = el('mqtt-gauge', {max: this.max, min: this.min, color: this.color, graphable: this.graphable}, []);
           break;
         case 'text':
           // noinspection JSUnresolvedVariable
-          elx = el('mqtt-text', {max: this.max, min: this.min, color: this.color}, []);
+          elx = el('mqtt-text', {max: this.max, min: this.min, color: this.color, graphable: this.graphable}, []);
           break;
         case 'color':
           // noinspection JSUnresolvedVariable
@@ -801,7 +820,7 @@ class MqttTopic {
           // Not currently being used, UI for controls works better as mqtt-text, this should still work though.
           // TODO possibly deprecate this
           // noinspection JSUnresolvedVariable
-          elx = el('mqtt-slider', {min: this.min, max: this.max, value: (this.max + this.min) / 2}, [
+          elx = el('mqtt-slider', {min: this.min, max: this.max, value: (this.max + this.min) / 2, graphable: this.graphable}, [
             el('span', {textContent: "△"}, []),
           ]);
           break;
@@ -815,9 +834,18 @@ class MqttTopic {
     return this.element;
   }
 
+  // TODO I think this is correct, subscribe to get updates on
+  setWired(v) {
+    this.wired = v;
+    // TODO need to unsubscribe from old value
+    // then remove comment on unhandled topic in MqttReceiver.topicValueSet(topic, message) {
+    if (v) {
+      mqtt_subscribe(v, this.message_received.bind(this));
+    }
+  }
   subscribe() {
     if (!mqtt_client) {
-      console.error("Trying to subscribe before connected")
+      XXX("Trying to subscribe before connected")
     }
     if (!this.subscribed) {
       this.subscribed = true;
@@ -1250,8 +1278,8 @@ class MqttReceiver extends MqttElement {
     super();
     this.state.elements = {}; // Pointer to specific elements (for special case updates)
   }
-  static get observedAttributes() { return ['value','color','type','label','topic']; }
-  static get boolAttributes() { return []; }
+  static get observedAttributes() { return ['value','color','type','label','topic', 'graphable']; }
+  static get boolAttributes() { return ['graphable']; }
 
   get isNode() { return false; } // Overridden in MqttNode
   get node() {
@@ -1291,6 +1319,7 @@ class MqttReceiver extends MqttElement {
     super.changeAttribute(name, valueString); // Change from string to number etc and store on this.state
     // TODO - could set width, color, name, on sub-elements and return false then copy this to other elements
     if (name === 'wired') {
+      this.mt.setWired(valueString);
       if (this.state.elements.chooseTopic) {
         this.state.elements.chooseTopic.setAttribute('value', valueString); // Update the dropdown if it exists
       } else {
@@ -1304,7 +1333,7 @@ class MqttReceiver extends MqttElement {
   // Return true if need to rerender
   // Note overridden in MqttNode and MqttProject
   topicValueSet(topic, message) {
-    if ((topic === this.mt.topicPath) || (topic === this.mt.topicSetPath)) {
+    if ([this.mt.topicPath, this.mt.topicSetPath, this.mt.wired].includes(topic)) {
       let value = this.mt.valueFromText(message);
       let now = Date.now();
       this.mt.data.push({value, time: now}); // Same format as graph dataset expects
@@ -1318,7 +1347,8 @@ class MqttReceiver extends MqttElement {
       this.parameterSet(parameter, message); // True if need to rerender
       return false; // parameterSet will have rerendered if needed
     } else {
-      console.error("Unhandled topicValueSet", topic, message);
+      // Leave this commented out until do unsubscribe in MqttTopic.setWired
+      // XXX("Unhandled topicValueSet", topic, message);
       return false;
     }
   }
@@ -1349,8 +1379,8 @@ class MqttReceiver extends MqttElement {
     this.mt.createGraph();
   }
   onwiredchange(e) {
-    this.mt.wired = e.target.value;
     let newPath = e.target.value;
+    this.mt.setWired(newPath);
     // noinspection JSUnresolvedVariable
     if ((this.mt.rw === 'r') && e.target.value) {
       let parts = e.target.value.split("/");
@@ -1362,7 +1392,11 @@ class MqttReceiver extends MqttElement {
   }
   renderLabel() {
     // noinspection JSUnresolvedVariable
-    return el('label', {for: this.mt.topicPath, textContent: this.mt.name});
+    return [
+      el('label', {for: this.mt.topicPath, textContent: this.mt.name}),
+      !this.state.graphable ? null
+      : el('img', {class: "icon", src: 'images/icon_graph.svg', onclick: this.opengraph.bind(this)})
+    ];
   }
   renderWiredName(wiredTopic) {
     let wiredTopicName = wiredTopic ? `${wiredTopic.node.usableName}:${wiredTopic.name}` : undefined;
@@ -1587,7 +1621,8 @@ class MqttBar extends MqttReceiver {
 
         el('div', {class: "name"}, [
           el('label', {for: this.mt.topicPath, textContent: this.mt.name}),
-          el('img', {class: "icon", src: 'images/icon_graph.svg', onclick: this.opengraph.bind(this)}),
+          !this.state.graphable ? null
+          : el('img', {class: "icon", src: 'images/icon_graph.svg', onclick: this.opengraph.bind(this)}),
         ]),
         el('div', {class: "bar", id: this.mt.topicPath},[
           el('span', {class: "left", style: `width:${width}%; background-color:${this.state.color};`},[
@@ -1631,7 +1666,8 @@ class MqttGauge extends MqttReceiver {
           "scale-offset": 45,
           "style": `--dg-arc-color:${this.state.color}`,
         }),
-        el('img', {class: "icon", src: 'images/icon_graph.svg', onclick: this.opengraph.bind(this)}),
+        !this.state.graphable ? null
+          : el('img', {class: "icon", src: 'images/icon_graph.svg', onclick: this.opengraph.bind(this)}),
       ]),
     ];
   }
@@ -2072,8 +2108,10 @@ class MqttNode extends MqttReceiver {
       "relay",
       ].includes(twig) // Its JUST "relay"
       || twig.startsWith("set") // Sonoff esp8266-243053 (note that is a 2nd "set")
+      || twig.startsWith("soil1") // Lilygo old
       || twig.startsWith("control/") // Old name for controlhysterisis
       || twig.startsWith("humidity/") // esp8266-243053 Old name for controlhysterisis
+      || twig.startsWith("led/") // esp8266-243053 Old name for ledbuiltin
       || twig.endsWith('/wire') // replaced with "/wired"
       || twig.endsWith('/device_name') // replaced with "/name"
       || !twig.includes('/')
@@ -2116,7 +2154,7 @@ class MqttNode extends MqttReceiver {
       if (groupId === "frugal_iot") {
         this.groups.frugal_iot = el('mqtt-groupfrugaliot', {class: 'group frugal_iot', group: groupId, name: groupName});
       } else {
-        this.groups[groupId] = el('mqtt-group', {class: `group ${groupId}`, group: groupId, name: groupName, slot: (dm.slot || null)}, []);
+        this.groups[groupId] = el('mqtt-group', {class: `group ${groupId}`, group: groupId, name: groupName, slot: ((dm && dm.slot) || null)}, []);
       }
       if (discover_groupsInsideFrugalIot.includes(groupId)) { // ledbuiltin or ota
         this.groups["frugal_iot"].append(this.groups[groupId]); // Add the new group to the frugal_iot node.
@@ -2159,12 +2197,12 @@ class MqttNode extends MqttReceiver {
     return this.state.id && super.shouldLoadWhenConnected() ;
   }
  */
-  // TODO-13 do we just set state here, or change hte render ? 
+  // TODO-13 do we just set state here, or change the render ?
   topicChanged(leaf, value) {
     switch (leaf) {
       case "battery":
         let bars = Math.floor(parseInt(value) * 6/4200);
-        this.state.batteryIndicator.src = `images/Battery${bars}.png`;
+        this.groups.frugal_iot.state.elements.batteryIndicator.src = `images/Battery${bars}.png`;
         break;
     }
   }
@@ -2211,6 +2249,7 @@ class MqttGroup extends MqttElement { // TODO-40 may extend MqttReceiver if need
   constructor() {
     super();
     this.topics = {}
+    this.state.elements = {}
   }
   static get observedAttributes() { return ['group','name']; }
   render () {
@@ -2235,7 +2274,7 @@ class MqttGroupFrugalIot extends MqttGroup {
         el('summary', {}, [
           el('slot', {name: 'name', class: 'name'}),
           //Starts off as 1px empty image, changed when battery message received
-          this.state.batteryIndicator = el('img', {
+          this.state.elements.batteryIndicator = el('img', {
             class: "batteryimg",
             src: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
           }),
