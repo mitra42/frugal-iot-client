@@ -26,7 +26,7 @@ function XXX(args) {
 } // Put a breakpoint here for debugging and intersperse XXX() in code.
 
 /* This is copied from the chartjs-adapter-luxon, I could not get it to import - gave me an error every time */
-/*!
+/*
  * chartjs-adapter-luxon v1.3.1
  * https://www.chartjs.org
  * (c) 2023 chartjs-adapter-luxon Contributors
@@ -642,6 +642,7 @@ function languageNamesAndFlags() {
 function getString(tag) {
   for (let lang of preferedLanguages) {
     let foo
+    // noinspection JSAssignmentUsedAsCondition
     if (foo = languages[lang] && languages[lang][tag]) {
       return foo;
     }
@@ -661,6 +662,7 @@ let i8ntags = {
 function el(tag, attributes = {}, children) {
   //console.log(attributes);
   if (attributes['i8n'] !== false) { // Add i8n: false if know the field is untranslatable (e.g. a name)
+    // noinspection JSUnusedLocalSymbols
     Object.entries(attributes)
       .filter(([k, unused]) => i8ntags[tag] && i8ntags[tag].includes(k))
       .filter(([unused, v]) => (
@@ -731,7 +733,7 @@ class Watchdog {
 class MqttTopic {
   // Manages a single topic - keeps track of data it has seen, and can create UI element or graphdataset for it
   // Note this intentionally does NOT extend HtmlElement or MqttElement etc
-  // Encapsulate a single topic, mostly this will be built during discovery process,
+  // Encapsulate a single topic, mostly this will be built during the discovery process,
   // but could also be built by hard coded UI if doesn't exist
   // Should be indexed in MqttNode
 
@@ -834,11 +836,9 @@ class MqttTopic {
     return this.element;
   }
 
-  // TODO I think this is correct, subscribe to get updates on
   setWired(v) {
+    // Note will still get messages from old "wired" but these will be ignored
     this.wired = v;
-    // TODO need to unsubscribe from old value
-    // then remove comment on unhandled topic in MqttReceiver.topicValueSet(topic, message) {
     if (v) {
       mqtt_subscribe(v, this.message_received.bind(this));
     }
@@ -855,6 +855,7 @@ class MqttTopic {
 
   get inputType() {
     // Valid responses for <input type=> are: USED text, number, checkbox or UNUSED password, checkbox, radio, submit, file, date, email, , url, color, range, search, tel, time, week, month
+    // noinspection JSUnresolvedReference
     switch (this.type) {
       case "text":
         return "text"
@@ -889,6 +890,7 @@ class MqttTopic {
           // noinspection JSUnusedGlobalSymbols
           return yaml.loadAll(message, {onWarning: (warn) => console.log('Yaml warning:', warn)});
         default:
+          // noinspection JSUnresolvedReference
           XXX([`Unrecognized message type: ${this.type}`]);
       }
     } catch (e) {
@@ -1349,7 +1351,7 @@ class MqttReceiver extends MqttElement {
       this.parameterSet(parameter, message); // True if need to rerender
       return false; // parameterSet will have rerendered if needed
     } else {
-      // Leave this commented out until do unsubscribe in MqttTopic.setWired
+      // Most likely cause of an "unhandled" topic is because received topic after changing "wired" - that is ok, can safely ignore
       // XXX("Unhandled topicValueSet", topic, message);
       return false;
     }
@@ -1427,7 +1429,8 @@ class MqttReceiver extends MqttElement {
     // noinspection JSUnresolvedVariable
     let wiredTopic = this.mt.wired ? this.mt.project.findTopic(this.mt.wired) : undefined;
     let wiredTopicValue = wiredTopic ? wiredTopic.element.state.value.toString() : undefined; // Works - but maybe error-prone if value can be undefined
-    return [
+    // noinspection JSUnresolvedReference
+      return [
       el('link', {rel: 'stylesheet', href: CssUrl}),
       el('div', {class: className + " outer"},
         // noinspection JSUnresolvedVariable
@@ -1497,7 +1500,7 @@ class MqttText extends MqttTransmitter {
   // TODO - make sure this doesn't get triggered by a message from server.
   onChange(e) {
     //console.log("Changed"+e.target.checked);
-    this.state.value = this.mt.valueFromText(e.target.value); // Convert for example to float
+    this.state.value = this.mt.valueFromText(e.target.value); // Convert, for example, to float
     this.publish();
   }
   /*
@@ -1525,7 +1528,7 @@ class MqttColor extends MqttTransmitter {
   // TODO - make sure this doesn't get triggered by a message from server.
   onChange(e) {
     //console.log("Changed"+e.target.checked);
-    this.state.value = this.mt.valueFromText(e.target.value); // Convert for example to float
+    this.state.value = this.mt.valueFromText(e.target.value); // Convert, for example, to float
     this.publish();
   }
   /*
@@ -1659,6 +1662,7 @@ class MqttGauge extends MqttReceiver {
   render() {
     //this.state.changeable.addEventListener('change', this.onChange.bind(this));
     //let width = 100*(this.state.value-this.state.min)/(this.state.max-this.state.min);
+    // noinspection JSUnresolvedReference
     return !(this.isConnected && this.mt) ? null : [
       el('link', {rel: 'stylesheet', href: CssUrl}),
       el('div', {class: "outer mqtt-gauge"}, [
@@ -1743,6 +1747,7 @@ class MqttSlider extends MqttTransmitter {
       this.slider = el('div', {class: "pointbar",},[this.thumb]);
       this.slider.onmousedown = this.onmousedown.bind(this);
     }
+    // noinspection JSUnresolvedReference
     return !this.isConnected ? null : [
       el('link', {rel: 'stylesheet', href: CssUrl}),
       el('div', {class: "mqtt-slider outer"}, [
@@ -2079,7 +2084,7 @@ class MqttNode extends MqttReceiver {
      */
     // Need the group firs,t else the addDiscoveredTopicsToNode will create a new group.
     this.addGroupFromTemplate("frugal_iot"); // Add group and topics
-    this.state.topics["frugal_iot/id/#"].element.valueSet(this.state.id); // Set manually as its not a message its a field
+    this.state.topics["frugal_iot/id/#"].element.valueSet(this.state.id); // Set manually as it is not a message it is a field
   }
   changeAttribute(leaf, valueString) {
     super.changeAttribute(leaf, valueString);
@@ -2142,6 +2147,7 @@ class MqttNode extends MqttReceiver {
       // Check if it is a group we haven't seen for this node, if so add it - checking first for a template
       this.addGroupFromTemplate(twig.split("/")[0]);
       let matched=false;
+      // noinspection JSUnusedLocalSymbols
       Object.entries(this.state.topics)
         .filter(([subscriptionTopic,unusedNode]) => topicMatches(subscriptionTopic, twig))
           .forEach(([unusedSubscriptionTopic, module]) => {
@@ -2186,7 +2192,9 @@ class MqttNode extends MqttReceiver {
             let elx = mt.createElement();
             // If topic specifies a slot - typically these are inside frugal_iot i.e. name, description, id, lastseen
             if (t.slot) {
+              // noinspection JSUnresolvedReference
               elx.setAttribute('slot', mt.slot);
+              // noinspection JSUnresolvedReference
               elx.setAttribute('class', mt.slot);
               if (groupId === "frugal_iot") {
                 this.state.elements[t.slot] = elx
