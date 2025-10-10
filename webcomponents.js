@@ -135,9 +135,8 @@ let unique_id = 1; // Just used as a label for auto-generated elements
 let graph;  // Will hold a default MqttGraph once user chooses to graph anything
 let server_config;
 
-// ==========TODO-44 === CODE REVIEW FROM HERE DOWN: getters#26; const vs let; globals;TODO's; Problems; Comments
-
-let discover_io = yaml.load(`
+// This structure defines each of the common Input/Output types included within a sensor or acctuator
+const discover_io = yaml.load(`
 analog:
   leaf:     analog
   type:     int
@@ -245,6 +244,9 @@ controlouttoggle:
   rw:       r
   wireable: true
 `);
+
+// This structure defines each of the modules (sensors, actuators, controls) that can be discovered
+// Please add new modules here, in alphabetical order
 let discover_mod = yaml.load(`
 # Each module contains inputs &/o outputs, each of which should have 
 # name  Capitalized English (and add translation below in 'languages'
@@ -268,6 +270,34 @@ battery:
     max:    5000
     color:  green
     rw:       r
+controlblinken:
+ name: "Control Blinken"
+ topics:
+  - leaf:     timeon
+    name:     Time On (s)
+    min:      0
+    max:      3600
+    type:     float
+    display:  text
+    color:    black
+    rw:       w
+    wireable: true
+  - leaf:     timeoff
+    name:     Time Off (s)
+    min:      0
+    max:      3600
+    type:     float
+    display:  text
+    color:    black
+    rw:       w
+    wireable: true
+  - leaf:     out
+    name:     Out
+    type:     bool
+    display:  toggle
+    color:    black
+    rw:       r
+    wireable: true
 ensaht:
  name: "ENS AHT"
  topics:
@@ -388,6 +418,7 @@ function d_io_v(io_id, variants) {
   }
   return io;
 }
+// This section adds some more modules that are simple combinations of the basic io types
 // TO-ADD-SENSOR TO-ADD-ACTUATOR TO-ADD-CONTROL
 discover_mod["button"] = { name: "Button", topics: [d_io_v("button")]};
 discover_mod["ht"] = { name: "HT",   topics: [ d_io_v("temperature"), d_io_v("humidity")]};
@@ -404,7 +435,10 @@ discover_mod["controlhysterisis"] = { name: "Control", topics: [
   d_io_v('controlfloat', {leaf: "hysterisis", name: "Hysterisis", max: 100, wireable: false}),
   d_io_v('controlouttoggle', {leaf: "out", name: "Out"}),
 ]};
-let discover_groupsInsideFrugalIot = ["ledbuiltin", "ota", "battery"];
+// Define a set of sensors that are pseudo, and hidden inside the Frugal_IoT drop-down on the name of a sensor
+const discover_groupsInsideFrugalIot = ["ledbuiltin", "ota", "battery"];
+
+// ==========TODO-44 === CODE REVIEW FROM HERE DOWN: getters#26; const vs let; globals;TODO's; Problems; Comments
 /* Helpers of various kinds */
 
 // Move to a new location by just changing one parameter in the URL
