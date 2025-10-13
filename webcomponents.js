@@ -133,7 +133,7 @@ let mqtt_client; // MQTT client - talking to server
 let mqtt_subscriptions = [];   // [{topic, cb(message)}]
 let unique_id = 1; // Just used as a label for auto-generated elements
 let graph;  // Will hold a default MqttGraph once user chooses to graph anything
-let server_config;
+let server_config;  // { user, organizations, logger, mqtt, server }
 
 // This structure defines each of the common Input/Output types included within a sensor or acctuator
 const discover_io = yaml.load(`
@@ -531,6 +531,10 @@ EN:
   Node Name:  Node Name
   Color:  Color
   Brightness: Brightness
+  TVOC: TVOC
+  AQI: AQI
+  Dashboard: Dashboard
+  ENS AHT: ENS AHT
 FR:
   _thisLanguage: Francaise
   _nameAndFlag: Français 🇫🇷
@@ -1244,51 +1248,238 @@ class MqttLogin extends HTMLElementExtended { // TODO-89 may depend on organizat
     return [
       el('link', {rel: 'stylesheet', href: CssUrl}),
       el('div', {class: 'mqtt-login'},[
+        // This is a top bar, holds message and language picker
         el('div',{class: 'message'},[
           el('span', {textContent: this.state.message}),
           el('language-picker'),
         ]),
-        el('section', {class: 'tabs'}, [
-          el('button', {class: 'tab' + (!this.state.register ? ' active' : ' inactive'), onclick: this.tabRegister.bind(this, false), textContent: "Sign In"}),
-          el('button', {class: 'tab' + (this.state.register ? ' active' : ' inactive'), onclick: this.tabRegister.bind(this, true), textContent: "Register"}),
+        el('tabbed-display', {tab: this.state.register ? 1 : 0 }, [
+          el('section', {title: "Sign In"}, [
+            el('form', {action:  '/login', method: "post"}, [
+              el('section', {}, [
+                el('label', {for: "username", textContent: 'Username'}),
+                el('input', {id: "username", name: "username", type: "text", autocomplete: "username", required: true, autofocus: true}),
+              ]),
+              el('section', {}, [
+                el('label', {for: "password", textContent: "Password"}),
+                el('input', {id: "password", name: "password", type: "password", autocomplete: "current-password", required: true}),
+              ]),
+              el('input', {id: "url", name: "url", type: "hidden", value: (this.state.url + "?lang=" + preferedLanguages.join(','))}),
+              el('button', {class: "submit", type: "submit",
+                textContent: (this.state.register ? 'Submit' : 'Submit')}),
+            ]),
+          ]),
+          el('section', {title: "Register"}, [
+            el('form', {action: '/register', method: "post"}, [
+              el('section', {}, [
+                el('label', {for: "username", textContent: 'Username'}),
+                el('input', {id: "username", name: "username", type: "text", autocomplete: "username", required: true, autofocus: true}),
+              ]),
+              el('section', {}, [
+                el('label', {for: "password", textContent: "Password"}),
+                el('input', {id: "password", name: "password", type: "password", autocomplete: "current-password", required: true}),
+              ]),
+              // TODO-22 TODO-14 organization should be a drop-down
+              el('section', {}, [
+                el('label', {for: "organization", textContent: "Organization"}),
+                el('input', {id: "organization", name: "organization", type: "text", autocomplete: "organization", required: true}),
+              ]),
+              el('section', {}, [
+                el('label', {for: "name", textContent: "Name"}),
+                el('input', {id: "name", name: "name", type: "text", autocomplete: "name", required: true}),
+              ]),
+              el('section', {}, [
+                el('label', {for: "email", textContent: "Email"}),
+                el('input', {id: "email", name: "email", type: "text", autocomplete: "email", required: true}),
+              ]),
+              el('section', {}, [
+                el('label', {for: "phone", textContent: "Phone or Whatsapp"}),
+                el('input', {id: "phone", name: "phone", type: "text", autocomplete: "phone", required: true}),
+              ]),
+              el('input', {id: "url", name: "url", type: "hidden", value: (this.state.url + "?lang=" + preferedLanguages.join(','))}),
+              el('button', {class: "submit", type: "submit", textContent: 'Submit'}),
+            ]),
+          ]),
         ]),
-        el('form', {action:  (this.state.register ? '/register' : '/login'), method: "post"}, [
-          el('section', {}, [
-            el('label', {for: "username", textContent: 'Username'}),
-            el('input', {id: "username", name: "username", type: "text", autocomplete: "username", required: true, autofocus: true}),
-          ]),
-          el('section', {}, [
-            el('label', {for: "password", textContent: "Password"}),
-            el('input', {id: "password", name: "password", type: "password", autocomplete: "current-password", required: true}),
-          ]),
-          // TODO-22 organization should be a drop-down
-          !this.state.register ? null : [
-            el('section', {}, [
-              el('label', {for: "organization", textContent: "Organization"}),
-              el('input', {id: "organization", name: "organization", type: "text", autocomplete: "organization", required: true}),
-            ]),
-            el('section', {}, [
-              el('label', {for: "name", textContent: "Name"}),
-              el('input', {id: "name", name: "name", type: "text", autocomplete: "name", required: true}),
-            ]),
-            el('section', {}, [
-              el('label', {for: "email", textContent: "Email"}),
-              el('input', {id: "email", name: "email", type: "text", autocomplete: "email", required: true}),
-            ]),
-            el('section', {}, [
-              el('label', {for: "phone", textContent: "Phone or Whatsapp"}),
-              el('input', {id: "phone", name: "phone", type: "text", autocomplete: "phone", required: true}),
-            ]),
-          ],
-          el('input', {id: "url", name: "url", type: "hidden", value: (this.state.url + "?lang=" + preferedLanguages.join(','))}),
-          el('button', {class: "submit", type: "submit",
-            textContent: (this.state.register ? 'Submit' : 'Submit')}),
-          ]),
       ]),
     ];
   }
 }
 customElements.define('mqtt-login', MqttLogin);
+
+class TabbedDisplay extends HTMLElementExtended {
+  constructor() {
+    super();
+    this.state = {tab: 0};
+    this.tabs = [];
+  }
+  static get observedAttributes() { return ['tab']; }
+  static get integerAttributes() { return ['tab']; }
+
+  tabSelect(tab) {
+    this.changeAttribute('tab', tab);
+    this.renderAndReplace();
+  }
+  updateActive(value) {
+    // Note this may get called before children added, so careful not to change 'tab'
+    if (this.children.length && this.tabs.length) {
+      if (value < 0) value = 0;
+      if (value >= this.children.length) value = this.children.length - 1;
+      for (let i = 0; i < this.children.length; i++) {
+        //if (this.children[i].tagName.toLowerCase() === 'section') {
+        if (i === value) {
+          this.children[i].className = "tabbed-section active";
+          this.tabs[i].className = "tab active";
+        } else {
+          this.children[i].className = "tabbed-section inactive";
+          this.tabs[i].className = "tab inactive";
+        }
+        //}
+      }
+    }
+  }
+  changeAttribute(name, value) {
+    super.changeAttribute(name, value); // will set this.state.tab if name is "tab"
+    if (name === "tab") {
+      this.updateActive(this.state.tab);
+    }
+  }
+  render() {
+    //let contents = [];
+    let i = 0;
+    this.tabs = Array.from(this.children).map((c, i) =>
+      el('button', {
+        onclick: this.tabSelect.bind(this, i),
+        textContent: c.getAttribute('title') })
+    );
+    this.updateActive(this.state.tab); // sets active/inactive on children and tabs
+    return [
+      el('link', {rel: 'stylesheet', href: CssUrl}),
+      el('div', {class: 'tabbed-display'}, [
+        el('section', {class: 'tabs'}, this.tabs),
+        el('slot',{}), // Children are the sections i.e. each tabs content
+      ]),
+    ];
+  }
+}
+customElements.define('tabbed-display', TabbedDisplay);
+
+class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organization
+  constructor(props) {
+    super(props);
+    this.state = {register: false};
+    this.state.elements = {};
+  }
+  static get observedAttributes() { return ['register','message','url','lang']; }
+  static get boolAttributes() { return ['register']; }
+
+  message(msg) {
+    console.error(msg);
+    this.state.message = msg;
+    //this.append(el('div', {class: 'message', textContent: msg}));
+  }
+  connectedCallback() {
+    // TODO-69 security this will be replaced by a subset of config.yaml,
+    //  that is public, but in the same format, so safe to build on this for now
+    // This should always succeed because index.html would have redirected to login.html if not logged in
+    GET("/config.json", {}, (err, json) => {
+      if (err) {
+        this.message(err);
+        return;
+      } else { // got config
+        server_config = json;
+        this.loadAttributesFromURL();
+        this.renderAndReplace(); // TODO check, but should not need to renderAndReplace as render is (currently) fully static
+      }
+    });
+    //super.connectedCallback(); // Not doing as finishes with a re-render.
+
+  }
+  changeAttribute(name, value) {
+    if (name === "lang") {
+      if (value.includes(',')) {
+        preferedLanguages = (value.split(',')).map(v => v.toUpperCase());
+      } else {
+        preferedLanguageSet(value.toUpperCase());
+      }
+    }
+    super.changeAttribute(name, value);
+  }
+  projectDropdown(org) {
+    return el('select', {id: 'projects', /*onchange: this.onOrganization.bind(this)*/}, [
+      //el('option', {value: "", textContent: "Not selected", selected: !this.state.value}),
+      el('option', {value: "+", textContent: "All", selected: true}),
+      Object.entries(server_config.organizations[org].projects)
+        .map(([pid, p]) => [ pid, p.name ])
+        .map(([pid, name]) =>
+          el('option', {value: pid, textContent: `${pid}: ${name}`, selected: false}))
+    ]);
+  }
+  onOrganization(e) {
+    let oid = e.target.value;
+    let oldSelect = this.state.elements.projectdropdown;
+    oldSelect.replaceWith(this.state.elements.projectdropdown = this.projectDropdown(oid));
+  }
+  onFile(e) {
+    //TODO-14 do some sanity check on the files. See https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/input/file
+  }
+  render() { //TODO-89 needs styles
+    let otaOrgs = server_config.user.permissions
+      .filter(o => o.capability === "OTAUPDATE")
+      .map(o => [ o.org, server_config.organizations[o.org].name ]);
+    return [
+      el('link', {rel: 'stylesheet', href: CssUrl}),
+      el('div', {class: 'mqtt-admin'},[
+        // This is a top bar, holds message and language picker
+        el('div',{class: 'message'},[
+          el('span', {textContent: this.state.message}),
+          el('language-picker'),
+        ]),
+        el('tabbed-display', {tab: 0}, [
+          el('section', {title: "Dashboard"}, [
+            el('mqtt-wrapper'),
+          ]),
+          // TODO-14 only show if have permission
+          !otaOrgs.length ? null :
+            el('section', {title: "OTA"}, [
+              el('form', {action: '/otaupdate', method: "post"}, [
+                el('section', {}, [
+                  el('label', {for: 'organizations', textContent: "Organization"}),
+                  el('select', {id: 'organizations', onchange: this.onOrganization.bind(this)}, [
+                    //el('option', {value: "", textContent: "Not selected", selected: !this.state.value}),
+                    otaOrgs.map(([oid, name]) =>
+                        el('option', {value: oid, textContent: `${oid}: ${name}`, selected: false}))
+                  ]),
+                ]),
+                el('section', {}, [
+                  el('label', {for: 'projects', textContent: "Project"}),
+                  this.state.elements.projectdropdown = this.projectDropdown(otaOrgs[0][0])
+                ]),
+                el('section', {}, [
+                  el('label', {for: 'otakey', textContent: "OTA Key or Device ID"}),
+                  el('input', {id: "otakey", name: "otakey", type: "text", autocomplete: "otakey", required: true}),
+                ]),
+                el('section', {}, [
+                  el('label', {for: 'file', textContent: "File"}),
+                  // Files should be either frugal-iot.ino.bin or firmware.bin
+                  el('input', {id: "file", name: "file", type: "file", accept: ".bin",  onchange: this.onFile.bind(this), required: true}),
+                  el('span', {}, [
+                    "(Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin)",
+                    "On PlatformIO The file is typically in <project>/.pio/build/<your board>/firmware.bin",
+                    "If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio direcftory without a leading '.'",
+                    "On ArduinoIDE the file is typically in <project>/build/<your board>/frugal-iot.ino.bin",
+                  ])
+                ]),
+                el('input', {id: "url", name: "url", type: "hidden", value: (this.state.url + "?lang=" + preferedLanguages.join(','))}),
+                el('button', {class: "submit", type: "submit", textContent: 'Upload'}),
+              ]), //form
+            ]), // OTA tab
+        ]),
+      ]),
+    ];
+  }
+}
+customElements.define('mqtt-admin', MqttAdmin);
 
 class MqttElement extends HTMLElementExtended {
   // TODO - maybe move this to HTMElementExtended
@@ -1932,7 +2123,7 @@ class MqttWrapper extends HTMLElementExtended {
       if (!this.state.project)  { // !n !p ?o
         if (!this.state.organization) { // !n !p !o
           // noinspection JSUnresolvedReference
-          this.append(
+          this.append( // TODO-14 merge with organization dropdown in mqtt-admin and add to mqtt-login and mqtt-register
             el('div', {class: 'dropdown'}, [
               el('label', {for: 'organizations', textContent: "Organization"}),
               el('select', {id: 'organizations', onchange: this.onOrganization.bind(this)}, [
@@ -1978,6 +2169,7 @@ class MqttWrapper extends HTMLElementExtended {
   connectedCallback() {
     // TODO-69 security this will be replaced by a subset of config.yaml,
     //  that is public, but in the same format, so safe to build on this for now
+    // This should always succeed because index.html would have redirected to login.html if not logged in
     GET("/config.json", {}, (err, json) => {
       if (err) {
         this.message(err);

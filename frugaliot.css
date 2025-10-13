@@ -151,7 +151,7 @@ div.mqtt-text {
     /* In MqttGraph */
     /* In MqttWrapper */
     /*Not useful: .mqtt-wrapper {border: 1px,black,solid;  margin: 0.2em; } */
-    mqtt-wrapper {
+    mqtt-wrapper,  .mqtt-admin {
         .dropdown { margin-top: 5px;}
         select { margin-left: 2em;}
         @media screen and (max-width: 1001px ) {
@@ -165,7 +165,7 @@ div.mqtt-text {
     }
 
     /* Related to authentication */
-    .mqtt-login {
+    .mqtt-login, .tabbed-display, tabbed-display {
         .tabs {
             display: flex;
             flex-direction: row;
@@ -174,28 +174,30 @@ div.mqtt-text {
             padding-bottom: 0em;
         }
         .tab {
-            border: 2px,black,solid;
+            border: 2px, black, solid;
             width: 50%;
             font-size: x-large;
-            margin-bottom: 0.2em; margin-bottom: 0em;
+            margin-bottom: 0.2em;
+            margin-bottom: 0em;
             padding: 0.6em;
             border-top-left-radius: 20px;
             border-top-right-radius: 20px;
         }
-        .active {
+        .tab.active {
             background-color: #ffffff;
             font-weight: bolder;
             border-bottom: 0px;
         }
-        .inactive {
+        .tab.inactive {
             background-color: #888888;
             font-weight: lighter;
         }
         .message {margin: 0.5em; font-weight: bold; font-size: x-large; }
-        form {
+        .tabbed-section.inactive { display: none; }
+        .tabbed-section.active {
             padding: 10px;
             border: black solid 2px;
-            border-top: 0px;
+            /*border-top: 2px; */
             border-bottom-left-radius: 20px;
             border-bottom-right-radius: 20px;
             label {
