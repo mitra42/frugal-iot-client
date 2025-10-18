@@ -198,6 +198,7 @@ soil:
   color:    brown
   rw:       r
   graphable:  true
+  calibrate:  true
 temperature:
   leaf:  temperature
   name:     Temperature
@@ -390,6 +391,7 @@ loadcell:
     max:      65000
     color:    yellow
     rw:       r
+    calibrate:  true
 lux:
  name: Light meter
  topics:
