@@ -533,8 +533,10 @@ EN:
   Brightness: Brightness
   TVOC: TVOC
   AQI: AQI
+  AQI500: AQI500
   Dashboard: Dashboard
   ENS AHT: ENS AHT
+  eCO2: eCO2
 FR:
   _thisLanguage: Francaise
   _nameAndFlag: Français 🇫🇷
