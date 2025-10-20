@@ -271,6 +271,7 @@ battery:
     max:    5000
     color:  green
     rw:       r
+    graphable:  true
 controlblinken:
  name: "Control Blinken"
  topics:
@@ -299,6 +300,7 @@ controlblinken:
     color:    black
     rw:       r
     wireable: true
+    graphable:  true
 ensaht:
  name: "ENS AHT"
  topics:
@@ -311,6 +313,7 @@ ensaht:
     color:  red
     wireable: false
     rw:       r
+    graphable:  true
   - leaf:  humidity
     name:     Humidity
     type:     float
@@ -319,14 +322,16 @@ ensaht:
     max:      100
     color:    blue
     rw:       r
+    graphable:  true
   - leaf:  aqi
     name:     AQI
     type:     int
     display:  bar
     min:      0
-    max:      255
+    max:      5
     color:    purple
     rw:       r
+    graphable:  true
   - leaf:  tvoc
     name:     TVOC
     type:     int
@@ -335,6 +340,7 @@ ensaht:
     max:      99
     color:    green
     rw:       r
+    graphable:  true
   - leaf:  eco2
     name:     eCO2
     type:     int
@@ -343,14 +349,16 @@ ensaht:
     max:      900
     color:    brown
     rw:       r
+    graphable:  true
   - leaf:  agi500
     name:     AQI500
     type:     int
     display:  bar
     min:      0
-    max:      99
+    max:      500
     color:    brown
     rw:       r
+    graphable:  true
 frugal_iot:
   name: XXX
   topics:
@@ -392,6 +400,7 @@ loadcell:
     color:    yellow
     rw:       r
     calibrate:  true
+    graphable:  true
 lux:
  name: Light meter
  topics:
@@ -403,6 +412,7 @@ lux:
     max:      65000
     color:    yellow
     rw:       r
+    graphable:  true
 ota:
   name: OTA
   topics:
@@ -476,7 +486,9 @@ const skipped = (ctx, value) => ctx.p0.skip || ctx.p1.skip ? value : undefined;
 
 function topicMatches(subscriptionTopic, messageTopic) {
   if (subscriptionTopic.endsWith('/#')) {
-    return (messageTopic.startsWith(subscriptionTopic.substring(0, subscriptionTopic.length - 2)));
+    return (
+      messageTopic === (subscriptionTopic.substring(0, subscriptionTopic.length - 2))
+      || messageTopic.startsWith(subscriptionTopic.substring(0, subscriptionTopic.length - 1)));
   } else {
     return (subscriptionTopic === messageTopic);
   }
@@ -1657,7 +1669,7 @@ class MqttReceiver extends MqttElement {
     }
     // noinspection JSUnresolvedVariable
     let wiredTopic = this.mt.wired ? this.mt.project.findTopic(this.mt.wired) : undefined;
-    let wiredTopicValue = wiredTopic ? wiredTopic.element.state.value.toString() : undefined; // Works - but maybe error-prone if value can be undefined
+    let wiredTopicValue = wiredTopic ? wiredTopic.element.state.value.toString() : this.state.value; // Works - but maybe error-prone if value can be undefined
     // noinspection JSUnresolvedReference
       return [
       el('link', {rel: 'stylesheet', href: CssUrl}),
@@ -1671,13 +1683,8 @@ class MqttReceiver extends MqttElement {
               el('details', {} , [
                 el('summary', {}, [
                   this.renderLabel(),
-                  // noinspection JSUnresolvedVariable
-                  this.mt.wired
-                    ? [
-                      this.renderValue(this.state.value),
-                      this.renderWiredName(wiredTopic),
-                    ]
-                    : this.renderValue(this.state.value),
+                  this.renderValue(this.state.value),
+                  !this.mt.wired ? null : this.renderWiredName(wiredTopic)
                 ]),
                 this.state.elements.chooseTopic = this.renderDropdown(),
               ])
@@ -1694,7 +1701,7 @@ class MqttReceiver extends MqttElement {
                   this.mt.wired
                     ? [
                       this.renderValue(wiredTopicValue),
-                      this.renderWiredName(wiredTopic),
+                      wiredTopic ? this.renderWiredName(wiredTopic) : this.mt.wired,
                     ]
                     : this.renderInput(),
                 ]),
@@ -2271,7 +2278,7 @@ class MqttProject extends MqttReceiver {
   findTopic(topicPath) {
     // Currently only used in renderMaybeWired
     let parts = topicPath.split("/");
-    return this.state.nodes[parts[2]].state.topics[`${parts[3]}/${parts[4]}/#`];
+    return this.state.nodes[parts[2]] && this.state.nodes[parts[2]].state.topics[`${parts[3]}/${parts[4]}/#`];
   }
   render() {
     return  !this.isConnected ? null : [
