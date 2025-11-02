@@ -165,7 +165,7 @@ div.mqtt-text {
     }
 
     /* Related to authentication */
-    .mqtt-login, .tabbed-display, tabbed-display {
+    .mqtt-login, .mqtt-admin, .tabbed-display, tabbed-display {
         .tabs {
             display: flex;
             flex-direction: row;

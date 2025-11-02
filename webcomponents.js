@@ -450,7 +450,6 @@ discover_mod["controlhysterisis"] = { name: "Control", topics: [
 // Define a set of sensors that are pseudo, and hidden inside the Frugal_IoT drop-down on the name of a sensor
 const discover_groupsInsideFrugalIot = ["ledbuiltin", "ota", "battery"];
 
-// ==========TODO-44 === CODE REVIEW FROM HERE DOWN: getters#26; const vs let; globals;TODO's; Problems; Comments
 /* Helpers of various kinds */
 
 // Move to a new location by just changing one parameter in the URL
@@ -469,7 +468,7 @@ function unshiftUnique(arr, v) {
 }
  */
 
-// Subscribe to a topic (no wild cards as topic not passed to cb) << TODO is this still true
+// Subscribe to a topic (no wild cards as topic not passed to cb)
 function mqtt_subscribe(topic, cb) { // cb(message)
   console.log("Subscribing to ", topic);
   mqtt_subscriptions.push({topic, cb});
@@ -493,8 +492,7 @@ function topicMatches(subscriptionTopic, messageTopic) {
     return (subscriptionTopic === messageTopic);
   }
 }
-
-let languages = yaml.load(`
+const languages = yaml.load(`
 #Language configuration - will be read from files at some point
 EN:
   _thisLanguage: English
@@ -540,7 +538,6 @@ EN:
   OTA: OTA
   Key: Key
   Description: Description
-  Last Seen: Last Seen
   Node ID:  Node ID
   Node Name:  Node Name
   Color:  Color
@@ -551,25 +548,41 @@ EN:
   Dashboard: Dashboard
   ENS AHT: ENS AHT
   eCO2: eCO2
+  Last Seen: Last Seen
 FR:
-  _thisLanguage: Francaise
   _nameAndFlag: Français 🇫🇷
+  _thisLanguage: Francaise
+  AQI: IQA  
+  AQI500: IQA500  
+  Brightness: Luminosité  
   Built in LED: LED intégrée
   close: fermer
+  Color: Couleur  
   connect: connecter
   connecting: connexion
+  Control: Contrôle
+  Dashboard: Tableau de bord  
+  eCO2: eCO2  
   Email: Email
-  Humidity: Humidité
+  ENS AHT: ENS AHT  
+  Greater Than: Supérieur à
   Humidity control: Contrôle de l'humidité
+  Humidity: Humidité
   Hysterisis: Hystérésis
+  Key: Clé
+  LED: LED
   Limit: Limite
+  Load Cell: Cellule de charge
   Name: Nom 
   Never seen: Jamais vu
+  Node Id: ID du nœud
+  Node Name: Nom du nœud  
   Not selected: Non sélectionné
   Now: Maintenant
   offline: hors ligne
   On: Allumé
   Organization: Organisation
+  OTA: OTA
   Out: Sortie
   Password: Mot de passe
   Phone or Whatsapp: Téléphone ou Whatsapp
@@ -582,84 +595,100 @@ FR:
   SHT: SHT
   SHT30: SHT30
   Sign In: Se connecter
-  Sonoff switch: Interrupteur Sonoff
   Sonoff R2 switch: Interrupteur Sonoff R2
+  Sonoff switch: Interrupteur Sonoff
   Submit: Soumettre
   Temperature: Température
-  Username: Nom de User
-  Load Cell: Cellule de charge
-  LED: LED
-  Control: Contrôle
+  TVOC: COVT  
   Unused: Inutilisé
-  Greater Than: Supérieur à
-  OTA: OTA
-  Key: Clé
-  Node ID: Node ID
-  Node Name: Node Name
+  Username: Nom de User
 HI:
-  _thisLanguage: हिंदी
   _nameAndFlag: हिंदी 🇮🇳
+  _thisLanguage: हिंदी
+  AQI: वायु गुणवत्ता सूचकांक  
+  AQI500: वायु गुणवत्ता सूचकांक 500  
+  Brightness: चमक  
   Built in LED: बिल्ट-इन एलईडी
   close: बंद करें
+  Color: रंग  
   connect: कनेक्ट करें
   connecting: कनेक्ट हो रहा है
+  Control: नियंत्रण
+  Dashboard: डैशबोर्ड  
+  eCO2: ईसीओ2  
   Email: ईमेल
-  Humidity: आर्द्रता
+  ENS AHT: ईएनएस एएचटी  
+  Greater Than: इससे बड़ा
   Humidity control: आर्द्रता नियंत्रण
+  Humidity: आर्द्रता
   Hysterisis: हिस्टेरिसिस
+  Key: कुंजी
+  LED: एलईडी
   Limit: सीमा
+  Load Cell: लोड सेल
   Name: नाम
   Never seen: कभी नहीं देखा
+  Node ID: नोड आईडी
+  Node Name: नोड नाम 
   Not selected: चयनित नहीं
   Now: अभी
   offline: ऑफ़लाइन
   On: चालू
   Organization: संगठन
+  OTA: ओटीए
   Out: आउट
   Password: पासवर्ड
   Phone or Whatsapp: फ़ोन या व्हाट्सएप
   Please login: कृपया लॉगिन करें
+  Project: परियोजना
   reconnect: पुनः कनेक्ट करें
   Register: पंजीकरण करें
   Relay: रिले
   server: सर्वर
   SHT: एसएचटी
   SHT30: एसएचटी30
-  Sonoff switch: सोनऑफ स्विच
-  Sonoff R2 switch: सोनऑफ R2 स्विच
   Sign In: साइन इन करें
+  Sonoff R2 switch: सोनऑफ R2 स्विच
+  Sonoff switch: सोनऑफ स्विच
   Submit: जमा करें
   Temperature: तापमान
-  Username: उपयोगकर्ता नाम
-  Project: परियोजना
-  Load Cell: लोड सेल
-  LED: एलईडी
-  Control: नियंत्रण
+  TVOC: टीवीओसी  
   Unused: अप्रयुक्त
-  Greater Than: इससे बड़ा
-  OTA: ओटीए
-  Key: कुंजी
-  Node ID: Node ID
-  Node Name: Node Name
+  Username: उपयोगकर्ता नाम
 ID:
-  _thisLanguage: Bahasa Indonesia
   _nameAndFlag: Bahasa Indonesia 🇮🇩
+  _thisLanguage: Bahasa Indonesia
+  AQI: Indeks Kualitas Udara  
+  AQI500: Indeks Kualitas Udara 500  
+  Brightness: Kecerahan  
   Built in LED: LED bawaan
   close: tutup
+  Color: Warna  
   connect: sambungkan
   connecting: menghubungkan
+  Control: Kontrol
+  Dashboard: Dasbor  
+  eCO2: eCO2  
   Email: Email
-  Humidity: Kelembapan
+  ENS AHT: ENS AHT  
+  Greater Than: Lebih dari
   Humidity control: Kontrol kelembapan
+  Humidity: Kelembapan
   Hysterisis: Histeresis
+  Key: Kunci
+  LED: LED
   Limit: Batas
+  Load Cell: Sel Beban
   Name: Nama
   Never seen: Belum pernah terlihat
+  Node ID: ID Node
+  Node Name: Nama Node  
   Not selected: Tidak dipilih
   Now: Sekarang
   offline: offline
   On: Hidup
   Organization: Organisasi
+  OTA: OTA
   Out: Keluar
   Password: Kata Sandi
   Phone or Whatsapp: Telepon atau Whatsapp
@@ -672,21 +701,15 @@ ID:
   SHT: SHT
   SHT30: SHT30
   Sign In: Masuk
-  Sonoff switch: Saklar Sonoff
   Sonoff R2 switch: Saklar Sonoff R2
+  Sonoff switch: Saklar Sonoff
   Submit: Kirim
   Temperature: Suhu
-  Username: Nama Pengguna
-  Load Cell: Sel Beban
-  LED: LED
-  Control: Kontrol
+  TVOC: TVOC  
   Unused: Tidak digunakan
-  Greater Than: Lebih dari
-  OTA: OTA
-  Key: Kunci
-  Node ID: Node ID
-  Node Name: Node Name
+  Username: Nama Pengguna
 `);
+// ==========TODO-44 === CODE REVIEW ABOVE DONE: getters#26; const vs let; globals;TODO's; Problems; Comments
 
 let preferedLanguages = [ ];
 function languageNamesAndFlags() {
@@ -1422,7 +1445,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     super.changeAttribute(name, value);
   }
   projectDropdown(org) {
-    return el('select', {id: 'projects', /*onchange: this.onOrganization.bind(this)*/}, [
+    return el('select', {id: 'projects', name: 'project' /*onchange: this.onOrganization.bind(this)*/}, [
       //el('option', {value: "", textContent: "Not selected", selected: !this.state.value}),
       el('option', {value: "+", textContent: "All", selected: true}),
       Object.entries(server_config.organizations[org].projects)
@@ -1455,13 +1478,14 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
           el('section', {title: "Dashboard"}, [
             el('mqtt-wrapper'),
           ]),
-          // TODO-14 only show if have permission
           !otaOrgs.length ? null :
             el('section', {title: "OTA"}, [
-              el('form', {action: '/otaupdate', method: "post"}, [
+              el('form', {action: '/ota_update', method: "post", enctype: "multipart/form-data"}, [
+                el('input', {id: "url2", name: "url", type: "hidden", value: `/dashboard/admin.html`}),
+                el('input', {id: "lang", name: "lang", type: "hidden", value: preferedLanguages.join(',')}),
                 el('section', {}, [
                   el('label', {for: 'organizations', textContent: "Organization"}),
-                  el('select', {id: 'organizations', onchange: this.onOrganization.bind(this)}, [
+                  el('select', {id: 'organizations', name: 'organization', onchange: this.onOrganization.bind(this)}, [
                     //el('option', {value: "", textContent: "Not selected", selected: !this.state.value}),
                     otaOrgs.map(([oid, name]) =>
                         el('option', {value: oid, textContent: `${oid}: ${name}`, selected: false}))
@@ -1486,7 +1510,6 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
                     "On ArduinoIDE the file is typically in <project>/build/<your board>/frugal-iot.ino.bin",
                   ])
                 ]),
-                el('input', {id: "url", name: "url", type: "hidden", value: (this.state.url + "?lang=" + preferedLanguages.join(','))}),
                 el('button', {class: "submit", type: "submit", textContent: 'Upload'}),
               ]), //form
             ]), // OTA tab
@@ -2003,7 +2026,6 @@ class MqttChooseTopic extends MqttElement {
   // options = "bool" for boolean topics (matches t.type on others)
   static get observedAttributes() { return MqttTransmitter.observedAttributes.concat(['name', 'type','value', 'project','rw','onchange']); }
 
-  // TODO-43 may need to change findTopics to account for other selection criteria
   findTopics() {
     let project = this.state.project;
     let nodes = Array.from(project.children);
