@@ -147,6 +147,8 @@ brightness:
   leaf:     brightness
   name:     Brightness
   type:     int
+  max:      255
+  min:      0
   display:  slider
   rw:       w
 button:
@@ -191,6 +193,7 @@ on:
   graphable:  true
 soil:
   leaf:     soil
+  name:     Soil Moisture
   type:     int
   display:  bar
   min:      0
@@ -440,6 +443,7 @@ discover_mod["ms5803"] = { name: "MS5803", topics: [ d_io_v("pressure"), d_io_v(
 discover_mod["relay"] = { name: "Relay", topics: [ d_io_v("on")]};
 discover_mod["ledbuiltin"] = { name: "LED", slot: "ledbuiltin", topics: [ d_io_v("on"), d_io_v("color"), d_io_v("brightness")]};
 discover_mod["soil"] = { name: "Soil", topics: [d_io_v("soil")]};
+discover_mod["ds18b20"] = { name: "Soil Temperature", topics: [d_io_v("temperature", {leaf: "ds18b20"})]}; // TODO replace with DS18B20
 discover_mod["controlhysterisis"] = { name: "Control", topics: [
   d_io_v('controlfloat', {leaf: "now", name: "Now"}),
   d_io_v('controlintoggle', {leaf: "greater", name: "Greater Than"}),
@@ -495,24 +499,40 @@ function topicMatches(subscriptionTopic, messageTopic) {
 const languages = yaml.load(`
 #Language configuration - will be read from files at some point
 EN:
-  _thisLanguage: English
   _nameAndFlag: English 🇬🇧
+  _thisLanguage: English
+  AQI: AQI
+  AQI500: AQI500
+  Brightness: Brightness
   Built in LED: Built in LED
   close: close
+  Color:  Color
   connect: connect
   connecting: connecting
+  Control: Control
+  Dashboard: Dashboard
+  Description: Description
+  eCO2: eCO2
   Email: Email
-  Humidity: Humidity
+  ENS AHT: ENS AHT
+  Greater Than: Greater Than
   Humidity control: Humidity control
+  Humidity: Humidity
   Hysterisis: Hysterisis
+  Key: Key
+  LED: LED
   Limit: Limit
+  Load Cell: Load Cell
   Name: Name
   Never seen: Never seen
+  Node ID:  Node ID
+  Node Name:  Node Name
   Not selected: Not selected
   Now: Now
   offline: offline
   On: On
   Organization: Organization
+  OTA: OTA
   Out: Out
   Password: Password
   Phone or Whatsapp: Phone or Whatsapp
@@ -525,30 +545,18 @@ EN:
   SHT: SHT
   SHT30: SHT30
   Sign In: Sign In
-  Sonoff switch: Sonoff switch
   Sonoff R2 switch: Sonoff R2 switch
+  Sonoff switch: Sonoff switch
   Submit: Submit
   Temperature: Temperature
-  Username: Username
-  Load Cell: Load Cell
-  LED: LED
-  Control: Control
-  Unused: Unused
-  Greater Than: Greater Than
-  OTA: OTA
-  Key: Key
-  Description: Description
-  Node ID:  Node ID
-  Node Name:  Node Name
-  Color:  Color
-  Brightness: Brightness
   TVOC: TVOC
-  AQI: AQI
-  AQI500: AQI500
-  Dashboard: Dashboard
-  ENS AHT: ENS AHT
-  eCO2: eCO2
+  Unused: Unused
+  Username: Username
   Last Seen: Last Seen
+  Soil: Soil
+  ds18b20: ds18b20
+  Soil Temperature: Soil Temperature
+  Soil Moisture: Soil Moisture
 FR:
   _nameAndFlag: Français 🇫🇷
   _thisLanguage: Francaise
@@ -602,6 +610,11 @@ FR:
   TVOC: COVT  
   Unused: Inutilisé
   Username: Nom de User
+  Last Seen: Dernière activité
+  Soil: Sol
+  ds18b20: ds18b20
+  Soil Temperature: Température du sol
+  Soil Moisture: Humidité du sol
 HI:
   _nameAndFlag: हिंदी 🇮🇳
   _thisLanguage: हिंदी
@@ -655,6 +668,11 @@ HI:
   TVOC: टीवीओसी  
   Unused: अप्रयुक्त
   Username: उपयोगकर्ता नाम
+  Last Seen: अंतिम बार देखा गया
+  Soil: मिट्टी
+  ds18b20: ds18b20
+  Soil Temperature: मिट्टी का तापमान
+  Soil Moisture: मिट्टी की नमी
 ID:
   _nameAndFlag: Bahasa Indonesia 🇮🇩
   _thisLanguage: Bahasa Indonesia
@@ -708,6 +726,11 @@ ID:
   TVOC: TVOC  
   Unused: Tidak digunakan
   Username: Nama Pengguna
+  Last Seen: Terakhir Dilihat
+  Soil: Tanah
+  ds18b20: ds18b20
+  Soil Temperature: Suhu Tanah
+  Soil Moisture: Kelembapan Tanah
 `);
 // ==========TODO-44 === CODE REVIEW ABOVE DONE: getters#26; const vs let; globals;TODO's; Problems; Comments
 
@@ -947,6 +970,29 @@ class MqttTopic {
         return "undefined";
     }
   }
+  // Called by MqttReceiver.parameterSet to make sure topic updated
+  parameterSet(parameter, message, typeOfParameter) {
+    switch (typeOfParameter) {
+      case "float":
+      case "integer":
+        return this[parameter] = Number(message);
+      case "boolean":
+        return this[parameter] = toBool(message);
+      case "string":
+        return this[parameter] = message;
+      default:
+        switch (typeof(this[parameter])) {
+          case "string":
+            return this[parameter] = message;
+          case "number":
+            return this[parameter] = Number(message);
+          case "boolean":
+            return this[parameter] = toBool(message);
+          default:
+            XXX(['Setting parameter of MqttTopic of unknown type', this.topic, parameter, message]);
+        }
+    }
+  }
   // TODO add opposite - return string or int based on argument, then look at valueGet subclassed many places
   // NOTE same function in frugal-iot-logger and frugal-iot-client if change here, change there
   valueFromText(message) {
@@ -977,6 +1023,7 @@ class MqttTopic {
   }
 
   // Note sometimes called from MqttClient and sometimes from node.topicValueSet
+  // Note pathway MqttTopic (for node) -> MqttNode -> MqttTopic for module
   message_received(topic, message) {
     if (this.element) {
       if (this.element.topicValueSet(topic, message)) {
@@ -1525,6 +1572,13 @@ class MqttElement extends HTMLElementExtended {
   // Called whenever an attribute is added or changed,
   // https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements#using_the_lifecycle_callbacks
   // unlikely to be subclassed except to change behavior of when calls renderAndReplace
+  typeOfAttribute(attributeName) {
+    if (this.constructor.integerAttributes.includes(attributeName)) { return "integer"; }
+    if (this.constructor.floatAttributes.includes(attributeName)) { return "float"; }
+    if (this.constructor.boolAttributes.includes(attributeName)) { return "boolean"; }
+    if (this.constructor.observedAttributes.includes(attributeName)) { return "string"; }
+    return undefined;
+  }
   attributeChangedCallback(name, oldValue, newValue) {
     // console.log(this.localName, 'Attribute Changed', name); // uncomment for debugging
     if (oldValue !== newValue) {
@@ -1635,6 +1689,7 @@ class MqttReceiver extends MqttElement {
       XXX(["Good chance parameter is not observed:", parameter]);
     }
     this.setAttribute(parameter, message); // Type will be set in changeAttribute
+    this.mt.parameterSet(parameter, message, this.typeOfAttribute(parameter)); // Ensure MqttTopic tracks same parameters
   }
   get project() { // Note this will only work once the element is connected
     // noinspection CssInvalidHtmlTagReference
@@ -2435,7 +2490,7 @@ class MqttNode extends MqttReceiver {
         this.append(this.groups[groupId]); // Adds the group to the node - typically it will be a dropdown
       }
       if (!dm) {
-        XXX(["Unknown group - for now can't guess"]);
+        XXX(["Unknown group - for now can't guess", groupId]);
       } else {
         dm.topics.forEach(t => {  // Note t.topic in discovery is twig
           t.group = groupId;
