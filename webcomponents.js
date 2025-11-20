@@ -864,6 +864,20 @@ class MqttTopic {
     this.retain = false; // Default to not retain
   }
 
+  get groupEl() {
+    return this.node.groups[this.group];
+  }
+  get groupName() {
+    return this.groupEl.state.name
+  }
+  get usableName() {
+    switch (this.name) {
+      case "On":
+        return `${this.groupName}`;
+      default:
+        return `${this.groupName}:${this.name}`;
+    }
+  }
   initialize(o) {
     // topic, name, type, display, rw, min, max, color, options, node
     Object.keys(o).forEach((k) => {
@@ -1742,7 +1756,7 @@ class MqttReceiver extends MqttElement {
     ];
   }
   renderWiredName(wiredTopic) {
-    let wiredTopicName = wiredTopic ? `${wiredTopic.node.usableName}:${wiredTopic.name}` : undefined;
+    let wiredTopicName = wiredTopic ? `${wiredTopic.node.usableName}:${wiredTopic.usableName}` : undefined;
     return el('span', {class: 'wired', textContent: wiredTopicName})
   }
   renderDropdown() {
@@ -2439,7 +2453,8 @@ class MqttNode extends MqttReceiver {
       .filter( t => types.includes(t.type))
       .filter(t => t.rw.includes(rw))
       // TODO-154 when have groups as a Webcomponent - use the groups name, and be clever e.g. ledbuiltin/on is LED, but temperature/max is Temperature Max
-      .map(t=> { return({name: `${usableName}:${t.name}`, topic: t.topicPath})});
+      // Note its intentionally t.topicPath even if rw=w because drop-down needs to subscribe to the topicPath , and set the topicSetPath
+      .map(t=> { return({name: `${usableName}:${t.usableName}`, topic: t.topicPath})});
   }
 
   // Overrides topicValueSet in MqttReceiver
