@@ -1816,13 +1816,13 @@ class MqttReceiver extends MqttElement {
 
 class MqttTransmitter extends MqttReceiver {
   // TODO - make sure this doesn't get triggered by a message from server.
-  valueGet() { // Needs to return an integer or a string
+  get valueGet() { // Needs to return an integer or a string
     return this.state.value
     // TODO could probably use a switch in MqttNode rather than overriding in each subclass
   } // Overridden for booleans
 
   publish() {
-    this.mt.publish(this.valueGet());
+    this.mt.publish(this.valueGet);
   }
 }
 
@@ -1888,7 +1888,7 @@ class MqttToggle extends MqttTransmitter {
     this.state.indeterminate = false; // Checkbox should default to indeterminate till get a message
     return true; // Rerender // TODO could set values on input instead of rerendering
   }
-  valueGet() {
+  get valueGet() {
     // TODO use Mqtt to convert instead of subclassing
     return (+this.state.value).toString(); // Implicit conversion from bool to int then to String.
   }
@@ -2026,18 +2026,18 @@ class MqttSlider extends MqttTransmitter {
   // noinspection JSCheckFunctionSignatures
   valueSet(val) {
     super.valueSet(val);
-    this.thumb.style.left = this.leftOffset() + "px";
+    this.thumb.style.left = this.leftOffset + "px";
     return true; // Rerenders on moving based on any received value but not when dragged
     // TODO could get smarter about setting with rather than rerendering
   }
-  valueGet() {
+  get valueGet() {
     // TODO use mqttTopic for conversion instead of subclassing
     return (this.state.value).toPrecision(3); // Conversion from int to String (for MQTT)
   }
   leftToValue(l) {
     return (l+this.thumb.offsetWidth/2)/this.slider.offsetWidth * (this.state.max-this.state.min) + this.state.min;
   }
-  leftOffset() {
+  get leftOffset() {
     return ((this.state.type === "exponential")
       ? (Math.log(this.state.value/(this.state.min||1))/Math.log(this.state.max/(this.state.min||1)))
       : ((this.state.value-this.state.min)/(this.state.max-this.state.min))
@@ -2071,7 +2071,7 @@ class MqttSlider extends MqttTransmitter {
   renderAndReplace() {
     super.renderAndReplace();
     if (this.thumb) {
-      this.thumb.style.left = this.leftOffset() + "px";
+      this.thumb.style.left = this.leftOffset + "px";
     }
   }
   render() {
@@ -2101,7 +2101,7 @@ class MqttChooseTopic extends MqttElement {
   // options = "bool" for boolean topics (matches t.type on others)
   static get observedAttributes() { return MqttTransmitter.observedAttributes.concat(['name', 'type','value', 'project','rw','onchange']); }
 
-  findTopics() {
+  get findTopics() {
     let project = this.state.project;
     let nodes = Array.from(project.children);
     // Note each node's value is its config
@@ -2131,7 +2131,7 @@ class MqttChooseTopic extends MqttElement {
         el('label', {for: 'choosetopic' + (++unique_id), textContent: name}),
         el('select', {id: 'choosetopic' + unique_id, onchange: this.onchange}, [
           el('option', {value: "", textContent: "Unused", selected: !this.state.value}),
-          this.findTopics().map( t => // { name, type etc. }
+          this.findTopics.map( t => // { name, type etc. }
             el('option', {value: t.topic, textContent: t.name, selected: t.topic === this.state.value}),
           ),
         ]),
@@ -2731,7 +2731,7 @@ class MqttGraph extends MqttElement {
     this.addDataFrom(filename, first);
   }
   // Return a list of filenames to allow a newly added GraphDataset to catch up on old data
-  graphNavleftFilenames() {
+  get graphNavleftFilenames() {
     let filenames = [];
     if (this.state.dateFrom) {
       let d = new Date();
@@ -2923,7 +2923,7 @@ class MqttGraphDataset extends MqttElement {
   }
   // Add any data left to get a new GraphDataSet up to speed with the chart
   addDataLeft() {
-    let filenames = this.graph.graphNavleftFilenames(); // Note in reverse order, latest first.
+    let filenames = this.graph.graphNavleftFilenames; // Note in reverse order, latest first.
     async.eachOfSeries(filenames, (filename, key, cb) => {
       this.addDataFrom(filename, !key, cb);
     }, () => {
