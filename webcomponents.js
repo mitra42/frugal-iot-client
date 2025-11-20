@@ -391,6 +391,23 @@ frugal_iot:
     type:     text
     display:  text
     rw:       r
+health:
+ name: System
+ topics:
+  - leaf:     wifibars
+    name:     WiFi
+    type:     int
+    display:  text
+    min:      0
+    max:      4
+    color:    blue
+    rw:       r
+  - leaf:     wifissid
+    name:     SSID
+    type:     text
+    display:  text
+    color:    blue
+    rw:       r    
 loadcell:
  name: Load Cell
  topics:
@@ -557,6 +574,9 @@ EN:
   ds18b20: ds18b20
   Soil Temperature: Soil Temperature
   Soil Moisture: Soil Moisture
+  System: System
+  WiFi: WiFi
+  SSID: SSID
 FR:
   _nameAndFlag: Français 🇫🇷
   _thisLanguage: Francaise
