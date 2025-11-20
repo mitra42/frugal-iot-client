@@ -1365,6 +1365,7 @@ class MqttLogin extends HTMLElementExtended { // TODO-89 may depend on organizat
   render() { //TODO-89 needs styles
     // TODO-89 organization should be dropdown
     // TODO-89 merge login & register
+    if (preferedLanguages.length === 0) { XXX("Tracking down issue with lang"); }
     return [
       el('link', {rel: 'stylesheet', href: CssUrl}),
       el('div', {class: 'mqtt-login'},[
@@ -1584,13 +1585,11 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
                   el('label', {for: 'file', textContent: "File"}),
                   // Files should be either frugal-iot.ino.bin or firmware.bin
                   el('input', {id: "file", name: "file", type: "file", accept: ".bin",  onchange: this.onFile.bind(this), required: true}),
-                  el('span', {}, [
-                    "(Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin)",
-                    "On PlatformIO The file is typically in <project>/.pio/build/<your board>/firmware.bin",
-                    "If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio direcftory without a leading '.'",
-                    "On ArduinoIDE the file is typically in <project>/build/<your board>/frugal-iot.ino.bin",
-                  ])
-                ]),
+                  el('p', {}, ["(Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin)"]),
+                  el('p', {}, ["On PlatformIO The file is typically in ", el('code',{}, ['<project>/.pio/build/<your board>/firmware.bin'])]),
+                  el('p', {}, ["If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.'"]),
+                  el('p', {}, ["On ArduinoIDE the file is typically in ", el('code',{}, ["<project>/build/<your board>/frugal-iot.ino.bin"])]),
+                  ]),
                 el('button', {class: "submit", type: "submit", textContent: 'Upload'}),
               ]), //form
             ]), // OTA tab
@@ -2463,7 +2462,7 @@ class MqttNode extends MqttReceiver {
 
     let twig = topicPath.substring(this.mt.topicPath.length+1);
     if (twig.startsWith("set/")) { twig = twig.substring(4); } // Remove "set/" prefix if present
-    // TODO-37 ignore some legacy and/or buggy nodes - probably will go away when server restarted
+    // TODO-37 ignore some legacy and/or buggy nodes - should have gone away by now
     if (
       (topicPath === this.mt.topicPath) // Its discover for this Node, not a sub-element (old nodes or in DB)
       ||  [
@@ -2477,8 +2476,16 @@ class MqttNode extends MqttReceiver {
       || twig.endsWith('/wire') // replaced with "/wired"
       || twig.endsWith('/device_name') // replaced with "/name"
       || !twig.includes('/')
-    ) { return false }
-
+    ) {
+      XXX(["legacy twig", twig]);
+      return false
+    }
+    // TODO-37 ignore some legacy and/or buggy nodes - probably will go away when server restarted
+    if (
+      twig.includes("wifistrength")
+    ) {
+      return false
+    }
     // Special case twigs
     if (twig.startsWith("frugal_iot/")) {
       let leaf = twig.substring(11);
