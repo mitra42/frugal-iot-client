@@ -635,6 +635,9 @@ FR:
   ds18b20: ds18b20
   Soil Temperature: Température du sol
   Soil Moisture: Humidité du sol
+  System: Système
+  WiFi: WiFi
+  SSID: SSID
 HI:
   _nameAndFlag: हिंदी 🇮🇳
   _thisLanguage: हिंदी
@@ -693,6 +696,9 @@ HI:
   ds18b20: ds18b20
   Soil Temperature: मिट्टी का तापमान
   Soil Moisture: मिट्टी की नमी
+  System: सिस्टम
+  WiFi: वाई-फ़ाई
+  SSID: SSID
 ID:
   _nameAndFlag: Bahasa Indonesia 🇮🇩
   _thisLanguage: Bahasa Indonesia
@@ -751,6 +757,9 @@ ID:
   ds18b20: ds18b20
   Soil Temperature: Suhu Tanah
   Soil Moisture: Kelembapan Tanah
+  System: Sistem
+  WiFi: WiFi
+  SSID: SSID
 `);
 // ==========TODO-44 === CODE REVIEW ABOVE DONE: getters#26; const vs let; globals;TODO's; Problems; Comments
 
