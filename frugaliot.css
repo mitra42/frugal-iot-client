@@ -166,6 +166,11 @@ div.mqtt-text {
 
     /* Related to authentication */
     .mqtt-login, .mqtt-admin, .tabbed-display, tabbed-display {
+        .pseudolink {
+            color: blue;
+            text-decoration: underline;
+            cursor: pointer;
+        }
         .tabs {
             display: flex;
             flex-direction: row;
