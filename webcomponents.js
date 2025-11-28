@@ -2195,7 +2195,7 @@ class MqttChooseTopic extends MqttElement {
         el('select', {id: 'choosetopic' + unique_id, onchange: this.onchange}, [
           el('option', {value: "", textContent: "Unused", selected: !this.state.value}),
           this.findTopics.map( t => // { name, type etc. }
-            el('option', {value: t.topic, textContent: t.name, selected: t.topic === this.state.value}),
+            el('option', {value: t.topic, textContent: t.name, selected: this.state.value === (this.state.rw==='w' ? t.setTopic : t.topic)}),
           ),
         ]),
       ]),
@@ -2503,7 +2503,7 @@ class MqttNode extends MqttReceiver {
       .filter(t => t.rw.includes(rw))
       // TODO-154 when have groups as a Webcomponent - use the groups name, and be clever e.g. ledbuiltin/on is LED, but temperature/max is Temperature Max
       // Note its intentionally t.topicPath even if rw=w because drop-down needs to subscribe to the topicPath , and set the topicSetPath
-      .map(t=> { return({name: `${usableName}:${t.usableName}`, topic: t.topicPath})});
+      .map(t=> { return({name: `${usableName}:${t.usableName}`, topic: t.topicPath, setTopic: t.topicSetPath})});
   }
 
   // Overrides topicValueSet in MqttReceiver
