@@ -505,6 +505,7 @@ function mqtt_subscribe(topic, cb) { // cb(message)
 // See https://www.chartjs.org/docs/latest/samples/line/segments.html
 const skipped = (ctx, value) => ctx.p0.skip || ctx.p1.skip ? value : undefined;
 
+// ============= Topic manipulation - some of these may end up in a new MqttPacket class
 function topicMatches(subscriptionTopic, messageTopic) {
   if (subscriptionTopic.endsWith('/#')) {
     return (
@@ -514,6 +515,27 @@ function topicMatches(subscriptionTopic, messageTopic) {
     return (subscriptionTopic === messageTopic);
   }
 }
+function topicTwig(topic) {
+  // dev/project/node/module/leaf/paramter -> module/leaf/parameter
+  // dev/project/node/set/module/leaf/paramter -> module/leaf/parameter
+  let arr = topic.split("/")
+  return (arr[3]=="set" ? arr.slice(4) : arr.slice(3)).join("/")
+}
+function topicLeaf(topic) {
+  // dev/project/node/module/leaf/paramter -> leaf/parameter
+  // dev/project/node/set/module/leaf/paramter -> leaf/parameter
+  let arr = topic.split("/")
+  return (arr[3]=="set" ? arr.slice(5) : arr.slice(4)).join("/")
+}
+function twigAttribute(topic) {
+  // "/" is not a valid character in attributes of webcomponents
+  return topicTwig(topic).replace(/\//g, '_'); // sht/temperature becomes sht_temperature
+}
+function leafAttribute(topic) {
+  // "/" is not a valid character in attributes of webcomponents
+  return topicLeaf(topic).replace(/\//g, '_'); // temperature/max becomes temperature_max
+}
+// =============================== Languages and Internationalization ===============================
 const languages = yaml.load(`
 #Language configuration - will be read from files at some point
 EN:
@@ -1691,6 +1713,10 @@ class MqttReceiver extends MqttElement {
   get node() {
     return this.mt.node;
   }
+  get groupElement() {
+    // Its also mt.node.state.groups[this.mt.group]
+    return this.parentElement;
+  }
   connectedCallback() {
     if (this.state.topic && !this.mt) {
       // Created with a topic string, which should be a path, so create the MqttTopic
@@ -1738,23 +1764,23 @@ class MqttReceiver extends MqttElement {
   }
   // Return true if need to rerender
   // Note overridden in MqttNode and MqttProject
-  topicValueSet(topic, message) {
-    if ([this.mt.topicPath, this.mt.topicSetPath, this.mt.wired].includes(topic)) {
+  topicValueSet(topicPath, message) {
+    if ([this.mt.topicPath, this.mt.topicSetPath, this.mt.wired].includes(topicPath)) {
       let value = this.mt.valueFromText(message);
       let now = Date.now();
       this.mt.data.push({value, time: now}); // Same format as graph dataset expects
-      if (this.node && this.node.topicChanged) { // There is (currently) no node if it is a Project and no "topicChanged" if embedded
-        this.node.topicChanged(this.mt.leaf, value);
+      if (this.groupElement) { // There is (currently) no node if it is a Project
+        this.groupElement.setAttribute(leafAttribute(topicPath), value); // Pass up to group things it might need to summarize
       }
       return this.valueSet(value);
-    } else if ((topic.startsWith(this.mt.topicPath)) || (topic.startsWith(this.mt.topicSetPath))) {
-      // topic like org/project/node/set/sht/temperature or ...set/sht/temperature/max
-      let parameter = topic.split("/").pop();
+    } else if ((topicPath.startsWith(this.mt.topicPath)) || (topicPath.startsWith(this.mt.topicSetPath))) {
+      // topic like org/project/node/set/sht/temperature/max or ...set/sht/temperature/max
+      let parameter = topicPath.split("/").pop();
       this.parameterSet(parameter, message); // True if need to rerender
       return false; // parameterSet will have rerendered if needed
     } else {
-      // Most likely cause of an "unhandled" topic is because received topic after changing "wired" - that is ok, can safely ignore
-      // XXX("Unhandled topicValueSet", topic, message);
+      // Most likely cause of an "unhandled" topicPath is because received topicPath after changing "wired" - that is ok, can safely ignore
+      // XXX("Unhandled topicValueSet", topicPath, message);
       return false;
     }
   }
@@ -2054,7 +2080,7 @@ class MqttGauge extends MqttReceiver {
   // noinspection JSCheckFunctionSignatures
   valueSet(val) {
     super.valueSet(val); // TODO could get smarter about setting with in span rather than rerender
-    this.dg.setAttribute('value',val);
+    this.state.elements.dg.setAttribute('value',val);
     return false; // Note will not re-render children like a MqttSlider because these are inserted into DOM via a "slot"
   }
   render() {
@@ -2064,7 +2090,7 @@ class MqttGauge extends MqttReceiver {
     return !(this.isConnected && this.mt) ? null : [
       el('link', {rel: 'stylesheet', href: CssUrl}),
       el('div', {class: "outer mqtt-gauge"}, [
-        this.dg = el('dial-gauge', {
+        this.state.elements.dg = el('dial-gauge', {
           "main-title": this.mt.name,
           "sub-title": "",
           "scale-start": this.state.min,
@@ -2473,21 +2499,18 @@ class MqttNode extends MqttReceiver {
   }
   addStandardChildren() {
     // These go in slots in the Node's render.
-    /*
-    this.groups.frugal_iot.append(this.state.elements.name = el('span', {slot: "name", class: 'name', textContent: this.state.name}));
-    this.groups.frugal_iot.append(this.state.elements.description =
-      el('mqtt-text', {slot: "description", class: 'description', value: this.state.description, rw: 'w', type: 'text', min: 0, max: 30}));
-    this.groups.frugal_iot.append(this.state.elements.description);
-    this.groups.frugal_iot.append(this.state.elements.id = el('span',{class: 'nodeid', textContent: this.state.id, i8n: false}));
-     */
-    // Need the group firs,t else the addDiscoveredTopicsToNode will create a new group.
+    // Need the group first else the addDiscoveredTopicsToNode will create a new group.
     this.addGroupFromTemplate("frugal_iot"); // Add group and topics
     this.state.topics["frugal_iot/id/#"].element.valueSet(this.state.id); // Set manually as it is not a message it is a field
   }
   changeAttribute(leaf, valueString) {
-    super.changeAttribute(leaf, valueString);
+    super.changeAttribute(leaf, valueString);  // Convert and set value on state
     if (this.state.elements[leaf]) { // This will be false during constructor
-      this.state.elements[leaf].textContent = this.state[leaf];
+      // This is for downwards (Node->element) flow of values, and I think this only happens with node/frugal_iot/xxx
+      // Elements (like the MqttText for the "name") have a slot specified, addGroupFromTemplate sets state.elements to point at itself
+      //this.state.elements[leaf].textContent = this.state[leaf]; // OLD WAY
+      this.state.elements[leaf].setAttribute("value", valueString); // NEW WAY (30Nov2025)
+      //TODO-42 maybe these should just go straight to the frugal_iot group except for id (which not sure ever see) (with care!)
     }
     return false;
   }
@@ -2535,7 +2558,8 @@ class MqttNode extends MqttReceiver {
     if (
       twig.includes("wifistrength")
     ) {
-      return false
+      XXX(["Ignoring buggy twig", twig]);
+      return false;
     }
     // Special case twigs
     if (twig.startsWith("frugal_iot/")) {
@@ -2572,11 +2596,10 @@ class MqttNode extends MqttReceiver {
     if (!this.groups[groupId]) {
       let dm = discover_mod[groupId];
         let groupName = dm ? dm.name : groupId;
-      if (groupId === "frugal_iot") {
-        this.groups.frugal_iot = el('mqtt-groupfrugaliot', {class: 'group frugal_iot', group: groupId, name: groupName});
-      } else {
-        this.groups[groupId] = el('mqtt-group', {class: `group ${groupId}`, group: groupId, name: groupName, slot: ((dm && dm.slot) || null)}, []);
-      }
+      // Create the group - can build subclasses of MqttGroup that do cleer summarization
+      let grouptag = (groupId === "frugal_iot") ? 'mqtt-groupfrugaliot' : `mqtt-group${groupId}`;
+      grouptag = customElements.get(grouptag) ? grouptag : 'mqtt-group'; // Fallback if no custom element defined
+      this.groups[groupId] = el(grouptag, {class: `group ${groupId}`, group: groupId, name: groupName, slot: ((dm && dm.slot) || null)}, []);
       if (discover_groupsInsideFrugalIot.includes(groupId)) { // ledbuiltin or ota
         this.groups["frugal_iot"].append(this.groups[groupId]); // Add the new group to the frugal_iot node.
       } else {
@@ -2585,6 +2608,7 @@ class MqttNode extends MqttReceiver {
       if (!dm) {
         XXX(["Unknown group - for now can't guess", groupId]);
       } else {
+        // Iterate through the discovery module topics and add any not already present
         dm.topics.forEach(t => {  // Note t.topic in discovery is twig
           t.group = groupId;
           if (t.leaf && !t.topic && groupId) {
@@ -2594,9 +2618,9 @@ class MqttNode extends MqttReceiver {
           if (!this.state.topics[t.topic]) { // Have we done this already?
             let mt = new MqttTopic();
             mt.fromDiscovery(t, this);
-            this.state.topics[t.topic + "/#"] = mt; // Watch for topic (e.g. sht/temperature or leaflet of it e.g. sht/temperature/color
+            this.state.topics[t.topic + "/#"] = mt; // Watch for topic (e.g. sht/temperature or parameter of it e.g. sht/temperature/color
             // mt.subscribe(); Node will forward to sub topics
-            let elx = mt.createElement();
+            let elx = mt.createElement(); // This creates the appropriate element e.g. MqttSlider etc.
             // If topic specifies a slot - typically these are inside frugal_iot i.e. name, description, id, lastseen
             if (t.slot) {
               // noinspection JSUnresolvedReference
@@ -2604,7 +2628,7 @@ class MqttNode extends MqttReceiver {
               // noinspection JSUnresolvedReference
               elx.setAttribute('class', mt.slot);
               if (groupId === "frugal_iot") {
-                this.state.elements[t.slot] = elx
+                this.state.elements[t.slot] = elx; // Allow setting value directly TODO-42 may not need this any more if frugal_iot not special cased in MqttNode.changeAttribute
               }
             }
             this.groups[groupId].append(elx);
@@ -2621,6 +2645,7 @@ class MqttNode extends MqttReceiver {
   }
  */
   // TODO-13 do we just set state here, or change the render ?
+  // TODO-42 this is not called currently - will want this code somewhere, probably in roll-up (MqttGroupBattery)
   topicChanged(leaf, value) {
     switch (leaf) {
       case "battery":
@@ -2674,13 +2699,35 @@ class MqttGroup extends MqttElement { // TODO-40 may extend MqttReceiver if need
     this.topics = {}
     this.state.elements = {}
   }
+  reSummarize() {
+    let oldSummary = this.state.elements.summary;
+    if (oldSummary) { // Will be false during constructor
+      oldSummary.replaceWith(this.state.elements.summary = this.renderSummary());
+    }
+  }
+  changeAttribute(name, valueString) {
+    // This will get called as normal for constructor-time but also when something inside the group changes will be e.g. battery_battery or ledbuiltin_on
+    super.changeAttribute(name, valueString); //TODO-42 needs to pass up to parent 
+    // This catches the textual ones such as sht/name - note these should all be elements of the group, not children of the group
+    if (this.state.elements[name]) { // This will be false during constructor
+      this.state.elements[name].setAttribute("value", valueString); // NEW WAY (30Nov2025)
+    }
+    //TODO-42 may need to roll up to parent
+    this.reSummarize();
+    return false; // Should be no need to rerender.
+  }
   static get observedAttributes() { return ['group','name']; }
+
+  renderSummary() {
+    return null; // Default is no extra summary (just the name)
+  }
   render () {
     return !this.isConnected ? null : [
       el('link', {rel: 'stylesheet', href: CssUrl}),
       el('details', {class: `mqtt-group ${this.state.group}`}, [
         el('summary',{},[
-          el('span', {textContent: this.state.name || this.state.group})
+          el('span', {textContent: this.state.name || this.state.group}),
+          this.state.elements.summary = this.renderSummary(),
         ]),
         el('slot'), // Children go here
       ]),
@@ -2689,15 +2736,31 @@ class MqttGroup extends MqttElement { // TODO-40 may extend MqttReceiver if need
 }
 customElements.define('mqtt-group', MqttGroup);
 
+// TODO-42 build a group here for any module we want to roll up values.
+
+class MqttGroupLedbuiltin extends MqttGroup {
+  static get observedAttributes() { return MqttGroup.observedAttributes.concat(['on']);}
+  static get boolAttributes() { return MqttGroup.boolAttributes.concat(['on']);}
+
+  renderSummary() {
+    let style = this.state.on ? "background:#ff0;" : "background:#444;";
+    return el('div', {style:`${style};width:12px;height:12px;border-radius:50%;border:1px solid #000;display:inline-block;margin-left:20px;vertical-align:middle;`}); // Colored circle with thin black border
+  }
+}
+customElements.define('mqtt-groupledbuiltin', MqttGroupLedbuiltin);
+
 class MqttGroupFrugalIot extends MqttGroup {
+  static get observedAttributes() {
+    return MqttGroup.observedAttributes.concat(['battery_battery', 'ledbuiltin_on']); } //TODO_42 do something with these
+
   render() {
     return !this.isConnected ? null : [
       el('link', {rel: 'stylesheet', href: CssUrl}),
       el('details', {}, [
         el('summary', {}, [
-          el('slot', {name: 'name', class: 'name'}),
+          el('slot', {name: 'name', class: 'name'}), /* frugal_iot.id is specified with `slot: name` */
           //Starts off as 1px empty image, changed when battery message received
-          this.state.elements.batteryIndicator = el('img', {
+          this.state.elements.batteryIndicator = el('img', { /* Changed in MqttNode.topicChanged */
             class: "batteryimg",
             src: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
           }),
