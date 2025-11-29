@@ -1498,7 +1498,7 @@ customElements.define('tabbed-display', TabbedDisplay);
 class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organization
   constructor(props) {
     super(props);
-    this.state = {register: false, ota_files: []};
+    this.state = {register: false, ota_files: [], people_list: []};
     this.state.elements = {};
   }
   static get observedAttributes() { return ['register','message','url','lang','org']; }
@@ -1509,10 +1509,16 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     this.state.message = msg;
     //this.append(el('div', {class: 'message', textContent: msg}));
   }
-  get otaOrgs() {
+  orgsByPerm(capability) {
     return server_config.user.permissions
-      .filter(o => o.capability === "OTAUPDATE")
+      .filter(o => o.capability === capability)
       .map(o => [ o.org, server_config.organizations[o.org].name ])
+  }
+  get adminOrgs() {
+    return this.orgsByPerm("ADMIN");
+  }
+  get otaOrgs() {
+    return this.orgsByPerm("OTAUPDATE");
   }
   connectedCallback() {
     // TODO-69 security this will be replaced by a subset of config.yaml,
@@ -1526,8 +1532,9 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
         server_config = json;
         this.loadAttributesFromURL();
         this.renderAndReplace(); // TODO check, but should not need to renderAndReplace as render is (currently) fully static
-        if (!this.state.org) this.state.org = this.otaOrgs[0][0];
+        if (!this.state.org) this.state.org = this.otaOrgs[0][0] || this.adminOrgs[0][0];
         this.getOtaFiles();
+        this.getPeopleList();
       }
     });
     //super.connectedCallback(); // Not doing as finishes with a re-render.
@@ -1577,9 +1584,39 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     return this.state.ota_files.length === 0 ?
       el('p', {}, ["No OTA files uploaded yet."]) :
       el('p', {}, this.state.ota_files.map(f => [
-        // TODO-89 add hover attribute
         el('span', {class: 'pseudolink', textContent: `🗑  ${f}`, onclick: this.onOtaDelete.bind(this,`${this.state.org}/${f}`)}),
         el('br', {}),
+        ])
+      );
+  }
+  // Fetch ota files and display
+  getOrChangeAdminPeople(url) {
+    GET(url, {}, (err, json) => {
+      if (err) {
+        this.message(err);
+        return;
+      } else { // got config
+        this.state.people_list = json;
+        let oldPeople = this.state.elements.people_list;
+        oldPeople.replaceWith(this.state.elements.people_list = this.peopleList());
+      }
+    });
+  }
+  getPeopleList() {
+    this.getOrChangeAdminPeople(`/people_list/${this.state.org}`);
+  }
+  onPeopleDelete(val, ev) {
+    console.log(ev,val);
+    this.getOrChangeAdminPeople(`/people_delete/${val}`);
+  }
+  peopleList() {
+    return this.state.people_list.length === 0 ?
+      el('p', {}, ["Nobody added for this organization yet."]) :
+      el('p', {}, this.state.people_list.map(f => [
+          el('span', {class: 'pseudolink', textContent: ' 🗑 ', onclick: this.onPeopleDelete.bind(this,`${this.state.org}/${f}`)}),
+          `${f}`,
+          //TODO-S15 add list of their permissions
+          el('br', {}),
         ])
       );
   }
@@ -1588,6 +1625,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     let oldSelect = this.state.elements.projectdropdown;
     oldSelect.replaceWith(this.state.elements.projectdropdown = this.projectDropdown(this.state.org));
     getOtaFiles(); // Replaces ota files part asynchronously
+    getPeopleList();
     // TODO-89 need to redo otafiles
   }
   onFile(e) {
@@ -1638,12 +1676,21 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
                   ]),
                 el('button', {class: "submit", type: "submit", textContent: 'Upload'}),
                 // TODO-89 placeholder for ota files list
-                el('section', {}, [
-                  el('h3', {}, ["Existing OTA Files"]),
-                  this.state.elements.ota_files = this.otaFilesList(),
-                ]), // section ota
               ]), //form
-            ]), // OTA tab
+              el('section', {}, [
+                el('h3', {}, ["Existing OTA Files"]),
+                this.state.elements.ota_files = this.otaFilesList(),
+              ]), // section ota
+            ]
+          ), // OTA tab
+
+          !this.adminOrgs.length ? null :
+            el('section', {title: "Admin"}, [
+              el('section', {}, [
+                    el('h3', {}, ["Permissions"]),
+                    this.state.elements.people_list = this.peopleList(),
+                  ]), // section ota
+            ]), // Admin tab
         ]),
       ]),
     ];
