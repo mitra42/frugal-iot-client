@@ -1,6 +1,7 @@
 /*
  * UX client for Frugal IoT
  *
+ * See https://github.com/mitra42/frugal-iot-client/wiki for (emerging) documentation
  */
 // noinspection ES6PreferShortImport
 import {EL, HTMLElementExtended, toBool, GET} from '/node_modules/html-element-extended/htmlelementextended.js';
