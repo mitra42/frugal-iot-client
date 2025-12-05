@@ -1589,7 +1589,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
         ])
       );
   }
-  // Fetch ota files and display
+  // Fetch people and display
   getOrChangeAdminPeople(url) {
     GET(url, {}, (err, json) => {
       if (err) {
@@ -1614,8 +1614,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       el('p', {}, ["Nobody added for this organization yet."]) :
       el('p', {}, this.state.people_list.map(f => [
           el('span', {class: 'pseudolink', textContent: ' 🗑 ', onclick: this.onPeopleDelete.bind(this,`${this.state.org}/${f}`)}),
-          `${f}`,
-          //TODO-S15 add list of their permissions
+          `${f.name}: ${f.capability}`,
           el('br', {}),
         ])
       );
@@ -1624,8 +1623,8 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     this.state.org = e.target.value;
     let oldSelect = this.state.elements.projectdropdown;
     oldSelect.replaceWith(this.state.elements.projectdropdown = this.projectDropdown(this.state.org));
-    getOtaFiles(); // Replaces ota files part asynchronously
-    getPeopleList();
+    this.getOtaFiles(); // Replaces ota files part asynchronously
+    this.getPeopleList();
     // TODO-89 need to redo otafiles
   }
   onFile(e) {
@@ -1686,6 +1685,14 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
 
           !this.adminOrgs.length ? null :
             el('section', {title: "Admin"}, [
+              el('section', {}, [
+                el('label', {for: 'organizations', textContent: "Organization"}),
+                el('select', {id: 'organizations', name: 'organization', onchange: this.onOrganization.bind(this)}, [
+                  //el('option', {value: "", textContent: "Not selected", selected: !this.state.value}),
+                  this.otaOrgs.map(([oid, name]) =>
+                    el('option', {value: oid, textContent: `${oid}: ${name}`, selected: false}))
+                ]),
+              ]),
               el('section', {}, [
                     el('h3', {}, ["Permissions"]),
                     this.state.elements.people_list = this.peopleList(),
