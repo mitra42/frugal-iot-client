@@ -2562,6 +2562,7 @@ class MqttNode extends MqttReceiver {
       return false;
     }
     // Special case twigs
+    /* TODO-42 doesnt appear to be needed - will go to "frugal_iot" group
     if (twig.startsWith("frugal_iot/")) {
       let leaf = twig.substring(11);
       if (!this.constructor.observedAttributes.includes(leaf)) {
@@ -2570,6 +2571,7 @@ class MqttNode extends MqttReceiver {
       this.setAttribute(leaf, message); // Will update state and rerender if needed
       // Need to drop through and also look for topics that match in the frugal_iot group
     }
+     */
     // I don't expect this next match to ever succeed - as topics is usually like set/temperature/# but the test happens below in the loop through this.state.topic
     if (this.state.topics[twig]) {
       XXX(["Unexpected exact match for twig", twig])
