@@ -828,7 +828,6 @@ class LanguagePicker extends HTMLElementExtended {
     locationParameterChange("lang", preferedLanguages.join(','));
   }
   render() {
-    // TODO-34 build from available languages
     return [
       el('link', {rel: 'stylesheet', href: CssUrl}),
       el('select', {class: "language-picker", onchange: this.onchange.bind(this)},
@@ -1061,7 +1060,7 @@ class MqttTopic {
           XXX([`Unrecognized message type: ${this.type}`]);
       }
     } catch (e) {
-      console.error("Error parsing message", message, e);
+      XXX(["Error parsing message", message, e]);
       return null;  // TODO its unclear how this error will be handled - catch specific cases (like unparseable yaml)
     }
   }
@@ -1071,6 +1070,7 @@ class MqttTopic {
   message_received(topic, message) {
     if (this.element) {
       if (this.element.topicValueSet(topic, message)) {
+        XXX(["rerendering - possibly unnecessarily - on",topic,message]);
         this.element.renderAndReplace(); // TODO note gradually replacing need to rerender by smarter valueSet() on different subclasses
       }
     } else { // This is typically a MqttGraphdataset in an embedded mqtt-chartdataset
@@ -1895,6 +1895,16 @@ class MqttText extends MqttTransmitter {
   static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['min','max','wired']); }
   static get floatAttributes() { return MqttReceiver.floatAttributes.concat(['min','max']); }
 
+  valueSet(val) {
+    super.valueSet(val);
+    if (this.state.elements.textValue) {
+      this.state.elements.textValue.textContent = val;
+    } else if (this.state.elements.inputValue) {
+      this.state.elements.inputValue.value = val;
+    }
+    return false; // Dont need to rerender - done above
+  }
+
   // TODO - make sure this doesn't get triggered by a message from server.
   onChange(e) {
     //console.log("Changed"+e.target.checked);
@@ -1906,10 +1916,13 @@ class MqttText extends MqttTransmitter {
   }
    */
   renderInput() {
-    return el('input', {class: "val", id: this.mt.topicPath, name: this.mt.topicPath, value: this.state.value, type: this.mt.inputType, min: this.state.min, max: this.state.max, onchange: this.onChange.bind(this)});
+    return this.state.elements.inputValue = el('input', {class: "val", id: this.mt.topicPath, name: this.mt.topicPath, value: this.state.value, type: this.mt.inputType, min: this.state.min, max: this.state.max, onchange: this.onChange.bind(this)});
   }
   renderValue(val) {
-    return el('span',{class: "val", textContent: val || "", i8n: false, /*onclick: this.onClick.bind(this)*/});
+    // I think val should always be this.state.value, even when called in renderMaybeWired with wiredTopicValue
+    // if not, then valueSet above may be invalid (note haven't written MqttText.valueSet yet
+    if (val != this.state.value) { XXX(["Mistaken assumption in MqttText.renderValue"])}
+    return this.state.elements.textValue = el('span',{class: "val", textContent: val || "", i8n: false, /*onclick: this.onClick.bind(this)*/});
   }
   render() {
     return this.renderMaybeWired("mqtt-text "+(this.mt && this.mt.twig && this.mt.twig.replaceAll('/','_') || ""));
@@ -2006,8 +2019,20 @@ class MqttBar extends MqttReceiver {
   }
   // noinspection JSCheckFunctionSignatures
   valueSet(val) {
-    super.valueSet(val); // TODO could get smarter about setting with in span rather than rerender
-    return true; // Note will not re-render children like a MqttSlider because these are inserted into DOM via a "slot"
+    super.valueSet(val); // TODO could get smarter about setting width in span rather than rerender
+    if (this.state.elements.inner) {
+      this.state.elements.inner.style.width = `${this.width}%`;
+    }
+    if (this.state.elements.textValue) {
+      this.state.elements.textValue.textContent = val;
+    }
+    return false; // Note will not re-render children like a MqttSlider because these are inserted into DOM via a "slot"
+  }
+  get width() {
+    return this.state.type === "exponential"
+      ? 100*(Math.log(this.state.value/(this.state.min||1))/Math.log(this.state.max/(this.state.min||1)))
+      : 100*(this.state.value-this.state.min)/(this.state.max-this.state.min)
+    ;
   }
   changeAttribute(name, valueString) {
     super.changeAttribute(name, valueString); // Change from string to number etc and store on this.state
@@ -2015,12 +2040,6 @@ class MqttBar extends MqttReceiver {
     return true;
   }
   render() {
-    //this.state.changeable.addEventListener('change', this.onChange.bind(this));
-    let width = this.state.type === "exponential"
-      ? 100*(Math.log(this.state.value/(this.state.min||1))/Math.log(this.state.max/(this.state.min||1)))
-      : 100*(this.state.value-this.state.min)/(this.state.max-this.state.min)
-      ;
-    // noinspection JSUnresolvedReference
     return !(this.isConnected && this.mt) ? null : [
       el('link', {rel: 'stylesheet', href: CssUrl}),
       el('div', {class: "outer mqtt-bar"}, [
@@ -2031,8 +2050,9 @@ class MqttBar extends MqttReceiver {
           : el('img', {class: "icon", src: 'images/icon_graph.svg', onclick: this.opengraph.bind(this)}),
         ]),
         el('div', {class: "bar", id: this.mt.topicPath},[
-          el('span', {class: "left", style: `width:${width}%; background-color:${this.state.color};`},[
-            el('span', {class: "val", textContent: this.state.value}),
+          // Note width overridden as value changes
+          this.state.elements.inner = el('span', {class: "left", style: `width:${this.width}%; background-color:${this.state.color};`},[
+            this.state.elements.textValue = el('span', {class: "val", textContent: this.state.value}),
           ]),
           //Do not appear to need this - and it sometimes wraps, so if re-enabled, need to make sure always horiz next to left
           //el('span', {class: "right", style: "width:"+(100-width)+"%"}),
