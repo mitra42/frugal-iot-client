@@ -1070,7 +1070,7 @@ class MqttTopic {
   message_received(topic, message) {
     if (this.element) {
       if (this.element.topicValueSet(topic, message)) {
-        XXX(["rerendering - possibly unnecessarily - on",topic,message]);
+        //XXX(["rerendering - possibly unnecessarily - on",topic,message]); // Should only be on MqttTopic (ok) and MqttSlider (needs work)
         this.element.renderAndReplace(); // TODO note gradually replacing need to rerender by smarter valueSet() on different subclasses
       }
     } else { // This is typically a MqttGraphdataset in an embedded mqtt-chartdataset
@@ -1963,7 +1963,14 @@ class MqttToggle extends MqttTransmitter {
   valueSet(val) {
     super.valueSet(val);
     this.state.indeterminate = false; // Checkbox should default to indeterminate till get a message
-    return true; // Rerender // TODO could set values on input instead of rerendering
+    if (this.state.elements.inputValue) {
+      this.state.elements.inputValue.checked = !!this.state.value;
+      this.state.elements.inputValue.indeterminate = typeof(this.state.value) == "undefined";
+    }
+    if (this.state.elements.textValue) {
+      this.state.elements.textValue.textContent = this.textValue;
+    }
+    return false; // No need to re-render
   }
   get valueGet() {
     // TODO use Mqtt to convert instead of subclassing
@@ -1984,6 +1991,9 @@ class MqttToggle extends MqttTransmitter {
     this.state.value = e.target.checked; // Boolean
     this.publish();
   }
+  get textValue() {
+    return (this.state.value === undefined) ? '?' : (this.state.value ? '✓' : '✗')
+  }
   // Handle cases ....
   // r/!wireable - text value
   // r/wireable/!wired - text value + hidden dropdown NOT DONE YET
@@ -1997,12 +2007,12 @@ class MqttToggle extends MqttTransmitter {
   // renderValue - check mark if value true, empty if false
 
   renderInput() {
-    return el('input', {class: 'val', type: 'checkbox', id: this.mt.topicPath,
+    return this.state.elements.inputValue = el('input', {class: 'val', type: 'checkbox', id: this.mt.topicPath,
       checked: !!this.state.value, indeterminate: typeof(this.state.value) == "undefined",
       onchange: this.onChange.bind(this)});
   }
   renderValue(val) {
-    return el('span',{class: 'val', textContent: (val === undefined) ? '?' : (val ? '✓' : '✗')});
+    return this.state.elements.textValue = el('span',{class: 'val', textContent: this.textValue});
   }
   render() {
     return this.renderMaybeWired("mqtt-toggle");
@@ -2119,6 +2129,8 @@ class MqttSlider extends MqttTransmitter {
     return (this.state.value).toPrecision(3); // Conversion from int to String (for MQTT)
   }
   leftToValue(l) {
+    // TODO - I doubt this is workign with exponential
+    if (this.state.type === "exponential") { XXX(["exponential sliders not tested"]); }
     return (l+this.thumb.offsetWidth/2)/this.slider.offsetWidth * (this.state.max-this.state.min) + this.state.min;
   }
   get leftOffset() {
