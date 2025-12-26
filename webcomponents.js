@@ -470,7 +470,7 @@ discover_mod["controlhysterisis"] = { name: "Control", topics: [
   d_io_v('controlouttoggle', {leaf: "out", name: "Out"}),
 ]};
 // Define a set of sensors that are pseudo, and hidden inside the Frugal_IoT drop-down on the name of a sensor
-const discover_groupsInsideFrugalIot = ["ledbuiltin", "ota", "battery"];
+const discover_groupsInsideFrugalIot = ["ledbuiltin", "ota", "battery", "health"];
 
 /* Helpers of various kinds */
 
