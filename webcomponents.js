@@ -578,6 +578,13 @@ EN:
   System: System
   WiFi: WiFi
   SSID: SSID
+  OTA binary uploaded: OTA binary uploaded
+  All: All
+  OTA Key or Device ID: OTA Key or Device ID
+  File: File
+  Upload: Upload
+  Battery: Battery
+  Voltage: Voltage
 FR:
   _nameAndFlag: Français 🇫🇷
   _thisLanguage: Francaise
@@ -639,6 +646,13 @@ FR:
   System: Système
   WiFi: WiFi
   SSID: SSID
+  OTA binary uploaded: Binaire OTA téléversé
+  All: Tous
+  OTA Key or Device ID: Clé OTA ou ID de l’appareil
+  File: Fichier
+  Upload: Téléverser
+  Battery: Batterie
+  Voltage: Tension
 HI:
   _nameAndFlag: हिंदी 🇮🇳
   _thisLanguage: हिंदी
@@ -700,6 +714,13 @@ HI:
   System: सिस्टम
   WiFi: वाई-फ़ाई
   SSID: SSID
+  OTA binary uploaded: OTA बाइनरी अपलोड की गई
+  All: सभी
+  OTA Key or Device ID: OTA कुंजी या डिवाइस आईडी
+  File: फ़ाइल
+  Upload: अपलोड
+  Battery: बैटरी
+  Voltage: वोल्टेज
 ID:
   _nameAndFlag: Bahasa Indonesia 🇮🇩
   _thisLanguage: Bahasa Indonesia
@@ -761,6 +782,13 @@ ID:
   System: Sistem
   WiFi: WiFi
   SSID: SSID
+  OTA binary uploaded: Biner OTA diunggah
+  All: Semua
+  OTA Key or Device ID: Kunci OTA atau ID Perangkat
+  File: Berkas
+  Upload: Unggah
+  Battery: Baterai
+  Voltage: Tegangan
 `);
 // ==========TODO-44 === CODE REVIEW ABOVE DONE: getters#26; const vs let; globals;TODO's; Problems; Comments
 
