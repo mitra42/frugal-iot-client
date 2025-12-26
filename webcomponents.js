@@ -2684,7 +2684,7 @@ class MqttNode extends MqttReceiver {
   topicChanged(leaf, value) {
     switch (leaf) {
       case "battery":
-        let bars = Math.floor(parseInt(value) * 6/4200);
+        let bars = Math.min(6,Math.floor(parseInt(value) * 6/4200));
         this.groups.frugal_iot.state.elements.batteryIndicator.src = `images/Battery${bars}.png`;
         break;
     }
