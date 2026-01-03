@@ -585,6 +585,7 @@ EN:
   Upload: Upload
   Battery: Battery
   Voltage: Voltage
+  Time On (s): Time On (s)
 FR:
   _nameAndFlag: Français 🇫🇷
   _thisLanguage: Francaise
@@ -790,7 +791,6 @@ ID:
   Battery: Baterai
   Voltage: Tegangan
 `);
-// ==========TODO-44 === CODE REVIEW ABOVE DONE: getters#26; const vs let; globals;TODO's; Problems; Comments
 
 let preferedLanguages = [ ];
 function languageNamesAndFlags() {
@@ -810,7 +810,8 @@ function getString(tag) {
   return (languages.EN[tag] || tag);
 }
 
-let i8ntags = {
+// List of tags to try and translate
+const i8ntags = {
   label: ["textContent"],
   button: ["textContent"],
   span: ["textContent"],
@@ -867,6 +868,8 @@ class LanguagePicker extends HTMLElementExtended {
 }
 customElements.define('language-picker', LanguagePicker);
 
+// The watchdog is looking at individual nodes, noticing how often they tend to report, then marking offline if they don't
+// show up as expected.
 class Watchdog {
   constructor(elx) {
     this.elx = elx;
@@ -886,6 +889,7 @@ class Watchdog {
     this.elx.offline();
   }
 }
+// ==========TODO-44 === CODE REVIEW ABOVE DONE: getters#26; const vs let; globals;TODO's; Problems; Comments
 
 class MqttTopic {
   // Manages a single topic - keeps track of data it has seen, and can create UI element or graphdataset for it
