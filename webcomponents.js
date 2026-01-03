@@ -1361,6 +1361,9 @@ class MqttLogin extends HTMLElementExtended { // TODO-89 may depend on organizat
     if (name === "lang") {
       if (value.includes(',')) {
         preferedLanguages = (value.split(',')).map(v => v.toUpperCase());
+      } else if (!value) {
+        preferedLanguageSet('EN');
+        locationParameterChange("lang", preferedLanguages.join(','));
       } else {
         preferedLanguageSet(value.toUpperCase());
       }
@@ -1536,6 +1539,9 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     if (name === "lang") {
       if (value.includes(',')) {
         preferedLanguages = (value.split(',')).map(v => v.toUpperCase());
+      } else if (!value) {
+        preferedLanguageSet('EN');
+        locationParameterChange("lang", preferedLanguages.join(','));
       } else {
         preferedLanguageSet(value.toUpperCase());
       }
@@ -2281,7 +2287,9 @@ class MqttWrapper extends HTMLElementExtended {
   onProject(e) {
     this.state.project = e.target.value;
     if (this.state.project) { // Will be false if choose "Not selected"
-      this.appender();
+      if (!this.querySelector(`mqtt-project[id="${this.state.project}"]`)) {
+        this.appender();
+      }
     }
   }
   appendClient() {
@@ -2394,6 +2402,7 @@ class MqttWrapper extends HTMLElementExtended {
         preferedLanguages = (value.split(',')).map(v => v.toUpperCase());
       } else if(!value) {
         preferedLanguageSet('EN');
+        locationParameterChange("lang", preferedLanguages.join(','));
       } else {
         preferedLanguageSet(value.toUpperCase());
       }

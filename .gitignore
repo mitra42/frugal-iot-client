@@ -1,0 +1,52 @@
+# Node modules
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# npm package lock file (optional, if you don't want to commit it)
+package-lock.json
+yarn.lock
+
+# Build output
+dist/
+build/
+
+# Coverage directory (for testing)
+coverage/
+
+# IDE or Editor folders
+.idea/
+.vscode/
+
+# Temporary files
+*.swp
+*.swo
+
+# Dependency directories
+bower_components/
+
+# Optional REPL history files
+.history
+
+# TypeScript compiled files
+*.tsbuildinfo
+
+# Miscellaneous
+*.tgz
+
+# Vercel deployment
+.vercel/
