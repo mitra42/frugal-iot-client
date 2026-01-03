@@ -470,7 +470,7 @@ discover_mod["controlhysterisis"] = { name: "Control", topics: [
   d_io_v('controlouttoggle', {leaf: "out", name: "Out"}),
 ]};
 // Define a set of sensors that are pseudo, and hidden inside the Frugal_IoT drop-down on the name of a sensor
-const discover_groupsInsideFrugalIot = ["ledbuiltin", "ota", "battery"];
+const discover_groupsInsideFrugalIot = ["ledbuiltin", "ota", "battery", "health"];
 
 /* Helpers of various kinds */
 
@@ -578,6 +578,14 @@ EN:
   System: System
   WiFi: WiFi
   SSID: SSID
+  OTA binary uploaded: OTA binary uploaded
+  All: All
+  OTA Key or Device ID: OTA Key or Device ID
+  File: File
+  Upload: Upload
+  Battery: Battery
+  Voltage: Voltage
+  Time On (s): Time On (s)
 FR:
   _nameAndFlag: Français 🇫🇷
   _thisLanguage: Francaise
@@ -639,6 +647,13 @@ FR:
   System: Système
   WiFi: WiFi
   SSID: SSID
+  OTA binary uploaded: Binaire OTA téléversé
+  All: Tous
+  OTA Key or Device ID: Clé OTA ou ID de l’appareil
+  File: Fichier
+  Upload: Téléverser
+  Battery: Batterie
+  Voltage: Tension
 HI:
   _nameAndFlag: हिंदी 🇮🇳
   _thisLanguage: हिंदी
@@ -700,6 +715,13 @@ HI:
   System: सिस्टम
   WiFi: वाई-फ़ाई
   SSID: SSID
+  OTA binary uploaded: OTA बाइनरी अपलोड की गई
+  All: सभी
+  OTA Key or Device ID: OTA कुंजी या डिवाइस आईडी
+  File: फ़ाइल
+  Upload: अपलोड
+  Battery: बैटरी
+  Voltage: वोल्टेज
 ID:
   _nameAndFlag: Bahasa Indonesia 🇮🇩
   _thisLanguage: Bahasa Indonesia
@@ -761,8 +783,14 @@ ID:
   System: Sistem
   WiFi: WiFi
   SSID: SSID
+  OTA binary uploaded: Biner OTA diunggah
+  All: Semua
+  OTA Key or Device ID: Kunci OTA atau ID Perangkat
+  File: Berkas
+  Upload: Unggah
+  Battery: Baterai
+  Voltage: Tegangan
 `);
-// ==========TODO-44 === CODE REVIEW ABOVE DONE: getters#26; const vs let; globals;TODO's; Problems; Comments
 
 let preferedLanguages = [ ];
 function languageNamesAndFlags() {
@@ -782,7 +810,8 @@ function getString(tag) {
   return (languages.EN[tag] || tag);
 }
 
-let i8ntags = {
+// List of tags to try and translate
+const i8ntags = {
   label: ["textContent"],
   button: ["textContent"],
   span: ["textContent"],
@@ -839,6 +868,8 @@ class LanguagePicker extends HTMLElementExtended {
 }
 customElements.define('language-picker', LanguagePicker);
 
+// The watchdog is looking at individual nodes, noticing how often they tend to report, then marking offline if they don't
+// show up as expected.
 class Watchdog {
   constructor(elx) {
     this.elx = elx;
@@ -858,6 +889,7 @@ class Watchdog {
     this.elx.offline();
   }
 }
+// ==========TODO-44 === CODE REVIEW ABOVE DONE: getters#26; const vs let; globals;TODO's; Problems; Comments
 
 class MqttTopic {
   // Manages a single topic - keeps track of data it has seen, and can create UI element or graphdataset for it
@@ -2665,7 +2697,7 @@ class MqttNode extends MqttReceiver {
   topicChanged(leaf, value) {
     switch (leaf) {
       case "battery":
-        let bars = Math.floor(parseInt(value) * 6/4200);
+        let bars = Math.min(6,Math.floor(parseInt(value) * 6/4200));
         this.groups.frugal_iot.state.elements.batteryIndicator.src = `images/Battery${bars}.png`;
         break;
     }
