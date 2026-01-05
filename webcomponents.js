@@ -1557,7 +1557,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       if (err) {
         if (err.message.includes("401")) { // This can happen if accessing from service worker which has /dashboard cached
           locationReplaceWithParams("/login.html", {
-            url: `/login.html?lang=${preferedLanguages.join(',')}&url=/dashboard/admin.html`) // TODO this should be /dashboard when dashboard automatically goes to admin
+            url: `/login.html?lang=${preferedLanguages.join(',')}&url=/dashboard/admin.html` // TODO this should be /dashboard when dashboard automatically goes to admin
           });
         } else {
           this.message(err);
@@ -2424,7 +2424,7 @@ class MqttWrapper extends HTMLElementExtended {
       if (err) {
         if (err.message.includes("401")) { // This can happen if accessing from service worker which has /dashboard cached
           locationReplaceWithParams("/login.html", {
-            url: `/login.html?lang=${preferedLanguages.join(',')}&url=/dashboard/admin.html`) // TODO this should be /dashboard when dashboard automatically goes to admin
+            url: `/login.html?lang=${preferedLanguages.join(',')}&url=/dashboard/admin.html` // TODO this should be /dashboard when dashboard automatically goes to admin
           });
         } else {
           this.message(err);
