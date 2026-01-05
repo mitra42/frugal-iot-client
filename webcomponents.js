@@ -1555,7 +1555,13 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     // This should always succeed because index.html would have redirected to login.html if not logged in
     GET("/config.json", {}, (err, json) => {
       if (err) {
-        this.message(err);
+        if (err.message.includes("401")) { // This can happen if accessing from service worker which has /dashboard cached
+          locationReplaceWithParams("/login.html", {
+            url: `/login.html?lang=${preferedLanguages.join(',')}&url=/dashboard/admin.html`) // TODO this should be /dashboard when dashboard automatically goes to admin
+          });
+        } else {
+          this.message(err);
+        }
         return;
       } else { // got config
         server_config = json;
@@ -2416,7 +2422,13 @@ class MqttWrapper extends HTMLElementExtended {
     // This should always succeed because index.html would have redirected to login.html if not logged in
     GET("/config.json", {}, (err, json) => {
       if (err) {
-        this.message(err);
+        if (err.message.includes("401")) { // This can happen if accessing from service worker which has /dashboard cached
+          locationReplaceWithParams("/login.html", {
+            url: `/login.html?lang=${preferedLanguages.join(',')}&url=/dashboard/admin.html`) // TODO this should be /dashboard when dashboard automatically goes to admin
+          });
+        } else {
+          this.message(err);
+        }
         return;
       } else { // got config
         server_config = json;
