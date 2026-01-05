@@ -480,6 +480,14 @@ function locationParameterChange(name, value) {
   url.searchParams.set(name, value); // Replace with desired param and value
   window.location = url.toString();
 }
+// Send client to login then back to this page
+function redirectToLogin() {
+  const url = new URL(`${window.location.href}`);
+  url.pathname = '/dashboard/login.html';
+  //url.searchParams.set("lang", preferedLanguages.join(',')); // Get these from the URL
+  url.searchParams.set("url", window.location.href); // Come back to same place after login
+  window.location = url.toString();
+}
 // Remove v if present, then unshift to front
 /* UNUSED
 function unshiftUnique(arr, v) {
@@ -1556,9 +1564,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     GET("/config.json", {}, (err, json) => {
       if (err) {
         if (err.message.includes("401")) { // This can happen if accessing from service worker which has /dashboard cached
-          locationReplaceWithParams("/login.html", {
-            url: `/login.html?lang=${preferedLanguages.join(',')}&url=/dashboard/admin.html` // TODO this should be /dashboard when dashboard automatically goes to admin
-          });
+          redirectToLogin();
         } else {
           this.message(err);
         }
@@ -2423,9 +2429,7 @@ class MqttWrapper extends HTMLElementExtended {
     GET("/config.json", {}, (err, json) => {
       if (err) {
         if (err.message.includes("401")) { // This can happen if accessing from service worker which has /dashboard cached
-          locationReplaceWithParams("/login.html", {
-            url: `/login.html?lang=${preferedLanguages.join(',')}&url=/dashboard/admin.html` // TODO this should be /dashboard when dashboard automatically goes to admin
-          });
+          redirectToLogin();
         } else {
           this.message(err);
         }
