@@ -1558,7 +1558,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       .map(o => [ o.org, server_config.organizations[o.org].name ])
   }
   connectedCallback() {
-    // TODO-69 security this will be replaced by a subset of config.yaml,
+    // TODO-22 security this will be replaced by a subset of config.yaml,
     //  that is public, but in the same format, so safe to build on this for now
     // This should always succeed because index.html would have redirected to login.html if not logged in
     GET("/config.json", {}, (err, json) => {
@@ -2389,7 +2389,7 @@ class MqttWrapper extends HTMLElementExtended {
                 ),
               ]),
             ]));
-        } else { // !n !p o  // TODO-69 maybe this should be a blank project ?
+        } else { // !n !p o
           // noinspection JSUnresolvedReference
           this.append( this.state.projectEl =
             el('div', {class: 'dropdown'}, [
@@ -2414,7 +2414,6 @@ class MqttWrapper extends HTMLElementExtended {
             this.state.organization = o[0];
           }
         } // drop through with !n p o
-        // TODO-69 need to have a human-friendly name, and short project id - will be needed in configuration and elsewhere.
         let projElem = this.addProject(true);
         // noinspection JSUnresolvedReference
         let nodes = Object.entries(server_config.organizations[this.state.organization].projects[this.state.project].nodes);
@@ -2423,7 +2422,7 @@ class MqttWrapper extends HTMLElementExtended {
     }
   }
   connectedCallback() {
-    // TODO-69 security this will be replaced by a subset of config.yaml,
+    // TODO-22 security this will be replaced by a subset of config.yaml,
     //  that is public, but in the same format, so safe to build on this for now
     // This should always succeed because index.html would have redirected to login.html if not logged in
     GET("/config.json", {}, (err, json) => {
