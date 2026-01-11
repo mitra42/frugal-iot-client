@@ -2099,6 +2099,23 @@ class MqttBar extends MqttReceiver {
     // TODO - could set width, color, name, on sub-elements and return false then copy this to other elements
     return true;
   }
+  renderInner() {
+    return `
+      <link rel="stylesheet" href="${CssUrl}">
+      <div  class="outer mqtt-bar">
+        <div class="name">
+          <label for="${this.mt.topicPath}">${this.mt.name}</label>
+          ${this.state.graphable ? `<img class="icon" src="images/icon_graph.svg" onclick="${this.opengraph.bind(this)}">` : ''}
+        </div>
+        <div class="bar" id="${this.mt.topicPath}">
+          <span class="left" style="width:${this.width}%; background-color:${this.state.color};"><!--needs to set state.elements.inner -->
+            <span class="val">${this.state.value}</span><!-- needs to set state.elements.textValue -->
+          </span>
+        </div>
+        <slot></slot><!-- Children would be a setpoint, but not using currently -->
+      </div>
+   `;
+  }
   render() {
     return !(this.isConnected && this.mt) ? null : [
       el('link', {rel: 'stylesheet', href: CssUrl}),
