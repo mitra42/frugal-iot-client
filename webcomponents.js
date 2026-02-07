@@ -2099,6 +2099,7 @@ class MqttBar extends MqttReceiver {
     // TODO - could set width, color, name, on sub-elements and return false then copy this to other elements
     return true;
   }
+  // This is a WIP, trying to use "innerHtml", not called anywhere yet, and only partially works.
   renderInner() {
     return `
       <link rel="stylesheet" href="${CssUrl}">
