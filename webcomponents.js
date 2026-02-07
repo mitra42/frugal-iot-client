@@ -2841,6 +2841,7 @@ class MqttGraph extends MqttElement {
             // locale: 'en-US', // Comment out to Use systems Locale
           },
         },
+        ticks: { font: { size: 24 }},
       }
     };
   }
@@ -2856,6 +2857,12 @@ class MqttGraph extends MqttElement {
   // For some reason, this does not work by adding inside the render - i.e. to the virtual Dom.
   loadContent() {
     this.canvas = el('canvas');
+    const width = window.innerWidth * 0.8;
+    const height = window.innerHeight * 0.6;
+    this.canvas.width = width;
+    this.canvas.height = height;
+    this.canvas.style.maxWidth = '100%';
+    this.canvas.style.maxHeight = '100%';
     this.append(el('div', {slot: "chart", style: "width: 80vw; height: 60vw; position: relative;"},[this.canvas]));
     this.makeChart();
   }
@@ -2863,6 +2870,7 @@ class MqttGraph extends MqttElement {
   addScale(id, o) {
     o.grid = { drawOnChartArea: !this.state.yAxisCount } // only want the grid lines for one axis to show u
     o.position = ((this.state.yAxisCount++) % 2) ? 'right' : 'left';
+    o.ticks = { font: { size: 24 } };
     this.state.scales[id] = o;
   }
   makeChart() {
@@ -2878,8 +2886,17 @@ class MqttGraph extends MqttElement {
         },
         options: {
           //zone: "America/Denver", // Comment out to use system time
-          responsive: true,
+          responsive: false,
+          maintainAspectRatio: false, // Suggested by Claude so doesnt crunch height on mobile
+          devicePixelRatio: 1,
           scales: this.state.scales,
+          plugins: {
+            legend: {
+              labels: {
+                font: {size: 16}
+              }
+            }
+          },
           elements: { // https://www.chartjs.org/docs/latest/configuration/elements.html
             point: {
               radius: 1,
