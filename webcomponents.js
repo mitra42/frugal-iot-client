@@ -144,6 +144,36 @@ analog:
   display:  bar
   rw:       r
   graphable:  true
+aqi:
+  leaf:  aqi
+  name:     AQI
+  type:     int
+  display:  bar
+  min:      0
+  max:      5
+  color:    purple
+  rw:       r
+  graphable:  true
+aqi500:
+  leaf:  aqi500
+  name:     AQI500
+  type:     int
+  display:  bar
+  min:      0
+  max:      500
+  color:    brown
+  rw:       r
+  graphable:  true
+battery:
+  leaf:   battery
+  name:   Voltage
+  type:   int
+  display: text
+  min:    3000
+  max:    5000
+  color:  green
+  rw:       r
+  graphable:  true
 brightness:
   leaf:     brightness
   name:     Brightness
@@ -164,56 +194,6 @@ color:
   type: color
   display:  color
   rw: w
-humidity:
-  leaf:  humidity
-  name:   Humidity
-  type:   float
-  display: bar
-  min:    0
-  max:    100
-  color:  blue
-  rw:       r
-  graphable:  true
-pressure:
-  leaf:  pressure
-  name:     Pressure
-  type:     float
-  display:  bar
-  min:      0
-  max:      99
-  color:   blue
-  rw:       r
-  graphable:  true
-on:
-  leaf:     on
-  name:     On
-  type:     bool
-  display:  toggle
-  color:    black
-  rw:       w
-  graphable:  true
-soil:
-  leaf:     soil
-  name:     Soil Moisture
-  type:     int
-  display:  bar
-  min:      0
-  max:      100
-  color:    brown
-  rw:       r
-  graphable:  true
-  calibrate:  true
-temperature:
-  leaf:  temperature
-  name:     Temperature
-  type:     float
-  display:  bar
-  rw:       r
-  min:      0
-  max:      50
-  color:    red
-  wireable: false
-  graphable:  true 
 controlfloat:
   #[leaf, name] should be overridden
   min:      0
@@ -248,6 +228,178 @@ controlouttoggle:
   color:    black
   rw:       r
   wireable: true
+description:
+  leaf:     description
+  slot:     description
+  name:     Description
+  type:     text
+  display:  text
+  rw:       w
+  retain:   true
+eco2:
+  leaf:  eco2
+  name:     eCO2
+  type:     int
+  display:  bar
+  min:      300
+  max:      900
+  color:    brown
+  rw:       r
+  graphable:  true
+humidity:
+  leaf:  humidity
+  name:   Humidity
+  type:   float
+  display: bar
+  min:    0
+  max:    100
+  color:  blue
+  rw:       r
+  graphable:  true
+id:
+  leaf:     id
+  slot:     id
+  name:     Node ID
+  type:     text
+  display:  text
+  rw:       r
+key:
+  leaf:     key
+  name:     Key
+  type:     text
+  display:  text
+  rw:       r
+lastseen:
+  leaf:     lastseen
+  slot:     lastseen
+  name:     Last Seen
+  type:     text
+  display:  text
+  rw:       r
+loadcell:
+  leaf:     loadcell
+  name:     Load Cell
+  type:     float
+  display:  text
+  min:      0
+  max:      65000
+  color:    yellow
+  rw:       r
+  calibrate:  true
+  graphable:  true
+lux:
+  leaf:     lux
+  name:     Lux
+  type:     exponential
+  display:  bar
+  min:      0
+  max:      65000
+  color:    yellow
+  rw:       r
+  graphable:  true
+name:
+  leaf:     name
+  slot:     name
+  name:     Node Name
+  type:     text
+  display:  text
+  rw:       w
+  retain:   true
+on:
+  leaf:     on
+  name:     On
+  type:     bool
+  display:  toggle
+  color:    black
+  rw:       w
+  graphable:  true
+out:
+  leaf:     out
+  name:     Out
+  type:     bool
+  display:  toggle
+  color:    black
+  rw:       r
+  wireable: true
+  graphable:  true
+pressure:
+  leaf:  pressure
+  name:     Pressure
+  type:     float
+  display:  bar
+  min:      0
+  max:      99
+  color:   blue
+  rw:       r
+  graphable:  true
+soil:
+  leaf:     soil
+  name:     Soil Moisture
+  type:     int
+  display:  bar
+  min:      0
+  max:      100
+  color:    brown
+  rw:       r
+  graphable:  true
+  calibrate:  true
+temperature:
+  leaf:  temperature
+  name:     Temperature
+  type:     float
+  display:  bar
+  rw:       r
+  min:      0
+  max:      50
+  color:    red
+  wireable: false
+  graphable:  true 
+timeoff:
+  leaf:     timeoff
+  name:     Time Off (s)
+  min:      0
+  max:      3600
+  type:     float
+  display:  text
+  color:    black
+  rw:       w
+  wireable: true
+timeon:
+  leaf:     timeon
+  name:     Time On (s)
+  min:      0
+  max:      3600
+  type:     float
+  display:  text
+  color:    black
+  rw:       w
+  wireable: true
+tvoc:
+  leaf:  tvoc
+  name:     TVOC
+  type:     int
+  display:  bar
+  min:      0
+  max:      99
+  color:    green
+  rw:       r
+  graphable:  true
+wifibars:
+  leaf:     wifibars
+  name:     WiFi
+  type:     int
+  display:  text
+  min:      0
+  max:      4
+  color:    blue
+  rw:       r
+wifissid:
+  leaf:     wifissid
+  name:     SSID
+  type:     text
+  display:  text
+  color:    blue
+  rw:       r
 `);
 
 // This structure defines each of the modules (sensors, actuators, controls) that can be discovered
@@ -268,207 +420,169 @@ battery:
  name: "Battery"
  topics:
   - leaf:   battery
-    name:   Voltage
-    type:   int
-    display: text
-    min:    3000
-    max:    5000
-    color:  green
-    rw:       r
-    graphable:  true
+button:
+  name: Button
+  topics:
+  - leaf:     button
 controlblinken:
  name: "Control Blinken"
  topics:
   - leaf:     timeon
-    name:     Time On (s)
-    min:      0
-    max:      3600
-    type:     float
-    display:  text
-    color:    black
-    rw:       w
-    wireable: true
   - leaf:     timeoff
-    name:     Time Off (s)
-    min:      0
-    max:      3600
-    type:     float
-    display:  text
-    color:    black
-    rw:       w
-    wireable: true
   - leaf:     out
-    name:     Out
-    type:     bool
-    display:  toggle
-    color:    black
-    rw:       r
-    wireable: true
-    graphable:  true
+climate:
+  name: Climate
+  topics:
+    - leaf: temperature_now
+      leaf_from: controlfloat
+      name: Temperature Now
+    - leaf: temperature_setpoint
+      leaf_from: controlfloat
+      wireable: false
+      name: Temperature Setpoint
+    - leaf: temperature_hysteresis
+      leaf_from: controlfloat
+      wireable: false
+      name: Temperature Hysteresis
+    - leaf: humidity_now
+      leaf_from: controlfloat
+      name: Humidity Now
+    - leaf: humidity_setpoint
+      leaf_from: controlfloat
+      name: Humidity Setpoint
+      wireable: false
+    - leaf: humidity_hysteresis
+      leaf_from: controlfloat
+      name: Humidity Hysteresis
+      wireable: false
+    - leaf: temperature_out
+      leaf_from: controlouttoggle
+      name: Temperature Out
+    - leaf: humidity_out
+      leaf_from: controlouttoggle
+      name: Humidity Out
+controlhysterisis:
+  name: Control
+  topics:
+    - leaf: now
+      leaf_from: controlfloat
+      name: Now
+    - leaf: greater
+      leaf_from: controlintoggle
+      name: Greater Than
+    - leaf: limit
+      leaf_from:  controlfloat
+      name: Limit
+    - leaf: hysterisis
+      leaf_from: controlfloat
+      name: Hysterisis
+      max:  100
+      wireable: false
+    - leaf: out
+      leaf_from: controlouttoggle
+      name: Out
+dht:
+  name: "DHT"
+  topics:
+    - leaf: temperature
+    - leaf: humidity
+ds18b20:
+  name: "Soil Temperature"
+  topics:
+    - leaf: ds18b20
+      leaf_from: temperature
 ensaht:
  name: "ENS AHT"
  topics:
-  - leaf:  temperature
-    name:   Temperature
-    type:   float
-    display: bar
-    min:    0
-    max:    50
-    color:  red
-    wireable: false
-    rw:       r
-    graphable:  true
-  - leaf:  humidity
-    name:     Humidity
-    type:     float
-    display:  bar
-    min:      0
-    max:      100
-    color:    blue
-    rw:       r
-    graphable:  true
-  - leaf:  aqi
-    name:     AQI
-    type:     int
-    display:  bar
-    min:      0
-    max:      5
-    color:    purple
-    rw:       r
-    graphable:  true
-  - leaf:  tvoc
-    name:     TVOC
-    type:     int
-    display:  bar
-    min:      0
-    max:      99
-    color:    green
-    rw:       r
-    graphable:  true
-  - leaf:  eco2
-    name:     eCO2
-    type:     int
-    display:  bar
-    min:      300
-    max:      900
-    color:    brown
-    rw:       r
-    graphable:  true
-  - leaf:  agi500
-    name:     AQI500
-    type:     int
-    display:  bar
-    min:      0
-    max:      500
-    color:    brown
-    rw:       r
-    graphable:  true
+   - leaf:  temperature
+   - leaf:  humidity
+   - leaf:  aqi
+   - leaf:  tvoc
+   - leaf:  eco2
+   - leaf:  agi500
 frugal_iot:
   name: XXX
   topics:
-  - leaf:     id
-    slot:     id
-    name:     Node ID
-    type:     text
-    display:  text
-    rw:       r
-  - leaf:     name
-    slot:     name
-    name:     Node Name
-    type:     text
-    display:  text
-    rw:       w
-    retain:   true
-  - leaf:     description
-    slot:     description
-    name:     Description
-    type:     text
-    display:  text
-    rw:       w
-    retain:   true
-  - leaf:     lastseen
-    slot:     lastseen
-    name:     Last Seen
-    type:     text
-    display:  text
-    rw:       r
+    - leaf:     id
+    - leaf:     name
+    - leaf:     description
+    - leaf:     lastseen
 health:
  name: System
  topics:
-  - leaf:     wifibars
-    name:     WiFi
-    type:     int
-    display:  text
-    min:      0
-    max:      4
-    color:    blue
-    rw:       r
-  - leaf:     wifissid
-    name:     SSID
-    type:     text
-    display:  text
-    color:    blue
-    rw:       r    
+   - leaf:     wifibars
+   - leaf:     wifissid
+ht:
+  name: HT
+  topics:
+    - leaf: temperature
+    - leaf: humidity
+ledbuiltin: 
+  name: LED
+  slot: ledbuiltin
+  topics:
+    - leaf:     on
+    - leaf:     color
+    - leaf:     brightness
 loadcell:
  name: Load Cell
  topics:
-  - leaf:     loadcell
-    name:     Load Cell
-    type:     float
-    display:  text
-    min:      0
-    max:      65000
-    color:    yellow
-    rw:       r
-    calibrate:  true
-    graphable:  true
+   - leaf:     loadcell
 lux:
  name: Light meter
  topics:
-  - leaf:     lux
-    name:     Lux
-    type:     exponential
-    display:  bar
-    min:      0
-    max:      65000
-    color:    yellow
-    rw:       r
-    graphable:  true
+   - leaf:     lux
+ms5803:
+  name: MS5803
+  topics:
+    - leaf: pressure
+    - leaf: temperature
 ota:
   name: OTA
   topics:
-  - leaf:     key
-    name:     Key
-    type:     text
-    display:  text
-    rw:       r
+    - leaf:     key
+relay:
+  name: Relay
+  topics:
+    - leaf:     on
+sht:
+  name: SHT
+  topics:
+    - leaf: temperature
+    - leaf: humidity
+soil:
+  name: Soil
+  topics:
+    - leaf: soil
 `);
+
+// Copy a single entry from discover_io, or return undefined if none
+function d_io_copy(io_id) {
+  let io;
+  let dio = discover_io[io_id];
+  if (dio) {
+    io = {};
+    Object.entries(discover_io[io_id]).forEach(([key, value]) => {io[key] = value});
+  }
+  return io;
+}
+// Helper function to create a new io from a discover_io entry, with optional overrides
 function d_io_v(io_id, variants) {
-  let io = {}
-  Object.entries(discover_io[io_id]).forEach(([key, value]) => {io[key] = value});
-  if (variants) {
+  let io = d_io_copy(io_id);
+  if (io && variants) {
     Object.entries(variants).forEach(([key, value]) => {io[key] = value});
   }
   return io;
 }
-// This section adds some more modules that are simple combinations of the basic io types
-// TO-ADD-SENSOR TO-ADD-ACTUATOR TO-ADD-CONTROL
-discover_mod["button"] = { name: "Button", topics: [d_io_v("button")]};
-discover_mod["ht"] = { name: "HT",   topics: [ d_io_v("temperature"), d_io_v("humidity")]};
-discover_mod["sht"] = { name: "SHT", topics: [ d_io_v("temperature"), d_io_v("humidity")]};
-discover_mod["dht"] = { name: "DHT", topics: [ d_io_v("temperature"), d_io_v("humidity")]};
-discover_mod["ms5803"] = { name: "MS5803", topics: [ d_io_v("pressure"), d_io_v("temperature")]};
-discover_mod["relay"] = { name: "Relay", topics: [ d_io_v("on")]};
-discover_mod["ledbuiltin"] = { name: "LED", slot: "ledbuiltin", topics: [ d_io_v("on"), d_io_v("color"), d_io_v("brightness")]};
-discover_mod["soil"] = { name: "Soil", topics: [d_io_v("soil")]};
-discover_mod["ds18b20"] = { name: "Soil Temperature", topics: [d_io_v("temperature", {leaf: "ds18b20"})]}; // TODO replace with DS18B20
-discover_mod["controlhysterisis"] = { name: "Control", topics: [
-  d_io_v('controlfloat', {leaf: "now", name: "Now"}),
-  d_io_v('controlintoggle', {leaf: "greater", name: "Greater Than"}),
-  d_io_v('controlfloat', {leaf: "limit", name: "Limit"}),
-  d_io_v('controlfloat', {leaf: "hysterisis", name: "Hysterisis", max: 100, wireable: false}),
-  d_io_v('controlouttoggle', {leaf: "out", name: "Out"}),
-]};
+
+// Map through discover_mod, replacing each topic with a full io definition
+Object.entries(discover_mod).forEach(([dmk, dmv]) => {
+  dmv.topics = dmv.topics.map((dmt) => {
+    let dmt_new = d_io_v(dmt.leaf_from || dmt.leaf, dmt);
+    return dmt_new || dmt; // Fallback to original if not found
+  })
+});
+
 // Define a set of sensors that are pseudo, and hidden inside the Frugal_IoT drop-down on the name of a sensor
 const discover_groupsInsideFrugalIot = ["ledbuiltin", "ota", "battery", "health"];
 
@@ -594,6 +708,15 @@ EN:
   Battery: Battery
   Voltage: Voltage
   Time On (s): Time On (s)
+  heating: heating
+  humidifier: humidifier
+  Hysteresis: hysteresis
+  now: now
+  temperature: temperature
+  humidity: humidity
+  out: out
+  Climate: Climate
+  Setpoint: Setpoint
 FR:
   _nameAndFlag: Français 🇫🇷
   _thisLanguage: Francaise
@@ -811,6 +934,10 @@ function getString(tag) {
     // noinspection JSAssignmentUsedAsCondition
     if (foo = languages[lang] && languages[lang][tag]) {
       return foo;
+    }
+    if (tag.includes(' ')) {
+      let tags = tag.split(' ');
+      return tags.map((t) => getString(t)).join(' '); // At worst it will be English parts concatenated
     }
     XXX(["Cannot translate ", tag, ' into ', lang]);
   }
@@ -1734,7 +1861,7 @@ class MqttReceiver extends MqttElement {
     super();
     this.state.elements = {}; // Pointer to specific elements (for special case updates)
   }
-  static get observedAttributes() { return ['value','color','type','label','topic', 'graphable']; }
+  static get observedAttributes() { return ['value','color','type','label','topic', 'graphable','wired']; }
   static get boolAttributes() { return ['graphable']; }
 
   get isNode() { return false; } // Overridden in MqttNode
@@ -1875,7 +2002,7 @@ class MqttReceiver extends MqttElement {
   // renderInput - checkbox with value
   // renderValue - check mark if value true, empty if false
 
-    renderMaybeWired(className) {
+  renderMaybeWired(className) {
     if (!this.mt) {
       return []; // Dont render till have mt set
     }
@@ -2071,8 +2198,8 @@ class MqttToggle extends MqttTransmitter {
 customElements.define(  'mqtt-toggle', MqttToggle);
 
 class MqttBar extends MqttReceiver {
-  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['min','max']); }
-  static get floatAttributes() { return MqttReceiver.floatAttributes.concat(['value','min','max']); }
+  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['min', 'max']); }
+  static get floatAttributes() { return MqttReceiver.floatAttributes.concat(['value', 'min', 'max']); }
 
   constructor() {
     super();
@@ -2613,6 +2740,16 @@ class MqttNode extends MqttReceiver {
       .map(t=> { return({name: `${usableName}:${t.usableName}`, topic: t.topicPath, setTopic: t.topicSetPath})});
   }
 
+  sendMessageToMatchingTopics(topicPath, twig, message) {
+    let matched=false;
+    Object.entries(this.state.topics)
+      .filter(([subscriptionTopic,unusedNode]) => topicMatches(subscriptionTopic, twig))
+      .forEach(([unusedSubscriptionTopic, module]) => { // module is MqttTopic
+        matched = true;
+        module.message_received(topicPath, message);
+      });
+    return matched;
+  }
   // Overrides topicValueSet in MqttReceiver
   // noinspection JSCheckFunctionSignatures
   topicValueSet(topicPath, message) {
@@ -2634,13 +2771,12 @@ class MqttNode extends MqttReceiver {
       || twig.endsWith('/device_name') // replaced with "/name"
       || !twig.includes('/')
     ) {
-      XXX(["legacy twig", twig]);
+      XXX(["legacy twig thought this was gone!", twig]);
       return false
     }
-    // TODO-37 ignore some legacy and/or buggy nodes - probably will go away when server restarted
-    if (
-      twig.includes("wifistrength")
-    ) {
+    // TODO-37 ignore some legacy and/or buggy nodes - probably will go away when MQTT restarted
+    if ( ["wifistrength", "climate/temp_now", "climate/temp_out", "climate/temp_hysteresis", "climate/temp_setpoint", "climate/temperature", "climate/humidity"].some(s => s == twig || twig.includes(s+"/"))) {
+      XXX(["legacy twig will go away after reboot", twig]);
       return false
     }
     // Special case twigs
@@ -2658,21 +2794,63 @@ class MqttNode extends MqttReceiver {
       this.state.topics[twig].message_received(topicPath, message);
     } else {
       // Check if it is a group we haven't seen for this node, if so add it - checking first for a template
-      this.addGroupFromTemplate(twig.split("/")[0]);
-      let matched=false;
-      // noinspection JSUnusedLocalSymbols
-      Object.entries(this.state.topics)
-        .filter(([subscriptionTopic,unusedNode]) => topicMatches(subscriptionTopic, twig))
-          .forEach(([unusedSubscriptionTopic, module]) => {
-              matched = true;
-              module.message_received(topicPath, message);
-            });
+      let groupId = twig.split("/")[0];
+      this.addGroupFromTemplate(groupId);
+      let matched= this.sendMessageToMatchingTopics(topicPath, twig, message);
       if (!matched) {
-        XXX(["Unrecognized twig at ", topicPath]);
+        let leaf = twig.split("/")[1]; // Remove group part
+        // Lets see if can find a template for this topic
+        let t = d_io_copy(leaf); // Because addTopicFromTemplate will modify it TODO probably fix addTopicFromTemplate instead
+        let guessName = leaf.replace("_"," ");
+        if (!t && ["_now", "_setpoint", "_limit", "_hysteresis", "_hysterisis", "_hyst"].some(suffix => leaf.endsWith(suffix))) {
+            t = d_io_v('controlfloat', {leaf, name: guessName}); // Unknown setpoint or limit or hysteresis can use a float
+        }
+        if (!t && ["_out"].some(suffix => leaf.endsWith(suffix))) {
+          t = d_io_v('controlouttoggle', {leaf, name: guessName}); // Unknown setpoint or limit or hysteresis can use a float
+        }
+        if (!t && ["_in"].some(suffix => leaf.endsWith(suffix))) {
+          t = d_io_v('controlouttoggle', {leaf, name: guessName}); // Unknown setpoint or limit or hysteresis can use a float
+        }
+        if (t) {
+          this.addTopicFromTemplate(t, groupId);
+          if (!this.sendMessageToMatchingTopics(topicPath, twig, message)) {
+            XXX(["Even after adding topic from template, no destination for", twig]);
+          }
+        } else {
+          XXX(["Unrecognized twig at ", topicPath]);
+        }
       }
     }
   }
-// Add a group (if not already there) and its topics
+  // Add a topic (either from template, or because received a value)
+  // In both cases the group must already exist
+  addTopicFromTemplate(t, groupId) { // t is a copy of discover_io entry e.g. { leaf, type, rw, unit, slot }
+    t.group = groupId;
+    // Convert leaf: in the template to a topic
+    if (t.leaf && !t.topic && groupId) {
+      t.topic = groupId + "/" + t.leaf;
+      delete t.leaf;
+    }
+    if (!this.state.topics[t.topic]) { // Have we done this already?
+      let mt = new MqttTopic();
+      mt.fromDiscovery(t, this);
+      this.state.topics[t.topic + "/#"] = mt; // Watch for topic (e.g. sht/temperature or leaflet of it e.g. sht/temperature/color
+      // mt.subscribe(); Node will forward to sub topics
+      let elx = mt.createElement();
+      // If topic specifies a slot - typically these are inside frugal_iot i.e. name, description, id, lastseen
+      if (t.slot) {
+        // noinspection JSUnresolvedReference
+        elx.setAttribute('slot', mt.slot);
+        // noinspection JSUnresolvedReference
+        elx.setAttribute('class', mt.slot);
+        if (groupId === "frugal_iot") {
+          this.state.elements[t.slot] = elx
+        }
+      }
+      this.groups[groupId].append(elx);
+    }
+  }
+  // Add a group (if not already there) and its topics
   addGroupFromTemplate(groupId) {
     // Check if we already have added the group
     if (!this.groups[groupId]) {
@@ -2692,29 +2870,7 @@ class MqttNode extends MqttReceiver {
         XXX(["Unknown group - for now can't guess", groupId]);
       } else {
         dm.topics.forEach(t => {  // Note t.topic in discovery is twig
-          t.group = groupId;
-          if (t.leaf && !t.topic && groupId) {
-            t.topic = groupId + "/" + t.leaf;
-            delete t.leaf;
-          }
-          if (!this.state.topics[t.topic]) { // Have we done this already?
-            let mt = new MqttTopic();
-            mt.fromDiscovery(t, this);
-            this.state.topics[t.topic + "/#"] = mt; // Watch for topic (e.g. sht/temperature or leaflet of it e.g. sht/temperature/color
-            // mt.subscribe(); Node will forward to sub topics
-            let elx = mt.createElement();
-            // If topic specifies a slot - typically these are inside frugal_iot i.e. name, description, id, lastseen
-            if (t.slot) {
-              // noinspection JSUnresolvedReference
-              elx.setAttribute('slot', mt.slot);
-              // noinspection JSUnresolvedReference
-              elx.setAttribute('class', mt.slot);
-              if (groupId === "frugal_iot") {
-                this.state.elements[t.slot] = elx
-              }
-            }
-            this.groups[groupId].append(elx);
-          }
+          this.addTopicFromTemplate(t, groupId);
         });
       }
     }
