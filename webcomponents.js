@@ -785,6 +785,16 @@ FR:
   Upload: Téléverser
   Battery: Batterie
   Voltage: Tension
+  Time On (s): Durée active (s)
+  heating: chauffage
+  humidifier: humidificateur
+  Hysteresis: hystérésis
+  now: maintenant
+  temperature: température
+  humidity: humidité
+  out: sortie
+  Climate: Climat
+  Setpoint: consigne
 HI:
   _nameAndFlag: हिंदी 🇮🇳
   _thisLanguage: हिंदी
@@ -853,6 +863,16 @@ HI:
   Upload: अपलोड
   Battery: बैटरी
   Voltage: वोल्टेज
+  Time On (s): चालू समय (से)
+  heating: हीटिंग
+  humidifier: ह्यूमिडिफ़ायर
+  Hysteresis: हिस्टेरेसिस
+  now: अभी
+  temperature: तापमान
+  humidity: आर्द्रता
+  out: आउट
+  Climate: जलवायु
+  Setpoint: सेटपॉइंट
 ID:
   _nameAndFlag: Bahasa Indonesia 🇮🇩
   _thisLanguage: Bahasa Indonesia
@@ -921,6 +941,16 @@ ID:
   Upload: Unggah
   Battery: Baterai
   Voltage: Tegangan
+  Time On (s): Waktu Nyala (d)
+  heating: pemanas
+  humidifier: pelembap
+  Hysteresis: histeresis
+  now: sekarang
+  temperature: suhu
+  humidity: kelembapan
+  out: keluar
+  Climate: Iklim
+  Setpoint: titik setel
 `);
 
 let preferedLanguages = [ ];
