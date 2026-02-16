@@ -797,6 +797,8 @@ FR:
   out: sortie
   Climate: Climat
   Setpoint: consigne
+  Admin: Admin
+  Add: Ajouter
 HI:
   _nameAndFlag: हिंदी 🇮🇳
   _thisLanguage: हिंदी
@@ -875,6 +877,8 @@ HI:
   out: आउट
   Climate: जलवायु
   Setpoint: सेटपॉइंट
+  Admin: एडमिन
+  Add: जोड़ें
 ID:
   _nameAndFlag: Bahasa Indonesia 🇮🇩
   _thisLanguage: Bahasa Indonesia
@@ -953,6 +957,8 @@ ID:
   out: keluar
   Climate: Iklim
   Setpoint: titik setel
+  Admin: Admin
+  Add: Tambah
 `);
 
 let preferedLanguages = [ ];
