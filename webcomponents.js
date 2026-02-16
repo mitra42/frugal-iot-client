@@ -717,6 +717,8 @@ EN:
   out: out
   Climate: Climate
   Setpoint: Setpoint
+  Admin: Admin
+  Add: Add
 FR:
   _nameAndFlag: Français 🇫🇷
   _thisLanguage: Francaise
@@ -1707,6 +1709,9 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   message(msg) {
     console.error(msg);
     this.state.message = msg;
+    if (this.state.elements.message) {
+      this.state.elements.message.textContent = msg;
+    }
     //this.append(el('div', {class: 'message', textContent: msg}));
   }
   orgsByPerm(capability) {
@@ -1726,17 +1731,17 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     // This should always succeed because index.html would have redirected to login.html if not logged in
     GET("/config.json", {}, (err, json) => {
       if (err) {
-        if (err.message.includes("401")) { // This can happen if accessing from service worker which has /dashboard cached
+        //if (err.message.includes("401")) { // This can happen if accessing from service worker which has /dashboard cached
           redirectToLogin();
-        } else {
-          this.message(err);
-        }
+        //} else {
+        //  this.message(err);
+        //}
         return;
       } else { // got config
         server_config = json;
         this.loadAttributesFromURL();
         this.renderAndReplace(); // TODO check, but should not need to renderAndReplace as render is (currently) fully static
-        if (!this.state.org) this.state.org = this.otaOrgs[0][0] || this.adminOrgs[0][0];
+        if (!this.state.org) this.state.org = (this.otaOrgs[0] && this.otaOrgs[0][0]) || (this.adminOrgs[0] && this.adminOrgs[0][0]);
         this.getOtaFiles();
         this.getPeopleList();
       }
@@ -1775,13 +1780,14 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
         return;
       } else { // got config
         this.state.ota_files = json;
-        let oldOtaFiles = this.state.elements.ota_files;
-        oldOtaFiles.replaceWith(this.state.elements.ota_files = this.otaFilesList());
+        this.replaceElement("ota_files", this.otaFilesList());
       }
     });
   }
   getOtaFiles() {
-    this.getOrDeleteOtaFiles(`/ota_list/${this.state.org}`);
+    if (this.otaOrgs.map(o => o[0]).includes(this.state.org)) {
+      this.getOrDeleteOtaFiles(`/ota_list/${this.state.org}`);
+    }
   }
   onOtaDelete(val, ev) {
     console.log(ev,val);
@@ -1800,36 +1806,73 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   getOrChangeAdminPeople(url) {
     GET(url, {}, (err, json) => {
       if (err) {
-        this.message(err);
+        this.message(err.message);
         return;
       } else { // got config
-        this.state.people_list = json;
-        let oldPeople = this.state.elements.people_list;
-        oldPeople.replaceWith(this.state.elements.people_list = this.peopleList());
+        this.state.people_list = json; // { peopleperms, people }
+        this.replaceElement("people_perms_list", this.peoplePermList());
+        this.replaceElement("people_list", this.peopleList());
       }
     });
   }
   getPeopleList() {
     this.getOrChangeAdminPeople(`/people_list/${this.state.org}`);
   }
-  onPeopleDelete(val, ev) {
+  onPermissionsDelete(val, ev) {
     console.log(ev,val);
-    this.getOrChangeAdminPeople(`/people_delete/${val}`);
+    this.getOrChangeAdminPeople(`/permissions_delete/${val}`);
   }
-  peopleList() {
-    return this.state.people_list.length === 0 ?
+  peoplePermList() {
+    return ((!this.state.people_list) || (!this.state.people_list.peopleperms) || (this.state.people_list.peopleperms.length === 0)) ?
       el('p', {}, ["Nobody added for this organization yet."]) :
-      el('p', {}, this.state.people_list.map(f => [
-          el('span', {class: 'pseudolink', textContent: ' 🗑 ', onclick: this.onPeopleDelete.bind(this,`${this.state.org}/${f}`)}),
+      el('p', {}, this.state.people_list.peopleperms.map(f => [
+          el('span', {class: 'pseudolink', textContent: ' 🗑 ', onclick: this.onPermissionsDelete.bind(this,`${this.state.org}?id=${f.id}&capability=${f.capability}`)}),
           `${f.name}: ${f.capability}`,
           el('br', {}),
         ])
       );
   }
+  peopleList() {
+    let EL = el('form', {action: `/add_permission/${this.state.org}`, method: "post"}, [
+      el('input', {id: "url3", name: "url", type: "hidden", value: `/dashboard/admin.html`}),
+      el('input', {id: "lang", name: "lang", type: "hidden", value: preferedLanguages.join(',')}),
+      // dropdown for name and for permissions
+      el('div', {class: 'dropdownsadmin'}, [
+        //el('label', {for: 'projects', textContent: "Project"}),
+        el('select', {id: 'id', name: 'id'}, [
+          el('option', {value: -1, textContent: "Not selected", selected: !this.state.value}),
+
+          ((this.state.people_list) && (this.state.people_list.people) && (this.state.people_list.people.length > 0)) &&
+          this.state.people_list.people.map(x =>
+            el('option', {value: x.id, textContent: x.name, selected: false, i8n: false})
+          )
+        ]),
+        el('select', {id: 'capability', name: 'capability'}, [
+          el('option', {value: "", textContent: "Not selected", selected: !this.state.value}),
+          ["OTAUPDATE","ADMIN","READ"].map(x =>
+            el('option', {value: x, textContent: x, selected: false, i8n: false})
+          )
+        ]),
+        el('button', {class: "submit", type: "submit", textContent: 'Add'}),
+      ]),
+    ]);
+    EL.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const urlparms =  new URLSearchParams(new FormData(this.state.elements.people_list)).toString();
+      this.getOrChangeAdminPeople(`/add_permission/${this.state.org}?${urlparms}`);
+    });
+    return EL;
+  }
+  replaceElement(name, newElement) {
+    if (this.state.elements[name]) {
+      let oldEl = this.state.elements[name];
+      oldEl.replaceWith(this.state.elements[name] = newElement);
+    }
+    return this.state.elements[name];
+  }
   onOrganization(e) {
     this.state.org = e.target.value;
-    let oldSelect = this.state.elements.projectdropdown;
-    oldSelect.replaceWith(this.state.elements.projectdropdown = this.projectDropdown(this.state.org));
+    this.replaceElement("projectdropdown", this.projectDropdown(this.state.org));
     this.getOtaFiles(); // Replaces ota files part asynchronously
     this.getPeopleList();
     // TODO-89 need to redo otafiles
@@ -1843,7 +1886,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       el('div', {class: 'mqtt-admin'},[
         // This is a top bar, holds message and language picker
         el('div',{class: 'message'},[
-          el('span', {textContent: this.state.message}),
+          this.state.elements.message = el('span', {textContent: this.state.message}),
           el('language-picker'),
         ]),
         el('tabbed-display', {tab: 0}, [
@@ -1896,14 +1939,15 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
                 el('label', {for: 'organizations', textContent: "Organization"}),
                 el('select', {id: 'organizations', name: 'organization', onchange: this.onOrganization.bind(this)}, [
                   //el('option', {value: "", textContent: "Not selected", selected: !this.state.value}),
-                  this.otaOrgs.map(([oid, name]) =>
+                  this.adminOrgs.map(([oid, name]) =>
                     el('option', {value: oid, textContent: `${oid}: ${name}`, selected: false}))
                 ]),
               ]),
               el('section', {}, [
                     el('h3', {}, ["Permissions"]),
+                    this.state.elements.people_perms_list = this.peoplePermList(), // This gets replaced when actions taken
                     this.state.elements.people_list = this.peopleList(),
-                  ]), // section ota
+              ]),
             ]), // Admin tab
         ]),
       ]),
@@ -2656,11 +2700,11 @@ class MqttWrapper extends HTMLElementExtended {
     // This should always succeed because index.html would have redirected to login.html if not logged in
     GET("/config.json", {}, (err, json) => {
       if (err) {
-        if (err.message.includes("401")) { // This can happen if accessing from service worker which has /dashboard cached
+        //if (err.message.includes("401")) { // This can happen if accessing from service worker which has /dashboard cached
           redirectToLogin();
-        } else {
-          this.message(err);
-        }
+        //} else {
+        //  this.message(err);
+        //}
         return;
       } else { // got config
         server_config = json;

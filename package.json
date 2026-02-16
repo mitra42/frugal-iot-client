@@ -11,7 +11,7 @@
     "chart.js": "^4.4.7",
     "csv-parse": "^5.6.0",
     "dial-gauge": "^0.1.5",
-    "html-element-extended": "^0.1.5",
+    "html-element-extended": "^0.1.6",
     "js-yaml": "^4.1.0",
     "luxon": "^3.5.0",
     "mqtt": "^5.10.3"
