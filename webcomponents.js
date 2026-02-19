@@ -297,6 +297,14 @@ lux:
   color:    yellow
   rw:       r
   graphable:  true
+manual:
+  leaf:     manual
+  name:     Manual
+  type:     bool
+  display:  toggle
+  color:    black
+  rw:       w
+  graphable:  true
 name:
   leaf:     name
   slot:     name
