@@ -1747,7 +1747,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
         server_config = json;
         this.loadAttributesFromURL();
         this.renderAndReplace(); // TODO check, but should not need to renderAndReplace as render is (currently) fully static
-        if (!this.state.org) this.state.org = (this.otaOrgs[0] && this.otaOrgs[0][0]) || (this.adminOrgs[0] && this.adminOrgs[0][0]);
+        this.setDefaultOrganization();
         this.getOtaFiles();
         this.getPeopleList();
       }
@@ -1769,6 +1769,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     super.changeAttribute(name, value);
   }
   projectDropdown(org) {
+    if (!org) { return el('span', {textContent: "No projects to display until organization selected"}); }
     return el('select', {id: 'projects', name: 'project' /*onchange: this.onOrganization.bind(this)*/}, [
       //el('option', {value: "", textContent: "Not selected", selected: !this.state.value}),
       el('option', {value: "+", textContent: "All", selected: true}),
@@ -1778,7 +1779,19 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
           el('option', {value: pid, textContent: `${pid}: ${name}`, selected: false}))
     ]);
   }
-  // Fetch ota files and display
+
+  orgDropdown(org, list, id) {
+    return el('section', {}, [
+      el('label', {for: 'organizations', textContent: "Organization"}),
+      el('select', {id: id, name: 'organization', onchange: this.onOrganization.bind(this)}, [
+        org ? null : // Display unselected if haven't picked one
+          el('option', {value: "", textContent: "Not selected", selected: true}),
+        list.map(([oid, name]) =>
+          el('option', {value: oid, textContent: `${oid}: ${name}`, selected: org == oid}))
+      ]),
+    ]);
+  }
+// Fetch ota files and display
   getOrDeleteOtaFiles(url) {
     GET(url, {}, (err, json) => {
       if (err) {
@@ -1791,8 +1804,10 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     });
   }
   getOtaFiles() {
-    if (this.otaOrgs.map(o => o[0]).includes(this.state.org)) {
-      this.getOrDeleteOtaFiles(`/ota_list/${this.state.org}`);
+    if (this.state.org) {
+      if (this.otaOrgs.map(o => o[0]).includes(this.state.org)) {
+        this.getOrDeleteOtaFiles(`/ota_list/${this.state.org}`);
+      }
     }
   }
   onOtaDelete(val, ev) {
@@ -1822,7 +1837,9 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     });
   }
   getPeopleList() {
-    this.getOrChangeAdminPeople(`/people_list/${this.state.org}`);
+    if (this.state.org) {
+      this.getOrChangeAdminPeople(`/people_list/${this.state.org}`);
+    }
   }
   onPermissionsDelete(val, ev) {
     console.log(ev,val);
@@ -1876,12 +1893,26 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     }
     return this.state.elements[name];
   }
-  onOrganization(e) {
-    this.state.org = e.target.value;
+  setOrganization(org) {
+    this.state.org =  org;
     this.replaceElement("projectdropdown", this.projectDropdown(this.state.org));
-    this.getOtaFiles(); // Replaces ota files part asynchronously
-    this.getPeopleList();
-    // TODO-89 need to redo otafiles
+    this.getOtaFiles();  // Replaces ota files part asynchronously
+    this.getPeopleList();  // Replaces perms and people list part asynchronously
+    // Note both these dropdowns are fine if this.state.org is undefined
+    this.replaceElement("otaorgsdropdown", this.orgDropdown(this.state.org, this.otaOrgs,"otaorganizations"));
+    this.replaceElement("adminorgsdropdown", this.orgDropdown(this.state.org, this.adminOrgs,"adminorganizations"));
+  }
+  setDefaultOrganization() {
+    let org = this.state.org;
+    if ((this.otaOrgs.length === 1) && (this.adminOrgs.length <= 1)) {
+      org = this.otaOrgs[0][0];
+    } else if ((this.adminOrgs.length === 1) && (this.otaOrgs.length <= 1)) {
+      org = this.adminOrgs[0][0];
+    }
+    this.setOrganization(org);
+  }
+  onOrganization(e) {
+    this.setOrganization(e.target.value);
   }
   onFile(e) {
     //TODO-14 do some sanity check on the files. See https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/input/file
@@ -1904,14 +1935,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
               el('form', {action: '/ota_update', method: "post", enctype: "multipart/form-data"}, [
                 el('input', {id: "url2", name: "url", type: "hidden", value: `/dashboard/admin.html`}),
                 el('input', {id: "lang", name: "lang", type: "hidden", value: preferedLanguages.join(',')}),
-                el('section', {}, [
-                  el('label', {for: 'organizations', textContent: "Organization"}),
-                  el('select', {id: 'organizations', name: 'organization', onchange: this.onOrganization.bind(this)}, [
-                    //el('option', {value: "", textContent: "Not selected", selected: !this.state.value}),
-                    this.otaOrgs.map(([oid, name]) =>
-                        el('option', {value: oid, textContent: `${oid}: ${name}`, selected: false}))
-                  ]),
-                ]),
+                this.state.elements.otaorgsdropdown = el('span',{ textContent: "Waiting"}),
                 el('section', {}, [
                   el('label', {for: 'projects', textContent: "Project"}),
                   this.state.elements.projectdropdown = this.projectDropdown(this.otaOrgs[0][0])
@@ -1941,14 +1965,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
 
           !this.adminOrgs.length ? null :
             el('section', {title: "Admin"}, [
-              el('section', {}, [
-                el('label', {for: 'organizations', textContent: "Organization"}),
-                el('select', {id: 'organizations', name: 'organization', onchange: this.onOrganization.bind(this)}, [
-                  //el('option', {value: "", textContent: "Not selected", selected: !this.state.value}),
-                  this.adminOrgs.map(([oid, name]) =>
-                    el('option', {value: oid, textContent: `${oid}: ${name}`, selected: false}))
-                ]),
-              ]),
+              this.state.elements.adminorgsdropdown = el('span',{ textContent: "Waiting"}),
               el('section', {}, [
                     el('h3', {}, ["Permissions"]),
                     this.state.elements.people_perms_list = this.peoplePermList(), // This gets replaced when actions taken
