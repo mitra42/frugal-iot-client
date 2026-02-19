@@ -1408,7 +1408,7 @@ class MqttTopic {
             let newprocdata = newdata.map(r => {
               return {
                 time: parseInt(r[0]),
-                value: parseFloat(r[1])  // TODO-72 need function for this as presuming its float
+                value: this.valueFromText(r[1])  // TODO-72 need function for this as presuming its float
               };
             });
             let olddata = this.data.splice(0, Infinity);
