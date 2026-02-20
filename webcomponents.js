@@ -134,466 +134,29 @@ let mqtt_client; // MQTT client - talking to server
 let mqtt_subscriptions = [];   // [{topic, cb(message)}]
 let unique_id = 1; // Just used as a label for auto-generated elements
 let graph;  // Will hold a default MqttGraph once user chooses to graph anything
-let server_config;  // { user, organizations, logger, mqtt, server }
+let server_config;  // { user, organizations, logger, mqtt, server } - note loaded by MqttWrapper OR MqttAdmin
 
 // This structure defines each of the common Input/Output types included within a sensor or acctuator
 // NOTE BELOW COPIED TO SERVER config.d/schema on 20 Feb - append any changes since then
-const discover_io = yaml.load(`
-analog:
-  leaf:     analog
-  type:     int
-  display:  bar
-  rw:       r
-  graphable:  true
-aqi:
-  leaf:  aqi
-  name:     AQI
-  type:     int
-  display:  bar
-  min:      0
-  max:      5
-  color:    purple
-  rw:       r
-  graphable:  true
-aqi500:
-  leaf:  aqi500
-  name:     AQI500
-  type:     int
-  display:  bar
-  min:      0
-  max:      500
-  color:    brown
-  rw:       r
-  graphable:  true
-battery:
-  leaf:   battery
-  name:   Voltage
-  type:   int
-  display: text
-  min:    3000
-  max:    5000
-  color:  green
-  rw:       r
-  graphable:  true
-brightness:
-  leaf:     brightness
-  name:     Brightness
-  type:     int
-  max:      255
-  min:      0
-  display:  slider
-  rw:       w
-button:
-  leaf:     button
-  name:     Button
-  type:     bool
-  display:  toggle
-  rw:       r
-color:
-  leaf: color
-  name: Color
-  type: color
-  display:  color
-  rw: w
-controlfloat:
-  #[leaf, name] should be overridden
-  min:      0
-  max:      100
-  type:     float
-  display:  text
-  color:    black
-  wireable: true
-  rw:       w
-  retain:   true
-controltext:
-  #[leaf, name] should be overridden
-  min:      0
-  max:      100
-  type:     text
-  display:  text
-  color:    black
-  wireable: true
-  rw:       w
-  retain:   true
-controlintoggle:
-  #[leaf, name] should be overridden
-  type:     bool
-  display:  toggle
-  color:    black
-  rw:       w
-  wireable: false
-controlouttoggle:
-  #[leaf, name] should be overridden
-  type:     bool
-  display:  toggle
-  color:    black
-  rw:       r
-  wireable: true
-description:
-  leaf:     description
-  slot:     description
-  name:     Description
-  type:     text
-  display:  text
-  rw:       w
-  retain:   true
-eco2:
-  leaf:  eco2
-  name:     eCO2
-  type:     int
-  display:  bar
-  min:      300
-  max:      900
-  color:    brown
-  rw:       r
-  graphable:  true
-humidity:
-  leaf:  humidity
-  name:   Humidity
-  type:   float
-  display: bar
-  min:    0
-  max:    100
-  color:  blue
-  rw:       r
-  graphable:  true
-id:
-  leaf:     id
-  slot:     id
-  name:     Node ID
-  type:     text
-  display:  text
-  rw:       r
-key:
-  leaf:     key
-  name:     Key
-  type:     text
-  display:  text
-  rw:       r
-lastseen:
-  leaf:     lastseen
-  slot:     lastseen
-  name:     Last Seen
-  type:     text
-  display:  text
-  rw:       r
-loadcell:
-  leaf:     loadcell
-  name:     Load Cell
-  type:     float
-  display:  text
-  min:      0
-  max:      65000
-  color:    yellow
-  rw:       r
-  calibrate:  true
-  graphable:  true
-lux:
-  leaf:     lux
-  name:     Lux
-  type:     exponential
-  display:  bar
-  min:      0
-  max:      65000
-  color:    yellow
-  rw:       r
-  graphable:  true
-manual:
-  leaf:     manual
-  name:     Manual
-  type:     bool
-  display:  toggle
-  color:    black
-  rw:       w
-  graphable:  true
-name:
-  leaf:     name
-  slot:     name
-  name:     Node Name
-  type:     text
-  display:  text
-  rw:       w
-  retain:   true
-on:
-  leaf:     on
-  name:     On
-  type:     bool
-  display:  toggle
-  color:    black
-  rw:       w
-  graphable:  true
-out:
-  leaf:     out
-  name:     Out
-  type:     bool
-  display:  toggle
-  color:    black
-  rw:       r
-  wireable: true
-  graphable:  true
-pressure:
-  leaf:  pressure
-  name:     Pressure
-  type:     float
-  display:  bar
-  min:      0
-  max:      99
-  color:   blue
-  rw:       r
-  graphable:  true
-soil:
-  leaf:     soil
-  name:     Soil Moisture
-  type:     int
-  display:  bar
-  min:      0
-  max:      100
-  color:    brown
-  rw:       r
-  graphable:  true
-  calibrate:  true
-temperature:
-  leaf:  temperature
-  name:     Temperature
-  type:     float
-  display:  bar
-  rw:       r
-  min:      0
-  max:      50
-  color:    red
-  wireable: false
-  graphable:  true 
-timeoff:
-  leaf:     timeoff
-  name:     Time Off (s)
-  min:      0
-  max:      3600
-  type:     float
-  display:  text
-  color:    black
-  rw:       w
-  wireable: true
-timeon:
-  leaf:     timeon
-  name:     Time On (s)
-  min:      0
-  max:      3600
-  type:     float
-  display:  text
-  color:    black
-  rw:       w
-  wireable: true
-tvoc:
-  leaf:  tvoc
-  name:     TVOC
-  type:     int
-  display:  bar
-  min:      0
-  max:      99
-  color:    green
-  rw:       r
-  graphable:  true
-wifibars:
-  leaf:     wifibars
-  name:     WiFi
-  type:     int
-  display:  text
-  min:      0
-  max:      4
-  color:    blue
-  rw:       r
-wifissid:
-  leaf:     wifissid
-  name:     SSID
-  type:     text
-  display:  text
-  color:    blue
-  rw:       r
-`);
 
-// This structure defines each of the modules (sensors, actuators, controls) that can be discovered
-// Please add new modules here, in alphabetical order
-let discover_mod = yaml.load(`
-# Each module contains inputs &/o outputs, each of which should have 
-# name  Capitalized English (and add translation below in 'languages'
-# max   For gauges, slider
-# min   For gauges, slider
-# color can be a name or a #RRGGBB
-# display One of bar,gauge,text,slider,inputbox
-# type One of bool,float,int,topic,text,yaml
-# rw  r for outputs w for inputs
-# wireable true,false, generally only  controls are wireable
-# wired not valid in this context, it will come from MQTT broker
-# Note battery gets special cased
-battery:
- name: "Battery"
- topics:
-  - leaf:   battery
-button:
-  name: Button
-  topics:
-  - leaf:     button
-controlblinken:
- name: "Control Blinken"
- topics:
-  - leaf:     timeon
-  - leaf:     timeoff
-  - leaf:     out
-climate:
-  name: Climate
-  topics:
-    - leaf: temperature_now
-      leaf_from: controlfloat
-      name: Temperature Now
-    - leaf: temperature_setpoint
-      leaf_from: controlfloat
-      wireable: false
-      name: Temperature Setpoint
-    - leaf: temperature_hysteresis
-      leaf_from: controlfloat
-      wireable: false
-      name: Temperature Hysteresis
-    - leaf: humidity_now
-      leaf_from: controlfloat
-      name: Humidity Now
-    - leaf: humidity_setpoint
-      leaf_from: controlfloat
-      name: Humidity Setpoint
-      wireable: false
-    - leaf: humidity_hysteresis
-      leaf_from: controlfloat
-      name: Humidity Hysteresis
-      wireable: false
-    - leaf: temperature_out
-      leaf_from: controlouttoggle
-      name: Temperature Out
-    - leaf: humidity_out
-      leaf_from: controlouttoggle
-      name: Humidity Out
-controlhysterisis:
-  name: Control
-  topics:
-    - leaf: now
-      leaf_from: controlfloat
-      name: Now
-    - leaf: greater
-      leaf_from: controlintoggle
-      name: Greater Than
-    - leaf: limit
-      leaf_from:  controlfloat
-      name: Limit
-    - leaf: hysterisis
-      leaf_from: controlfloat
-      name: Hysterisis
-      max:  100
-      wireable: false
-    - leaf: out
-      leaf_from: controlouttoggle
-      name: Out
-dht:
-  name: "DHT"
-  topics:
-    - leaf: temperature
-    - leaf: humidity
-ds18b20:
-  name: "Soil Temperature"
-  topics:
-    - leaf: ds18b20
-      leaf_from: temperature
-ensaht:
- name: "ENS AHT"
- topics:
-   - leaf:  temperature
-   - leaf:  humidity
-   - leaf:  aqi
-   - leaf:  tvoc
-   - leaf:  eco2
-   - leaf:  agi500
-frugal_iot:
-  name: XXX
-  topics:
-    - leaf:     id
-    - leaf:     name
-    - leaf:     description
-    - leaf:     lastseen
-health:
- name: System
- topics:
-   - leaf:     wifibars
-   - leaf:     wifissid
-ht:
-  name: HT
-  topics:
-    - leaf: temperature
-    - leaf: humidity
-ledbuiltin: 
-  name: LED
-  slot: ledbuiltin
-  topics:
-    - leaf:     on
-    - leaf:     color
-    - leaf:     brightness
-loadcell:
- name: Load Cell
- topics:
-   - leaf:     loadcell
-lux:
- name: Light meter
- topics:
-   - leaf:     lux
-ms5803:
-  name: MS5803
-  topics:
-    - leaf: pressure
-    - leaf: temperature
-ota:
-  name: OTA
-  topics:
-    - leaf:     key
-relay:
-  name: Relay
-  topics:
-    - leaf:     on
-sht:
-  name: SHT
-  topics:
-    - leaf: temperature
-    - leaf: humidity
-soil:
-  name: Soil
-  topics:
-    - leaf: soil
-`);
-
-// Copy a single entry from discover_io, or return undefined if none
-function d_io_copy(io_id) {
+// Copy a single entry from server_config.schema.topics, or return undefined if none
+function copyTopicTemplate(io_id) {
   let io;
-  let dio = discover_io[io_id];
+  let dio = server_config.schema.topics[io_id];
   if (dio) {
     io = {};
-    Object.entries(discover_io[io_id]).forEach(([key, value]) => {io[key] = value});
+    Object.entries(server_config.schema.topics[io_id]).forEach(([key, value]) => {io[key] = value});
   }
   return io;
 }
-// Helper function to create a new io from a discover_io entry, with optional overrides
-function d_io_v(io_id, variants) {
-  let io = d_io_copy(io_id);
+// Helper function to create a new io from a server_config.schema.topics entry, with optional overrides
+function expandTopicTemplate(io_id, variants) {
+  let io = copyTopicTemplate(io_id);
   if (io && variants) {
     Object.entries(variants).forEach(([key, value]) => {io[key] = value});
   }
   return io;
 }
-
-// Map through discover_mod, replacing each topic with a full io definition
-Object.entries(discover_mod).forEach(([dmk, dmv]) => {
-  dmv.topics = dmv.topics.map((dmt) => {
-    let dmt_new = d_io_v(dmt.leaf_from || dmt.leaf, dmt);
-    return dmt_new || dmt; // Fallback to original if not found
-  })
-});
-
-// Define a set of sensors that are pseudo, and hidden inside the Frugal_IoT drop-down on the name of a sensor
-const discover_groupsInsideFrugalIot = ["ledbuiltin", "ota", "battery", "health"];
 
 /* Helpers of various kinds */
 
@@ -645,6 +208,7 @@ function topicMatches(subscriptionTopic, messageTopic) {
     return (subscriptionTopic === messageTopic);
   }
 }
+// TODO-L8 move this to config on server
 const languages = yaml.load(`
 #Language configuration - will be read from files at some point
 EN:
@@ -1104,14 +668,16 @@ class MqttTopic {
   initialize(o) {
     // topic, name, type, display, rw, min, max, color, options, node
     Object.keys(o).forEach((k) => {
-      this[k] = o[k];
+      if (!["leaf"].includes(k)) { // Dont override getters
+        this[k] = o[k];
+      }
     });
   }
-  fromDiscovery(discoveredTopic, node) {
+  fromTemplate(topicTemplate, twig, group, node) {
     // topic, name, type, display, rw, min, max, color, options,
-    this.initialize(discoveredTopic);
-    // "topic" is ambiguous - currently in discovery it is "twig" e.g. sht/temperature
-    this.twig = discoveredTopic.topic;
+    this.initialize(topicTemplate);
+    this.group = group
+    this.twig = twig;
     // getters defined for leaf
     this.node = node;
   }
@@ -2997,16 +2563,16 @@ class MqttNode extends MqttReceiver {
       if (!matched) {
         let leaf = twig.split("/")[1]; // Remove group part
         // Lets see if can find a template for this topic
-        let t = d_io_copy(leaf); // Because addTopicFromTemplate will modify it TODO probably fix addTopicFromTemplate instead
+        let t = server_config.schema.topics[leaf]; // May be undefined if no template for this leaf
         let guessName = leaf.replace("_"," ");
         if (!t && ["_now", "_setpoint", "_limit", "_hysteresis", "_hysterisis", "_hyst"].some(suffix => leaf.endsWith(suffix))) {
-            t = d_io_v('controlfloat', {leaf, name: guessName}); // Unknown setpoint or limit or hysteresis can use a float
+            t = expandTopicTemplate('controlfloat', {leaf, name: guessName}); // Unknown setpoint or limit or hysteresis can use a float
         }
         if (!t && ["_out"].some(suffix => leaf.endsWith(suffix))) {
-          t = d_io_v('controlouttoggle', {leaf, name: guessName}); // Unknown setpoint or limit or hysteresis can use a float
+          t = expandTopicTemplate('controlouttoggle', {leaf, name: guessName}); // Unknown setpoint or limit or hysteresis can use a float
         }
         if (!t && ["_in"].some(suffix => leaf.endsWith(suffix))) {
-          t = d_io_v('controlouttoggle', {leaf, name: guessName}); // Unknown setpoint or limit or hysteresis can use a float
+          t = expandTopicTemplate('controlouttoggle', {leaf, name: guessName}); // Unknown setpoint or limit or hysteresis can use a float
         }
         if (t) {
           if (this.addTopicFromTemplate(t, groupId)) {
@@ -3023,27 +2589,23 @@ class MqttNode extends MqttReceiver {
   }
   // Add a topic (either from group template, or because received a value and adding automatically)
   // In both cases the group must already exist
-  addTopicFromTemplate(t, groupId) { // t is a copy of discover_io entry e.g. { leaf, type, rw, unit, slot }
-    t.group = groupId;
+  addTopicFromTemplate(topicTemplate, groupId) { // topicTemplate is a copy of server_config.schema.topics entry e.g. { leaf, type, rw, unit, slot }
     // Convert leaf: in the template to a topic
-    if (t.leaf && !t.topic && groupId) {
-      t.topic = groupId + "/" + t.leaf;
-      delete t.leaf;
-    }
-    if (!this.state.topics[t.topic]) { // Have we done this already?
+    let twig = (groupId + "/" + topicTemplate.leaf);
+    if (!this.state.topics[twig]) { // Have we done this already?
       let mt = new MqttTopic();
-      mt.fromDiscovery(t, this);
-      this.state.topics[t.topic + "/#"] = mt; // Watch for topic (e.g. sht/temperature or leaflet of it e.g. sht/temperature/color
+      mt.fromTemplate(topicTemplate, twig, groupId, this);
+      this.state.topics[twig + "/#"] = mt; // Watch for topic (e.g. sht/temperature or leaflet of it e.g. sht/temperature/color
       // mt.subscribe(); Node will forward to sub topics
       let elx = mt.createElement();
       // If topic specifies a slot - typically these are inside frugal_iot i.e. name, description, id, lastseen
-      if (t.slot) {
+      if (topicTemplate.slot) {
         // noinspection JSUnresolvedReference
         elx.setAttribute('slot', mt.slot);
         // noinspection JSUnresolvedReference
         elx.setAttribute('class', mt.slot);
         if (groupId === "frugal_iot") {
-          this.state.elements[t.slot] = elx
+          this.state.elements[topicTemplate.slot] = elx
         }
       }
       this.groups[groupId].append(elx);
@@ -3057,23 +2619,27 @@ class MqttNode extends MqttReceiver {
   addGroupFromTemplate(groupId) {
     // Check if we already have added the group
     if (!this.groups[groupId]) {
-      let dm = discover_mod[groupId];
-        let groupName = dm ? dm.name : groupId;
+      let moduleTemplate = server_config.schema.modules[groupId]; // Unexpanded template
+      let groupName = moduleTemplate ? moduleTemplate.name : groupId;
       if (groupId === "frugal_iot") {
         this.groups.frugal_iot = el('mqtt-groupfrugaliot', {class: 'group frugal_iot', group: groupId, name: groupName});
       } else {
-        this.groups[groupId] = el('mqtt-group', {class: `group ${groupId}`, group: groupId, name: groupName, slot: ((dm && dm.slot) || null)}, []);
+        // This group may be `slotted`
+        this.groups[groupId] = el('mqtt-group', {class: `group ${groupId}`, group: groupId, name: groupName, slot: ((moduleTemplate && moduleTemplate.slot) || null)}, []);
       }
-      if (discover_groupsInsideFrugalIot.includes(groupId)) { // ledbuiltin or ota
+      if (moduleTemplate.insidefrugaliot) { // ledbuiltin or ota
         this.groups["frugal_iot"].append(this.groups[groupId]); // Add the new group to the frugal_iot node.
       } else {
         this.append(this.groups[groupId]); // Adds the group to the node - typically it will be a dropdown
       }
-      if (!dm) {
+      if (!moduleTemplate) {
         XXX(["Unknown group - for now can't guess", groupId]);
       } else {
-        dm.topics.forEach(t => {  // Note t.topic in discovery is twig
-          this.addTopicFromTemplate(t, groupId); //XXX N200
+        moduleTemplate.topics.forEach(topicUnexpandedTemplate => {  // Note t.topic in discovery is twig
+          // Expand topic, copying from template and overriding fields
+          // If topic not in schema.topics then use full definition from modules
+          let topicExpandedTemplate = expandTopicTemplate(topicUnexpandedTemplate.leaf_from || topicUnexpandedTemplate.leaf, topicUnexpandedTemplate) || topicUnexpandedTemplate;
+          this.addTopicFromTemplate(topicExpandedTemplate, groupId);
         });
       }
       return true;
