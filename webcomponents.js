@@ -137,6 +137,7 @@ let graph;  // Will hold a default MqttGraph once user chooses to graph anything
 let server_config;  // { user, organizations, logger, mqtt, server }
 
 // This structure defines each of the common Input/Output types included within a sensor or acctuator
+// NOTE BELOW COPIED TO SERVER config.d/schema on 20 Feb - append any changes since then
 const discover_io = yaml.load(`
 analog:
   leaf:     analog
