@@ -3401,12 +3401,7 @@ class MqttGraphDataset extends MqttElement {
       this.chartdataset = {
         data: this.mt.data, // Should be pointer to receiver's data set in MqttReceiver.valueSet
         stepped: this.mt.type === "bool" ? 'before' : false,
-        fill:
-          this.mt.type !== "bool" ? false :
-          {
-          target: 'origin',
-          above: lightenablecolors.includes(this.state.color) ? "light"+this.state.color : this.state.color,
-        },
+        fill: this.mt.type !== "bool" ? false : true, // Use true for fill, rely on backgroundColor
         segment: {
           borderColor: ctx => skipped(ctx, 'rgb(0,0,0,0.2)'),
           borderDash: ctx => skipped(ctx, [6, 6]),
@@ -3421,9 +3416,45 @@ class MqttGraphDataset extends MqttElement {
     // Things that are changed by attributes
     this.chartdataset.label = this.state.label; // TODO-80 Needs device name
     this.chartdataset.borderColor = this.state.color; // also sets color of point
-    this.chartdataset.backgroundColor =this.state.color;
+    this.chartdataset.backgroundColor = this.addAlpha(this.state.color, 0.3); // 30% opacity
     this.chartdataset.yAxisID = this.state.yaxisid;
     // Should override display and position and grid of each axis used
+  }
+
+  // Helper method to add alpha transparency to a color
+  addAlpha(color, alpha) {
+    // Named color map for common colors
+    const namedColors = {
+      'purple': 'rgb(128, 0, 128)',
+      'brown': 'rgb(165, 42, 42)',
+      'red': 'rgb(255, 0, 0)',
+      'pink': 'rgb(255, 192, 203)',
+      'green': 'rgb(0, 128, 0)',
+      'blue': 'rgb(0, 0, 255)'
+    };
+
+    // If it's already an rgba color, modify the alpha
+    if (color.startsWith('rgba')) {
+      return color.replace(/[\d.]+\)$/, alpha + ')');
+    }
+    // Convert hex or named color to rgba
+    if (color.startsWith('#')) {
+      const r = parseInt(color.slice(1, 3), 16);
+      const g = parseInt(color.slice(3, 5), 16);
+      const b = parseInt(color.slice(5, 7), 16);
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+    // If it's rgb, convert to rgba
+    if (color.startsWith('rgb')) {
+      return color.replace('rgb', 'rgba').replace(')', `, ${alpha})`);
+    }
+    // Check for named colors
+    const lowerColor = color.toLowerCase().trim();
+    if (namedColors[lowerColor]) {
+      return namedColors[lowerColor].replace('rgb', 'rgba').replace(')', `, ${alpha})`);
+    }
+    // For unknown colors, return as-is
+    return color;
   }
 
   // Normally the MqttTopic creates the MqttGraphDataset,
