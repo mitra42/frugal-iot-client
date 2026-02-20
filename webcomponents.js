@@ -2072,6 +2072,11 @@ class MqttReceiver extends MqttElement {
       return true;
     }
   }
+  rebuildTopicDropdown() {
+    if (this.state.elements.chooseTopic) {
+      this.state.elements.chooseTopic.rebuildDropdown(); // Rebuild in place, dont make a new one
+    }
+  }
   // Return true if need to rerender
   // Note overridden in MqttNode and MqttProject
   topicValueSet(topic, message) {
@@ -2548,13 +2553,14 @@ class MqttSlider extends MqttTransmitter {
 customElements.define('mqtt-slider', MqttSlider);
 
 class MqttChooseTopic extends MqttElement {
-  // options = "bool" for boolean topics (matches t.type on others)
+  // type = "bool" for boolean topics (matches t.type on others)
+  // value = the topic path of the currently wired topic,
   static get observedAttributes() { return MqttTransmitter.observedAttributes.concat(['name', 'type','value', 'project','rw','onchange']); }
 
   get findTopics() {
     let project = this.state.project;
     let nodes = Array.from(project.children);
-    // Note each node's value is its config
+    // Note each node's value is its config,
     let allowableTypes = {
       // Mapping of requested types to valid fields - e.g. if want a float then returning an int will be fine
       "float": ["float", "int", "exponential"],
@@ -2563,8 +2569,9 @@ class MqttChooseTopic extends MqttElement {
     return nodes.map(n => n.topicsByType(allowableTypes[this.state.type] || this.state.type, this.state.rw))
       .flat();
   }
+
   // noinspection JSCheckFunctionSignatures
-  valueSet(val) {
+  valueSet(val) { // val is new path to topic wired to.
     this.state.value = (val);
     this.renderAndReplace();
   }
@@ -2572,6 +2579,10 @@ class MqttChooseTopic extends MqttElement {
     super.changeAttribute(name, valueString); // convert and store on state
     return true; // Rerender - will use new value, name etc.
     // Note that value is expected to change when topic is rewired
+  }
+  // This should be called when the list of topics to choose from changes, for example new Node added
+  rebuildDropdown() {
+    this.renderAndReplace(); // This could be optimized, but its about as simple as it gets.
   }
   render() {
     // noinspection JSUnresolvedReference
@@ -2795,6 +2806,7 @@ class MqttProject extends MqttReceiver {
     elNode.state.project = this; // For some reason, this cannot be set on elNode while mt can be!
     elNode.mt = mt;
     this.append(elNode);
+    this.rebuildTopicDropdowns();
     mt.subscribe(); // Subscribe (for node) to get Discovery - note subscribes to wild card
     return elNode;
   }
@@ -2833,6 +2845,15 @@ class MqttProject extends MqttReceiver {
     let parts = topicPath.split("/");
     return this.state.nodes[parts[2]] && this.state.nodes[parts[2]].state.topics[`${parts[3]}/${parts[4]}/#`];
   }
+  nodesForEach(cb) {
+    Object.entries(this.state.nodes).forEach(k => cb(k[1]));
+  }
+  // Rebuild all embedded mqtt-choosetopic.
+  // Note you can't use querySelectorAll to find them because they are in the Shadow DOM of the nodes, so instead each node will have to have a function that finds the choosetopics in its Shadow DOM and calls their renderAndReplace function.
+  rebuildTopicDropdowns() {
+    this.nodesForEach((node) => { node.rebuildTopicDropdowns(); } ); //TODO-N200
+  }
+
   render() {
     return  !this.isConnected ? null : [
       el('link', {rel: 'stylesheet', href: CssUrl}),
@@ -2873,7 +2894,7 @@ class MqttNode extends MqttReceiver {
     this.groups.frugal_iot.append(this.state.elements.id = el('span',{class: 'nodeid', textContent: this.state.id, i8n: false}));
      */
     // Need the group firs,t else the addDiscoveredTopicsToNode will create a new group.
-    this.addGroupFromTemplate("frugal_iot"); // Add group and topics
+    this.addGroupFromTemplate("frugal_iot"); // Add group & topics - don't rebuild Topics here as Node not yet attached
     this.state.topics["frugal_iot/id/#"].element.valueSet(this.state.id); // Set manually as it is not a message it is a field
   }
   changeAttribute(leaf, valueString) {
@@ -2883,6 +2904,7 @@ class MqttNode extends MqttReceiver {
     }
     return false;
   }
+  // Getters
   get isNode() { return true; } // Overrides superclass in MqttReceiver
 
   get usableName() {
@@ -2909,8 +2931,21 @@ class MqttNode extends MqttReceiver {
       });
     return matched;
   }
+
+  topicsForEach(cb) {
+    Object.entries(this.state.topics).forEach(k => cb(k[1]));
+  }
+  elementsForEach(cb) {
+    Object.entries(this.state.topics).forEach(k => cb(k[1].element));
+  }
+  // Rebuild all embedded mqtt-choosetopic.
+  rebuildTopicDropdowns() {
+    console.log("TODO-N200 node:", this.state.name || this.state.id);
+    this.elementsForEach(el => { el.rebuildTopicDropdown(); } );
+  }
   // Overrides topicValueSet in MqttReceiver
   // noinspection JSCheckFunctionSignatures
+  // This is complex, because it first adds the elements for the topic if it is new, then sends the message to the topic which updates the value and triggers any needed re-rendering
   topicValueSet(topicPath, message) {
 
     let twig = topicPath.substring(this.mt.topicPath.length+1);
@@ -2954,7 +2989,9 @@ class MqttNode extends MqttReceiver {
     } else {
       // Check if it is a group we haven't seen for this node, if so add it - checking first for a template
       let groupId = twig.split("/")[0];
-      this.addGroupFromTemplate(groupId);
+      if (this.addGroupFromTemplate(groupId)) { //XXX N200
+        this.project.rebuildTopicDropdowns();
+      }
       let matched= this.sendMessageToMatchingTopics(topicPath, twig, message);
       if (!matched) {
         let leaf = twig.split("/")[1]; // Remove group part
@@ -2971,7 +3008,9 @@ class MqttNode extends MqttReceiver {
           t = d_io_v('controlouttoggle', {leaf, name: guessName}); // Unknown setpoint or limit or hysteresis can use a float
         }
         if (t) {
-          this.addTopicFromTemplate(t, groupId);
+          if (this.addTopicFromTemplate(t, groupId)) {
+            this.project.rebuildTopicDropdowns();
+          } //XXX N200
           if (!this.sendMessageToMatchingTopics(topicPath, twig, message)) {
             XXX(["Even after adding topic from template, no destination for", twig]);
           }
@@ -2981,7 +3020,7 @@ class MqttNode extends MqttReceiver {
       }
     }
   }
-  // Add a topic (either from template, or because received a value)
+  // Add a topic (either from group template, or because received a value and adding automatically)
   // In both cases the group must already exist
   addTopicFromTemplate(t, groupId) { // t is a copy of discover_io entry e.g. { leaf, type, rw, unit, slot }
     t.group = groupId;
@@ -3007,9 +3046,13 @@ class MqttNode extends MqttReceiver {
         }
       }
       this.groups[groupId].append(elx);
+      return true;
+    } else {
+      return false;
     }
   }
   // Add a group (if not already there) and its topics
+  // Returns true if added, false if already there
   addGroupFromTemplate(groupId) {
     // Check if we already have added the group
     if (!this.groups[groupId]) {
@@ -3029,9 +3072,12 @@ class MqttNode extends MqttReceiver {
         XXX(["Unknown group - for now can't guess", groupId]);
       } else {
         dm.topics.forEach(t => {  // Note t.topic in discovery is twig
-          this.addTopicFromTemplate(t, groupId);
+          this.addTopicFromTemplate(t, groupId); //XXX N200
         });
       }
+      return true;
+    }  else {
+      return false;
     }
   }
 
