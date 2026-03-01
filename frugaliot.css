@@ -158,6 +158,15 @@ div.mqtt-text {
             .dropdown {
                 font-size: xxx-large;
             }
+            .dropdownsadmin {
+                display: flex;
+                justify-content: left;
+                gap: 10px;
+            }
+            .dropdownsadmin > select {
+                flex: 0 0 auto;
+                margin-left: 0;
+            }
             select {
                 font-size: xx-large;
             }
