@@ -25,6 +25,11 @@ function XXX(args) {
   if (args) { console.log(...args); }
   return false;
 } // Put a breakpoint here for debugging and intersperse XXX() in code.
+// Use this for things you might not want to breakpoint e.g. legacy twigs
+function XXY(args) {
+  if (args) { console.log(...args); }
+  return false;
+} // Put a breakpoint here for debugging and intersperse XXX() in code.
 
 /* This is copied from the chartjs-adapter-luxon, I could not get it to import - gave me an error every time */
 /*
@@ -314,6 +319,8 @@ EN:
   Setpoint: Setpoint
   Admin: Admin
   Add: Add
+  Manual: Manual
+  buttons: buttons
 FR:
   _nameAndFlag: Français 🇫🇷
   _thisLanguage: Francaise
@@ -2559,8 +2566,8 @@ class MqttNode extends MqttReceiver {
       return false
     }
     // TODO-37 ignore some legacy and/or buggy nodes - probably will go away when MQTT restarted
-    if ( ["wifistrength", "climate/temp_now", "climate/temp_out", "climate/temp_hysteresis", "climate/temp_setpoint", "climate/temperature", "climate/humidity"].some(s => s == twig || twig.includes(s+"/"))) {
-      XXX(["legacy twig will go away after reboot", twig]);
+    if ( ["wifistrength", "climate/temp_now", "climate/temp_out", "climate/temp_hysteresis", "climate/temp_setpoint", "climate/temperature", "climate/humidity", "controlhysterisis/auto", "frugal-iot/reboot", "buttons"].some(s => s == twig || twig.includes(s+"/"))) {
+      XXY(["legacy twig will go away after reboot", twig]);
       return false
     }
     // Special case twigs
@@ -2650,7 +2657,7 @@ class MqttNode extends MqttReceiver {
       let grouptag = (groupId === "frugal_iot") ? 'mqtt-groupfrugaliot' : `mqtt-group${groupId}`;
       grouptag = customElements.get(grouptag) ? grouptag : 'mqtt-group'; // Fallback if no custom element defined
       this.groups[groupId] = el(grouptag, {class: `group ${groupId}`, group: groupId, name: groupName, slot: ((moduleTemplate && moduleTemplate.slot) || null)}, []);
-      if (moduleTemplate.insidefrugaliot) { // ledbuiltin or ota
+      if (moduleTemplate && moduleTemplate.insidefrugaliot) { // ledbuiltin or ota
         this.groups["frugal_iot"].append(this.groups[groupId]); // Add the new group to the frugal_iot node.
       } else {
         this.append(this.groups[groupId]); // Adds the group to the node - typically it will be a dropdown
