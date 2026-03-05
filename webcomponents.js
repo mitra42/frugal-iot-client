@@ -2331,7 +2331,7 @@ class MqttWrapper extends HTMLElementExtended {
         } // drop through with !n p o
         let projElem = this.addProject(true);
         // noinspection JSUnresolvedReference
-        let nodes = Object.entries(server_config.organizations[this.state.organization].projects[this.state.project].nodes);
+        let nodes = Object.entries(server_config.organizations[this.state.organization].projects[this.state.project].nodes || {});
         projElem.nodesFromConfig(nodes);
       }
     }
