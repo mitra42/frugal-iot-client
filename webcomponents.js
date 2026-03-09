@@ -227,13 +227,13 @@ function topicTwig(topic) {
   // dev/project/node/module/leaf/paramter -> module/leaf/parameter
   // dev/project/node/set/module/leaf/paramter -> module/leaf/parameter
   let arr = topic.split("/")
-  return (arr[3]=="set" ? arr.slice(4) : arr.slice(3)).join("/")
+  return (arr[3] === "set" ? arr.slice(4) : arr.slice(3)).join("/")
 }
 function topicLeaf(topic) {
   // dev/project/node/module/leaf/paramter -> leaf/parameter
   // dev/project/node/set/module/leaf/paramter -> leaf/parameter
   let arr = topic.split("/")
-  return (arr[3]=="set" ? arr.slice(5) : arr.slice(4)).join("/")
+  return (arr[3] === "set" ? arr.slice(5) : arr.slice(4)).join("/")
 }
 function twigAttribute(topic) {
   // "/" is not a valid character in attributes of webcomponents
@@ -687,7 +687,6 @@ class Watchdog {
     this.elx.offline();
   }
 }
-// ==========TODO-44 === CODE REVIEW ABOVE DONE: getters#26; const vs let; globals;TODO's; Problems; Comments
 
 class MqttTopic {
   // Manages a single topic - keeps track of data it has seen, and can create UI element or graphdataset for it
@@ -696,27 +695,13 @@ class MqttTopic {
   // but could also be built by hard coded UI if doesn't exist
   // Should be indexed in MqttNode
 
-  // Creation & initialization
+  // Creation & initialization =========
   constructor() {
-    this.data = [];
+    this.data = []; // Tracks previous values of this topic - used for graphing
     this.qos = 0; // Default to send and not care if received
     this.retain = false; // Default to not retain
   }
 
-  get groupEl() {
-    return this.node.groups[this.group];
-  }
-  get groupName() {
-    return this.groupEl.state.name
-  }
-  get usableName() {
-    switch (this.name) {
-      case "On":
-        return `${this.groupName}`;
-      default:
-        return `${this.groupName}:${this.name}`;
-    }
-  }
   initialize(o) {
     // topic, name, type, display, rw, min, max, color, options, node
     Object.keys(o).forEach((k) => {
@@ -728,33 +713,57 @@ class MqttTopic {
   fromTemplate(topicTemplate, twig, group, node) {
     // topic, name, type, display, rw, min, max, color, options,
     this.initialize(topicTemplate);
-    this.group = group
-    this.twig = twig;
+    this.group = group // e.g. "sht"
+    this.twig = twig;  // e.g. "sht/temperature"
     // getters defined for leaf
-    this.node = node;
+    this.node = node; // Instance of MqttNode
   }
-  // Gets and related fields
+
+  // Gets and related fields ========
+
+  get groupEl() {
+    return this.node.groups[this.group];
+  }
+  get groupName() {
+    return this.groupEl.state.name
+  }
+  // Suitable name to refer to this, e,g. on a graph etc. for groups with a single value (e.g. relay) this is the name of the group, rather than the name of the leaf
+  get usableName() {
+    switch (this.name) {
+      case "On":
+        return `${this.groupName}`;
+      default:
+        return `${this.groupName}:${this.name}`;
+    }
+  }
+
+  // instance of MqttProject
   get project() {
     return this.node.project;
   }
-  get leaf() {
+  get leaf() { // e.g. temperature
     return this.twig.split("/").pop();
   }
+  // e.g. /dev/project/node/module/leaf or for node /dev/project/node
   get topicPath() {
     return (this.node ? this.node.mt.topicPath + "/" : "") + this.twig;
   }
+  // e.g. /dev/project/node/set/module/leaf
   get topicSetPath() {
     // "set" path is meaningless (I think) for a node or project
     return this.node.mt.topicPath + "/set/" + this.twig;
   }
+  // e.g. /dev/project/node/set/module/leaf/wired
   get topicWiredPath() {
     return this.topicSetPath + "/wired"; // Path to set wired value
   }
+  // e.g. or for node /dev/project/node/# and should not be used at element level as subscribe at node level.
   get topicSubscribePath() {
     if (this.element && this.element.isNode) {
       return this.topicPath + "/#"; // Subscribe to all subtopics
     } else {
       //noinspection JSUnresolvedVariable
+      XXX(["Should not need subscribe path as subscribing at node level", this.topicPath]);
       switch (this.rw) { // Note for project this will be undefined
         case 'w': // Note should not be happening as subscribing at node level
           return this.topicSetPath;
@@ -765,6 +774,7 @@ class MqttTopic {
   }
   // Create the UX element that displays this
   createElement() {
+    // TO-ADD-ELEMENT expand this switch statement (also create new class)
     if (!this.element) {
       // noinspection JSUnresolvedReference
       // let name = this.name; // comes from discovery
@@ -811,6 +821,8 @@ class MqttTopic {
     return this.element;
   }
 
+  // Set new wired value, and subscribe to topic if wired is true
+  // Ignoring duplication if subscribing to something on own node - could fix if need to.
   setWired(v) {
     // Note will still get messages from old "wired" but these will be ignored
     this.wired = v;
@@ -818,6 +830,7 @@ class MqttTopic {
       mqtt_subscribe(v, this.message_received.bind(this));
     }
   }
+  // Subscribe to a topic. note should (mostly) not do this except at Node level, or for wired
   subscribe() {
     if (!mqtt_client) {
       XXX("Trying to subscribe before connected")
@@ -828,6 +841,7 @@ class MqttTopic {
     }
   }
 
+  // Get input type, so can build a form
   get inputType() {
     // Valid responses for <input type=> are: USED text, number, checkbox or UNUSED password, checkbox, radio, submit, file, date, email, , url, color, range, search, tel, time, week, month
     // noinspection JSUnresolvedReference
@@ -846,6 +860,7 @@ class MqttTopic {
     }
   }
   // Called by MqttReceiver.parameterSet to make sure topic updated
+  // Convert and set parameter, return converted value.
   parameterSet(parameter, message, typeOfParameter) {
     switch (typeOfParameter) {
       case "float":
@@ -868,6 +883,7 @@ class MqttTopic {
         }
     }
   }
+  // Convert from text to value based on type
   // TODO add opposite - return string or int based on argument, then look at valueGet subclassed many places
   // NOTE same function in frugal-iot-logger and frugal-iot-client if change here, change there
   valueFromText(message) {
@@ -906,8 +922,8 @@ class MqttTopic {
         this.element.renderAndReplace(); // TODO note gradually replacing need to rerender by smarter valueSet() on different subclasses
       }
     } else { // This is typically a MqttGraphdataset in an embedded mqtt-chartdataset
-      let value = this.valueFromText(message);
-      let now = Date.now();
+      const value = this.valueFromText(message);
+      const now = Date.now();
       this.data.push({value, time: now}); // Same format as graph dataset expects
     }
     if (this.graphdataset) { // instance of MqttGraphdataset
@@ -915,6 +931,9 @@ class MqttTopic {
     }
   }
 
+  // ==========TODO-44 === CODE REVIEW ABOVE DONE: getters#26; const vs let; globals;TODO's; Problems; Comments
+
+  /// Get an y-axis id for the graph, the idea is to make it easy to have multiple traces on same y-axis.
   get yaxisid() {
     let scaleNames = Object.keys(this.graph.state.scales);
     let yaxisid;
@@ -1969,7 +1988,7 @@ class MqttToggle extends MqttTransmitter {
   changeAttribute(name, valueString) {
     super.changeAttribute(name, valueString); // Change from string to number etc and store on this.state
     // TODO - could set width, color, name, on sub-elements and return false then copy this to other elements
-    return true;
+    return true; // Need to rerender -TODO-optimize this
   }
 
     // TODO - make sure this doesn't get triggered by a message from server.
@@ -2034,7 +2053,7 @@ class MqttBar extends MqttReceiver {
   changeAttribute(name, valueString) {
     super.changeAttribute(name, valueString); // Change from string to number etc and store on this.state
     // TODO - could set width, color, name, on sub-elements and return false then copy this to other elements
-    return true;
+    return true; // Need to rerender -TODO-optimize this
   }
   // This is a WIP, trying to use "innerHtml", not called anywhere yet, and only partially works.
   renderInner() {
