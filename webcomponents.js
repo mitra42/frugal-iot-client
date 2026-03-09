@@ -22,12 +22,21 @@ import {_decodeFill, _resolveTarget} from './filler.options.js';
 */
 const CssUrl = './frugaliot.css';
 function XXX(args) {
-  if (args) { console.log(...args); }
-  return false;
-} // Put a breakpoint here for debugging and intersperse XXX() in code.
+  // Put a breakpoint here for debugging and intersperse XXX() in code.
+  if (typeof(args) === 'string') {
+    console.log(args);
+  } else {
+    console.log(...args);
+  }
+}
+
 // Use this for things you might not want to breakpoint e.g. legacy twigs
 function XXY(args) {
-  if (args) { console.log(...args); }
+  if (typeof(args) === 'string') {
+    console.log(args);
+  } else {
+    console.log(...args);
+  }
   return false;
 } // Put a breakpoint here for debugging and intersperse XXX() in code.
 
@@ -2609,7 +2618,7 @@ class MqttNode extends MqttReceiver {
         if (t) {
           if (this.addTopicFromTemplate(t, groupId)) {
             this.project.rebuildTopicDropdowns();
-          } //XXX N200
+          }
           if (!this.sendMessageToMatchingTopics(topicPath, twig, message)) {
             XXX(["Even after adding topic from template, no destination for", twig]);
           }
