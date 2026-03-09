@@ -330,6 +330,8 @@ EN:
   Add: Add
   Manual: Manual
   buttons: buttons
+  Waiting: Waiting
+  No projects to display until organization selected: No projects to display until organization selected
 FR:
   _nameAndFlag: Français 🇫🇷
   _thisLanguage: Francaise
@@ -957,7 +959,7 @@ class MqttTopic {
     
     // Create a graphdataset to put in the chart
     if (!this.graphdataset) {
-      let nodename = this.node ? this.node.state.name : "";
+      let nodename = this.node ? this.node.usableName : "";
       // noinspection JSUnresolvedReference
       this.graphdataset = el('mqtt-graphdataset', {
         // noinspection JSUnresolvedReference
@@ -1671,6 +1673,7 @@ class MqttReceiver extends MqttElement {
     // TODO - could set width, color, name, on sub-elements and return false then copy this to other elements
     if (name === 'wired') {
       this.mt.setWired(valueString);
+      this.rebuildWiredInput(); // Rebuild wired input as now know where wired
       if (this.state.elements.chooseTopic) {
         this.state.elements.chooseTopic.setAttribute('value', valueString); // Update the dropdown if it exists
       } else {
@@ -1681,23 +1684,34 @@ class MqttReceiver extends MqttElement {
       return true;
     }
   }
+  // Rebuild any topic dropdowns, this is needed if wired differently or may have access to previously unknown names
   rebuildTopicDropdown() {
     if (this.state.elements.chooseTopic) {
-      this.state.elements.chooseTopic.rebuildDropdown(); // Rebuild in place, dont make a new one
+      this.state.elements.chooseTopic.rebuildDropdown(); // Just rebuilds the dropdown, not the entire MqttReceiver
     }
+    this.rebuildWiredInput();
   }
-  // Return true if need to rerender
+  // rebuild wired Input - this is needed if wired differently or may have access to previously unknown names
+  rebuildWiredInput() {
+  if (this.state.elements.wiredInput) {
+    this.state.elements.wiredInput.replaceWith(this.state.elements.wiredInput = this.renderWiredInput());
+  }
+}
+
+// Return true if need to rerender
   // Note overridden in MqttNode and MqttProject
   topicValueSet(topicPath, message) {
     if ([this.mt.topicPath, this.mt.topicSetPath, this.mt.wired].includes(topicPath)) {
+      // Its trying to set our value
       let value = this.mt.valueFromText(message);
       let now = Date.now();
       this.mt.data.push({value, time: now}); // Same format as graph dataset expects
       if (this.groupElement) { // There is (currently) no node if it is a Project
         this.groupElement.setAttribute(leafAttribute(topicPath), value); // Pass up to group things it might need to summarize
       }
-      return this.valueSet(value);
+      return this.valueSet(value); // Subclassed for each element e.g. MqttText
     } else if ((topicPath.startsWith(this.mt.topicPath)) || (topicPath.startsWith(this.mt.topicSetPath))) {
+      // Trying to set a parameter
       // topic like org/project/node/set/sht/temperature/max or ...set/sht/temperature/max
       let parameter = topicPath.split("/").pop();
       this.parameterSet(parameter, message); // True if need to rerender
@@ -1737,14 +1751,17 @@ class MqttReceiver extends MqttElement {
   }
   onwiredchange(e) {
     let newPath = e.target.value;
-    this.mt.setWired(newPath);
-    // noinspection JSUnresolvedVariable
+    this.mt.setWired(newPath); // Set on MT, and subscribe if required
+    // Turn new path into a setpath (e.g. org/project/node/set/sht/temperature/max)
     if ((this.mt.rw === 'r') && e.target.value) {
       let parts = e.target.value.split("/");
       parts.splice(3,0,"set");
       newPath = parts.join("/");
     }
+    // Send value out, this triggers change on nodes or other UX
     this.mt.publishWired(newPath);
+    // Rerender - but could just change attribute probably TODO-64
+
     this.renderAndReplace();
   }
   renderLabel() {
@@ -1755,6 +1772,19 @@ class MqttReceiver extends MqttElement {
       : el('img', {class: "icon", src: 'images/icon_graph.svg', onclick: this.opengraph.bind(this)})
     ];
   }
+  renderWiredInput() {
+    let wiredTopic = this.mt.wired ? this.mt.project.findTopic(this.mt.wired) : undefined;
+    let wiredTopicValue = (wiredTopic && wiredTopic.element.state.value && wiredTopic.element.state.value.toString()) || this.state.value; // Works - but maybe error-prone if value can be undefined
+    this.state.elements.textValue = undefined; // Will be defined below if renderValue creates it
+    this.state.elements.inputValue = undefined; // Will be defined below if renderInput creates it
+    return this.mt.wired
+      ? el('span', {class: 'wiredinput'}, [
+          this.renderValue(wiredTopicValue), // Value is changed because this call sets elements.textValue, and changeAttribute changes it
+          this.renderWiredName(wiredTopic)
+        ])
+      : this.renderInput()
+  }
+
   renderWiredName(wiredTopic) {
     let wiredTopicName = wiredTopic ? `${wiredTopic.node.usableName}:${wiredTopic.usableName}` : undefined;
     return el('span', {class: 'wired', textContent: wiredTopicName})
@@ -1791,12 +1821,12 @@ class MqttReceiver extends MqttElement {
           ? [
             // noinspection JSUnresolvedVariable
             this.mt.wireable
-              ? // rw==r && wireable
+              ? // rw==r && wireable  (e.g. manual or out
               el('details', {} , [
                 el('summary', {}, [
                   this.renderLabel(),
                   this.renderValue(this.state.value),
-                  !this.mt.wired ? null : this.renderWiredName(wiredTopic)
+                  !this.mt.wired ? null : this.renderWiredName(wiredTopic) //TODO-64 may want to look more like the wiredInput version below
                 ]),
                 this.state.elements.chooseTopic = this.renderDropdown(),
               ])
@@ -1806,16 +1836,11 @@ class MqttReceiver extends MqttElement {
               ]
           ] : [ // rw==='w'
             this.mt.wireable
-              ? // rw==w && wireable
+              ? // rw==w && wireable   e.g. now or limit
               el('details', {} , [
                 el('summary', {}, [
                   this.renderLabel(),
-                  this.mt.wired
-                    ? [
-                      this.renderValue(wiredTopicValue),
-                      wiredTopic ? this.renderWiredName(wiredTopic) : this.mt.wired,
-                    ]
-                    : this.renderInput(),
+                  this.state.elements.wiredInput = this.renderWiredInput(),
                 ]),
                 this.state.elements.chooseTopic = this.renderDropdown(),
               ])
@@ -1871,7 +1896,7 @@ class MqttText extends MqttTransmitter {
   renderValue(val) {
     // I think val should always be this.state.value, even when called in renderMaybeWired with wiredTopicValue
     // if not, then valueSet above may be invalid (note haven't written MqttText.valueSet yet
-    if (val != this.state.value) { XXX(["Mistaken assumption in MqttText.renderValue"])}
+    if (val != this.state.value) { XXX(["Mistaken assumption in MqttText.renderValue"])} // TODO-64
     return this.state.elements.textValue = el('span',{class: "val", textContent: val || "", i8n: false, /*onclick: this.onClick.bind(this)*/});
   }
   render() {
@@ -2452,6 +2477,9 @@ class MqttProject extends MqttReceiver {
   findTopic(topicPath) {
     // Currently only used in renderMaybeWired
     let parts = topicPath.split("/");
+    if (parts[3] === "set") {
+      parts.splice(3,1); // Remove "set" from topic path to get topic for subscribing and finding topic metadata such as type
+    }
     return this.state.nodes[parts[2]] && this.state.nodes[parts[2]].state.topics[`${parts[3]}/${parts[4]}/#`];
   }
   nodesForEach(cb) {
@@ -2514,7 +2542,9 @@ class MqttNode extends MqttReceiver {
   get isNode() { return true; } // Overrides superclass in MqttReceiver
 
   get usableName() {
-    return (this.state.name === "device") ? this.state.id : this.state.name;
+    // This used to refer to this.state.name, and fallback to this.state.id BUT name no longer appears to be used.
+    // Instead it is frugal_iot/name so need to get from group, fallback to id (don't use group.usableName because that could be "frugal_iot"
+    return (this.groups.frugal_iot && this.groups.frugal_iot.state.name) || this.state.id;
   }
   // Filter the topics on this node by type e.g. "bool" "float" or ["float","int"]
   topicsByType(types, rw) { // [ { name, topic: topicpath } ]
@@ -2546,7 +2576,6 @@ class MqttNode extends MqttReceiver {
   }
   // Rebuild all embedded mqtt-choosetopic.
   rebuildTopicDropdowns() {
-    console.log("TODO-N200 node:", this.state.name || this.state.id);
     this.elementsForEach(el => { el.rebuildTopicDropdown(); } );
   }
   // Overrides topicValueSet in MqttReceiver
@@ -2568,28 +2597,24 @@ class MqttNode extends MqttReceiver {
       || twig.startsWith("humidity/") // esp8266-243053 Old name for controlhysterisis
       || twig.startsWith("led/") // esp8266-243053 Old name for ledbuiltin
       || twig.endsWith('/wire') // replaced with "/wired"
-      || twig.endsWith('/device_name') // replaced with "/name"
       || !twig.includes('/')
     ) {
       XXX(["legacy twig thought this was gone!", twig]);
       return false
     }
-    // TODO-37 ignore some legacy and/or buggy nodes - probably will go away when MQTT restarted
-    if ( ["wifistrength", "climate/temp_now", "climate/temp_out", "climate/temp_hysteresis", "climate/temp_setpoint", "climate/temperature", "climate/humidity", "controlhysterisis/auto", "frugal-iot/reboot", "buttons"].some(s => s == twig || twig.includes(s+"/"))) {
+    // Look for twigs that we don't act on - currently just frugal_iot/project but may be others in future
+    if ( ["frugal_iot/project"].some(s => s == twig || twig.includes(s+"/"))) {
+      return false
+    }
+    // TODO-37 ignore some legacy and/or buggy topics - probably will go away when MQTT restarted
+    if ( ["frugal_iot/device_name"].some(s => s == twig || twig.includes(s+"/"))) {
+      //XXY(["legacy twig won't go away till nodes and their file systems rebuilt", twig]);
+      return false
+    }
+    if ( ["wifistrength", "climate/temp_now", "climate/temp_out", "climate/temp_hysteresis", "climate/temp_setpoint", "climate/temperature", "climate/humidity", "controlhysterisis/auto", "frugal-iot/reboot", "buttons", "messages", "now/now"].some(s => s == twig || twig.includes(s+"/"))) {
       XXY(["legacy twig will go away after reboot", twig]);
       return false
     }
-    // Special case twigs
-    /* TODO-42 doesnt appear to be needed - will go to "frugal_iot" group
-    if (twig.startsWith("frugal_iot/")) {
-      let leaf = twig.substring(11);
-      if (!this.constructor.observedAttributes.includes(leaf)) {
-        XXX(["Probably not a valid leaf of frugal_iot", leaf]);
-      }
-      this.setAttribute(leaf, message); // Will update state and rerender if needed
-      // Need to drop through and also look for topics that match in the frugal_iot group
-    }
-     */
     // I don't expect this next match to ever succeed - as topics is usually like set/temperature/# but the test happens below in the loop through this.state.topic
     if (this.state.topics[twig]) {
       XXX(["Unexpected exact match for twig", twig])
@@ -2597,10 +2622,15 @@ class MqttNode extends MqttReceiver {
     } else {
       // Check if it is a group we haven't seen for this node, if so add it - checking first for a template
       let groupId = twig.split("/")[0];
-      if (this.addGroupFromTemplate(groupId)) { //XXX N200
+      if (this.addGroupFromTemplate(groupId)) {
         this.project.rebuildTopicDropdowns();
       }
       let matched= this.sendMessageToMatchingTopics(topicPath, twig, message);
+      if ([ "frugal_iot/name"].some(s => s == twig || twig.includes(s+"/"))) {
+        // Special case for name because it is used in the topic dropdowns, so if it changes then need to trigger a re-render of the dropdowns
+        this.project.rebuildTopicDropdowns();
+      }
+      // Haven't seen this topic before, and its not in the group, so try adding it based on a template and then send the message to it (which will update the value and trigger any needed re-rendering)
       if (!matched) {
         let leaf = twig.split("/")[1]; // Remove group part
         // Lets see if can find a template for this topic
