@@ -412,6 +412,10 @@ FR:
   Setpoint: consigne
   Admin: Admin
   Add: Ajouter
+  Manual: Manuel
+  buttons: boutons
+  Waiting: En attente
+  No projects to display until organization selected: Aucun projet à afficher tant qu'une organisation n'est sélectionnée
 HI:
   _nameAndFlag: हिंदी 🇮🇳
   _thisLanguage: हिंदी
@@ -492,6 +496,10 @@ HI:
   Setpoint: सेटपॉइंट
   Admin: एडमिन
   Add: जोड़ें
+  Manual: मैनुअल
+  buttons: बटन
+  Waiting: प्रतीक्षा में
+  No projects to display until organization selected: संगठन चुने जाने तक कोई प्रोजेक्ट प्रदर्शित नहीं होगा
 ID:
   _nameAndFlag: Bahasa Indonesia 🇮🇩
   _thisLanguage: Bahasa Indonesia
@@ -572,6 +580,10 @@ ID:
   Setpoint: titik setel
   Admin: Admin
   Add: Tambah
+  Manual: Manual
+  buttons: tombol
+  Waiting: Menunggu
+  No projects to display until organization selected: Tidak ada proyek untuk ditampilkan sampai organisasi dipilih
 `);
 
 let preferedLanguages = [ ];
