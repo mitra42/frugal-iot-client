@@ -763,7 +763,7 @@ class MqttTopic {
       return this.topicPath + "/#"; // Subscribe to all subtopics
     } else {
       //noinspection JSUnresolvedVariable
-      XXX(["Should not need subscribe path as subscribing at node level", this.topicPath]);
+      // should only happen for embedded as normally subscribe to wildcard at topic level
       switch (this.rw) { // Note for project this will be undefined
         case 'w': // Note should not be happening as subscribing at node level
           return this.topicSetPath;
@@ -1491,6 +1491,26 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     console.log(ev,val);
     this.getOrChangeAdminPeople(`/permissions_delete/${val}`);
   }
+  onPublishMessage(ev) {
+    const topic = this.state.elements.msg_topic.value;
+    const value = this.state.elements.msg_value.value;
+    const retain = this.state.elements.msg_retain.checked;
+    const qos = parseInt(this.state.elements.msg_qos.value);
+
+    if (!topic || !value) {
+      this.message("Topic and Value are required");
+      return;
+    }
+
+    mqtt_client.publish(topic, value, {retain: retain, qos: qos});
+    this.message(`Published to ${topic}`);
+
+    // Clear the form
+    this.state.elements.msg_topic.value = '';
+    this.state.elements.msg_value.value = '';
+    this.state.elements.msg_retain.checked = false;
+    this.state.elements.msg_qos.value = '0';
+  }
   peoplePermList() {
     return ((!this.state.people_list) || (!this.state.people_list.peopleperms) || (this.state.people_list.peopleperms.length === 0)) ?
       el('p', {}, ["Nobody added for this organization yet."]) :
@@ -1614,9 +1634,40 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
               this.state.elements.adminorgsdropdown = el('span',{ textContent: "Waiting"}),
               el('section', {}, [
                     el('h3', {}, ["Permissions"]),
+                    // List of people and their permissions, with option to delete,
                     this.state.elements.people_perms_list = this.peoplePermList(), // This gets replaced when actions taken
+                    // and form to add (dropdown of people and permissions)
                     this.state.elements.people_list = this.peopleList(),
               ]),
+              // TODO-CSS cleanup - labels are too big
+              // This should really use a superuser permission but for now its just the super admin can do this
+              server_config.user.id !== 1 ? null : // Only show publish message to super admin, as not really a feature, more for testing and debugging
+                el('section', {}, [
+                  el('h3', {}, ["Publish Message"]),
+                  el('form', {}, [
+                    el('div', {class: 'formgroup'}, [
+                      el('label', {for: 'msg_topic', textContent: "Topic"}),
+                      this.state.elements.msg_topic = el('input', {id: 'msg_topic', name: 'topic', type: 'text', placeholder: 'Enter topic', required: true}),
+                    ]),
+                    el('div', {class: 'formgroup'}, [
+                      el('label', {for: 'msg_value', textContent: "Value"}),
+                      this.state.elements.msg_value = el('input', {id: 'msg_value', name: 'value', type: 'text', placeholder: 'Enter value', required: true}),
+                    ]),
+                    el('div', {class: 'formgroup'}, [
+                      el('label', {for: 'msg_retain', textContent: "Retain"}),
+                      this.state.elements.msg_retain = el('input', {id: 'msg_retain', name: 'retain', type: 'checkbox'}),
+                    ]),
+                    el('div', {class: 'formgroup'}, [
+                      el('label', {for: 'msg_qos', textContent: "QoS"}),
+                      this.state.elements.msg_qos = el('select', {id: 'msg_qos', name: 'qos'}, [
+                        el('option', {value: 0, textContent: "0", selected: true}),
+                        el('option', {value: 1, textContent: "1"}),
+                        el('option', {value: 2, textContent: "2"}),
+                      ]),
+                    ]),
+                    el('button', {class: 'submit', type: 'button', textContent: 'SEND', onclick: this.onPublishMessage.bind(this)}),
+                  ]),
+                ]),
             ]), // Admin tab
         ]),
       ]),
@@ -1672,7 +1723,7 @@ class MqttReceiver extends MqttElement {
   connectedCallback() {
     if (this.state.topic && !this.mt) {
       // Created with a topic string, which should be a path, so create the MqttTopic
-      XXX("TODO-155 Not expecting connectCallback to work - see createTopic");
+      // only used when embedding, may not work
       this.createTopic();
     }
     super.connectedCallback();
@@ -1681,7 +1732,6 @@ class MqttReceiver extends MqttElement {
   // But not sure how this still works because the mt will not have a node, which is presumed.
   // TODO-155 test embedded examples - doubt this will work now, without a node.
   createTopic() {
-    XXX("TODO-155 Not expecting MqttReceiver.createTopic to work");
     let mt = new MqttTopic();
     let tt = this.state.topic.split("/");
     let org = tt.shift();
@@ -1694,10 +1744,10 @@ class MqttReceiver extends MqttElement {
       element: this,
       name: this.state.label,
       color: this.state.color,
-      node: { mt: { topicPath: `${org}/${projectId}/${nodeId}`} }
+      node: { mt: { topicPath: `${org}/${projectId}/${nodeId}`} }  // fake node
     })
     this.mt = mt;
-    mt.subscribe(); //TODO-155 check embedded case,
+    mt.subscribe();
   }
   changeAttribute(name, valueString) {
     super.changeAttribute(name, valueString); // Change from string to number etc and store on this.state
