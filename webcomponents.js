@@ -267,7 +267,8 @@ EN:
   Greater Than: Greater Than
   Humidity control: Humidity control
   Humidity: Humidity
-  Hysterisis: Hysterisis
+  Hysteresis: Hysteresis
+  Hysterisis: Hysteresis
   Key: Key
   LED: LED
   Limit: Limit
@@ -319,7 +320,6 @@ EN:
   Time On (s): Time On (s)
   heating: heating
   humidifier: humidifier
-  Hysteresis: hysteresis
   now: now
   temperature: temperature
   humidity: humidity
@@ -352,6 +352,7 @@ FR:
   Humidity control: Contrôle de l'humidité
   Humidity: Humidité
   Hysterisis: Hystérésis
+  Hysteresis: Hystérésis
   Key: Clé
   LED: LED
   Limit: Limite
@@ -403,7 +404,8 @@ FR:
   Time On (s): Durée active (s)
   heating: chauffage
   humidifier: humidificateur
-  Hysteresis: hystérésis
+  hysteresis: hystérésis
+  hysterisis: hystérésis
   now: maintenant
   temperature: température
   humidity: humidité
@@ -435,6 +437,7 @@ HI:
   Greater Than: इससे बड़ा
   Humidity control: आर्द्रता नियंत्रण
   Humidity: आर्द्रता
+  Hysteresis: हिस्टेरिसिस
   Hysterisis: हिस्टेरिसिस
   Key: कुंजी
   LED: एलईडी
@@ -487,7 +490,8 @@ HI:
   Time On (s): चालू समय (से)
   heating: हीटिंग
   humidifier: ह्यूमिडिफ़ायर
-  Hysteresis: हिस्टेरेसिस
+  hysteresis: हिस्टेरेसिस
+  hysterisis: हिस्टेरेसिस
   now: अभी
   temperature: तापमान
   humidity: आर्द्रता
@@ -519,6 +523,7 @@ ID:
   Greater Than: Lebih dari
   Humidity control: Kontrol kelembapan
   Humidity: Kelembapan
+  Hysteresis: Histeresis
   Hysterisis: Histeresis
   Key: Kunci
   LED: LED
@@ -571,7 +576,8 @@ ID:
   Time On (s): Waktu Nyala (d)
   heating: pemanas
   humidifier: pelembap
-  Hysteresis: histeresis
+  hysteresis: histeresis
+  hysterisis: histeresis
   now: sekarang
   temperature: suhu
   humidity: kelembapan
@@ -1720,6 +1726,9 @@ class MqttReceiver extends MqttElement {
     // Its also mt.node.state.groups[this.mt.group]
     return this.parentElement;
   }
+  get wiredTopic() {
+    return this.mt.wired ? this.mt.project.findTopic(this.mt.wired) : undefined;
+  }
   connectedCallback() {
     if (this.state.topic && !this.mt) {
       // Created with a topic string, which should be a path, so create the MqttTopic
@@ -1796,6 +1805,10 @@ class MqttReceiver extends MqttElement {
       // topic like org/project/node/set/sht/temperature/max or ...set/sht/temperature/max
       let parameter = topicPath.split("/").pop();
       this.parameterSet(parameter, message); // True if need to rerender
+      if (this.groupElement) { // There is (currently) no node if it is a Project
+        // Notes just passing message up as a string, (parameterSet knows how to convert)
+        this.groupElement.setAttribute(`${leafAttribute(topicPath)}`, message); // ROLL-UP to group things it might need to summarize
+      }
       return false; // parameterSet will have rerendered if needed
     } else {
       // Most likely cause of an "unhandled" topicPath is because received topicPath after changing "wired" - that is ok, can safely ignore
@@ -1854,20 +1867,19 @@ class MqttReceiver extends MqttElement {
     ];
   }
   renderWiredInput() {
-    let wiredTopic = this.mt.wired ? this.mt.project.findTopic(this.mt.wired) : undefined;
-    let wiredTopicValue = (wiredTopic && wiredTopic.element.state.value && wiredTopic.element.state.value.toString()) || this.state.value; // Works - but maybe error-prone if value can be undefined
+    let wiredTopicValue = (this.wiredTopic && this.wiredTopic.element.state.value && this.wiredTopic.element.state.value.toString()) || this.state.value; // Works - but maybe error-prone if value can be undefined
     this.state.elements.textValue = undefined; // Will be defined below if renderValue creates it
     this.state.elements.inputValue = undefined; // Will be defined below if renderInput creates it
     return this.mt.wired
       ? el('span', {class: 'wiredinput'}, [
-          this.renderValue(wiredTopicValue), // Value is changed because this call sets elements.textValue, and changeAttribute changes it
-          this.renderWiredName(wiredTopic)
+          this.renderValue(this.wiredTopicValue), // Value is changed because this call sets elements.textValue, and changeAttribute changes it
+          this.renderWiredName()
         ])
       : this.renderInput()
   }
 
-  renderWiredName(wiredTopic) {
-    let wiredTopicName = wiredTopic ? `${wiredTopic.node.usableName}:${wiredTopic.usableName}` : undefined;
+  renderWiredName() {
+    let wiredTopicName = this.wiredTopic ? `${this.wiredTopic.node.usableName}:${this.wiredTopic.usableName}` : undefined;
     return el('span', {class: 'wired', textContent: wiredTopicName})
   }
   renderDropdown() {
@@ -1891,8 +1903,8 @@ class MqttReceiver extends MqttElement {
       return []; // Dont render till have mt set
     }
     // noinspection JSUnresolvedVariable
-    let wiredTopic = this.mt.wired ? this.mt.project.findTopic(this.mt.wired) : undefined;
-    let wiredTopicValue = wiredTopic ? wiredTopic.element.state.value.toString() : this.state.value; // Works - but maybe error-prone if value can be undefined
+
+    let wiredTopicValue = this.wiredTopic ? this.wiredTopic.element.state.value.toString() : this.state.value; // Works - but maybe error-prone if value can be undefined
     // noinspection JSUnresolvedReference
       return [
       el('link', {rel: 'stylesheet', href: CssUrl}),
@@ -1907,7 +1919,7 @@ class MqttReceiver extends MqttElement {
                 el('summary', {}, [
                   this.renderLabel(),
                   this.renderValue(this.state.value),
-                  !this.mt.wired ? null : this.renderWiredName(wiredTopic) //TODO-64 may want to look more like the wiredInput version below
+                  !this.mt.wired ? null : this.renderWiredName() //TODO-64 may want to look more like the wiredInput version below
                 ]),
                 this.state.elements.chooseTopic = this.renderDropdown(),
               ])
@@ -2048,6 +2060,7 @@ class MqttToggle extends MqttTransmitter {
     this.publish();
   }
   get textValue() {
+    // Note same code in MqttGroupControlHysteresis but no obvious common parent
     return (this.state.value === undefined) ? '?' : (this.state.value ? '✓' : '✗')
   }
   // Handle cases ....
@@ -2859,6 +2872,14 @@ class MqttGroup extends MqttElement { // TODO-40 may extend MqttReceiver if need
     this.topics = {}
     this.state.elements = {}
   }
+  // Instance of MqttNode
+  get node() {
+    return this.parentElement;
+  }
+  // instance of MqttProject
+  get project() {
+    return this.node.project;
+  }
   reSummarize() {
     let oldSummary = this.state.elements.summary;
     if (oldSummary) { // Will be false during constructor
@@ -2897,10 +2918,13 @@ class MqttGroup extends MqttElement { // TODO-40 may extend MqttReceiver if need
 customElements.define('mqtt-group', MqttGroup);
 
 // TODO-42 build a group here for any module we want to roll up values.
-
+//  It will be found in "addGroupFromTemplate" if it exists and matches a group id
+// MqttReceiver.topicValueSet passes the value from subelement up to group
 class MqttGroupLedbuiltin extends MqttGroup {
   static get observedAttributes() { return MqttGroup.observedAttributes.concat(['on']);}
   static get boolAttributes() { return MqttGroup.boolAttributes.concat(['on']);}
+
+  //constructor() { super(); } // Just for debugging - TODO remove
 
   renderSummary() {
     let style = this.state.on ? "background:#ff0;" : "background:#444;";
@@ -2908,6 +2932,30 @@ class MqttGroupLedbuiltin extends MqttGroup {
   }
 }
 customElements.define('mqtt-groupledbuiltin', MqttGroupLedbuiltin);
+
+class MqttGroupControlHysteresis extends MqttGroup {
+  static get observedAttributes() { return MqttGroup.observedAttributes.concat(['on','now','now_wired','greater','limit','limit_wired','hysteresis','hysterisis','out_wired', 'manual']);}
+  static get boolAttributes() { return MqttGroup.boolAttributes.concat(['on', 'greater', 'manual']);}
+  static get floatAttributes() { return MqttGroup.floatAttributes.concat(['now','limit','hysteresis','hysterisis']);}
+
+  //constructor() { super(); } // Just for debugging - TODO remove
+
+  nameOrValue(val,wired) {
+    return wired && this.project.findTopic(wired) && this.project.findTopic(wired).usableName || val;
+  }
+  renderSummary() {
+    let hysteresis = this.state.hysterisis || this.state.hysterisis || 0
+    let summarytext = this.state.manual
+      ? 'Manual' //TODO-TRANSLATE
+      : `${this.nameOrValue("",this.state.out_wired)} = ${this.nameOrValue(this.state.now,this.state.now_wired)} ${this.state.greater ? ">" : "<"} ${this.nameOrValue(this.state.limit,this.state.limit_wired)} ${hysteresis ? "+/-" : ""} ${hysteresis ? hysteresis : ""} ${(this.state.on === undefined) ? '?' : (this.state.on ? '✓' : '✗')}`;
+    return el('div', {style:`display:inline-block;margin-left:20px;vertical-align:middle;`}, [
+        el('span', {textContent: summarytext})
+      ]); // Colored circle with thin black border
+  }
+}
+customElements.define('mqtt-groupcontrolhysteresis', MqttGroupControlHysteresis);
+class MqttGroupControlHysterisis extends MqttGroupControlHysteresis { }
+customElements.define('mqtt-groupcontrolhysterisis', MqttGroupControlHysterisis); // TODO-legacy-hysterisis
 
 class MqttGroupFrugalIot extends MqttGroup {
   static get observedAttributes() {
