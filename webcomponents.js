@@ -2920,11 +2920,19 @@ customElements.define('mqtt-group', MqttGroup);
 // TODO-42 build a group here for any module we want to roll up values.
 //  It will be found in "addGroupFromTemplate" if it exists and matches a group id
 // MqttReceiver.topicValueSet passes the value from subelement up to group
-class MqttGroupLedbuiltin extends MqttGroup {
+class MqttSummaryGroup extends MqttGroup {
+  renderSummary() {
+    return el('div', {style:`display:inline-block;margin-left:20px;vertical-align:middle;`}, [
+      el('span', {textContent: this.summaryText()})
+    ]); // Colored circle with thin black border
+  }
+  trueFalseSymbol(val) {
+    return (val === undefined) ? '?' : (val ? '✓' : '✗');
+  }
+}
+class MqttGroupLedbuiltin extends MqttSummaryGroup {
   static get observedAttributes() { return MqttGroup.observedAttributes.concat(['on']);}
   static get boolAttributes() { return MqttGroup.boolAttributes.concat(['on']);}
-
-  //constructor() { super(); } // Just for debugging - TODO remove
 
   renderSummary() {
     let style = this.state.on ? "background:#ff0;" : "background:#444;";
@@ -2933,7 +2941,66 @@ class MqttGroupLedbuiltin extends MqttGroup {
 }
 customElements.define('mqtt-groupledbuiltin', MqttGroupLedbuiltin);
 
-class MqttGroupControlHysteresis extends MqttGroup {
+class MqttGroupRelay extends MqttSummaryGroup {
+  static get observedAttributes() { return MqttGroup.observedAttributes.concat(['on']);}
+  static get boolAttributes() { return MqttGroup.boolAttributes.concat(['on']);}
+
+  summaryText() {
+        return `${this.trueFalseSymbol(this.state.on)}`
+  }
+}
+customElements.define('mqtt-grouprelay', MqttGroupRelay);
+
+class MqttGroupSoil extends MqttSummaryGroup {
+  static get observedAttributes() { return MqttGroup.observedAttributes.concat(['soil']);}
+  static get floatAttributes() { return MqttGroup.boolAttributes.concat(['soil']);}
+
+  summaryText() {
+    return `${this.state.soil}%`
+  }
+}
+customElements.define('mqtt-groupsoil', MqttGroupSoil);
+
+class MqttGroupOta extends MqttSummaryGroup {
+  static get observedAttributes() { return MqttGroup.observedAttributes.concat(['key']);}
+
+  summaryText() {
+    return `${this.state.key}`
+  }
+}
+customElements.define('mqtt-groupota', MqttGroupOta);
+
+class MqttGroupBattery extends MqttSummaryGroup {
+  static get observedAttributes() { return MqttGroup.observedAttributes.concat(['battery']);}
+  static get integerAttributes() { return MqttGroup.boolAttributes.concat(['battery']);}
+
+  summaryText() {
+    return `${this.state.battery}`
+  }
+}
+customElements.define('mqtt-groupbattery', MqttGroupBattery);
+
+class MqttGroupDS18B20 extends MqttSummaryGroup {
+  static get observedAttributes() { return MqttGroup.observedAttributes.concat(['ds18b20']);}
+  static get floatAttributes() { return MqttGroup.boolAttributes.concat(['ds18b20']);}
+
+  summaryText() {
+    return `${this.state.ds18b20}°C`
+  }
+}
+customElements.define('mqtt-groupds18b20', MqttGroupDS18B20);
+
+class MqttGroupSht extends MqttSummaryGroup {
+  static get observedAttributes() { return MqttGroup.observedAttributes.concat(['temperature', 'humidity']);}
+  static get floatAttributes() { return MqttGroup.boolAttributes.concat(['temperature', 'humidity']);}
+
+  summaryText() {
+    return `${this.state.temperature}°C ${this.state.humidity}%RH`
+  }
+}
+customElements.define('mqtt-groupsht', MqttGroupSht);
+
+class MqttGroupControlHysteresis extends MqttSummaryGroup {
   static get observedAttributes() { return MqttGroup.observedAttributes.concat(['on','now','now_wired','greater','limit','limit_wired','hysteresis','hysterisis','out_wired', 'manual']);}
   static get boolAttributes() { return MqttGroup.boolAttributes.concat(['on', 'greater', 'manual']);}
   static get floatAttributes() { return MqttGroup.floatAttributes.concat(['now','limit','hysteresis','hysterisis']);}
@@ -2943,14 +3010,11 @@ class MqttGroupControlHysteresis extends MqttGroup {
   nameOrValue(val,wired) {
     return wired && this.project.findTopic(wired) && this.project.findTopic(wired).usableName || val;
   }
-  renderSummary() {
+  summaryText() {
     let hysteresis = this.state.hysterisis || this.state.hysterisis || 0
-    let summarytext = this.state.manual
+    return this.state.manual
       ? 'Manual' //TODO-TRANSLATE
-      : `${this.nameOrValue("",this.state.out_wired)} = ${this.nameOrValue(this.state.now,this.state.now_wired)} ${this.state.greater ? ">" : "<"} ${this.nameOrValue(this.state.limit,this.state.limit_wired)} ${hysteresis ? "+/-" : ""} ${hysteresis ? hysteresis : ""} ${(this.state.on === undefined) ? '?' : (this.state.on ? '✓' : '✗')}`;
-    return el('div', {style:`display:inline-block;margin-left:20px;vertical-align:middle;`}, [
-        el('span', {textContent: summarytext})
-      ]); // Colored circle with thin black border
+      : `${this.nameOrValue("",this.state.out_wired)} = ${this.nameOrValue(this.state.now,this.state.now_wired)} ${this.state.greater ? ">" : "<"} ${this.nameOrValue(this.state.limit,this.state.limit_wired)} ${hysteresis ? "+/-" : ""} ${hysteresis ? hysteresis : ""} ${this.trueFalseSymbol(this.state.on)}`;
   }
 }
 customElements.define('mqtt-groupcontrolhysteresis', MqttGroupControlHysteresis);
