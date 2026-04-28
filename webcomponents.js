@@ -1665,17 +1665,17 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
 
      this.state.allNodes = allNodes;
 
-     // Create table rows
-     let tableRows = allNodes.map((node) => [
-       el('tr', {}, [
-         el('td', {textContent: node.projectId, i8n: false}),
-         el('td', {textContent: node.nodeId, i8n: false}),
-         el('td', {textContent: node.name, i8n: false}),
-         el('td', {textContent: node.description, i8n: false}),
-         el('td', {textContent: node.lastSeen, i8n: false}),
-         el('td', {textContent: node.otakey, i8n: false}),
-       ])
-     ]);
+      // Create table rows
+      let tableRows = allNodes.map((node) => [
+        el('tr', {}, [
+          this.renderProjectIdCell(node),
+          el('td', {textContent: node.nodeId, i8n: false}),
+          el('td', {textContent: node.name, i8n: false}),
+          el('td', {textContent: node.description, i8n: false}),
+          el('td', {textContent: node.lastSeen, i8n: false}),
+          el('td', {textContent: node.otakey, i8n: false}),
+        ])
+      ]);
 
      // Create table headers with click handlers for sorting
      let headerCells = [
@@ -1710,11 +1710,67 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
        this.state.sortField = field;
        this.state.sortAsc = true;
      }
+      if (rerender && this.state.elements.nodes_table) {
+        this.state.elements.nodes_table.replaceWith(this.state.elements.nodes_table = this.nodesTable());
+      }
+    }
 
-     if (rerender && this.state.elements.nodes_table) {
-       this.state.elements.nodes_table.replaceWith(this.state.elements.nodes_table = this.nodesTable());
-     }
-   }
+    projectsDropdownForNode(org, currentProjectId) {
+      // Create dropdown for selecting a different project for a node
+      if (!org) { return el('span', {textContent: "No organization"}); }
+      return el('select', {name: 'project'}, [
+        Object.entries(server_config.organizations[org].projects)
+          .map(([pid, p]) => [ pid, p.name ])
+          .map(([pid, name]) =>
+            el('option', {value: pid, textContent: `${pid}: ${name}`, selected: pid === currentProjectId}))
+      ]);
+    }
+
+    onNodeProjectChange(nodeId, oldProjectId, selectElement) {
+      // Handle project change for a node
+      const newProjectId = selectElement.value;
+      if (newProjectId === oldProjectId) {
+        return; // No change
+      }
+
+      // Send MQTT message to update project
+      const topic = `${this.state.org}/${oldProjectId}/${nodeId}/set/frugal_iot/project`;
+      const message = newProjectId;
+
+      console.log(`Publishing ${topic} = ${message}`);
+      mqtt_client.publish(topic, message, {retain: false, qos: 1});
+      this.message(`Project changed to ${newProjectId} for node ${nodeId}`);
+
+      // Refresh the table after a short delay
+      setTimeout(() => {
+        if (this.state.elements.nodes_table) {
+          this.state.elements.nodes_table.replaceWith(this.state.elements.nodes_table = this.nodesTable());
+        }
+      }, 500);
+    }
+
+    renderProjectIdCell(node) {
+      // Create an editable cell for projectId that opens a dropdown on click
+      return el('td', {
+        style: 'cursor: pointer; position: relative;',
+        title: 'Click to change project',
+        onclick: (e) => {
+          // Replace with dropdown
+          const dropdown = this.projectsDropdownForNode(this.state.org, node.projectId);
+          dropdown.addEventListener('change', (changeEvent) => {
+            this.onNodeProjectChange(node.nodeId, node.projectId, changeEvent.target);
+          });
+          e.target.replaceWith(dropdown);
+          dropdown.focus();
+          // Close dropdown if focus lost
+          dropdown.addEventListener('blur', () => {
+            if (this.state.elements.nodes_table) {
+              this.state.elements.nodes_table.replaceWith(this.state.elements.nodes_table = this.nodesTable());
+            }
+          });
+        }
+      }, [node.projectId]);
+    }
 
    render() { //TODO-89 needs styles
      return [
