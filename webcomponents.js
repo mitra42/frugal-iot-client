@@ -1570,9 +1570,11 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     this.replaceElement("projectdropdown", this.projectDropdown(this.state.org));
     this.getOtaFiles();  // Replaces ota files part asynchronously
     this.getPeopleList();  // Replaces perms and people list part asynchronously
+    this.sortNodesTable("projectId", true);
     // Note both these dropdowns are fine if this.state.org is undefined
     this.replaceElement("otaorgsdropdown", this.orgDropdown(this.state.org, this.otaOrgs,"otaorganizations"));
     this.replaceElement("adminorgsdropdown", this.orgDropdown(this.state.org, this.adminOrgs,"adminorganizations"));
+    this.replaceElement("nodesorgsdropdown", this.orgDropdown(this.state.org, this.adminOrgs,"nodesorganizations"));
   }
   setDefaultOrganization() {
     let org = this.state.org;
@@ -1586,24 +1588,149 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   onOrganization(e) {
     this.setOrganization(e.target.value);
   }
-  onFile(e) {
-    //TODO-14 do some sanity check on the files. See https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/input/file
-  }
-  render() { //TODO-89 needs styles
-    return [
-      el('link', {rel: 'stylesheet', href: CssUrl}),
-      el('div', {class: 'mqtt-admin'},[
-        // This is a top bar, holds message and language picker
-        el('div',{class: 'message'},[
-          this.state.elements.message = el('span', {textContent: this.state.message}),
-          el('language-picker'),
-        ]),
-        el('tabbed-display', {tab: 0}, [
-          el('section', {title: "Dashboard"}, [
-            el('mqtt-wrapper'),
-          ]),
-          !this.otaOrgs.length ? null :
-            el('section', {title: "OTA"}, [
+   onFile(e) {
+     //TODO-14 do some sanity check on the files. See https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/input/file
+   }
+
+   formatLastSeen(dateString) {
+     // Format ISO date string to local timezone in format: 2026-04-27 10:34
+     if (!dateString || dateString === getString("Never seen")) {
+       return getString("Never seen");
+     }
+     try {
+       const date = new Date(dateString);
+       // Use toLocaleString with options for YYYY-MM-DD HH:MM format
+       return date.toLocaleString('sv-SE', {
+         year: 'numeric',
+         month: '2-digit',
+         day: '2-digit',
+         hour: '2-digit',
+         minute: '2-digit',
+         second: undefined,
+         hour12: false
+       }).replace(' ', ' ');
+     } catch (e) {
+       return dateString; // Return original if parsing fails
+     }
+   }
+
+   nodesTable() {
+     if (!this.state.org) {
+       return el('p', {}, ["No organization selected"]);
+     }
+
+     let org = this.state.org;
+     let projects = server_config.organizations[org].projects || {};
+     let allNodes = [];
+
+     // Collect all nodes from all projects
+     Object.entries(projects).forEach(([projectId, project]) => {
+       let nodes = project.nodes || {};
+       Object.entries(nodes).forEach(([nodeId, nodeData]) => {
+          allNodes.push({
+            projectId: projectId,
+            nodeId: nodeId,
+            name: nodeData["frugal_iot/name"] || "",
+            description: nodeData["frugal_iot/description"] || "",
+            lastSeen: this.formatLastSeen(nodeData.lastseen),
+            otakey: nodeData["ota/key"] || ""
+          });
+       });
+     });
+
+     if (allNodes.length === 0) {
+       return el('p', {}, ["No nodes found for this organization"]);
+     }
+
+     // Store nodes in state for sorting
+     if (!this.state.sortField) {
+       this.state.sortField = 'projectId';
+       this.state.sortAsc = true;
+     }
+
+     // Sort nodes
+     allNodes.sort((a, b) => {
+       let aVal = a[this.state.sortField] || "";
+       let bVal = b[this.state.sortField] || "";
+
+       if (typeof aVal === 'string') {
+         aVal = aVal.toLowerCase();
+         bVal = bVal.toLowerCase();
+       }
+
+       if (aVal < bVal) return this.state.sortAsc ? -1 : 1;
+       if (aVal > bVal) return this.state.sortAsc ? 1 : -1;
+       return 0;
+     });
+
+     this.state.allNodes = allNodes;
+
+     // Create table rows
+     let tableRows = allNodes.map((node) => [
+       el('tr', {}, [
+         el('td', {textContent: node.projectId, i8n: false}),
+         el('td', {textContent: node.nodeId, i8n: false}),
+         el('td', {textContent: node.name, i8n: false}),
+         el('td', {textContent: node.description, i8n: false}),
+         el('td', {textContent: node.lastSeen, i8n: false}),
+         el('td', {textContent: node.otakey, i8n: false}),
+       ])
+     ]);
+
+     // Create table headers with click handlers for sorting
+     let headerCells = [
+       {label: "Project ID", field: 'projectId'},
+       {label: "Node ID", field: 'nodeId'},
+       {label: "Node Name", field: 'name'},
+       {label: "Description", field: 'description'},
+       {label: "Last Seen", field: 'lastSeen'},
+       {label: "OTA Key", field: 'otakey'},
+     ].map(header =>
+       el('th', {
+         style: 'cursor: pointer; user-select: none; padding-right: 10px;',
+         title: 'Click to sort',
+         onclick: () => this.sortNodesTable(header.field, true),
+         textContent: header.label + (this.state.sortField === header.field ? (this.state.sortAsc ? ' ↑' : ' ↓') : '')
+       })
+     );
+
+     return el('table', {class: 'nodes-table', style: 'border-collapse: collapse; width: 100%;'}, [
+       el('thead', {}, [
+         el('tr', {}, headerCells)
+       ]),
+       el('tbody', {}, tableRows),
+     ]);
+   }
+
+   sortNodesTable(field, rerender = true) {
+     // Toggle sort order if same field clicked
+     if (this.state.sortField === field) {
+       this.state.sortAsc = !this.state.sortAsc;
+     } else {
+       this.state.sortField = field;
+       this.state.sortAsc = true;
+     }
+
+     if (rerender && this.state.elements.nodes_table) {
+       this.state.elements.nodes_table.replaceWith(this.state.elements.nodes_table = this.nodesTable());
+     }
+   }
+
+   render() { //TODO-89 needs styles
+     return [
+       el('link', {rel: 'stylesheet', href: CssUrl}),
+       el('div', {class: 'mqtt-admin'},[
+         // This is a top bar, holds message and language picker
+         el('div',{class: 'message'},[
+           this.state.elements.message = el('span', {textContent: this.state.message}),
+           el('language-picker'),
+         ]),
+         el('tabbed-display', {tab: 0}, [
+           el('section', {title: "Dashboard"}, [
+             el('mqtt-wrapper'),
+           ]),
+           !this.otaOrgs.length ? null :
+             el('section', {title: "OTA"}, [
               el('form', {action: '/ota_update', method: "post", enctype: "multipart/form-data"}, [
                 el('input', {id: "url2", name: "url", type: "hidden", value: `/dashboard/admin.html`}),
                 el('input', {id: "lang", name: "lang", type: "hidden", value: preferedLanguages.join(',')}),
@@ -1674,11 +1801,18 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
                     el('button', {class: 'submit', type: 'button', textContent: 'SEND', onclick: this.onPublishMessage.bind(this)}),
                   ]),
                 ]),
-            ]), // Admin tab
-        ]),
-      ]),
-    ];
-  }
+             ]), // Admin tab
+
+           !this.adminOrgs.length ? null :
+             el('section', {title: "Nodes"}, [
+               this.state.elements.nodesorgsdropdown = el('span',{ textContent: "Waiting"}),
+               el('h3', {}, ["Nodes in Organization"]),
+               this.state.elements.nodes_table = this.nodesTable(),
+             ]), // Nodes tab
+         ]),
+       ]),
+     ];
+   }
 }
 customElements.define('mqtt-admin', MqttAdmin);
 
