@@ -3203,7 +3203,7 @@ class MqttGroupControlHysteresis extends MqttSummaryGroup {
   summaryText() {
     let hysteresis = this.state.hysterisis || this.state.hysterisis || 0
     return this.state.manual
-      ? 'Manual' //TODO-TRANSLATE
+      ? getString('Manual')
       : `${this.nameOrValue("",this.state.out_wired)} = ${this.nameOrValue(this.state.now,this.state.now_wired)} ${this.state.greater ? ">" : "<"} ${this.nameOrValue(this.state.limit,this.state.limit_wired)} ${hysteresis ? "+/-" : ""} ${hysteresis ? hysteresis : ""} ${this.trueFalseSymbol(this.state.on)}`;
   }
 }
