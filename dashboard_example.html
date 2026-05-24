@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#007bff">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Frugal IoT Dashboard">
+    <link rel="apple-touch-icon" href="/images/icon-192x192.png">
+    <link rel="manifest" href="/manifest.json">
+    <title>Frugal IoT Control Dashboard</title>
+    <link href="./frugaliot.css" rel="stylesheet" type="text/css">
+    <script type="importmap">
+        {
+        "imports": {
+            "@kurkle/color": "/node_modules/@kurkle/color/dist/color.esm.js",
+            "chart.js": "/node_modules/chart.js/dist/Chart.js",
+            "dial-gauge": "/node_modules/dial-gauge/dial-gauge.js",
+            "luxon": "/node_modules/luxon/src/luxon.js",
+            "chartjs-adapter-luxon": "/node_modules/chartjs-adapter-luxon/dist/chartjs-adapter-luxon.esm.js",
+            "csv-parse": "/node_modules/csv-parse/dist/esm/index.js"
+            }
+        }
+    </script>
+    <script src="./webcomponents.js" type="module"></script>
+    <style>
+        * { box-sizing: border-box; }
+
+        body { font-family: sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
+
+        /* ── Header ── */
+        #app-header {
+            background: #007bff;
+            color: white;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        #app-title { margin: 0; font-size: 1.15em; font-weight: bold; }
+
+        #settings-btn {
+            background: transparent;
+            border: 2px solid white;
+            color: white;
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            font-size: 1.2em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            padding: 0;
+            transition: background 0.15s, color 0.15s;
+        }
+        #settings-btn.active { background: white; color: #007bff; }
+
+        /* ── Panels ── */
+        .panel { padding: 12px; }
+        .panel.hidden { display: none; }
+
+        /* ── Waiting message ── */
+        #waiting-msg {
+            text-align: center;
+            padding: 48px 20px;
+            color: #666;
+        }
+        #waiting-msg p { font-size: 1.1em; margin-bottom: 12px; }
+        #waiting-msg button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 4px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+
+        /* ── Connection info card ── */
+        #connection-info {
+            background: white;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 4px 8px;
+            font-size: 0.92em;
+            box-shadow: 0 1px 3px rgba(0,0,0,.1);
+        }
+        .info-label { color: #888; }
+        .info-value { font-weight: bold; word-break: break-all; }
+
+        /* ── Status indicator ── */
+        #status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: white;
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,.1);
+        }
+        #status-dot {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #ccc;
+            border: 2px solid #aaa;
+            flex-shrink: 0;
+            transition: background 0.3s, border-color 0.3s;
+        }
+        #status-dot.on  { background: #2ecc71; border-color: #27ae60; }
+        #status-dot.off { background: #e74c3c; border-color: #c0392b; }
+        #status-text { font-size: 1.1em; font-weight: bold; color: #333; }
+
+        /* ── Bar section ── */
+        #bar-container {
+            background: white;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,.1);
+        }
+
+        /* ── Controls card (limit + hysteresis) ── */
+        #controls-card {
+            background: white;
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,.1);
+        }
+        #controls-card h3 { margin: 0 0 10px; font-size: 0.95em; color: #555; }
+        #dashboard-controls { display: flex; flex-wrap: wrap; gap: 12px; }
+
+        .control-field { display: flex; flex-direction: column; min-width: 120px; }
+        .control-field-label {
+            font-size: 0.8em;
+            color: #666;
+            margin-bottom: 3px;
+            font-weight: bold;
+        }
+
+        /* ── Graph card ── */
+        #graph-card {
+            background: white;
+            border-radius: 8px;
+            padding: 10px 14px;
+            box-shadow: 0 1px 3px rgba(0,0,0,.1);
+            overflow: hidden;
+        }
+        #graph-card h3 { margin: 0 0 8px; font-size: 0.95em; color: #555; }
+        #graph-container { width: 100%; }
+
+        /* ── Settings panel ── */
+        #settings-intro {
+            background: #e8f0fe;
+            border-left: 4px solid #007bff;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+            border-radius: 0 6px 6px 0;
+            font-size: 0.9em;
+            color: #444;
+        }
+    </style>
+</head>
+<body>
+
+<div id="app-header">
+    <h1 id="app-title">Control Dashboard</h1>
+    <button id="settings-btn" title="Settings" onclick="window._dashToggleSettings()">⚙</button>
+</div>
+
+<!-- ═══ Dashboard panel ═══ -->
+<div id="dashboard-panel" class="panel">
+
+    <div id="waiting-msg">
+        <p>No control module found yet.</p>
+        <p>Select your device in Settings, then return here.</p>
+        <button onclick="window._dashToggleSettings()">Open Settings ⚙</button>
+    </div>
+
+    <div id="dashboard-content" style="display:none">
+
+        <div id="connection-info">
+            <span class="info-label">Sensor</span>
+            <span class="info-value" id="sensor-name">—</span>
+            <span class="info-label">Actuator</span>
+            <span class="info-value" id="actuator-name">—</span>
+        </div>
+
+        <div id="status-indicator">
+            <div id="status-dot"></div>
+            <span id="status-text">Status unknown</span>
+        </div>
+
+        <div id="bar-container">
+            <!-- mqtt-bar inserted here by JS -->
+        </div>
+
+        <div id="controls-card">
+            <h3>Control Parameters</h3>
+            <div id="dashboard-controls">
+                <!-- limit + hysteresis mqtt-text inserted here by JS -->
+            </div>
+        </div>
+
+        <div id="graph-card">
+            <h3>History</h3>
+            <div id="graph-container">
+                <!-- mqtt-graph inserted here by JS -->
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ═══ Settings panel ═══ -->
+<div id="settings-panel" class="panel hidden">
+    <div id="settings-intro">
+        Select your organisation, project and node below. Expand the
+        <strong>controlhysteresis</strong> group to wire a sensor and actuator,
+        then switch back to Dashboard.
+    </div>
+    <mqtt-wrapper></mqtt-wrapper>
+</div>
+
+<script type="module">
+    /* ── Tab switching ── */
+    let settingsOpen = false;
+
+    window._dashToggleSettings = function () {
+        settingsOpen = !settingsOpen;
+        document.getElementById('dashboard-panel').classList.toggle('hidden', settingsOpen);
+        document.getElementById('settings-panel').classList.toggle('hidden', !settingsOpen);
+        document.getElementById('settings-btn').classList.toggle('active', settingsOpen);
+    };
+
+    /* ── Helpers ── */
+    function shortName(topicPath) {
+        if (!topicPath) return '—';
+        const parts = topicPath.split('/');
+        // Return last two segments e.g. "sht/temperature"
+        return parts.length >= 2 ? parts.slice(-2).join('/') : topicPath;
+    }
+
+    function updateOnOff(group) {
+        const on = group.state && group.state.on;
+        const dot  = document.getElementById('status-dot');
+        const text = document.getElementById('status-text');
+        if (on === undefined || on === null) {
+            dot.className = '';
+            text.textContent = 'Status unknown';
+        } else if (on) {
+            dot.className = 'on';
+            text.textContent = 'ON';
+        } else {
+            dot.className = 'off';
+            text.textContent = 'OFF';
+        }
+    }
+
+    function updateNames(group) {
+        document.getElementById('sensor-name').textContent =
+            shortName(group.state && group.state.now_wired);
+        document.getElementById('actuator-name').textContent =
+            shortName(group.state && group.state.out_wired);
+    }
+
+    /* ── Build an embedded element with attributes pre-set ── */
+    function makeEl(tag, attrs) {
+        const el = document.createElement(tag);
+        Object.entries(attrs).forEach(([k, v]) => {
+            if (v !== undefined && v !== null) el.setAttribute(k, v);
+        });
+        return el;
+    }
+
+    /* ── Wire up the dashboard once a control group is discovered ── */
+    let currentGroup = null;
+    let groupAttrObserver = null;
+
+    function wireUpDashboard(group) {
+        currentGroup = group;
+
+        // The group is a light-DOM child of mqtt-node; mqtt-node.mt.topicPath = org/project/node
+        const node = group.parentElement;
+        const nodeTopicPath = node && node.mt && node.mt.topicPath;
+        if (!nodeTopicPath) {
+            console.warn('dashboard: could not determine node topic path');
+            return;
+        }
+
+        const groupId = group.getAttribute('group') || 'controlhysteresis';
+
+        /* Read topics and min/max from the children already created by discovery.
+           Each child has an .mt (MqttTopic) set by the node's addTopicFromTemplate. */
+        let nowTopic, limitTopic, hystTopic, onTopic;
+        let barMin = '0', barMax = '100';
+
+        Array.from(group.children).forEach(child => {
+            if (!child.mt) return;
+            const leaf = child.mt.twig ? child.mt.twig.split('/').pop() : null;
+            if (!leaf) return;
+            const tp = child.mt.topicPath;
+
+            if (leaf === 'now')                                nowTopic   = tp;
+            else if (leaf === 'limit')                         limitTopic = tp;
+            else if (leaf === 'hysteresis' || leaf === 'hysterisis') hystTopic = tp;
+            else if (leaf === 'on')                            onTopic    = tp;
+
+            if (child.tagName.toLowerCase() === 'mqtt-bar') {
+                barMin = child.getAttribute('min') || barMin;
+                barMax = child.getAttribute('max') || barMax;
+            }
+        });
+
+        // Fallbacks if discovery hasn't populated children yet
+        nowTopic   = nowTopic   || `${nodeTopicPath}/${groupId}/now`;
+        limitTopic = limitTopic || `${nodeTopicPath}/${groupId}/limit`;
+        hystTopic  = hystTopic  || `${nodeTopicPath}/${groupId}/hysteresis`;
+
+        /* Update title to node name */
+        const nodeName = (node.state && (node.state.name || node.state.id))
+                         || nodeTopicPath.split('/').pop();
+        document.getElementById('app-title').textContent = nodeName;
+
+        /* Show dashboard content */
+        document.getElementById('waiting-msg').style.display = 'none';
+        document.getElementById('dashboard-content').style.display = '';
+
+        /* ── mqtt-bar for current sensor value ── */
+        const barContainer = document.getElementById('bar-container');
+        barContainer.innerHTML = '';
+        const bar = makeEl('mqtt-bar', {
+            topic: nowTopic,
+            label: 'Now',
+            type:  'float',
+            color: 'steelblue',
+            min:   barMin,
+            max:   barMax,
+        });
+        barContainer.appendChild(bar);
+
+        /* ── Limit + Hysteresis controls ── */
+        const controlsEl = document.getElementById('dashboard-controls');
+        controlsEl.innerHTML = '';
+
+        function addControl(label, topic, color) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'control-field';
+
+            const lbl = document.createElement('div');
+            lbl.className = 'control-field-label';
+            lbl.textContent = label;
+
+            const txt = makeEl('mqtt-text', {
+                topic,
+                label,
+                type:  'float',
+                color: color || 'black',
+            });
+
+            wrapper.appendChild(lbl);
+            wrapper.appendChild(txt);
+            controlsEl.appendChild(wrapper);
+        }
+
+        addControl('Limit',      limitTopic, 'orange');
+        addControl('Hysteresis', hystTopic,  '#666');
+
+        /* ── mqtt-graph + mqtt-graphdataset ── */
+        const graphContainer = document.getElementById('graph-container');
+        graphContainer.innerHTML = '';
+
+        const graph = document.createElement('mqtt-graph');
+        const dataset = makeEl('mqtt-graphdataset', {
+            topic: nowTopic,
+            type:  'float',
+            color: 'steelblue',
+            label: 'Sensor value',
+            min:   barMin,
+            max:   barMax,
+        });
+        graph.appendChild(dataset);
+        graphContainer.appendChild(graph);
+
+        /* ── Watch group attributes for on/off and wiring names ── */
+        if (groupAttrObserver) groupAttrObserver.disconnect();
+        groupAttrObserver = new MutationObserver(() => {
+            updateOnOff(group);
+            updateNames(group);
+        });
+        groupAttrObserver.observe(group, { attributes: true });
+
+        updateOnOff(group);
+        updateNames(group);
+    }
+
+    /* ── Observe the settings panel for a control group appearing ── */
+    const settingsPanel = document.getElementById('settings-panel');
+    const domObserver = new MutationObserver(() => {
+        const group = document.querySelector(
+            'mqtt-groupcontrolhysteresis, mqtt-groupcontrolhysterisis'
+        );
+        if (group && group !== currentGroup) {
+            wireUpDashboard(group);
+        }
+    });
+    domObserver.observe(settingsPanel, { childList: true, subtree: true });
+</script>
+
+</body>
+</html>
