@@ -2666,7 +2666,10 @@ class MqttNode extends MqttReceiver {
     Object.entries(this.state.topics).forEach(k => cb(k[1]));
   }
   elementsForEach(cb) {
-    Object.entries(this.state.topics).forEach(k => cb(k[1].element));
+    Object.entries(this.state.topics).forEach(k => {
+      let el = k[1].element;
+      if (el) { cb(k[1].element); } // Dont call callback if element empty (currently captive/language_code is empty)
+    } );
   }
   // Rebuild all embedded mqtt-choosetopic.
   rebuildTopicDropdowns() {
@@ -3011,7 +3014,7 @@ class MqttGroupControlHysteresis extends MqttSummaryGroup {
     return wired && this.project.findTopic(wired) && this.project.findTopic(wired).usableName || val;
   }
   summaryText() {
-    let hysteresis = this.state.hysterisis || this.state.hysterisis || 0
+    let hysteresis = this.state.hysteresis || this.state.hysterisis || 0
     return this.state.manual
       ? 'Manual' //TODO-TRANSLATE
       : `${this.nameOrValue("",this.state.out_wired)} = ${this.nameOrValue(this.state.now,this.state.now_wired)} ${this.state.greater ? ">" : "<"} ${this.nameOrValue(this.state.limit,this.state.limit_wired)} ${hysteresis ? "+/-" : ""} ${hysteresis ? hysteresis : ""} ${this.trueFalseSymbol(this.state.on)}`;
