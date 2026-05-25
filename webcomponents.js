@@ -256,7 +256,7 @@ EN:
   Built in LED: Built in LED
   close: close
   Color:  Color
-  connect: connect
+  connected: connected
   connecting: connecting
   Control: Control
   Dashboard: Dashboard
@@ -341,7 +341,7 @@ FR:
   Built in LED: LED intégrée
   close: fermer
   Color: Couleur  
-  connect: connecter
+  connected: connecté
   connecting: connexion
   Control: Contrôle
   Dashboard: Tableau de bord  
@@ -427,7 +427,7 @@ HI:
   Built in LED: बिल्ट-इन एलईडी
   close: बंद करें
   Color: रंग  
-  connect: कनेक्ट करें
+  connected: जुड़े हुए
   connecting: कनेक्ट हो रहा है
   Control: नियंत्रण
   Dashboard: डैशबोर्ड  
@@ -513,7 +513,7 @@ ID:
   Built in LED: LED bawaan
   close: tutup
   Color: Warna  
-  connect: sambungkan
+  connected: terhubung
   connecting: menghubungkan
   Control: Kontrol
   Dashboard: Dasbor  
@@ -1145,7 +1145,7 @@ class MqttClient extends HTMLElementExtended {
       mqtt_client.on('connect', () => {
         // TODO - can be smarter about this - dont want to re-subscribe as will do this automatically, BUT do want to subscribe if didn't because not connected
         // Looks like client ignores subscription BECAUSE in mqtt_client._resubscribeTopics
-        this.setStatus('connect');
+        this.setStatus('connected');
         if (mqtt_subscriptions.length > 0) {
           mqtt_subscriptions.forEach((s) => {
             if (!mqtt_client._resubscribeTopics[s.topic]) { // Not really public interface but cleaner console as not needed
@@ -1273,7 +1273,9 @@ class MqttLogin extends HTMLElementExtended { // TODO-89 may depend on organizat
               // TODO-22 TODO-14 organization should be a drop-down
               el('section', {}, [
                 el('label', {for: "organization", textContent: "Organization"}),
-                el('input', {id: "organization", name: "organization", type: "text", autocomplete: "organization", required: true}),
+                el('span', {textContent: "Note this is your organization - not the organizations whose devices you want to access." }),
+                el('br'),
+                el('input', {id: "organization", name: "organization", type: "text", autocomplete: "organization", required: false}),
               ]),
               el('section', {}, [
                 el('label', {for: "name", textContent: "Name"}),
