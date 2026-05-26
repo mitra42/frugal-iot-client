@@ -1321,6 +1321,7 @@ class TabbedDisplay extends HTMLElementExtended {
       for (let i = 0; i < this.children.length; i++) {
         //if (this.children[i].tagName.toLowerCase() === 'section') {
         if (i === value) {
+          // TODO could do this more easily with classList, but need to edit CSS
           this.children[i].className = "tabbed-section active";
           this.tabs[i].className = "tab active";
         } else {
@@ -2486,6 +2487,7 @@ class MqttChooseTopic extends MqttElement {
       "float": ["float", "int", "exponential"],
       "text": ["text", "float", "exponential", "int", "bool"],
     }
+    // TODO replace by flatMap
     return nodes.map(n => n.topicsByType(allowableTypes[this.state.type] || this.state.type, this.state.rw))
       .flat();
   }
@@ -3590,3 +3592,9 @@ class MqttGraphDataset extends MqttElement {
   }
 }
 customElements.define('mqtt-graphdataset', MqttGraphDataset);
+
+// This event is used by custom dashboards to send
+document.addEventListener('frugaliot:publish', ({detail}) => {
+  if (mqtt_client && detail.topic && detail.value !== undefined)
+    mqtt_client.publish(detail.topic, String(detail.value), detail.options || {retain: true, qos: 1});
+});
