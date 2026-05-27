@@ -365,8 +365,8 @@
             controlsEl.appendChild(w);
         }
 
-        /* Greater checkbox */
-        addCtrl('Greater >', makeEl('mqtt-toggle', { topic: greaterTopic, label: '>', type: 'bool' }));
+        /* Direction: dropdown showing < or > instead of a checkbox */
+        addCtrl('', makeEl('mqtt-toggle', { topic: greaterTopic, label: 'Direction', type: 'bool', labels: '<,>' }));
 
         /* Limit */
         addCtrl('Limit', makeEl('mqtt-text', { topic: limitTopic, label: 'Limit', type: 'float', color: 'orange' }));

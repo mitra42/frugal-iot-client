@@ -2221,12 +2221,18 @@ class MqttColor extends MqttTransmitter {
 customElements.define('mqtt-color', MqttColor);
 
 class MqttToggle extends MqttTransmitter {
+  // When the labels attribute is absent, renders a checkbox.
+  // When labels="false-label,true-label" is set, renders a two-option select dropdown instead.
   valueSet(val) {
     super.valueSet(val);
     this.state.indeterminate = false; // Checkbox should default to indeterminate till get a message
     if (this.state.elements.inputValue) {
-      this.state.elements.inputValue.checked = !!this.state.value;
-      this.state.elements.inputValue.indeterminate = typeof(this.state.value) == "undefined";
+      if (this.hasLabels) {
+        this.state.elements.inputValue.value = val ? '1' : '0';
+      } else {
+        this.state.elements.inputValue.checked = !!this.state.value;
+        this.state.elements.inputValue.indeterminate = typeof(this.state.value) == "undefined";
+      }
     }
     if (this.state.elements.textValue) {
       this.state.elements.textValue.textContent = this.textValue;
@@ -2238,22 +2244,37 @@ class MqttToggle extends MqttTransmitter {
     return (+this.state.value).toString(); // Implicit conversion from bool to int then to String.
   }
   static get observedAttributes() {
-    return MqttTransmitter.observedAttributes.concat(['checked','indeterminate','wired']);
+    return MqttTransmitter.observedAttributes.concat(['checked','indeterminate','wired','labels']);
   }
   changeAttribute(name, valueString) {
     super.changeAttribute(name, valueString); // Change from string to number etc and store on this.state
-    // TODO - could set width, color, name, on sub-elements and return false then copy this to other elements
-    return true; // Need to rerender -TODO-optimize this
+    if (name === 'labels' && valueString) {
+      // Split on first comma so labels can contain commas after the first
+      const idx = valueString.indexOf(',');
+      if (idx !== -1) {
+        this.state.falseLabel = valueString.substring(0, idx);
+        this.state.trueLabel  = valueString.substring(idx + 1);
+      }
+    }
+    return true; // Need to rerender
   }
 
-    // TODO - make sure this doesn't get triggered by a message from server.
+  // True when a labels="false-label,true-label" attribute has been parsed
+  get hasLabels() {
+    return this.state.falseLabel !== undefined && this.state.trueLabel !== undefined;
+  }
+
+  // TODO - make sure this doesn't get triggered by a message from server.
   onChange(e) {
-    //console.log("Changed"+e.target.checked);
-    this.state.value = e.target.checked; // Boolean
+    // Select option values are '0'/'1'; checkbox uses .checked
+    this.state.value = this.hasLabels ? (e.target.value === '1') : e.target.checked;
     this.publish();
   }
   get textValue() {
     // Note same code in MqttGroupControlHysteresis but no obvious common parent
+    if (this.hasLabels) {
+      return (this.state.value === undefined) ? '?' : (this.state.value ? this.state.trueLabel : this.state.falseLabel);
+    }
     return (this.state.value === undefined) ? '?' : (this.state.value ? '✓' : '✗')
   }
   // Handle cases ....
@@ -2265,10 +2286,17 @@ class MqttToggle extends MqttTransmitter {
   // w/wireable/wired - text value(from wired) and wired topic name and hidden dropdown
 
   // For Bool all same except:
-  // renderInput - checkbox with value
-  // renderValue - check mark if value true, empty if false
+  // renderInput - checkbox or two-option select (when labels attribute set)
+  // renderValue - label text or check mark (✓/✗) depending on hasLabels
 
   renderInput() {
+    if (this.hasLabels) {
+      // Two-option select where option values are '0' (false) and '1' (true)
+      return this.state.elements.inputValue = el('select', {class: 'val', onchange: this.onChange.bind(this)}, [
+        el('option', {value: '0', textContent: this.state.falseLabel, selected: !this.state.value}),
+        el('option', {value: '1', textContent: this.state.trueLabel,  selected: !!this.state.value}),
+      ]);
+    }
     return this.state.elements.inputValue = el('input', {class: 'val', type: 'checkbox', id: this.mt.topicPath,
       checked: !!this.state.value, indeterminate: typeof(this.state.value) == "undefined",
       onchange: this.onChange.bind(this)});
