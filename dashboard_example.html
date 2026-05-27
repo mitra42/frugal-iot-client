@@ -88,6 +88,10 @@
         .ctrl-label { font-size: 0.78em; color: #666; font-weight: bold; margin-bottom: 3px; }
         /* mqtt-toggle in dashboard shows its own label (hidden by shadow CSS) - we add external labels */
 
+        /* Constrain mqtt-text inputs in the controls row so limit + hysteresis fit on one line.
+           --mqtt-val-width is a CSS custom property read inside the mqtt-text shadow DOM (frugaliot.css). */
+        #dashboard-controls mqtt-text { --mqtt-text-val-width: 90px; }
+
         /* ── Settings panel: hide mqtt-wrapper's node display, show only org/project dropdowns ── */
         #settings-panel > mqtt-wrapper > mqtt-project { display: none !important; }
         #settings-panel > mqtt-wrapper > mqtt-client  { display: none !important; }
@@ -322,7 +326,7 @@
 
         /* App title from node */
         const node = group.parentElement;
-        const nodeName = node ? node.usableName() : "Dashboard";
+        const nodeName = node ? node.usableName : "Dashboard";
         // A node always has a usableName, no need to repeat logic here ...
         /*
         const nodeName = (node && node.state && (node.state.name || node.state.id))
@@ -357,22 +361,22 @@
         function addCtrl(labelText, el) {
             const w = document.createElement('div');
             w.className = 'ctrl-field';
-            const lbl = document.createElement('div');
-            lbl.className = 'ctrl-label';
-            lbl.textContent = labelText;
-            w.appendChild(lbl);
+            //const lbl = document.createElement('div');
+            //lbl.className = 'ctrl-label';
+            //lbl.textContent = labelText;
+            //w.appendChild(lbl);
             w.appendChild(el);
             controlsEl.appendChild(w);
         }
 
         /* Direction: dropdown showing < or > instead of a checkbox */
-        addCtrl('', makeEl('mqtt-toggle', { topic: greaterTopic, label: 'Direction', type: 'bool', labels: '<,>' }));
+        addCtrl('', makeEl('mqtt-toggle', { topic: greaterTopic, label: '', type: 'bool', labels: '<,>' }));
 
         /* Limit */
-        addCtrl('Limit', makeEl('mqtt-text', { topic: limitTopic, label: 'Limit', type: 'float', color: 'orange' }));
+        addCtrl('Limit', makeEl('mqtt-text', { topic: limitTopic, label: '', type: 'float', color: 'orange' }));
 
         /* ± Hysteresis */
-        addCtrl('±', makeEl('mqtt-text', { topic: hystTopic, label: 'Hysteresis', type: 'float', color: '#666' }));
+        addCtrl('±', makeEl('mqtt-text', { topic: hystTopic, label: '±', type: 'float', color: '#666' }));
 
         /* ── Graph ── */
         const graphContainer = document.getElementById('graph-container');

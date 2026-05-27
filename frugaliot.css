@@ -19,9 +19,11 @@ div.frugal_iot_name {
     /* :host-context(.name) label { color: blue; } /* Not clear if works or fails */
 }
 
+
 div.mqtt-text {
     display: inline-block; /* display all on same line when closed */
-    label {  display: none; } /* Hide labels inside the frugal_iot group */
+    /* Dont hide labels as mucks up dashboard_example.html */
+    /*label {  display: none; }*/ /* Hide labels inside the frugal_iot group  */
 }
 
     /*details[open] summary slot {display: block; color: red} */
@@ -133,7 +135,10 @@ div.mqtt-text {
     .mqtt-slider .setpoint {position: relative;top: -5px;cursor: pointer;width: max-content;height: max-content;}
 
     .mqtt-text {
-        .val {margin:5px;}
+        /* --mqtt-val-width can be set on a mqtt-text host (or any ancestor) to constrain input width.
+           CSS custom properties inherit through shadow DOM boundaries, so setting it outside the
+           shadow root (e.g. in a dashboard layout rule) overrides the default here. */
+        .val {margin:5px; width: var(--mqtt-text-val-width, auto);}
         .wired {margin:5px;}
         @media (max-width:1001px){
             .val {font-size: xx-large;}
