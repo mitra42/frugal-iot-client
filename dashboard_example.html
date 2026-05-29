@@ -197,6 +197,7 @@
 </div>
 
 <script type="module">
+  import { el } from './webcomponents.js';
   //TODO rethink using any EL from the settings page, should just not build them and use the topic tree instead.
     /* ── Tab switching ── */
     let settingsOpen = false;
@@ -209,13 +210,6 @@
     };
 
     /* ── Helpers ── */
-    function makeEl(tag, attrs) {
-        // TODO can probably replace this with EL(tag, attrs, [])
-        const el = document.createElement(tag);
-        Object.entries(attrs).forEach(([k, v]) => { if (v !== null && v !== undefined) el.setAttribute(k, v); });
-        return el;
-    }
-
     function shortName(topicPath) {
         if (!topicPath) return null;
         const parts = topicPath.split('/');
@@ -344,7 +338,7 @@
         const barContainer = document.getElementById('bar-container');
         barContainer.innerHTML = '';
         // TODO I think should use sensorTopic.createElement() in which case some of the attributes used below may not be needed
-        barContainer.appendChild(makeEl('mqtt-bar', {
+        barContainer.appendChild(el('mqtt-bar', {
             topic: sensorTopic,
             label: sensorName,
             type:  'float',
@@ -356,36 +350,26 @@
         /* ── Controls ── */
         const controlsEl = document.getElementById('dashboard-controls');
         controlsEl.innerHTML = '';
-        // TODO compact this into >< limit +- hysteresis, then possibly back-port to webcomponents
+        // TODO back-port to webcomponents
         // This might just be the el's with some CSS
-        function addCtrl(labelText, el) {
-            const w = document.createElement('div');
-            w.className = 'ctrl-field';
-            //const lbl = document.createElement('div');
-            //lbl.className = 'ctrl-label';
-            //lbl.textContent = labelText;
-            //w.appendChild(lbl);
-            w.appendChild(el);
-            controlsEl.appendChild(w);
+        function addCtrl(child) {
+          controlsEl.appendChild(el('div', {class: 'ctrl-field'}, [child]));
         }
-
         /* Direction: dropdown showing < or > instead of a checkbox */
-        addCtrl('', makeEl('mqtt-toggle', { topic: greaterTopic, label: '', type: 'bool', labels: '<,>' }));
-
+        addCtrl(el('mqtt-toggle', { topic: greaterTopic, label: '', type: 'bool', labels: '<,>' }));
         /* Limit */
-        addCtrl('Limit', makeEl('mqtt-text', { topic: limitTopic, label: '', type: 'float', color: 'orange' }));
-
+        addCtrl(el('mqtt-text', { topic: limitTopic, label: '', type: 'float', color: 'orange' }));
         /* ± Hysteresis */
-        addCtrl('±', makeEl('mqtt-text', { topic: hystTopic, label: '±', type: 'float', color: '#666' }));
+        addCtrl(el('mqtt-text', { topic: hystTopic, label: '±', type: 'float', color: '#666' }));
 
         /* ── Graph ── */
         const graphContainer = document.getElementById('graph-container');
         graphContainer.innerHTML = '';
         // TODO in MqttGraph.graph look for `graph-container` and put a graph there it will then be used by topic.createGraph
         // TODO then becomes unneccessary to create here
-        const graph = document.createElement('mqtt-graph');
+        const graph = el('mqtt-graph', {});
         // TODO probably just use sensorTopic.createGraph() but check how it gets the dataset
-        graph.appendChild(makeEl('mqtt-graphdataset', {
+        graph.appendChild(el('mqtt-graphdataset', {
             topic: sensorTopic,
             type:  'float',
             color: 'steelblue',
@@ -394,8 +378,8 @@
             max:   String(barMax),
         }));
 
-        // TODO just use outTopic.createGraph()
-        if (outTopic) graph.appendChild(makeEl('mqtt-graphdataset', {
+        // TODO just use outTopic.createGraph() - change this first to be passed a graph
+        if (outTopic) graph.appendChild(el('mqtt-graphdataset', {
             topic: outTopic,
             type:  'bool',
             color: 'orange',
@@ -406,9 +390,9 @@
         graphContainer.appendChild(graph);
 
         /* ── Watch group attributes for live updates ── */
+        // Once we've wired up the dashboard from this `group` watch the group for changes to what its wired to (which might come from online from another UX)
         if (groupAttrObserver) groupAttrObserver.disconnect();
         groupAttrObserver = new MutationObserver((mutations) => {
-          // TODO add break here and understand how MutationObserver works
             const wiringChanged = mutations.some(m =>
                 m.attributeName === 'now_wired' || m.attributeName === 'out_wired'
             );
@@ -555,7 +539,7 @@
     /* ── Watch settings panel for control groups appearing ── */
     const settingsPanel = document.getElementById('settings-panel');
     const domObserver = new MutationObserver(() => {
-      // TODO I think this always just finds th efirst one as not using result of MutationObserver
+      // TODO I think this always just finds th first one as not using result of MutationObserver
         const group = document.querySelector(
             '#settings-panel mqtt-groupcontrolhysteresis, #settings-panel mqtt-groupcontrolhysterisis'
         );

@@ -3626,3 +3626,7 @@ document.addEventListener('frugaliot:publish', ({detail}) => {
   if (mqtt_client && detail.topic && detail.value !== undefined)
     mqtt_client.publish(detail.topic, String(detail.value), detail.options || {retain: true, qos: 1});
 });
+
+// Public API for custom dashboards and pages that import this module.
+// Add further exports here as dashboard needs grow (e.g. getString for i18n).
+export { el };
