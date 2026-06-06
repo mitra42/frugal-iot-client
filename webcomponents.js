@@ -937,18 +937,16 @@ class MqttTopic {
     }
   }
 
-  // ==========TODO-44 === CODE REVIEW ABOVE DONE: getters#26; const vs let; globals;TODO's; Problems; Comments
-
   /// Get an y-axis id for the graph, the idea is to make it easy to have multiple traces on same y-axis.
   get yaxisid() {
-    let scaleNames = Object.keys(this.graph.state.scales);
-    let yaxisid;
+    const scaleNames = Object.keys(this.graph.state.scales);
     // noinspection JSUnresolvedReference
     let n = this.name.toLowerCase().replace(/[0-9]+$/,'');
     let t = this.leaf.toLowerCase().replace(/[0-9]+$/,'');
     if (scaleNames.includes(n)) { return n; }
     if (scaleNames.includes(t)) { return t; }
     // noinspection JSAssignmentUsedAsCondition
+    let yaxisid;
     if (yaxisid = scaleNames.find(tt => tt.includes(n) || n.includes(tt))) {
       return yaxisid;
     }
@@ -956,11 +954,9 @@ class MqttTopic {
     if (yaxisid = scaleNames.find(tt => tt.includes(n) || n.includes(tt))) {
       return yaxisid;
     }
-    // TODO-46 - need to turn axis on, and position when used.
     // Not found - lets make one - this might get more parameters (e.g. linear vs exponential could be a attribute of Bar ?
     // noinspection JSUnresolvedReference
     this.graph.addScale(t, {
-      // TODO-46 add color
       type: 'linear',
       display: this.type !== 'bool',
       title: {
@@ -976,6 +972,8 @@ class MqttTopic {
     });
     return t;
   }
+  // ==========TODO-44 === CODE REVIEW ABOVE DONE: getters#26; const vs let; globals;TODO's; Problems; Comments; Set thru attributes not state from yaxisid; rollups from yaxisid
+
 
   get graph() {
     if (this.graphdataset) {
