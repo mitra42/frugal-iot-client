@@ -108,12 +108,10 @@
             margin-bottom: 10px;
         }
         .settings-node-name { font-weight: bold; font-size: 1em; }
-        .settings-row {
-            display: flex; align-items: center; gap: 8px;
-            margin-bottom: 8px;
-        }
-        .settings-label { font-size: 0.9em; color: #555; width: 72px; flex-shrink: 0; }
-        .settings-select { flex: 1; padding: 5px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.92em; }
+        mqtt-choosetopic { display: block; margin-bottom: 8px; }
+        mqtt-choosetopic::part(row) { display: flex; align-items: center; gap: 8px; }
+        mqtt-choosetopic::part(label) { font-size: 0.9em; color: #555; width: 72px; flex-shrink: 0; }
+        mqtt-choosetopic::part(select) { flex: 1; padding: 5px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.92em; }
         .settings-empty { color: #888; font-size: 0.95em; padding: 8px 0; }
         .settings-intro {
             background: #e8f0fe; border-left: 4px solid #007bff;
@@ -224,16 +222,6 @@
             if (topic && topic.usableName) return topic.usableName;
         } catch (e) { /* ignore */ }
         return shortName(wiredPath);
-    }
-
-    // Finds the mt so can send a message to its wiredPath
-    // TODO add a findLeaf to group
-    // TODO add wiredPath as getter  to element so callers of this can do e.g. group.findLeaf('now').wiredPath
-    function getGroupChildMt(group, leaf) {
-        for (const child of group.children) {
-            if (child.mt && child.mt.leaf === leaf) return child.mt;
-        }
-        return null;
     }
 
     /* ── Dashboard state ── */
@@ -433,14 +421,8 @@
             container.appendChild(p);
             return;
         }
-
-        // REVIEW FROM HERE ===========
-        // TODO do this already in webcomponents but on a topic and don't have that here.
-        /* Collect all available sensor and actuator topics from all nodes in the project */
-        const allNodes    = Array.from(document.querySelectorAll('#settings-panel mqtt-node'));
-        // TODO at least use allowableTypes from webcomponents
-        const sensors     = allNodes.flatMap(n => n.topicsByType(['float', 'int', 'exponential'], 'r'));
-        const actuators   = allNodes.flatMap(n => n.topicsByType(['bool'], 'w'));
+      // TODO-REVIEW FROM HERE ===========
+        const project = document.querySelector('#settings-panel mqtt-project');
 
         allGroups.forEach((group, idx) => {
             const node     = group.parentElement;
@@ -472,67 +454,39 @@
 
             /* Sensor dropdown */
             const currentNowWired = group.state && group.state.now_wired;
-            section.appendChild(buildWiringRow('Sensor', sensors, currentNowWired, false, (value) => {
+            section.appendChild(makeWiringRow('Sensor', 'float', currentNowWired, 'r', project, (value) => {
                 // When row is changed, value is the path to the sensor, and this function will set the wiredPath of the control to the sensor
-                // TODO see note on getGroupChildMt replace with
-                /* topicWiredPath = group.findLeaf('now').wiredPath
-                    if (topicWiredPath) {  document.dispatchEvent ... }
-                 */
-                const mt = getGroupChildMt(group, 'now');
-                if (mt) document.dispatchEvent(new CustomEvent('frugaliot:publish', {
-                    detail: { topic: mt.topicWiredPath, value, options: {retain: true, qos: 1} }
-                }));
+                const topicWiredPath = group.findLeaf('now').topicWiredPath;
+                if (topicWiredPath) {  document.dispatchEvent(new CustomEvent('frugaliot:publish', {
+                    detail: { topic: topicWiredPath, value, options: {retain: true, qos: 1} }
+                  }))};
             }));
 
             /* Actuator dropdown — 'out' is rw='r' so we publish the actuator's setTopic */
             const currentOutWired = group.state && group.state.out_wired;
-            section.appendChild(buildWiringRow('Actuator', actuators, currentOutWired, true, (value) => {
-              // TODO see note on getGroupChildMt replace with
-              /* topicWiredPath = group.findLeaf('now').wiredPath
-                    if (topicWiredPath) {  document.dispatchEvent ... }
-              */
+            section.appendChild(makeWiringRow('Actuator', 'bool', currentOutWired, 'w', project, (value) => {
               // When row is changed, value is the path to the sensor, and this function will set the wiredPath of the control to the sensor
-              const mt = getGroupChildMt(group, 'out');
-                if (mt) document.dispatchEvent(new CustomEvent('frugaliot:publish', {
-                    detail: { topic: mt.topicWiredPath, value, options: {retain: true, qos: 1} }
-                }));
+              const topicWiredPath = group.findLeaf('out').topicWiredPath;
+              if (topicWiredPath) {  document.dispatchEvent(new CustomEvent('frugaliot:publish', {
+                detail: { topic: topicWiredPath, value, options: {retain: true, qos: 1} }
+              }))};
             }));
 
             container.appendChild(section);
         });
     }
 
-    /* Build a labeled dropdown row for sensor/actuator wiring.
-       useSetTopic: true for actuators (out is rw='r', so we wire to the SET topic of the actuator) */
-    function buildWiringRow(labelText, topicList, currentValue, useSetTopic, onChange) {
-      // TODO use el()
-        const row = document.createElement('div');
-        row.className = 'settings-row';
-
-        const lbl = document.createElement('label');
-        lbl.className   = 'settings-label';
-        lbl.textContent = labelText;
-
-        const sel = document.createElement('select');
-        sel.className = 'settings-select';
-
-        const none = document.createElement('option');
-        none.value = ''; none.textContent = 'Not connected';
-        sel.appendChild(none);
-
-        topicList.forEach(t => {
-            const opt = document.createElement('option');
-            const publishValue = useSetTopic ? t.setTopic : t.topic;
-            opt.value = publishValue;
-            opt.textContent = t.name;
-            opt.selected = (publishValue === currentValue || t.topic === currentValue || t.setTopic === currentValue);
-            sel.appendChild(opt);
-        });
-
-        sel.onchange = (e) => { if (e.target.value) onChange(e.target.value); };
-
-        row.appendChild(lbl);
-        row.appendChild(sel);
+    /* Build a labeled dropdown row for sensor/actuator wiring using mqtt-choosetopic.
+       rw: 'r' for sensors (use t.topic as value), 'w' for actuators (use t.setTopic). */
+   // TODO why not use an el() here
+    function makeWiringRow(labelText, type, currentValue, rw, project, onChange) {
+        const row = document.createElement('mqtt-choosetopic');
+        row.setAttribute('name', labelText);
+        row.setAttribute('type', type);
+        row.setAttribute('rw', rw);
+        if (currentValue) row.setAttribute('value', currentValue);
+        row.onchange = (e) => { if (e.target.value) onChange(e.target.value); };
+        row.state.project = project;
         return row;
     }
 

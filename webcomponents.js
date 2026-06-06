@@ -1919,8 +1919,13 @@ class MqttReceiver extends MqttElement {
     // Its also mt.node.state.groups[this.mt.group]
     return this.parentElement;
   }
+  // Return the topic this is wired to or undefined
   get wiredTopic() {
     return this.mt.wired ? this.mt.project.findTopic(this.mt.wired) : undefined;
+  }
+  // Returns the path for wiring this topic - e.g. /org/proj/device/control/now/wired
+  get topicWiredPath() {
+    return this.mt.topicWiredPath;
   }
   connectedCallback() {
     if (this.state.topic && !this.mt) {
@@ -2501,16 +2506,17 @@ class MqttSlider extends MqttTransmitter {
 }
 customElements.define('mqtt-slider', MqttSlider);
 
+// Class to display a drop down that can select from topics of the right type (e.g. rw float's)
 class MqttChooseTopic extends MqttElement {
   // type = "bool" for boolean topics (matches t.type on others)
   // value = the topic path of the currently wired topic,
   static get observedAttributes() { return MqttTransmitter.observedAttributes.concat(['name', 'type','value', 'project','rw','onchange']); }
 
   get findTopics() {
-    let project = this.state.project;
-    let nodes = Array.from(project.children);
+    const project = this.state.project;
+    const nodes = Array.from(project.children);
     // Note each node's value is its config,
-    let allowableTypes = {
+    const allowableTypes = {
       // Mapping of requested types to valid fields - e.g. if want a float then returning an int will be fine
       "float": ["float", "int", "exponential"],
       "text": ["text", "float", "exponential", "int", "bool"],
@@ -2538,13 +2544,15 @@ class MqttChooseTopic extends MqttElement {
     // noinspection JSUnresolvedReference
     return !this.isConnected ? null : [
       el('link', {rel: 'stylesheet', href: CssUrl}),
-      el('div', {class: 'outer mqtt-choosetopic'}, [
-        el('label', {for: 'choosetopic' + (++unique_id), textContent: name}),
-        el('select', {id: 'choosetopic' + unique_id, onchange: this.onchange}, [
+      el('div', {class: 'outer mqtt-choosetopic', part: 'row'}, [
+        el('label', {for: 'choosetopic' + (++unique_id), textContent: this.state.name, part: 'label'}),
+        el('select', {id: 'choosetopic' + unique_id, onchange: (e) => this.onchange && this.onchange(e), part: 'select'}, [
           el('option', {value: "", textContent: "Unused", selected: !this.state.value}),
-          this.findTopics.map( t => // { name, type etc. }
-            el('option', {value: t.topic, textContent: t.name, selected: this.state.value === (this.state.rw==='w' ? t.setTopic : t.topic)}),
-          ),
+          this.findTopics.map( t => { // { name, type etc. }
+            const val = this.state.rw === 'w' ? t.setTopic : t.topic;
+            // Check all three forms in case the stored wiredPath uses a different format
+            return el('option', {value: val, textContent: t.name, selected: this.state.value === val || this.state.value === t.topic || this.state.value === t.setTopic});
+          }),
         ]),
       ]),
     ];
@@ -3105,6 +3113,13 @@ class MqttGroup extends MqttElement { // TODO-40 may extend MqttReceiver if need
   get project() {
     return this.node.project;
   }
+  findLeaf(leaf) {
+    for (const child of this.children) {
+      if (child.mt && child.mt.leaf === leaf) return child;
+    }
+    return null;
+  }
+
   reSummarize() {
     let oldSummary = this.state.elements.summary;
     if (oldSummary) { // Will be false during constructor
