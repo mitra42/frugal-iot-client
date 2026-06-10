@@ -597,11 +597,23 @@ function languageNamesAndFlags() {
   //noinspection JSUnresolvedVariable
   return Object.entries(languages).map(([k,v]) => [k,v._nameAndFlag]);
 }
-function getString(tag) {
+function addVocabulary(langs) {
+  // Accepts an object in the same format as `languages` e.g. { FR: { word: 'mot' } },
+  // or a YAML string in the same format. Merges into existing language entries; adds new languages wholesale.
+  if (typeof langs === 'string') langs = yaml.load(langs);
+  for (const [lang, words] of Object.entries(langs)) {
+    if (languages[lang]) {
+      Object.assign(languages[lang], words);
+    } else {
+      languages[lang] = words;
+    }
+  }
+}
+function getStringFrom(langs, tag) {
   for (let lang of preferedLanguages) {
     let foo
     // noinspection JSAssignmentUsedAsCondition
-    if (foo = languages[lang] && languages[lang][tag]) {
+    if (foo = langs[lang] && langs[lang][tag]) {
       return foo;
     }
     if (tag.includes(' ')) {
@@ -611,7 +623,10 @@ function getString(tag) {
     XXX(["Cannot translate ", tag, ' into ', lang]);
   }
   //noinspection JSUnresolvedVariable
-  return (languages.EN[tag] || tag);
+  return undefined;
+}
+function getString(tag) {
+  return getStringFrom(languages, tag) || languages.EN[tag] || tag;
 }
 
 // List of tags to try and translate
@@ -3644,4 +3659,4 @@ document.addEventListener('frugaliot:publish', ({detail}) => {
 
 // Public API for custom dashboards and pages that import this module.
 // Add further exports here as dashboard needs grow (e.g. getString for i18n).
-export { el };
+export { el, getString, getStringFrom, addVocabulary };
