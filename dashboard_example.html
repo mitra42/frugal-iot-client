@@ -198,7 +198,6 @@
   import { el, getString, addVocabulary } from './webcomponents.js';
   //import yaml from '/node_modules/js-yaml/dist/js-yaml.mjs'; // https://www.npmjs.com/package/js-yaml
 
-  //TODO-TRANSLATE
   addVocabulary(`
 #Language configuration - will be read from files at some point
 EN:
@@ -343,16 +342,21 @@ ID:
         /* ── Bar ── */
         const barContainer = document.getElementById('bar-container');
         barContainer.innerHTML = '';
-        // TODO I think should use sensorTopic.createElement() in which case some of the attributes used below may not be needed
-        barContainer.appendChild(el('mqtt-bar', {
+        const wiredTopic =nowMt.wiredTopic; // Can use this to learn about the topic being displayed
+      // TODO need to test, device seems to be offline
+        if (wiredTopic) {
+          barContainer.appendChild(wiredTopic.createElement());
+        } else {
+          // TODO I think should use sensorTopic.createElement() in which case some of the attributes used below may not be needed
+          barContainer.appendChild(el('mqtt-bar', {
             topic: sensorTopic,
             label: sensorName,
-            type:  'float',
+            type: 'float',
             color: 'steelblue',
-            min:   String(barMin),
-            max:   String(barMax),
-        }));
-
+            min: String(barMin),
+            max: String(barMax),
+          }));
+        }
         /* ── Controls ── */
         const controlsEl = document.getElementById('dashboard-controls');
         controlsEl.innerHTML = '';

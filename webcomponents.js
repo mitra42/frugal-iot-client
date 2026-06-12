@@ -793,6 +793,11 @@ class MqttTopic {
       }
     }
   }
+  // Return the topic this is wired to or undefined
+  get wiredTopic() {
+    return this.wired ? this.project.findTopic(this.wired) : undefined;
+  }
+
   // Create the UX element that displays this
   createElement() {
     // TO-ADD-ELEMENT expand this switch statement (also create new class)
@@ -1936,7 +1941,7 @@ class MqttReceiver extends MqttElement {
   }
   // Return the topic this is wired to or undefined
   get wiredTopic() {
-    return this.mt.wired ? this.mt.project.findTopic(this.mt.wired) : undefined;
+    return this.mt.wiredTopic; // May be undefined
   }
   // Returns the path for wiring this topic - e.g. /org/proj/device/control/now/wired
   get topicWiredPath() {
