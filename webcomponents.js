@@ -2983,8 +2983,19 @@ class MqttNode extends MqttReceiver {
         // Lets see if can find a template for this topic
         let t = server_config.schema.topics[leaf]; // May be undefined if no template for this leaf
         let guessName = leaf.replace("_"," ");
-        if (!t && ["_now", "_setpoint", "_limit", "_hysteresis", "_hysterisis", "_hyst"].some(suffix => leaf.endsWith(suffix))) {
+        if (
+          (!t && ["_now", "_setpoint", "_limit", "_hysteresis", "_hysterisis", "_hyst"].some(suffix => leaf.endsWith(suffix)))
+          || (t && groupId.startsWith("control") && (t.type == "float")) // Inside a control display as number and dropdown
+          )
+        {
             t = expandTopicTemplate('controlfloat', {leaf, name: guessName}); // Unknown setpoint or limit or hysteresis can use a float
+        }
+        if ( // No int prefixes yet, so _xxx is placeholder
+          (!t && ["_xxx",].some(suffix => leaf.endsWith(suffix)))
+          || (t && groupId.startsWith("control") && (t.type == "int")) // Inside a control display as number and dropdown
+        )
+        {
+          t = expandTopicTemplate('controlint', {leaf, name: guessName}); // Unknown setpoint or limit or hysteresis can use a float
         }
         if (!t && ["_out"].some(suffix => leaf.endsWith(suffix))) {
           t = expandTopicTemplate('controlouttoggle', {leaf, name: guessName}); // Unknown setpoint or limit or hysteresis can use a float

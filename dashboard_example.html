@@ -321,7 +321,7 @@ ID:
             barMin = nowMt.min != null ? nowMt.min : 0;
             barMax = nowMt.max != null ? nowMt.max : 100;
         }
-
+      // TODO these should be TopicPath not Topic - review entire page
         const outTopic     = (outMt     && outMt.topicPath)      || (nodeTopicPath && `${nodeTopicPath}/${groupId}/out`);
         const greaterTopic = (greaterMt && greaterMt.topicPath)  || `${nodeTopicPath}/${groupId}/greater`;
         const limitTopic   = (limitMt   && limitMt.topicPath)    || `${nodeTopicPath}/${groupId}/limit`;
