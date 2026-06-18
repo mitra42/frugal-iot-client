@@ -12,6 +12,8 @@ JavaScript/Web Components MQTT client for the Frugal IoT project. Connects to an
 - **Async style**: prefer callback-style async (using the `async` library from `caolan/async`) over Promise chains. Existing `fetch` calls that use `.then()` are legacy patterns; new async code should use callbacks or `async.waterfall` / `async.parallel` etc.
 - **Comments**: every new or edited function and class must have a comment explaining what it does and any non-obvious behaviour. Comments on the WHY, not restatements of the code.
 - **Getters**: prefer `get foo()` over plain property access whenever a value is derived or retrieved by traversing connected objects (e.g. `this.node.project`, `this.parentElement`, `this.mt.node.groups[this.group]`). Getters make the dependency chain explicit and let callers read `thing.project` naturally without knowing the traversal path.
+- **Dashboard functionality**: prefer adding reusable behaviour to `webcomponents.js` over implementing it inside a custom dashboard file. If a dashboard needs to traverse the topic tree, compute a list, or fire an event, that logic belongs on the relevant class as a getter or method.
+- **Naming — path/twig/leaf suffix**: a string variable whose value looks like `org/project/node/mod/leaf` must end in `Path` (e.g. `topicPath`, `sensorPath`); a string starting at the module level (`mod/leaf`) must end in `Twig`; a string holding just the final segment must end in `Leaf`.
 - No trailing summaries or change-log comments in code.
 
 ## Architecture
