@@ -344,9 +344,9 @@ ID:
         barContainer.innerHTML = '';
         const wiredTopic =nowMt.wiredTopic; // Can use this to learn about the topic being displayed
       // TODO need to test, device seems to be offline
-        if (wiredTopic) {
-          barContainer.appendChild(wiredTopic.createElement());
-        } else {
+        //if (wiredTopic) {
+        //  barContainer.appendChild(wiredTopic.createElement());
+        //} else {
           // TODO I think should use sensorTopic.createElement() in which case some of the attributes used below may not be needed
           barContainer.appendChild(el('mqtt-bar', {
             topic: sensorTopic,
@@ -356,7 +356,7 @@ ID:
             min: String(barMin),
             max: String(barMax),
           }));
-        }
+        //}
         /* ── Controls ── */
         const controlsEl = document.getElementById('dashboard-controls');
         controlsEl.innerHTML = '';

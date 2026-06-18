@@ -1646,7 +1646,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
      let projects = server_config.organizations[org].projects || {};
      let allNodes = [];
 
-     // Collect all nodes from all projects
+     // Collect all nodes from all projects (note these are the projects in the config, not MqttProjects)
      Object.entries(projects).forEach(([projectId, project]) => {
        let nodes = project.nodes || {};
        Object.entries(nodes).forEach(([nodeId, nodeData]) => {
@@ -2774,7 +2774,7 @@ class MqttProject extends MqttReceiver {
     let topicPath = `${this.mt.topicPath}/${id}`;
     let elNode = el('mqtt-node', {id, topic: topicPath, discover: this.state.discover, name: "", description: ""},[]);
     elNode.addStandardChildren(); // Cant be done in constructor
-    this.state.nodes[id] = elNode;
+    this.state.nodes[id] = elNode; //XX
     let mt = new MqttTopic();
     mt.initialize({
       type: "yaml",
@@ -3348,8 +3348,10 @@ class MqttGraph extends MqttElement {
   }
   static get graph() { // TODO-46 probably belongs in MqttReceiver
     if (!graph) { // global
-      graph = el('mqtt-graph');
-      document.body.append(graph);
+      // See if there is a graphContainer as a specific place to put this otherwise end of document
+      const graphContainer = document.getElementById('graph-container') || document.body
+      graph = el('mqtt-graph'); // graph is global
+      graphContainer.append(graph);
     }
     return graph;
   }
