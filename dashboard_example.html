@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-title" content="Frugal IoT Dashboard">
     <link rel="apple-touch-icon" href="/images/icon-192x192.png">
     <link rel="manifest" href="/manifest.json">
-    <title>Frugal IoT Control Dashboard</title>
+    <title>Frugal IoT Control Dashboard 2</title>
     <link href="./frugaliot.css" rel="stylesheet" type="text/css">
     <script type="importmap">
         {
@@ -85,39 +85,28 @@
             display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px;
         }
         .ctrl-field { display: flex; flex-direction: column; }
-        .ctrl-label { font-size: 0.78em; color: #666; font-weight: bold; margin-bottom: 3px; }
-        /* mqtt-toggle in dashboard shows its own label (hidden by shadow CSS) - we add external labels */
-
-        /* Constrain mqtt-text inputs in the controls row so limit + hysteresis fit on one line.
-           --mqtt-val-width is a CSS custom property read inside the mqtt-text shadow DOM (frugaliot.css). */
         #dashboard-controls mqtt-text { --mqtt-text-val-width: 90px; }
 
-        /* ── Settings panel: hide mqtt-wrapper's node display, show only org/project dropdowns ── */
+        /* ── Settings: hide mqtt-wrapper's node display ── */
         #settings-panel > mqtt-wrapper > mqtt-project { display: none !important; }
         #settings-panel > mqtt-wrapper > mqtt-client  { display: none !important; }
 
-        /* ── Custom settings ── */
-        #custom-settings { margin-top: 8px; }
-        .settings-group-section {
-            background: white; border-radius: 8px;
-            padding: 12px 14px; margin-bottom: 10px;
-            box-shadow: 0 1px 3px rgba(0,0,0,.1);
-        }
-        .settings-group-heading {
-            display: flex; align-items: center; gap: 8px;
-            margin-bottom: 10px;
-        }
-        .settings-node-name { font-weight: bold; font-size: 1em; }
-        mqtt-choosetopic { display: block; margin-bottom: 8px; }
-        mqtt-choosetopic::part(row) { display: flex; align-items: center; gap: 8px; }
-        mqtt-choosetopic::part(label) { font-size: 0.9em; color: #555; width: 72px; flex-shrink: 0; }
-        mqtt-choosetopic::part(select) { flex: 1; padding: 5px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.92em; }
-        .settings-empty { color: #888; font-size: 0.95em; padding: 8px 0; }
+        /* ── Settings: chooser section ── */
         .settings-intro {
             background: #e8f0fe; border-left: 4px solid #007bff;
             padding: 8px 12px; margin-bottom: 10px;
             border-radius: 0 6px 6px 0; font-size: 0.88em; color: #444;
         }
+        #chooser-section {
+            background: white; border-radius: 8px;
+            padding: 12px 14px; margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,.1);
+        }
+        #chooser-section.hidden { display: none; }
+        mqtt-choosetopic { display: block; margin-bottom: 8px; }
+        mqtt-choosetopic::part(row) { display: flex; align-items: center; gap: 8px; }
+        mqtt-choosetopic::part(label) { font-size: 0.9em; color: #555; width: 72px; flex-shrink: 0; }
+        mqtt-choosetopic::part(select) { flex: 1; padding: 5px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.92em; }
     </style>
 </head>
 <body>
@@ -148,7 +137,7 @@
             </div>
         </div>
 
-        <!-- Status -->
+        <!-- On/off status -->
         <div class="card">
             <div id="status-row">
                 <div id="status-dot"></div>
@@ -156,25 +145,20 @@
             </div>
         </div>
 
-        <!-- Sensor bar -->
-        <div class="card" id="bar-container">
-            <!-- mqtt-bar inserted by JS -->
-        </div>
+        <!-- Sensor bar — mqtt-bar inserted by JS -->
+        <!--TODO check its adding via creating element rather than raw bar?-->
+        <div class="card" id="bar-container"></div>
 
-        <!-- Control parameters -->
+        <!-- Control parameters — inserted by JS -->
         <div class="card">
             <h3>Control Parameters</h3>
-            <div id="dashboard-controls">
-                <!-- greater, limit, hysteresis inserted by JS -->
-            </div>
+            <div id="dashboard-controls"></div>
         </div>
 
-        <!-- History graph -->
+        <!-- History graph — mqtt-graph placed here by MqttGraph.graph via topic.createGraph() -->
         <div class="card">
             <h3>History</h3>
-            <div id="graph-container">
-                <!-- mqtt-graph inserted by JS -->
-            </div>
+            <div id="graph-container"></div>
         </div>
 
     </div>
@@ -183,23 +167,25 @@
 <!-- ═══ Settings panel ═══ -->
 <div id="settings-panel" class="panel hidden">
     <div class="settings-intro">
-        Select organisation and project, then choose sensor and actuator below.
+        Select organisation and project, then choose your control module, sensor, and actuator.
     </div>
-    <!-- mqtt-wrapper: handles MQTT connection and org/project selection UI.
-         The node/group details are hidden via CSS; we show our own simplified UI. -->
+
+    <!-- mqtt-wrapper handles MQTT connection and org/project dropdowns.
+         Node display is suppressed via CSS; we drive the rest from the topic data tree. -->
     <mqtt-wrapper></mqtt-wrapper>
-    <!-- Custom control-group settings, built by JS after discovery -->
-    <div id="custom-settings">
-        <div id="custom-settings-groups"></div>
+
+    <!-- Choosers are built by JS once control groups are discovered via frugaliot:controlgroup. -->
+    <div id="chooser-section" class="hidden">
+        <div id="control-chooser-container"></div>
+        <div id="sensor-chooser-container"></div>
+        <div id="actuator-chooser-container"></div>
     </div>
 </div>
 
 <script type="module">
   import { el, getString, addVocabulary } from './webcomponents.js';
-  //import yaml from '/node_modules/js-yaml/dist/js-yaml.mjs'; // https://www.npmjs.com/package/js-yaml
 
   addVocabulary(`
-#Language configuration - will be read from files at some point
 EN:
     OFF: OFF
     ON: ON
@@ -208,319 +194,236 @@ FR:
     OFF: Éteint
     ON: Allumé
     Status unknown: Statut inconnu
-HI:
-    OFF: बंद
-    ON: चालू
-    Status unknown: स्थिति अज्ञात
-ID:
-    OFF: Mati
-    ON: Nyala
-    Status unknown: Status tidak diketahui
 `);
 
-  // Check locally for translation first
-  function getDashboardString(tag) {
-    return getStringFrom(dashboardLanguages, tag) || getString(tag);
+  /* ── Tab switching ── */
+  let settingsOpen = false;
+  window._dashToggle = function () {
+    settingsOpen = !settingsOpen;
+    document.getElementById('dashboard-panel').classList.toggle('hidden', settingsOpen);
+    document.getElementById('settings-panel').classList.toggle('hidden', !settingsOpen);
+    document.getElementById('settings-btn').classList.toggle('active', settingsOpen);
+  };
+
+  /* ── Dashboard state ── */
+  let currentEntry = null;   // { nodeMt, groupId, topics: [MqttTopic] } — the active control group
+  let groupAttrObserver = null;
+  let choosersBuilt = false; // Sensor/actuator choosers are built once and reused
+  let prevSensorMt = null;   // Track the last graphed sensor to remove its line on sensor change
+  let prevOutMt = null;      // Track the last graphed actuator to remove its line on control change
+
+  /* ── Helpers ── */
+  function getWrapper() { return document.querySelector('mqtt-wrapper'); }
+
+  // Human-readable label for a MqttTopic, falling back to the last two path segments.
+  function labelOf(mt) {
+    //return mt ? mt.usableName : null;
+
+    if (!mt) return null;
+    // TODO-73 unclear why need fallback, usableName will, at worst, return a ':'
+    try { if (mt.usableName) return mt.usableName; } catch (e) {}
+    const parts = mt.topicPath.split('/');
+    return parts.length >= 2 ? parts.slice(-2).join('/') : mt.topicPath;
+
   }
-  //TODO rethink using any EL from the settings page, should just not build them and use the topic tree instead.
-    /* ── Tab switching ── */
-    let settingsOpen = false;
-    window._dashToggle = function () {
-        settingsOpen = !settingsOpen;
-        document.getElementById('dashboard-panel').classList.toggle('hidden', settingsOpen);
-        document.getElementById('settings-panel').classList.toggle('hidden', !settingsOpen);
-        document.getElementById('settings-btn').classList.toggle('active', settingsOpen);
-        if (settingsOpen) rebuildSettingsGroupsUI();
-    };
 
-    /* ── Helpers ── */
-    function shortName(topicPath) {
-        if (!topicPath) return null;
-        const parts = topicPath.split('/');
-        return parts.length >= 2 ? parts.slice(-2).join('/') : topicPath;
+  /* ── Status dot ── */
+  function updateOnOff(on) {
+    const dot  = document.getElementById('status-dot');
+    const text = document.getElementById('status-text');
+    if (on === undefined || on === null) {
+      dot.className = ''; text.textContent = getString('Status unknown');
+    } else if (on) {
+      dot.className = 'on'; text.textContent = getString('ON');
+    } else {
+      dot.className = 'off'; text.textContent = getString('OFF');
     }
+  }
 
-    // Return a usable name for the path, or a short name if do not have sufficient info to get usableName
-    function nameOf(group, wiredPath) {
-        if (!wiredPath) return null;
-        try {
-            const topic = group && group.project && group.project.findTopic(wiredPath);
-            if (topic && topic.usableName) return topic.usableName;
-        } catch (e) { /* ignore */ }
-        return shortName(wiredPath);
-    }
+  /* ── Connection info card ── */
+  function updateConnectionInfo(sensorMt, actuatorMt) {
+    document.getElementById('sensor-name').textContent   = labelOf(sensorMt)   || '—';
+    document.getElementById('actuator-name').textContent = labelOf(actuatorMt) || '—';
+  }
 
-    /* ── Dashboard state ── */
-    let currentGroup = null; // A mqtt-groupcontrolhysteresis or mqtt-groupcontrolhysterisis, Set when things change and by looping through all control_hysteresis or control_hysterisis
-    let groupAttrObserver = null;
+  /* ── Build/rebuild the chooser section from the data tree ──
+     Called on every frugaliot:controlgroup event so the control dropdown stays current.
+     Sensor/actuator choosers are built once; only their selected values are updated. */
+  function buildChoosers() {
+    const wrapper = getWrapper();
+    const project = wrapper && wrapper.projectMt && wrapper.projectMt.element; // TODO-73 dependence on project element
+    if (!project) return;
 
-    /* ── On/Off indicator ── */
-    function updateOnOff() {
-        if (!currentGroup) return;
-        const on = currentGroup.state.on;
-        const dot  = document.getElementById('status-dot');
-        const text = document.getElementById('status-text');
-        if (on === undefined || on === null) {
-            dot.className = ''; text.textContent = getString('Status unknown');
-        } else if (on) {
-            dot.className = 'on'; text.textContent = getString('ON');
-        } else {
-            dot.className = 'off'; text.textContent = getString('OFF');
-        }
-    }
+    document.getElementById('chooser-section').classList.remove('hidden');
 
-    /* ── Connection info ── */
-    function updateConnectionInfo() {
-        if (!currentGroup) return;
-        const nowWired = currentGroup.state && currentGroup.state.now_wired;
-        const outWired = currentGroup.state && currentGroup.state.out_wired;
-        document.getElementById('sensor-name').textContent   = nameOf(currentGroup, nowWired)  || '—';
-        document.getElementById('actuator-name').textContent = nameOf(currentGroup, outWired)  || '—';
-    }
+    // ── Control chooser: type="control" uses the data tree via MqttTopic.controlGroupList ──
+    const controlContainer = document.getElementById('control-chooser-container');
+    controlContainer.innerHTML = '';
+    controlContainer.appendChild(el('mqtt-choosetopic', {
+      name:    'Control',
+      type:    'control',
+      project, //TODO-73 do we need the element for choose-topic (1/3)
+      value:   currentEntry
+        ? `${currentEntry.nodeMt.element.state.id}/${currentEntry.groupId}` //TODO-73 dependence on element
+        : '',
+      onchange: (e) => {
+        if (!e.target.value) return;
+        const [nodeId, groupId] = e.target.value.split('/');
+        const nodeMt = getWrapper().projectMt.nodes[nodeId];
+        if (!nodeMt) return;
+        selectControl({ nodeMt, groupId, topics: nodeMt.controlGroups[groupId] || [] });
+      }
+    }));
 
-    /* ── Wire up the dashboard from a discovered control group ── */
-    function wireUpDashboard(group) {
-        currentGroup = group;
+    if (!choosersBuilt) {
+      choosersBuilt = true;
 
-        /* Collect mt objects from group's child elements */
-        let nowMt, outMt, greaterMt, limitMt, hystMt; /* onMt */
-        Array.from(group.children).forEach(child => {
-            if (!child.mt) return;
-            switch (child.mt.leaf) { // TODO-add leaf as getter to Elements
-                case 'now':         nowMt     = child.mt; break;
-                case 'out':         outMt     = child.mt; break;
-                case 'greater':     greaterMt = child.mt; break;
-                case 'limit':       limitMt   = child.mt; break;
-                case 'hysteresis':
-                case 'hysterisis':  hystMt    = child.mt; break;
-                //case 'on':          onMt      = child.mt; break; the child is "out" the status on Group is "on"
-            }
-        });
-
-        const groupId        = group.getAttribute('group') || 'controlhysteresis'; // Should always exist
-        const nodeTopicPath  = group.parentElement && group.parentElement.mt && group.parentElement.mt.topicPath; // Add getter on group to go to parent
-        const nowWired       = group.state.now_wired;
-        const outWired       = group.state.out_wired;
-
-        /* Resolve sensor topic and range */
-        let sensorTopic = (nowMt && nowMt.topicPath) || `${nodeTopicPath}/${groupId}/now`;
-        let barMin = 0, barMax = 100; // just defaults
-        // Look for min and max on the topic we are wired to
-        if (nowWired) {
-            try {
-                const sensorMt = group.project && group.project.findTopic(nowWired);
-                if (sensorMt) {
-                    sensorTopic = sensorMt.topicPath;
-                    barMin = sensorMt.min != null ? sensorMt.min : 0;
-                    barMax = sensorMt.max != null ? sensorMt.max : 100;
-                } else {
-                    sensorTopic = nowWired;
-                }
-            } catch (e) { sensorTopic = nowWired; }
-        } else if (nowMt) {
-            barMin = nowMt.min != null ? nowMt.min : 0;
-            barMax = nowMt.max != null ? nowMt.max : 100;
-        }
-      // TODO these should be TopicPath not Topic - review entire page
-        const outTopic     = (outMt     && outMt.topicPath)      || (nodeTopicPath && `${nodeTopicPath}/${groupId}/out`);
-        const greaterTopic = (greaterMt && greaterMt.topicPath)  || `${nodeTopicPath}/${groupId}/greater`;
-        const limitTopic   = (limitMt   && limitMt.topicPath)    || `${nodeTopicPath}/${groupId}/limit`;
-        const hystLeaf     = (hystMt    && hystMt.leaf)          || 'hysteresis';
-        const hystTopic    = (hystMt    && hystMt.topicPath)     || `${nodeTopicPath}/${groupId}/${hystLeaf}`;
-
-        /* Names */
-        const sensorName   = nameOf(group, nowWired) || 'Sensor';
-        const actuatorName = nameOf(group, outWired) || 'Actuator';
-
-       document.getElementById('app-title').textContent = group.node.usableName || "Dashboard";
-
-        /* Show dashboard */
-        document.getElementById('waiting-msg').style.display = 'none';
-        document.getElementById('dashboard-content').style.display = '';
-        updateConnectionInfo();
-
-        /* ── Bar ── */
-        const barContainer = document.getElementById('bar-container');
-        barContainer.innerHTML = '';
-        const wiredTopic =nowMt.wiredTopic; // Can use this to learn about the topic being displayed
-      // TODO need to test, device seems to be offline
-        //if (wiredTopic) {
-        //  barContainer.appendChild(wiredTopic.createElement());
-        //} else {
-          // TODO I think should use sensorTopic.createElement() in which case some of the attributes used below may not be needed
-          barContainer.appendChild(el('mqtt-bar', {
-            topic: sensorTopic,
-            label: sensorName,
-            type: 'float',
-            color: 'steelblue',
-            min: String(barMin),
-            max: String(barMax),
-          }));
-        //}
-        /* ── Controls ── */
-        const controlsEl = document.getElementById('dashboard-controls');
-        controlsEl.innerHTML = '';
-        // TODO back-port to webcomponents
-        // This might just be the el's with some CSS
-        function addCtrl(child) {
-          controlsEl.appendChild(el('div', {class: 'ctrl-field'}, [child]));
-        }
-        /* Direction: dropdown showing < or > instead of a checkbox */
-        addCtrl(el('mqtt-toggle', { topic: greaterTopic, label: '', type: 'bool', labels: '<,>' }));
-        /* Limit */
-        addCtrl(el('mqtt-text', { topic: limitTopic, label: '', type: 'float', color: 'orange' }));
-        /* ± Hysteresis */
-        addCtrl(el('mqtt-text', { topic: hystTopic, label: '±', type: 'float', color: '#666' }));
-
-        /* ── Graph ── */
-        const graphContainer = document.getElementById('graph-container');
-        graphContainer.innerHTML = '';
-        // TODO in MqttGraph.graph look for `graph-container` and put a graph there it will then be used by topic.createGraph
-        // TODO then becomes unnecessary to create here
-        const graph = el('mqtt-graph', {});
-        // TODO probably just use sensorTopic.createGraph() but check how it gets the dataset
-        // TODO Note that at this point we have nowMt but that is in the control, we dont have the mt of the topic nowMt is wired to
-        graph.appendChild(el('mqtt-graphdataset', {
-            topic: sensorTopic,
-            type:  'float',
-            color: 'steelblue',
-            label: sensorName,
-            min:   String(barMin),
-            max:   String(barMax),
-        }));
-
-        // TODO figure out how to do outMt->wiredTopicMt->.createGraph() - change this first to be passed a graph
-        if (outTopic) graph.appendChild(el('mqtt-graphdataset', {
-            topic: outTopic,
-            type:  'bool',
-            color: 'orange',
-            label: actuatorName,
-        }));
-
-        // TODO this becomes unneeded if creating graph in it via MqttGraph.graph
-        graphContainer.appendChild(graph);
-
-        /* ── Watch group attributes for live updates ── */
-        // Once we've wired up the dashboard from this `group` watch the group for changes to what it is wired to (which might come from online from another UX)
-        if (groupAttrObserver) groupAttrObserver.disconnect();
-        groupAttrObserver = new MutationObserver((mutations) => {
-            const wiringChanged = mutations.some(m =>
-                m.attributeName === 'now_wired' || m.attributeName === 'out_wired'
-            );
-            if (wiringChanged) {
-                wireUpDashboard(currentGroup); // rebuild bar/graph with real sensor topic
-            } else {
-                updateOnOff();
-                updateConnectionInfo();
-            }
-        });
-        groupAttrObserver.observe(group, { attributes: true });
-
-        updateOnOff();
-        rebuildSettingsGroupsUI();
-    }
-
-    /* ── Build simplified settings: one section per control group ── */
-    function rebuildSettingsGroupsUI() {
-        domObserver.disconnect();
-        try { _doRebuildSettingsGroupsUI(); } finally {
-            domObserver.observe(settingsPanel, { childList: true, subtree: true });
-        }
-    }
-    function _doRebuildSettingsGroupsUI() {
-        const container = document.getElementById('custom-settings-groups');
-        if (!container) return;
-        container.innerHTML = '';
-
-        const allGroups = Array.from(document.querySelectorAll(
-            '#settings-panel mqtt-groupcontrolhysteresis, #settings-panel mqtt-groupcontrolhysterisis'
-        ));
-
-        if (allGroups.length === 0) {
-          container.appendChild(
-            el('p', {
-              class: 'settings-empty',
-              textContent: 'No control modules found yet. Select organisation and project above.'
-            }));
-          return;
-        }
-
-        allGroups.forEach((group, idx) => {
-            const isActive = (group === currentGroup);
-            const section =
-              el('div', {class: 'settings-group-section'}, [
-                /* Heading: radio (if multiple) + node name */
-                el('div', {class: 'settings-group-heading'}, [
-                    (allGroups.length > 1) ? el('input', {
-                      type: 'radio',
-                      name: 'active-group',
-                      value: String(idx),
-                      checked: isActive,
-                      onchange: () => wireUpDashboard(group),
-                    }) : null,
-                    el('span', {class: 'settings-node-name', textContent: group.node.usableName})
-                ]),
-                /* Sensor dropdown */
-                // TODO pretty sure webcomponent.js has something that does this - i.e. send even when wiring changes
-                makeWiringRow('Sensor', 'float', group.state.now_wired, 'r', group.project, (value) => {
-                  // When row is changed, value is the path to the sensor, and this function will set the wiredPath of the control to the sensor
-                  const topicWiredPath = group.findLeaf('now').topicWiredPath;
-                  if (topicWiredPath) {  document.dispatchEvent(new CustomEvent('frugaliot:publish', {
-                    detail: { topic: topicWiredPath, value, options: {retain: true, qos: 1} }
-                  }))}
-                }),
-                /* Actuator dropdown — 'out' is rw='r' so we publish the actuator's setTopic */
-                makeWiringRow('Actuator', 'bool', group.state.out_wired, 'w', group.project, (value) => {
-                  // When row is changed, value is the path to the sensor, and this function will set the wiredPath of the control to the sensor
-                  const topicWiredPath = group.findLeaf('out').topicWiredPath;
-                  if (topicWiredPath) {  document.dispatchEvent(new CustomEvent('frugaliot:publish', {
-                    detail: { topic: topicWiredPath, value, options: {retain: true, qos: 1} }
-                  }))}
-                })
-              ]);
-
-            container.appendChild(section);
-        });
-    }
-
-    /* Build a labeled dropdown row for sensor/actuator wiring using mqtt-choosetopic.
-       rw: 'r' for sensors (use t.topic as value), 'w' for actuators (use t.setTopic). */
-    function makeWiringRow(labelText, type, currentValue, rw, project, onChange) {
-      return el('mqtt-choosetopic', {
-        name: labelText,
-        type: type,
-        rw: rw,
-        value: currentValue || '',
+      // ── Sensor chooser: float read topics across the whole project ──
+      document.getElementById('sensor-chooser-container').appendChild(el('mqtt-choosetopic', {
+        name: 'Sensor',
+        type: 'float',
+        rw:   'r',
+        project, //TODO-73 do we need the element for choose-topic (1/3)
+        value: '',
         onchange: (e) => {
-          if (e.target.value) onChange(e.target.value);
-        },
-        project: project,
-      });
-    }
-    /* ── Watch settings panel for control groups appearing ── */
-    const settingsPanel = document.getElementById('settings-panel');
-    const domObserver = new MutationObserver((mutations) => {
-        // Collect only newly added hysteresis group elements from this batch of mutations.
-        // Using addedNodes (not querySelector) avoids re-detecting the first group every time
-        // any unrelated DOM change fires the observer.
-        const newGroups = [];
-        for (const mutation of mutations) {
-            for (const node of mutation.addedNodes) {
-                if (node.nodeType !== Node.ELEMENT_NODE) continue;
-                if (node.matches('mqtt-groupcontrolhysteresis, mqtt-groupcontrolhysterisis')) {
-                    newGroups.push(node);
-                }
-                node.querySelectorAll('mqtt-groupcontrolhysteresis, mqtt-groupcontrolhysterisis')
-                    .forEach(g => newGroups.push(g));
-            }
+          if (!e.target.value || !currentEntry) return;
+          const nowMt = currentEntry.topics.find(t => t.leaf === 'now');
+          if (nowMt) nowMt.publishWired(e.target.value);
         }
-        if (newGroups.length === 0) return;
-        // Wire up the dashboard only when no group is active yet; subsequent groups
-        // just need the settings panel rebuilt so the radio-button list stays complete.
-        if (!currentGroup) wireUpDashboard(newGroups[0]);
-        if (settingsOpen) rebuildSettingsGroupsUI();
-    });
-    domObserver.observe(settingsPanel, { childList: true, subtree: true });
+      }));
+
+      // ── Actuator chooser: bool write topics across the whole project ──
+      // TODO-73 cant we use the choosetopics' own mechanism to send the change to 'out'
+      document.getElementById('actuator-chooser-container').appendChild(el('mqtt-choosetopic', {
+        name: 'Actuator',
+        type: 'bool',
+        rw:   'w',
+        project, //TODO-73 do we need the element for choose-topic (1/3)
+        value: '',
+        onchange: (e) => {
+          if (!e.target.value || !currentEntry) return;
+          const outMt = currentEntry.topics.find(t => t.leaf === 'out');
+          if (outMt) outMt.publishWired(e.target.value);
+        }
+      }));
+    }
+
+    syncWiringChoosers();
+  }
+
+  /* ── Sync sensor/actuator chooser values with the current control's wiring ── */
+  function syncWiringChoosers() {
+    if (!currentEntry) return;
+    const nowMt = currentEntry.topics.find(t => t.leaf === 'now');
+    const outMt = currentEntry.topics.find(t => t.leaf === 'out');
+    const sensorChooser   = document.querySelector('#sensor-chooser-container mqtt-choosetopic');
+    const actuatorChooser = document.querySelector('#actuator-chooser-container mqtt-choosetopic');
+    if (sensorChooser   && nowMt) sensorChooser.setAttribute('value',   nowMt.wired || '');
+    if (actuatorChooser && outMt) actuatorChooser.setAttribute('value', outMt.wired || '');
+  }
+
+  /* ── Select a control group entry and update the dashboard ── */
+  function selectControl(entry) {
+    currentEntry = entry;
+    wireUpDashboard(entry);
+    syncWiringChoosers();
+  }
+
+  /* ── Build the dashboard for a control entry ──
+     Derives all topic paths from the data tree (MqttTopic objects) rather than DOM traversal.
+     Falls back gracefully if specific leaves are absent (e.g. older firmware). */
+  function wireUpDashboard({ nodeMt, groupId, topics }) {
+    // Locate specific leaf topics from the control group's topic list
+    const nowMt     = topics.find(t => t.leaf === 'now');
+    const outMt     = topics.find(t => t.leaf === 'out');
+    const greaterMt = topics.find(t => t.leaf === 'greater');
+    const limitMt   = topics.find(t => t.leaf === 'limit');
+    const hystMt    = topics.find(t => t.leaf === 'hysteresis' || t.leaf === 'hysterisis');
+
+    // Sensor is what 'now' is wired to; fall back to the local 'now' reading if unwired
+    const sensorMt   = (nowMt && nowMt.wiredTopic) || nowMt;
+    // Actuator display is the topic 'out' is wired to (may be null)
+    const actuatorMt = outMt && outMt.wiredTopic;
+
+    document.getElementById('app-title').textContent =
+      nodeMt.element.usableName || 'Dashboard';
+    document.getElementById('waiting-msg').style.display   = 'none';
+    document.getElementById('dashboard-content').style.display = '';
+
+    updateConnectionInfo(sensorMt, actuatorMt);
+
+    // ── Sensor bar ──
+    const barContainer = document.getElementById('bar-container');
+    barContainer.innerHTML = '';
+    if (sensorMt) {
+      barContainer.appendChild(el('mqtt-bar', { //TODO-73 can we build from MT instead ?
+        topic: sensorMt.topicPath,
+        label: labelOf(sensorMt),
+        type:  'float',
+        color: 'steelblue',
+        min:   String(sensorMt.min ?? 0),
+        max:   String(sensorMt.max ?? 100),
+      }));
+    }
+
+    // ── Control inputs ──
+    const controlsEl = document.getElementById('dashboard-controls');
+    controlsEl.innerHTML = '';
+    function addCtrl(child) { controlsEl.appendChild(el('div', { class: 'ctrl-field' }, [child])); }
+    if (greaterMt) addCtrl(el('mqtt-toggle', { topic: greaterMt.topicPath, label: '', type: 'bool', labels: '<,>' }));
+    if (limitMt)   addCtrl(el('mqtt-text',   { topic: limitMt.topicPath,   label: '',  type: 'float', color: 'orange' }));
+    if (hystMt)    addCtrl(el('mqtt-text',   { topic: hystMt.topicPath,    label: '±', type: 'float', color: '#666' }));
+
+    // ── Graph: remove old lines if sensor or actuator changed, then add the new ones ──
+    if (prevSensorMt && prevSensorMt !== sensorMt)   prevSensorMt.removeFromGraph();
+    if (prevOutMt    && prevOutMt    !== actuatorMt)  prevOutMt.removeFromGraph();
+    prevSensorMt = sensorMt   || null;
+    prevOutMt    = actuatorMt || null;
+    if (sensorMt)   sensorMt.createGraph();
+    if (actuatorMt) actuatorMt.createGraph();
+
+    // ── Watch the group element for on/off state and wiring changes ──
+    // The group element's attributes (on, now_wired, out_wired) are updated by incoming MQTT.
+    //TODO-73 is this groupEl in old DOM or this dashboard's
+    if (groupAttrObserver) groupAttrObserver.disconnect();
+    const groupEl = nodeMt.element.groups[groupId];
+    if (groupEl) {
+      groupAttrObserver = new MutationObserver((mutations) => {
+        const wiringChanged = mutations.some(
+          m => m.attributeName === 'now_wired' || m.attributeName === 'out_wired'
+        );
+        if (wiringChanged) {
+          // Rebuild bar and graph with updated sensor/actuator
+          wireUpDashboard({ nodeMt, groupId, topics });
+          syncWiringChoosers();
+        } else {
+          updateOnOff(groupEl.state.on);
+        }
+      });
+      groupAttrObserver.observe(groupEl, { attributes: true });
+      updateOnOff(groupEl.state.on);
+    }
+  }
+
+  /* ── React to control groups appearing via the topic data tree ──
+     Fired by MqttNode.addGroupFromTemplate when a control group is created. */
+  document.addEventListener('frugaliot:controlgroup', (e) => {
+    buildChoosers(); // Rebuild control dropdown to include the new group
+    if (!currentEntry) {
+      // Auto-select the first control group discovered
+      selectControl(e.detail);
+    }
+  });
+
+  /* ── Rebuild sensor/actuator choosers when new topics are discovered ──
+     Fired by MqttProject.rebuildTopicDropdowns whenever nodes or groups are added.
+     This ensures sensor topics that arrive after the initial build still appear. */
+  document.addEventListener('frugaliot:topicschanged', () => {
+    const sc = document.querySelector('#sensor-chooser-container mqtt-choosetopic');
+    const ac = document.querySelector('#actuator-chooser-container mqtt-choosetopic');
+    if (sc) sc.rebuildDropdown();
+    if (ac) ac.rebuildDropdown();
+  });
 </script>
 
 </body>
