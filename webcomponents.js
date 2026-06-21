@@ -301,6 +301,7 @@ EN:
   Temperature: Temperature
   TVOC: TVOC
   Unused: Unused
+  undefined: undefined
   Username: Username
   Last Seen: Last Seen
   Soil: Soil
@@ -385,6 +386,7 @@ FR:
   Temperature: Température
   TVOC: COVT  
   Unused: Inutilisé
+  undefined: indéfini
   Username: Nom de User
   Last Seen: Dernière activité
   Soil: Sol
@@ -471,6 +473,7 @@ HI:
   Temperature: तापमान
   TVOC: टीवीओसी  
   Unused: अप्रयुक्त
+  undefined: अपरिभाषित
   Username: उपयोगकर्ता नाम
   Last Seen: अंतिम बार देखा गया
   Soil: मिट्टी
@@ -557,6 +560,7 @@ ID:
   Temperature: Suhu
   TVOC: TVOC  
   Unused: Tidak digunakan
+  undefined: tidak ditentukan
   Username: Nama Pengguna
   Last Seen: Terakhir Dilihat
   Soil: Tanah
@@ -592,7 +596,10 @@ ID:
   No projects to display until organization selected: Tidak ada proyek untuk ditampilkan sampai organisasi dipilih
 `);
 
-let preferedLanguages = [ ];
+// Initialise from ?lang= immediately so language-picker renders with the correct selection
+// before any element connects. mqtt-wrapper.changeAttribute("lang") will reinforce this later.
+const _langInit = new URL(window.location.href).searchParams.get('lang');
+let preferedLanguages = _langInit ? _langInit.split(',').map(l => l.toUpperCase()) : [];
 function languageNamesAndFlags() {
   //noinspection JSUnresolvedVariable
   return Object.entries(languages).map(([k,v]) => [k,v._nameAndFlag]);
@@ -721,6 +728,7 @@ class MqttTopic {
     this.data = []; // Tracks previous values of this topic - used for graphing
     this.qos = 0; // Default to send and not care if received
     this.retain = false; // Default to not retain
+    this.state = {}; // Dynamic state: value, groupMt roll-up fields (now_wired, out_wired, on, etc.)
   }
 
   initialize(o) {
@@ -742,11 +750,14 @@ class MqttTopic {
 
   // Gets and related fields ========
 
-  get groupEl() {
-    return this.node.groups[this.group];
+  // The MqttTopicGroup for this leaf's group — always via the data tree.
+  // nodeMt is set on all leaf topics by MqttTopicNode.addTopicFromTemplate.
+  get groupMt() {
+    return this.nodeMt && this.nodeMt.groups[this.group];
   }
   get groupName() {
-    return this.groupEl.state.name
+    const gmt = this.groupMt;
+    return (gmt && gmt.state.name) || this.group;
   }
   // Suitable name to refer to this, e,g. on a graph etc. for groups with a single value (e.g. relay) this is the name of the group, rather than the name of the leaf
   get usableName() {
@@ -758,21 +769,26 @@ class MqttTopic {
     }
   }
 
-  // instance of MqttProject
+  // instance of MqttProject element — still needed by element-side callers
   get project() {
     return this.node.project;
+  }
+  // Project-level MqttTopicProject. Reached via nodeMt._projectMt, which is set on all MqttTopicNode
+  // objects — by MqttProject.addNode in normal mode and MqttTopicProject.addNode in headless mode.
+  get projectMt() {
+    return this._projectMt || (this.nodeMt && this.nodeMt._projectMt);
   }
   get leaf() { // e.g. temperature
     return this.twig.split("/").pop();
   }
-  // e.g. /dev/project/node/module/leaf or for node /dev/project/node
+  // e.g. org/project/node/group/leaf; for node/project topics nodeMt is absent and twig is the full path.
+  // nodeMt is set on all leaf topics by MqttTopicNode.addTopicFromTemplate in both normal and headless mode.
   get topicPath() {
-    return (this.node ? this.node.mt.topicPath + "/" : "") + this.twig;
+    return (this.nodeMt ? this.nodeMt.topicPath + "/" : "") + this.twig;
   }
-  // e.g. /dev/project/node/set/module/leaf
+  // e.g. org/project/node/set/group/leaf
   get topicSetPath() {
-    // "set" path is meaningless (I think) for a node or project
-    return this.node.mt.topicPath + "/set/" + this.twig;
+    return this.nodeMt.topicPath + "/set/" + this.twig;
   }
   // e.g. /dev/project/node/set/module/leaf/wired
   get topicWiredPath() {
@@ -795,32 +811,34 @@ class MqttTopic {
   }
   // Return the topic this is wired to or undefined
   get wiredTopic() {
-    return this.wired ? this.project.findTopic(this.wired) : undefined;
+    const projMt = this.projectMt;
+    return this.wired && projMt ? projMt.findTopic(this.wired) : undefined;
+  }
+
+  // Navigate project → node → group → topic purely via the data tree.
+  // Only meaningful when called on a project-level MqttTopic (i.e. one with a nodes map).
+  findTopic(topicPath) {
+    const parts = topicPath.split("/");
+    if (parts[3] === "set") parts.splice(3, 1); // Normalise read and write paths
+    const nodeMt = this.nodes[parts[2]];
+    const groupMt = nodeMt && nodeMt.groups[parts[3]];
+    return groupMt && groupMt.topics[parts[4]];
   }
 
   // Lazy-initialised map of nodeId → node-level MqttTopic.
   // Only meaningful when this topic represents a project; populated by MqttProject.addNode.
   get nodes() { return this._nodes || (this._nodes = {}); }
 
-  // Lazy-initialised map of twig → leaf MqttTopic for this node.
-  // Only meaningful when this topic represents a node; populated by MqttNode.addTopicFromTemplate.
+  // Lazy-initialised map of leaf → MqttTopic.
+  // Used by MqttTopicGroup to hold its leaf topics; not meaningful on node-level topics.
   get topics() { return this._topics || (this._topics = {}); }
 
-  // For node-level topics: leaf MqttTopics grouped by their groupId,
-  // derived from this.topics — no element access needed.
-  // Returns { groupId: [MqttTopic] }
-  get groups() {
-    const result = {};
-    Object.values(this.topics).forEach(mt => {
-      if (!mt.group) return; //TODO-73 unclear whether mt.group exists
-      if (!result[mt.group]) result[mt.group] = [];
-      result[mt.group].push(mt);
-    });
-    return result;
-  }
+  // Lazy-initialised map of groupId → MqttTopicGroup for this node.
+  // Only meaningful when this topic represents a node; populated via MqttNode.topicGroups.
+  get groups() { return this._groups || (this._groups = {}); }
 
   // For node-level topics: the subset of groups whose id starts with 'control'.
-  // Returns { groupId: [MqttTopic] }
+  // Returns { groupId: MqttTopicGroup }
   get controlGroups() {
     return Object.fromEntries(
       Object.entries(this.groups).filter(([id]) => id.startsWith('control'))
@@ -828,11 +846,11 @@ class MqttTopic {
   }
 
   // For project-level topics: flat list of all control groups across all nodes.
-  // Each entry: { nodeMt, groupId, topics: [MqttTopic] }
+  // Each entry: { nodeMt, groupId, groupMt, topics: [MqttTopic] }
   get controlGroupList() {
     return Object.values(this.nodes).flatMap(nodeMt =>
       Object.entries(nodeMt.controlGroups)
-        .map(([groupId, topics]) => ({ nodeMt, groupId, topics }))
+        .map(([groupId, groupMt]) => ({ nodeMt, groupId, groupMt, topics: Object.values(groupMt.topics) }))
     );
   }
 
@@ -985,10 +1003,29 @@ class MqttTopic {
         //XXX(["rerendering - possibly unnecessarily - on",topic,message]); // Should only be on MqttTopic (ok) and MqttSlider (needs work)
         this.element.renderAndReplace(); // TODO note gradually replacing need to rerender by smarter valueSet() on different subclasses
       }
-    } else { // This is typically a MqttGraphdataset in an embedded mqtt-chartdataset
-      const value = this.valueFromText(message);
-      const now = Date.now();
-      this.data.push({value, time: now}); // Same format as graph dataset expects
+    } else {
+      // Headless path: update the data tree directly (also reached by detached MqttGraphDataset topics).
+      // topicSetPath throws if nodeMt is null, so guard the startsWith call with nodeMt.
+      const isParam = this.nodeMt && topic.startsWith(this.topicSetPath + '/');
+      if (isParam) {
+        // Parameter subtopic arriving (e.g. now/wired, temperature/max).
+        if (topic.split('/').pop() === 'wired') this.setWired(message);
+      } else {
+        // Value arriving on this topic's own path, its set-path, or its wired source.
+        const value = this.valueFromText(message);
+        this.data.push({value, time: Date.now()});
+        this.state.value = value; // Keep state.value current so usableName, wiredTopic, etc. work headlessly
+      }
+      // Mirror to the data-tree group and notify dashboard listeners, matching what the element path does.
+      // groupMt is null for graph-dataset topics (no nodeMt), so this block is skipped for those.
+      const groupMt = this.groupMt;
+      if (groupMt && this.nodeMt) {
+        const leafAttr = leafAttribute(topic);
+        groupMt.state[leafAttr] = isParam ? message : this.state.value;
+        document.dispatchEvent(new CustomEvent('frugaliot:groupchanged', {
+          detail: { nodeMt: this.nodeMt, groupId: this.group, groupMt, changed: [leafAttr] }
+        }));
+      }
     }
     if (this.graphdataset) { // instance of MqttGraphdataset
       this.graphdataset.dataChanged();
@@ -1180,6 +1217,224 @@ class MqttTopic {
     }
   }
 }
+
+// Group-level data node in the topic tree. Holds the leaf MqttTopics for one module group.
+// Subclass of MqttTopic so it can be stored in and navigated via the same tree.
+// topics: { leaf → MqttTopic } — inherited lazy map via get topics().
+// Paired with an optional MqttGroup element via this.element.
+class MqttTopicGroup extends MqttTopic {
+}
+
+// Project-level data node in the topic tree. Receives discovery messages and creates nodes.
+// Created by MqttWrapper.addProject; paired with MqttProject element via this.element.
+class MqttTopicProject extends MqttTopic {
+  // Route directly on the data-tree object rather than through the element.
+  // base MqttTopic.message_received routes through this.element.topicValueSet, which is wrong at project level.
+  message_received(topicPath, message) {
+    this.topicValueSet(topicPath, message);
+    if (this.graphdataset) this.graphdataset.dataChanged(); //TODO-73 cant think why project has a dataset?
+  }
+  // Handle a discovery message. Creates a new node if not yet seen.
+  // In headless mode: calls this.addNode directly (no MqttProject element or watchdog).
+  topicValueSet(topicPath, message) {
+    const val = this.valueFromText(message);
+    if (this.headless) {
+      if (!this.nodes[val]) this.addNode(val);
+    } else if (this.element && this.element.state.discover) {
+      if (this.nodes[val]) {
+        this.nodes[val].element?.tickle();
+      } else {
+        this.element.addNode(val);
+      }
+    }
+  }
+  // Creates the MqttTopicNode for a node id. Works in both headless and normal mode.
+  // In normal mode, MqttProject.addNode calls this and then does the DOM layer on top.
+  // _groups starts as {} and is replaced by MqttProject.addNode with elNode.topicGroups.
+  addNode(id) {
+    const topicPath = `${this.topicPath}/${id}`;
+    const mt = new MqttTopicNode();
+    mt.initialize({ type: "yaml", twig: topicPath });
+    if (this.headless) mt.headless = true;
+    mt._groups = {};
+    mt._projectMt = this;
+    mt.nodeId = id;
+    this.nodes[id] = mt;
+    mt.subscribe();
+    // In headless mode only — normal mode fires via MqttProject.rebuildTopicDropdowns
+    if (this.headless) {
+      document.dispatchEvent(new CustomEvent('frugaliot:topicschanged', { detail: { project: this } }));
+    }
+    return mt;
+  }
+}
+
+// Node-level data node in the topic tree. Routes incoming MQTT messages to the correct leaf MqttTopic.
+// Always created by MqttTopicProject.addNode. In normal mode MqttProject.addNode then adds the paired
+// MqttNode element (this.element) and replaces _groups with elNode.topicGroups.
+class MqttTopicNode extends MqttTopic {
+  // Route directly on the data-tree object rather than through the element.
+  message_received(topicPath, message) {
+    this.topicValueSet(topicPath, message);
+    if (this.graphdataset) this.graphdataset.dataChanged();
+  }
+  // Route an incoming MQTT message to the correct leaf MqttTopic.
+  // Element-specific operations (group/topic DOM creation, dropdown rebuild) are guarded with if (this.element).
+  topicValueSet(topicPath, message) {
+    let twig = topicPath.substring(this.topicPath.length + 1);
+    if (twig.startsWith("set/")) { twig = twig.substring(4); }
+    // TODO-37 ignore some legacy and/or buggy topics
+    if (
+      (topicPath === this.topicPath)
+      || ["relay"].includes(twig)
+      || twig.startsWith("set")
+      || twig.startsWith("soil1")
+      || twig.startsWith("control/")
+      || twig.startsWith("humidity/")
+      || twig.startsWith("led/")
+      || twig.endsWith('/wire')
+      || !twig.includes('/')
+    ) {
+      XXX(["legacy twig thought this was gone!", twig]);
+      return false;
+    }
+    if (["frugal_iot/project"].some(s => s === twig || twig.includes(s + "/"))) return false;
+    if (["frugal_iot/device_name"].some(s => s === twig || twig.includes(s + "/"))) return false;
+    if (["wifistrength", "climate/temp_now", "climate/temp_out", "climate/temp_hysteresis", "climate/temp_setpoint", "climate/temperature", "climate/humidity", "controlhysterisis/auto", "frugal-iot/reboot", "buttons", "messages", "now/now"].some(s => s === twig || twig.includes(s + "/"))) {
+      XXY(["legacy twig will go away after reboot", twig]);
+      return false;
+    }
+    const parts = twig.split("/");
+    const groupId = parts[0];
+    // Auto-create group from template if it hasn't been seen yet
+    if (!this.groups[groupId]) {
+      if (this.element) {
+        if (this.element.addGroupFromTemplate(groupId)) {
+          this.element.project?.rebuildTopicDropdowns();
+        }
+      } else if (this.headless) {
+        if (this.addGroupFromTemplate(groupId)) {
+          document.dispatchEvent(new CustomEvent('frugaliot:topicschanged', { detail: { project: this._projectMt } }));
+        }
+      }
+    }
+    let matched = this.sendMessageToMatchingTopics(topicPath, twig, message);
+    if (["frugal_iot/name"].some(s => s === twig || twig.includes(s + "/"))) {
+      this.element?.project?.rebuildTopicDropdowns();
+    }
+    // No match — try to add the topic from a template and route again
+    if (!matched) {
+      const leaf = parts[1];
+      let t = server_config.schema.topics[leaf];
+      const guessName = leaf.replace("_", " ");
+      if (
+        (!t && ["_now", "_setpoint", "_limit", "_hysteresis", "_hysterisis", "_hyst"].some(suffix => leaf.endsWith(suffix)))
+        || (t && groupId.startsWith("control") && t.type === "float")
+      ) {
+        t = expandTopicTemplate('controlfloat', {leaf, name: guessName});
+      }
+      if (
+        (!t && ["_xxx"].some(suffix => leaf.endsWith(suffix)))
+        || (t && groupId.startsWith("control") && t.type === "int")
+      ) {
+        t = expandTopicTemplate('controlint', {leaf, name: guessName});
+      }
+      if (!t && ["_out"].some(suffix => leaf.endsWith(suffix))) {
+        t = expandTopicTemplate('controlouttoggle', {leaf, name: guessName});
+      }
+      if (!t && ["_in"].some(suffix => leaf.endsWith(suffix))) {
+        t = expandTopicTemplate('controlouttoggle', {leaf, name: guessName});
+      }
+      if (t) {
+        if (this.element) {
+          if (this.element.addTopicFromTemplate(t, groupId)) {
+            this.element.project?.rebuildTopicDropdowns();
+          }
+        } else if (this.headless) {
+          if (this.addTopicFromTemplate(t, groupId)) {
+            document.dispatchEvent(new CustomEvent('frugaliot:topicschanged', { detail: { project: this._projectMt } }));
+          }
+        }
+        if (!this.sendMessageToMatchingTopics(topicPath, twig, message)) {
+          XXX(["Even after adding topic from template, no destination for", twig]);
+        }
+      } else {
+        XXX(["Unrecognized twig at ", topicPath]);
+      }
+    }
+  }
+  // Data-tree group creation: builds MqttTopicGroup and its template topics with no paired DOM element.
+  // MqttNode.addGroupFromTemplate delegates here and then adds the DOM element on top.
+  addGroupFromTemplate(groupId) {
+    if (this.groups[groupId]) return false;
+    const moduleTemplate = server_config.schema.modules[groupId];
+    const groupName = moduleTemplate ? moduleTemplate.name : groupId;
+    const groupMt = new MqttTopicGroup();
+    groupMt.name = groupName;
+    groupMt.state.name = groupName;
+    groupMt.group = groupId;
+    this._groups[groupId] = groupMt;
+    if (!moduleTemplate) {
+      XXX(["Unknown group - no template found", groupId]);
+    } else {
+      moduleTemplate.topics.forEach(topicUnexpandedTemplate => {
+        const topicExpandedTemplate = expandTopicTemplate(topicUnexpandedTemplate.leaf_from || topicUnexpandedTemplate.leaf, topicUnexpandedTemplate) || topicUnexpandedTemplate;
+        this.addTopicFromTemplate(topicExpandedTemplate, groupId);
+      });
+    }
+    if (groupId.startsWith('control')) {
+      const groupMtReady = this.groups[groupId];
+      document.dispatchEvent(new CustomEvent('frugaliot:controlgroup', {
+        detail: { nodeMt: this, groupId, groupMt: groupMtReady, topics: Object.values(groupMtReady ? groupMtReady.topics : {}) }
+      }));
+    }
+    return true;
+  }
+  // Data-tree topic creation: builds a MqttTopic with no paired DOM element.
+  // Sets mt.nodeMt so topicPath, groupMt, and projectMt getters work via the data tree.
+  // MqttNode.addTopicFromTemplate delegates here and then adds the DOM element on top.
+  addTopicFromTemplate(topicTemplate, groupId) {
+    const groupMt = this.groups[groupId];
+    if (groupMt && !groupMt.topics[topicTemplate.leaf]) {
+      const mt = new MqttTopic();
+      mt.fromTemplate(topicTemplate, groupId + "/" + topicTemplate.leaf, groupId, null);
+      mt.nodeMt = this; // Back-reference so data-tree getters resolve without traversing the DOM
+      groupMt.topics[topicTemplate.leaf] = mt;
+      return true;
+    }
+    return false;
+  }
+  // Node-level topics always subscribe to the wildcard path so all subtopics route through topicValueSet.
+  // Overrides the base getter which checked this.element.isNode (unreliable when element is absent).
+  get topicSubscribePath() { return this.topicPath + "/#"; }
+  // Human-readable node label: the value of the frugal_iot/name topic, or the raw nodeId as fallback.
+  get usableName() {
+    const frugaliot = this.groups["frugal_iot"];
+    const nameTopic = frugaliot && frugaliot.topics["name"];
+    return (nameTopic && nameTopic.state.value) || this.nodeId;
+  }
+  // Flat list of topics on this node matching the given types and rw, in choosetopic format.
+  // Uses the data-tree groups/topics rather than MqttNode.state.topics flat index.
+  topicsByType(types, rw) {
+    const usableName = this.usableName;
+    return Object.values(this.groups)
+      .flatMap(groupMt => Object.values(groupMt.topics))
+      .filter(t => types.includes(t.type) && t.rw && t.rw.includes(rw))
+      .map(t => ({ name: `${usableName}:${t.usableName}`, topic: t.topicPath, setTopic: t.topicSetPath }));
+  }
+  // Route to the leaf MqttTopic via the data tree — O(1) lookup, no wildcard scan needed.
+  // parts[0] is the groupId, parts[1] is the leaf (e.g. "temperature"); sub-paths are handled by MqttTopic.
+  sendMessageToMatchingTopics(topicPath, twig, message) {
+    const parts = twig.split("/");
+    const groupMt = this.groups[parts[0]];
+    if (!groupMt) return false;
+    const leafMt = groupMt.topics[parts[1]];
+    if (!leafMt) return false;
+    leafMt.message_received(topicPath, message);
+    return true;
+  }
+}
+
 /* Manages a connection to a MQTT broker */
 class MqttClient extends HTMLElementExtended {
   // This appears to be reconnecting properly, but if not see mqtt (library I think)'s README
@@ -2005,26 +2260,19 @@ class MqttReceiver extends MqttElement {
     }
     super.connectedCallback();
   }
-  // This should be called when a receiver is created with a topic (which should be a path)
-  // But not sure how this still works because the mt will not have a node, which is presumed.
-  // TODO-155 test embedded examples - doubt this will work now, without a node.
+  // Binds this element to its MqttTopic by looking it up in the discovery data tree.
+  // The topic must already be in the tree (it has to be there for the user to have selected it),
+  // so there is no need to create a parallel MqttTopic with fabricated paths.
   createTopic() {
-    let mt = new MqttTopic();
-    let tt = this.state.topic.split("/");
-    let org = tt.shift();
-    let projectId = tt.shift();
-    let nodeId = tt.shift();
-    mt.initialize({
-      type: this.state.type,
-      //topic: this.state.topic,
-      twig: tt.join("/"),
-      element: this,
-      name: this.state.label,
-      color: this.state.color,
-      node: { mt: { topicPath: `${org}/${projectId}/${nodeId}`} }  // fake node
-    })
-    this.mt = mt;
-    mt.subscribe();
+    const wrapper = document.querySelector('mqtt-wrapper');
+    const mt = wrapper?.projectMt?.findTopic(this.state.topic);
+    if (mt) {
+      this.mt = mt;
+      mt.element = this; // Route wildcard subscription messages to this element
+      mt.subscribe();    // No-op if already subscribed; sets up direct subscription otherwise
+    } else {
+      XXX(["createTopic: topic not found in data tree", this.state.topic]);
+    }
   }
   changeAttribute(name, valueString) {
     super.changeAttribute(name, valueString); // Change from string to number etc and store on this.state
@@ -2064,8 +2312,14 @@ class MqttReceiver extends MqttElement {
       let value = this.mt.valueFromText(message);
       let now = Date.now();
       this.mt.data.push({value, time: now}); // Same format as graph dataset expects
-      if (this.groupElement) { // There is (currently) no node if it is a Project
-        this.groupElement.setAttribute(leafAttribute(topicPath), value); // Pass up to group things it might need to summarize
+      const leafAttr = leafAttribute(topicPath);
+      const groupMt = this.mt.groupMt;
+      if (groupMt) groupMt.state[leafAttr] = value; // Mirror to data-tree group (headless-safe roll-up)
+      if (this.groupElement) this.groupElement.setAttribute(leafAttr, value); // DOM roll-up for element-based rendering
+      if (groupMt && this.mt.node?.mt) {
+        document.dispatchEvent(new CustomEvent('frugaliot:groupchanged', {
+          detail: { nodeMt: this.mt.node.mt, groupId: this.mt.group, groupMt, changed: [leafAttr] }
+        }));
       }
       return this.valueSet(value); // Subclassed for each element e.g. MqttText
     } else if ((topicPath.startsWith(this.mt.topicPath)) || (topicPath.startsWith(this.mt.topicSetPath))) {
@@ -2073,9 +2327,14 @@ class MqttReceiver extends MqttElement {
       // topic like org/project/node/set/sht/temperature/max or ...set/sht/temperature/max
       let parameter = topicPath.split("/").pop();
       this.parameterSet(parameter, message); // True if need to rerender
-      if (this.groupElement) { // There is (currently) no node if it is a Project
-        // Notes just passing message up as a string, (parameterSet knows how to convert)
-        this.groupElement.setAttribute(`${leafAttribute(topicPath)}`, message); // ROLL-UP to group things it might need to summarize
+      const leafAttr = leafAttribute(topicPath);
+      const groupMt = this.mt.groupMt;
+      if (groupMt) groupMt.state[leafAttr] = message; // Mirror to data-tree group (headless-safe roll-up)
+      if (this.groupElement) this.groupElement.setAttribute(leafAttr, message); // DOM roll-up for element-based rendering
+      if (groupMt && this.mt.node?.mt) {
+        document.dispatchEvent(new CustomEvent('frugaliot:groupchanged', {
+          detail: { nodeMt: this.mt.node.mt, groupId: this.mt.group, groupMt, changed: [leafAttr] }
+        }));
       }
       return false; // parameterSet will have rerendered if needed
     } else {
@@ -2088,6 +2347,7 @@ class MqttReceiver extends MqttElement {
   valueSet(val) {
     // Note val can be of many types - it will be subclass dependent
     this.state.value = val;
+    if (this.mt) this.mt.state.value = val; // Mirror to data tree so wiredTopic.state.value works headlessly
     return true; // Rerender by default - subclass will often return false
   }
   // Subclass "changeAttribute" to edit rendered elements and return true if do not want to rerender
@@ -2099,7 +2359,11 @@ class MqttReceiver extends MqttElement {
       XXX(["Good chance parameter is not observed:", parameter]);
     }
     this.setAttribute(parameter, message); // Type will be set in changeAttribute
-    this.mt.parameterSet(parameter, message, this.typeOfAttribute(parameter)); // Ensure MqttTopic tracks same parameters
+    if (parameter === "wired") {
+      this.mt.setWired(message); // setWired sets mt.wired and subscribes; parameterSet can't handle it (wired starts as undefined)
+    } else {
+      this.mt.parameterSet(parameter, message, this.typeOfAttribute(parameter)); // Ensure MqttTopic tracks same parameters
+    }
   }
   get project() { // Note this will only work once the element is connected
     // noinspection CssInvalidHtmlTagReference
@@ -2135,12 +2399,12 @@ class MqttReceiver extends MqttElement {
     ];
   }
   renderWiredInput() {
-    let wiredTopicValue = (this.wiredTopic && this.wiredTopic.element.state.value && this.wiredTopic.element.state.value.toString()) || this.state.value; // Works - but maybe error-prone if value can be undefined
+    let wiredTopicValue = (this.wiredTopic && this.wiredTopic.state.value != null && this.wiredTopic.state.value.toString()) || this.state.value;
     this.state.elements.textValue = undefined; // Will be defined below if renderValue creates it
     this.state.elements.inputValue = undefined; // Will be defined below if renderInput creates it
     return this.mt.wired
       ? el('span', {class: 'wiredinput'}, [
-          this.renderValue(this.wiredTopicValue), // Value is changed because this call sets elements.textValue, and changeAttribute changes it
+          this.renderValue(wiredTopicValue), // Value is changed because this call sets elements.textValue, and changeAttribute changes it
           this.renderWiredName()
         ])
       : this.renderInput()
@@ -2152,7 +2416,7 @@ class MqttReceiver extends MqttElement {
   }
   renderDropdown() {
     // noinspection JSUnresolvedVariable
-    return el('mqtt-choosetopic', {name: this.mt.name, type: this.mt.type, value: this.getAttribute('wired'), rw: (this.mt.rw === 'r' ? 'w' : 'r'), project: this.mt.project, onchange: this.onwiredchange.bind(this)});
+    return el('mqtt-choosetopic', {name: this.mt.name, type: this.mt.type, value: this.getAttribute('wired'), rw: (this.mt.rw === 'r' ? 'w' : 'r'), projectMt: this.mt.projectMt, onchange: this.onwiredchange.bind(this)});
   }
   // Handle cases ....
   // r/!wireable - text value
@@ -2172,7 +2436,7 @@ class MqttReceiver extends MqttElement {
     }
     // noinspection JSUnresolvedVariable
 
-    let wiredTopicValue = this.wiredTopic ? this.wiredTopic.element.state.value.toString() : this.state.value; // Works - but maybe error-prone if value can be undefined
+    let wiredTopicValue = this.wiredTopic ? (this.wiredTopic.state.value ?? this.state.value) : this.state.value;
     // noinspection JSUnresolvedReference
       return [
       el('link', {rel: 'stylesheet', href: CssUrl}),
@@ -2256,8 +2520,8 @@ class MqttText extends MqttTransmitter {
   }
   renderValue(val) {
     // I think val should always be this.state.value, even when called in renderMaybeWired with wiredTopicValue
-    // if not, then valueSet above may be invalid (note haven't written MqttText.valueSet yet
-    if (val != this.state.value) { XXX(["Mistaken assumption in MqttText.renderValue"])} // TODO-64
+    // For wired inputs, the device may not be echoing out the new value (e.g. controlhysterisis/now is alwys 50
+    //if (val != this.state.value) { XXX(["Mistaken assumption in MqttText.renderValue"])} // TODO-64
     return this.state.elements.textValue = el('span',{class: "val", textContent: val || "", i8n: false, /*onclick: this.onClick.bind(this)*/});
   }
   render() {
@@ -2580,31 +2844,27 @@ customElements.define('mqtt-slider', MqttSlider);
 class MqttChooseTopic extends MqttElement {
   // type = "bool" for boolean topics (matches t.type on others)
   // value = the topic path of the currently wired topic,
-  static get observedAttributes() { return MqttTransmitter.observedAttributes.concat(['name', 'type','value', 'project','rw','onchange']); }
+  static get observedAttributes() { return MqttTransmitter.observedAttributes.concat(['name', 'type','value', 'projectMt','rw','onchange']); }
 
   get findTopics() {
-    const project = this.state.project;
+    const projectMt = this.state.projectMt;
+    if (!projectMt) return [];
     // For type="control", return the list of discovered control groups rather than typed topics.
-    // Option value is "nodeId/groupId" so the caller can look up nodeMt and groupEl from the data tree.
+    // Option value is "nodeId/groupId" so the caller can look up nodeMt from the data tree.
     if (this.state.type === 'control') {
-      if (!project || !project.mt) return [];
-      return project.mt.controlGroupList.map(({ nodeMt, groupId }) => {
-        const value = `${nodeMt.element.state.id}/${groupId}`;
-        const groupEl = nodeMt.element.groups[groupId];
-        const label = `${nodeMt.element.usableName} / ${(groupEl && groupEl.state.name) || groupId}`;
+      return projectMt.controlGroupList.map(({ nodeMt, groupId }) => {
+        const value = `${nodeMt.nodeId}/${groupId}`;
+        const groupMt = nodeMt.groups[groupId];
+        const label = `${nodeMt.usableName} / ${(groupMt && groupMt.state.name) || groupId}`;
         return { name: label, topic: value, setTopic: value };
       });
     }
-    const nodes = Array.from(project.children);
-    // Note each node's value is its config,
     const allowableTypes = {
-      // Mapping of requested types to valid fields - e.g. if want a float then returning an int will be fine
       "float": ["float", "int", "exponential"],
       "text": ["text", "float", "exponential", "int", "bool"],
-    }
-    // TODO replace by flatMap
-    return nodes.map(n => n.topicsByType(allowableTypes[this.state.type] || this.state.type, this.state.rw))
-      .flat();
+    };
+    return Object.values(projectMt.nodes)
+      .flatMap(n => n.topicsByType(allowableTypes[this.state.type] || this.state.type, this.state.rw));
   }
 
   // noinspection JSCheckFunctionSignatures
@@ -2664,9 +2924,9 @@ class MqttWrapper extends HTMLElementExtended {
     super();
     this.state.elements = {}; // Pointer to specific child elements for targeted updates
   }
-  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['organization','project','node','lang']); }
+  static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['organization','project','node','lang','headless']); }
+  static get boolAttributes() { return ['headless']; }
   // Maybe add 'discover' but think thru interactions
-  //static get boolAttributes() { return MqttReceiver.boolAttributes.concat(['discover'])}
 
   // Note this is not using the standard connectedCallBack which loads content and re-renders,
   // it is going to instead add things to the slot
@@ -2702,27 +2962,27 @@ class MqttWrapper extends HTMLElementExtended {
       el('mqtt-client', {slot: 'client', server: server_config.mqtt.broker}) // typically "wss://frugaliot.naturalinnovation.org/wss"
     )
   }
+  // Creates the MqttTopicProject and (unless headless) its paired MqttProject DOM element.
+  // Always returns the MqttTopicProject. appender() accesses the element via mt.element when needed.
   addProject(discover) {
-    let twig = `${this.state.organization}/${this.state.project}`;
-    // noinspection JSUnresolvedReference
-    let elProject = el('mqtt-project', {discover, id: this.state.project, name: server_config.organizations[this.state.organization].projects[this.state.project].name }, []);
-    // The project's topic watches for discover packets for nodes
-    let mt = new MqttTopic();
-    mt.initialize({
-      type: "text",
-      twig: twig,
-      element: elProject,
-    });
-    elProject.mt = mt;
-    mt.subscribe(); // Subscribing Project
-    this.append(elProject);
-    this.state.elements["project"] = elProject; // Store for projectMt getter
-    return elProject;
+    const twig = `${this.state.organization}/${this.state.project}`;
+    const mt = new MqttTopicProject();
+    if (this.state.headless) {
+      mt.initialize({ type: "text", twig, headless: true });
+    } else {
+      // noinspection JSUnresolvedReference
+      const elProject = el('mqtt-project', {discover, id: this.state.project, name: server_config.organizations[this.state.organization].projects[this.state.project].name }, []);
+      mt.initialize({ type: "text", twig, element: elProject });
+      elProject.mt = mt;
+      this.append(elProject);
+    }
+    mt.subscribe();
+    this.state.elements["project"] = mt; // Store MqttTopicProject directly
+    return mt;
   }
 
-  // Returns the MqttTopic for the currently active project, giving access to the data tree
-  // (projectMt.nodes, projectMt.controlGroupList, etc). Null if no project is loaded yet.
-  get projectMt() { return this.state.elements["project"] && this.state.elements["project"].mt; }
+  // Returns the MqttTopicProject for the currently active project.
+  get projectMt() { return this.state.elements["project"]; }
   appender() {
     // At this point could have any combination of org project or node
     if (this.state.node) { // n
@@ -2736,8 +2996,12 @@ class MqttWrapper extends HTMLElementExtended {
           this.state.project = p;
         }
       } // Drop through with n & o & p
-      let elProject = this.addProject(false);
-      elProject.valueSet(this.state.node, true); // Create node on project along with its MqttNode
+      const mt = this.addProject(false);
+      if (this.state.headless) {
+        mt.addNode(this.state.node);
+      } else {
+        mt.element.valueSet(this.state.node, true); // Create node on project along with its MqttNode
+      }
     } else { // !n
       if (!this.state.project)  { // !n !p ?o
         if (!this.state.organization) { // !n !p !o
@@ -2777,10 +3041,15 @@ class MqttWrapper extends HTMLElementExtended {
             this.state.organization = o[0];
           }
         } // drop through with !n p o
-        let projElem = this.addProject(true);
+        const mt = this.addProject(true);
         // noinspection JSUnresolvedReference
-        let nodes = Object.entries(server_config.organizations[this.state.organization].projects[this.state.project].nodes || {});
-        projElem.nodesFromConfig(nodes);
+        const nodes = Object.entries(server_config.organizations[this.state.organization].projects[this.state.project].nodes || {});
+        if (this.state.headless) {
+          nodes.filter(([id, nc]) => id !== '+' && nc.lastseen)
+            .forEach(([id]) => { if (!mt.nodes[id]) mt.addNode(id); });
+        } else {
+          mt.element.nodesFromConfig(nodes);
+        }
       }
     }
   }
@@ -2835,44 +3104,33 @@ customElements.define('mqtt-wrapper', MqttWrapper);
 class MqttProject extends MqttReceiver {
   constructor() {
     super();
-    this.state.nodes = {};  // [ MqttNode ]
   }
   static get observedAttributes() { return MqttReceiver.observedAttributes.concat(['discover', 'name']); }
   static get boolAttributes() { return MqttReceiver.boolAttributes.concat(['discover'])}
 
+  // DOM layer for node creation. Data-tree MqttTopicNode is created by MqttTopicProject.addNode;
+  // this method creates the mqtt-node element and links it to the data-tree node.
   addNode(id) {
-    let topicPath = `${this.mt.topicPath}/${id}`;
-    let elNode = el('mqtt-node', {id, topic: topicPath, discover: this.state.discover, name: "", description: ""},[]);
-    elNode.addStandardChildren(); // Cant be done in constructor
-    this.state.nodes[id] = elNode; //XX
-    let mt = new MqttTopic();
-    mt.initialize({
-      type: "yaml",
-      twig: topicPath,
-      element: elNode,
-    });
-    elNode.state.project = this; // For some reason, this cannot be set on elNode while mt can be!
+    const elNode = el('mqtt-node', {id, topic: `${this.mt.topicPath}/${id}`, discover: this.state.discover, name: "", description: ""}, []);
+    elNode.state.project = this;
+    const mt = this.mt.addNode(id); // Data-tree: creates MqttTopicNode, sets _projectMt, subscribes
+    mt.element = elNode;
     elNode.mt = mt;
-    this.mt.nodes[id] = mt; // Register in the project-level data tree
+    mt._groups = elNode.topicGroups; // Share element's topicGroups with the data-tree node
+    elNode.addStandardChildren(); // Runs after mt is linked so addGroupFromTemplate can delegate to this.mt
     this.append(elNode);
     this.rebuildTopicDropdowns();
-    mt.subscribe(); // Subscribe (for node) to get Discovery - note subscribes to wild card
     return elNode;
-  }
-  // Overrides topicValueSet in MqttReceiver
-  topicValueSet(topic, message) {
-    // value is going to be a discovery message, so should be a node id
-    // At the moment since not wild-carding, topic will be "org/project"
-    this.valueSet(this.mt.valueFromText(message));
   }
   // noinspection JSCheckFunctionSignatures
   // Two cases either from a discovery message for a new node, OR from Wrapper calling valueSet on new Project
+  // Note: routing of MQTT discovery messages is now handled by MqttTopicProject.topicValueSet (data-tree class).
   valueSet(val, force) {  //TODO-REFACTOR maybe dont use "force", (only used by wrapper)
     // val is a node id such as esp8266-12ab3c
     if (this.state.discover || force) {
-      if (this.state.nodes[val]) {
+      if (this.mt.nodes[val]) {
         // Already have the node, but reset its watchdog
-        this.state.nodes[val].tickle();
+        this.mt.nodes[val].element.tickle();
       } else {
         this.addNode(val);
       }
@@ -2890,22 +3148,26 @@ class MqttProject extends MqttReceiver {
     });
   }
   findTopic(topicPath) {
-    // Currently only used in renderMaybeWired
+    // Currently only used in renderMaybeWired and wiredTopic getter.
+    // Navigates through the data tree: project → node → group → topic (no element access required).
     let parts = topicPath.split("/");
     if (parts[3] === "set") {
-      parts.splice(3,1); // Remove "set" from topic path to get topic for subscribing and finding topic metadata such as type
+      parts.splice(3, 1); // Remove "set" to normalise read and write paths
     }
-    return this.state.nodes[parts[2]] && this.state.nodes[parts[2]].state.topics[`${parts[3]}/${parts[4]}/#`];
+    const nodeMt = this.mt.nodes[parts[2]];
+    const groupMt = nodeMt && nodeMt.groups[parts[3]];
+    return groupMt && groupMt.topics[parts[4]];
   }
+  // Iterates MqttNode elements for all nodes; skips nodes without a rendered element (headless mode).
   nodesForEach(cb) {
-    Object.entries(this.state.nodes).forEach(k => cb(k[1]));
+    Object.values(this.mt.nodes).forEach(nodeMt => { if (nodeMt.element) cb(nodeMt.element); });
   }
   // Rebuild all embedded mqtt-choosetopic.
   // Note you can't use querySelectorAll to find them because they are in the Shadow DOM of the nodes, so instead each node will have to have a function that finds the choosetopics in its Shadow DOM and calls their renderAndReplace function.
   rebuildTopicDropdowns() {
     this.nodesForEach((node) => { node.rebuildTopicDropdowns(); } ); //TODO-N200
     // Notify external choosers (e.g. in a custom settings panel) that the topic list has changed.
-    document.dispatchEvent(new CustomEvent('frugaliot:topicschanged', { detail: { project: this } }));
+    document.dispatchEvent(new CustomEvent('frugaliot:topicschanged', { detail: { project: this.mt } }));
   }
 
   render() {
@@ -2935,7 +3197,8 @@ class MqttNode extends MqttReceiver {
     this.state.days = 0;
     this.watchdog = new Watchdog(this);
     this.state.lastseen = 0;
-    this.groups = {}; // Index of groups
+    this.groups = {}; // Index of DOM group elements: groupId → MqttGroup element
+    this.topicGroups = {}; // Index of data-tree groups: groupId → MqttTopicGroup (mirrored to this.mt.groups after mt is set)
     // Special case elements whose text is changed at top level , not inside a group or the ShadowRoot
   }
   addStandardChildren() {
@@ -2974,17 +3237,6 @@ class MqttNode extends MqttReceiver {
       .map(t=> { return({name: `${usableName}:${t.usableName}`, topic: t.topicPath, setTopic: t.topicSetPath})});
   }
 
-  sendMessageToMatchingTopics(topicPath, twig, message) {
-    let matched=false;
-    Object.entries(this.state.topics)
-      .filter(([subscriptionTopic,unusedNode]) => topicMatches(subscriptionTopic, twig))
-      .forEach(([unusedSubscriptionTopic, module]) => { // module is MqttTopic
-        matched = true;
-        module.message_received(topicPath, message);
-      });
-    return matched;
-  }
-
   topicsForEach(cb) {
     Object.entries(this.state.topics).forEach(k => cb(k[1]));
   }
@@ -2998,162 +3250,53 @@ class MqttNode extends MqttReceiver {
   rebuildTopicDropdowns() {
     this.elementsForEach(el => { el.rebuildTopicDropdown(); } );
   }
-  // Overrides topicValueSet in MqttReceiver
-  // noinspection JSCheckFunctionSignatures
-  // This is complex, because it first adds the elements for the topic if it is new, then sends the message to the topic which updates the value and triggers any needed re-rendering
-  topicValueSet(topicPath, message) {
-
-    let twig = topicPath.substring(this.mt.topicPath.length+1);
-    if (twig.startsWith("set/")) { twig = twig.substring(4); } // Remove "set/" prefix if present
-    // TODO-37 ignore some legacy and/or buggy nodes - should have gone away by now
-    if (
-      (topicPath === this.mt.topicPath) // Its discover for this Node, not a sub-element (old nodes or in DB)
-      ||  [
-      "relay",
-      ].includes(twig) // Its JUST "relay"
-      || twig.startsWith("set") // Sonoff esp8266-243053 (note that is a 2nd "set")
-      || twig.startsWith("soil1") // Lilygo old
-      || twig.startsWith("control/") // Old name for controlhysterisis
-      || twig.startsWith("humidity/") // esp8266-243053 Old name for controlhysterisis
-      || twig.startsWith("led/") // esp8266-243053 Old name for ledbuiltin
-      || twig.endsWith('/wire') // replaced with "/wired"
-      || !twig.includes('/')
-    ) {
-      XXX(["legacy twig thought this was gone!", twig]);
-      return false
-    }
-    // Look for twigs that we don't act on - currently just frugal_iot/project but may be others in future
-    if ( ["frugal_iot/project"].some(s => s == twig || twig.includes(s+"/"))) {
-      return false
-    }
-    // TODO-37 ignore some legacy and/or buggy topics - probably will go away when MQTT restarted
-    if ( ["frugal_iot/device_name"].some(s => s == twig || twig.includes(s+"/"))) {
-      //XXY(["legacy twig won't go away till nodes and their file systems rebuilt", twig]);
-      return false
-    }
-    if ( ["wifistrength", "climate/temp_now", "climate/temp_out", "climate/temp_hysteresis", "climate/temp_setpoint", "climate/temperature", "climate/humidity", "controlhysterisis/auto", "frugal-iot/reboot", "buttons", "messages", "now/now"].some(s => s == twig || twig.includes(s+"/"))) {
-      XXY(["legacy twig will go away after reboot", twig]);
-      return false
-    }
-    // I don't expect this next match to ever succeed - as topics is usually like set/temperature/# but the test happens below in the loop through this.state.topic
-    if (this.state.topics[twig]) {
-      XXX(["Unexpected exact match for twig", twig])
-      this.state.topics[twig].message_received(topicPath, message);
-    } else {
-      // Check if it is a group we haven't seen for this node, if so add it - checking first for a template
-      let groupId = twig.split("/")[0];
-      if (this.addGroupFromTemplate(groupId)) {
-        this.project.rebuildTopicDropdowns();
-      }
-      let matched= this.sendMessageToMatchingTopics(topicPath, twig, message);
-      if ([ "frugal_iot/name"].some(s => s == twig || twig.includes(s+"/"))) {
-        // Special case for name because it is used in the topic dropdowns, so if it changes then need to trigger a re-render of the dropdowns
-        this.project.rebuildTopicDropdowns();
-      }
-      // Haven't seen this topic before, and its not in the group, so try adding it based on a template and then send the message to it (which will update the value and trigger any needed re-rendering)
-      if (!matched) {
-        let leaf = twig.split("/")[1]; // Remove group part
-        // Lets see if can find a template for this topic
-        let t = server_config.schema.topics[leaf]; // May be undefined if no template for this leaf
-        let guessName = leaf.replace("_"," ");
-        if (
-          (!t && ["_now", "_setpoint", "_limit", "_hysteresis", "_hysterisis", "_hyst"].some(suffix => leaf.endsWith(suffix)))
-          || (t && groupId.startsWith("control") && (t.type == "float")) // Inside a control display as number and dropdown
-          )
-        {
-            t = expandTopicTemplate('controlfloat', {leaf, name: guessName}); // Unknown setpoint or limit or hysteresis can use a float
-        }
-        if ( // No int prefixes yet, so _xxx is placeholder
-          (!t && ["_xxx",].some(suffix => leaf.endsWith(suffix)))
-          || (t && groupId.startsWith("control") && (t.type == "int")) // Inside a control display as number and dropdown
-        )
-        {
-          t = expandTopicTemplate('controlint', {leaf, name: guessName}); // Unknown setpoint or limit or hysteresis can use a float
-        }
-        if (!t && ["_out"].some(suffix => leaf.endsWith(suffix))) {
-          t = expandTopicTemplate('controlouttoggle', {leaf, name: guessName}); // Unknown setpoint or limit or hysteresis can use a float
-        }
-        if (!t && ["_in"].some(suffix => leaf.endsWith(suffix))) {
-          t = expandTopicTemplate('controlouttoggle', {leaf, name: guessName}); // Unknown setpoint or limit or hysteresis can use a float
-        }
-        if (t) {
-          if (this.addTopicFromTemplate(t, groupId)) {
-            this.project.rebuildTopicDropdowns();
-          }
-          if (!this.sendMessageToMatchingTopics(topicPath, twig, message)) {
-            XXX(["Even after adding topic from template, no destination for", twig]);
-          }
-        } else {
-          XXX(["Unrecognized twig at ", topicPath]);
-        }
-      }
-    }
-  }
   // Add a topic (either from group template, or because received a value and adding automatically)
-  // In both cases the group must already exist
-  addTopicFromTemplate(topicTemplate, groupId) { // topicTemplate is a copy of server_config.schema.topics entry e.g. { leaf, type, rw, unit, slot }
-    // Convert leaf: in the template to a topic
-    let twig = (groupId + "/" + topicTemplate.leaf);
-    if (!this.state.topics[twig]) { // Have we done this already?
-      let mt = new MqttTopic();
-      mt.fromTemplate(topicTemplate, twig, groupId, this);
-      this.state.topics[twig + "/#"] = mt; // Watch for topic (e.g. sht/temperature or leaflet of it e.g. sht/temperature/color
-      if (this.mt) this.mt.topics[twig] = mt; // Mirror on the node-level MqttTopic for data-tree navigation
-      // mt.subscribe(); Node will forward to sub topics
-      let elx = mt.createElement();
-      // If topic specifies a slot - typically these are inside frugal_iot i.e. name, description, id, lastseen
-      if (topicTemplate.slot) {
-        // noinspection JSUnresolvedReference
+  // DOM layer for topic creation. Data-tree MqttTopic is created by MqttTopicNode.addTopicFromTemplate;
+  // this method adds the element reference, flat index, and DOM element on top.
+  addTopicFromTemplate(topicTemplate, groupId) {
+    if (!this.mt.addTopicFromTemplate(topicTemplate, groupId)) return false;
+    const mt = this.mt.groups[groupId].topics[topicTemplate.leaf];
+    mt.node = this; // Element reference for DOM-specific getters (project, projectMt via closest())
+    this.state.topics[mt.twig + "/#"] = mt; // Flat index used by topicsByType / topicsForEach
+    const elx = mt.createElement();
+    if (mt.slot) {
+      elx.setAttribute('slot', mt.slot);
+      elx.setAttribute('class', mt.slot);
+      if (groupId === "frugal_iot") this.state.elements[mt.slot] = elx;
+    }
+    this.groups[groupId].append(elx);
+    return true;
+  }
+  // DOM layer for group creation. Data-tree MqttTopicGroup and its topics are created by
+  // MqttTopicNode.addGroupFromTemplate; this method creates the DOM element and the per-topic elements.
+  addGroupFromTemplate(groupId) {
+    if (this.groups[groupId]) return false;
+    const moduleTemplate = server_config.schema.modules[groupId];
+    const groupName = moduleTemplate ? moduleTemplate.name : groupId;
+    let grouptag = (groupId === "frugal_iot") ? 'mqtt-groupfrugaliot' : `mqtt-group${groupId}`;
+    grouptag = customElements.get(grouptag) ? grouptag : 'mqtt-group';
+    this.groups[groupId] = el(grouptag, {class: `group ${groupId}`, group: groupId, name: groupName, slot: ((moduleTemplate && moduleTemplate.slot) || null)}, []);
+    // Data-tree: creates MqttTopicGroup + all template topics (also fires frugaliot:controlgroup)
+    this.mt.addGroupFromTemplate(groupId);
+    // DOM: populate topic elements into the group before connecting it to the node
+    Object.values(this.mt.groups[groupId].topics).forEach(mt => {
+      mt.node = this;
+      this.state.topics[mt.twig + "/#"] = mt;
+      const elx = mt.createElement();
+      if (mt.slot) {
         elx.setAttribute('slot', mt.slot);
-        // noinspection JSUnresolvedReference
         elx.setAttribute('class', mt.slot);
-        if (groupId === "frugal_iot") {
-          this.state.elements[topicTemplate.slot] = elx
-        }
+        if (groupId === "frugal_iot") this.state.elements[mt.slot] = elx;
       }
       this.groups[groupId].append(elx);
-      return true;
+    });
+    // Append after topics are in place so the group is never rendered empty
+    if (moduleTemplate && moduleTemplate.insidefrugaliot) {
+      this.groups["frugal_iot"].append(this.groups[groupId]);
     } else {
-      return false;
+      this.append(this.groups[groupId]);
     }
-  }
-  // Add a group (if not already there) and its topics
-  // Returns true if added, false if already there
-  addGroupFromTemplate(groupId) {
-    // Check if we already have added the group
-    if (!this.groups[groupId]) {
-      let moduleTemplate = server_config.schema.modules[groupId]; // Unexpanded template
-      let groupName = moduleTemplate ? moduleTemplate.name : groupId;
-      // Create the group - can build subclasses of MqttGroup that do cleer summarization
-      let grouptag = (groupId === "frugal_iot") ? 'mqtt-groupfrugaliot' : `mqtt-group${groupId}`;
-      grouptag = customElements.get(grouptag) ? grouptag : 'mqtt-group'; // Fallback if no custom element defined
-      this.groups[groupId] = el(grouptag, {class: `group ${groupId}`, group: groupId, name: groupName, slot: ((moduleTemplate && moduleTemplate.slot) || null)}, []);
-      if (moduleTemplate && moduleTemplate.insidefrugaliot) { // ledbuiltin or ota
-        this.groups["frugal_iot"].append(this.groups[groupId]); // Add the new group to the frugal_iot node.
-      } else {
-        this.append(this.groups[groupId]); // Adds the group to the node - typically it will be a dropdown
-      }
-      if (!moduleTemplate) {
-        XXX(["Unknown group - for now can't guess", groupId]);
-      } else {
-        moduleTemplate.topics.forEach(topicUnexpandedTemplate => {  // Note t.topic in discovery is twig
-          // Expand topic, copying from template and overriding fields
-          // If topic not in schema.topics then use full definition from modules
-          let topicExpandedTemplate = expandTopicTemplate(topicUnexpandedTemplate.leaf_from || topicUnexpandedTemplate.leaf, topicUnexpandedTemplate) || topicUnexpandedTemplate;
-          this.addTopicFromTemplate(topicExpandedTemplate, groupId);
-        });
-      }
-      // Notify dashboards that a control group is available for wiring.
-      // Guard on this.mt because addStandardChildren runs before mt is set on the node.
-      if (groupId.startsWith('control') && this.mt) {
-        document.dispatchEvent(new CustomEvent('frugaliot:controlgroup', {
-          detail: { nodeMt: this.mt, groupId, topics: this.mt.controlGroups[groupId] || [] }
-        }));
-      }
-      return true;
-    }  else {
-      return false;
-    }
+    return true;
   }
 
   /*
@@ -3275,7 +3418,7 @@ customElements.define('mqtt-group', MqttGroup);
 class MqttSummaryGroup extends MqttGroup {
   renderSummary() {
     return el('div', {style:`display:inline-block;margin-left:20px;vertical-align:middle;`}, [
-      el('span', {textContent: this.summaryText()})
+      el('span', {i8n: false, textContent: this.summaryText()})
     ]); // Colored circle with thin black border
   }
   trueFalseSymbol(val) {
@@ -3660,7 +3803,8 @@ class MqttGraphDataset extends MqttElement {
       'red': 'rgb(255, 0, 0)',
       'pink': 'rgb(255, 192, 203)',
       'green': 'rgb(0, 128, 0)',
-      'blue': 'rgb(0, 0, 255)'
+      'blue': 'rgb(0, 0, 255)',
+      'black': 'rgb(0, 0, 0)'
     };
 
     // If it's already an rgba color, modify the alpha
@@ -3766,4 +3910,4 @@ document.addEventListener('frugaliot:publish', ({detail}) => {
 
 // Public API for custom dashboards and pages that import this module.
 // Add further exports here as dashboard needs grow (e.g. getString for i18n).
-export { el, getString, getStringFrom, addVocabulary };
+export { el, getString, getStringFrom, addVocabulary, preferedLanguageSet, XXX };
