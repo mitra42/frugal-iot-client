@@ -217,6 +217,11 @@ div.mqtt-text {
         }
         .message {margin: 0.5em; font-weight: bold; font-size: x-large; }
         .tabbed-section.inactive { display: none; }
+        tabbed-display.solo .tabbed-section.active {
+            padding: 0;
+            border: none;
+            border-radius: 0;
+        }
         .tabbed-section.active {
             padding: 10px;
             border: black solid 2px;

@@ -1670,10 +1670,11 @@ class TabbedDisplay extends HTMLElementExtended {
         textContent: c.getAttribute('title') })
     );
     this.updateActive(this.state.tab); // sets active/inactive on children and tabs
+    this.classList.toggle('solo', this.tabs.length <= 1); // light-DOM class so CSS can suppress border
     return [
       el('link', {rel: 'stylesheet', href: CssUrl}),
       el('div', {class: 'tabbed-display'}, [
-        el('section', {class: 'tabs'}, this.tabs),
+        this.tabs.length > 1 ? el('section', {class: 'tabs'}, this.tabs) : null,
         el('slot',{}), // Children are the sections i.e. each tabs content
       ]),
     ];
