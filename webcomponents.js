@@ -2519,7 +2519,6 @@ class MqttText extends MqttTransmitter {
   }
   renderValue(val) {
     // I think val should always be this.state.value, even when called in renderMaybeWired with wiredTopicValue
-    // For wired inputs, the device may not be echoing out the new value (e.g. controlhysterisis/now is alwys 50
     //if (val != this.state.value) { XXX(["Mistaken assumption in MqttText.renderValue"])} // TODO-64
     return this.state.elements.textValue = el('span',{class: "val", textContent: val || "", i8n: false, /*onclick: this.onClick.bind(this)*/});
   }
@@ -3484,7 +3483,7 @@ class MqttGroupDS18B20 extends MqttSummaryGroup {
 }
 customElements.define('mqtt-groupds18b20', MqttGroupDS18B20);
 
-class MqttGroupSht extends MqttSummaryGroup {
+class MqttGroupHt extends MqttSummaryGroup {
   static get observedAttributes() { return MqttGroup.observedAttributes.concat(['temperature', 'humidity']);}
   static get floatAttributes() { return MqttGroup.boolAttributes.concat(['temperature', 'humidity']);}
 
@@ -3492,7 +3491,14 @@ class MqttGroupSht extends MqttSummaryGroup {
     return `${this.state.temperature}°C ${this.state.humidity}%RH`
   }
 }
+customElements.define('mqtt-groupht', MqttGroupHt);
+
+class MqttGroupSht extends MqttGroupHt {
+}
 customElements.define('mqtt-groupsht', MqttGroupSht);
+class MqttGroupDht extends MqttGroupHt {
+}
+customElements.define('mqtt-groupdht', MqttGroupDht);
 
 class MqttGroupControlHysteresis extends MqttSummaryGroup {
   static get observedAttributes() { return MqttGroup.observedAttributes.concat(['on','now','now_wired','greater','limit','limit_wired','hysteresis','hysterisis','out_wired', 'manual']);}
@@ -3512,6 +3518,7 @@ class MqttGroupControlHysteresis extends MqttSummaryGroup {
   }
 }
 customElements.define('mqtt-groupcontrolhysteresis', MqttGroupControlHysteresis);
+// TODO - delete when sure all nodes updated (esp Winam)
 class MqttGroupControlHysterisis extends MqttGroupControlHysteresis { }
 customElements.define('mqtt-groupcontrolhysterisis', MqttGroupControlHysterisis); // TODO-legacy-hysterisis
 
