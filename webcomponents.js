@@ -1686,7 +1686,7 @@ customElements.define('tabbed-display', TabbedDisplay);
 class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organization
   constructor(props) {
     super(props);
-    this.state = {register: false, ota_files: [], people_list: []};
+    this.state = {register: false, ota_files: [], people_list: [], projects_list: []};
     this.state.elements = {};
   }
   static get observedAttributes() { return ['register','message','url','lang','org']; }
@@ -1730,6 +1730,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
         this.setDefaultOrganization();
         this.getOtaFiles();
         this.getPeopleList();
+        this.getProjectsList();
       }
     });
     //super.connectedCallback(); // Not doing as finishes with a re-render.
@@ -1821,6 +1822,23 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       this.getOrChangeAdminPeople(`/people_list/${this.state.org}`);
     }
   }
+  // Fetch projects and display
+  getOrChangeAdminProjects(url) {
+    GET(url, {}, (err, json) => {
+      if (err) {
+        this.message(err.message);
+        return;
+      } else { // got projects
+        this.state.projects_list = json; // [{id, name}]
+        this.replaceElement("projects_display_list", this.projectsDisplayList());
+      }
+    });
+  }
+  getProjectsList() {
+    if (this.state.org) {
+      this.getOrChangeAdminProjects(`/projects_list/${this.state.org}`);
+    }
+  }
   onPermissionsDelete(val, ev) {
     console.log(ev,val);
     this.getOrChangeAdminPeople(`/permissions_delete/${val}`);
@@ -1886,6 +1904,34 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     });
     return EL;
   }
+  projectsDisplayList() {
+    return ((!this.state.projects_list) || (this.state.projects_list.length === 0)) ?
+      el('p', {}, ["No projects added for this organization yet."]) :
+      el('p', {}, this.state.projects_list.map(p => [
+          `${p.id}: ${p.name}`,
+          el('br', {}),
+        ])
+      );
+  }
+  projectsAddForm() {
+    let EL = el('form', {}, [
+      el('div', {class: 'dropdownsadmin'}, [
+        el('label', {for: 'project_id', textContent: "Project ID"}),
+        el('input', {id: 'project_id', name: 'id', type: 'text', placeholder: 'id', required: true,
+          pattern: '[a-z0-9]+', title: "Lower-case letters and numbers only, no spaces or punctuation"}),
+        el('label', {for: 'project_name', textContent: "Project Name"}),
+        el('input', {id: 'project_name', name: 'name', type: 'text', placeholder: 'Name', required: true}),
+        el('button', {class: "submit", type: "submit", textContent: 'Add'}),
+      ]),
+    ]);
+    EL.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const urlparms = new URLSearchParams(new FormData(EL)).toString();
+      this.getOrChangeAdminProjects(`/add_project/${this.state.org}?${urlparms}`);
+      EL.reset();
+    });
+    return EL;
+  }
   replaceElement(name, newElement) {
     if (this.state.elements[name]) {
       let oldEl = this.state.elements[name];
@@ -1898,6 +1944,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     this.replaceElement("projectdropdown", this.projectDropdown(this.state.org));
     this.getOtaFiles();  // Replaces ota files part asynchronously
     this.getPeopleList();  // Replaces perms and people list part asynchronously
+    this.getProjectsList();  // Replaces projects list part asynchronously
     this.sortNodesTable("projectId", true);
     // Note both these dropdowns are fine if this.state.org is undefined
     this.replaceElement("otaorgsdropdown", this.orgDropdown(this.state.org, this.otaOrgs,"otaorganizations"));
@@ -2155,6 +2202,13 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
                     this.state.elements.people_perms_list = this.peoplePermList(), // This gets replaced when actions taken
                     // and form to add (dropdown of people and permissions)
                     this.state.elements.people_list = this.peopleList(),
+              ]),
+              el('section', {}, [
+                    el('h3', {}, ["Projects"]),
+                    // List of existing projects for this organization,
+                    this.state.elements.projects_display_list = this.projectsDisplayList(),
+                    // and form to add a new project (id and name)
+                    this.projectsAddForm(),
               ]),
               // TODO-CSS cleanup - labels are too big
               // This should really use a superuser permission but for now its just the super admin can do this
