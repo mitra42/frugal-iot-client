@@ -1049,10 +1049,10 @@ class MqttTopic {
     if (yaxisid = scaleNames.find(tt => tt.includes(n) || n.includes(tt))) {
       return yaxisid;
     }
-    // Not found - lets make one - this might get more parameters (e.g. linear vs exponential could be a attribute of Bar ?
+    // Not found - lets make one
     // noinspection JSUnresolvedReference
     this.graph.addScale(t, {
-      type: 'linear',
+      type: this.type === 'exponential' ? 'logarithmic' : 'linear',
       display: this.type !== 'bool',
       title: {
         // noinspection JSUnresolvedReference
@@ -1060,8 +1060,9 @@ class MqttTopic {
         // noinspection JSUnresolvedReference
         text: getString(this.name.replace(/[0-9]+$/,'')),
       },
+      // 0 is not valid on a logarithmic axis, so fall back to auto-scaling (undefined) rather than 0
       // noinspection JSUnresolvedReference
-      min: ((this.type === 'bool') ? false : (this.min || 0)),
+      min: ((this.type === 'bool') ? false : (this.type === 'exponential' ? (this.min || undefined) : (this.min || 0))),
       // noinspection JSUnresolvedReference
       max: ((this.type === 'bool') ? true : undefined),
     });
