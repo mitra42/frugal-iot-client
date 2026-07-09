@@ -182,9 +182,13 @@ function locationParameterChange(name, value) {
 }
 // Send client to login then back to this page
 function redirectToLogin() {
-  const url = new URL(`${window.location.href}`);
-  url.pathname = '/dashboard/login.html';
-  //url.searchParams.set("lang", preferedLanguages.join(',')); // Get these from the URL
+  // Build login.html's URL fresh, rather than mutating a copy of the current page's URL - otherwise
+  // the current page's whole query string leaks onto login.html verbatim alongside the "url" param
+  // (which already carries the full target, including that same query string, back through login).
+  // Carry over just "lang", so login.html itself still renders in the right language.
+  const currentLang = new URL(window.location.href).searchParams.get('lang');
+  const url = new URL('/dashboard/login.html', window.location.origin);
+  if (currentLang) { url.searchParams.set('lang', currentLang); }
   url.searchParams.set("url", window.location.href); // Come back to same place after login
   window.location = url.toString();
 }
@@ -1580,6 +1584,19 @@ class MqttLogin extends HTMLElementExtended { // TODO-89 may depend on organizat
     this.changeAttribute('register', register);
     this.renderAndReplace();
   }
+  // this.state.url (the page to return to after login) may already have its own query string, so set
+  // "lang" via the URL API rather than naively concatenating "?lang=...", which would produce a second
+  // "?" if one is already present.
+  urlWithLang(urlStr) {
+    if (!urlStr) { return urlStr; }
+    try {
+      const u = new URL(urlStr, window.location.origin);
+      u.searchParams.set('lang', preferedLanguages.join(','));
+      return u.toString();
+    } catch (e) {
+      return urlStr;
+    }
+  }
   render() { //TODO-89 needs styles
     // TODO-89 organization should be dropdown
     // TODO-89 merge login & register
@@ -1603,7 +1620,7 @@ class MqttLogin extends HTMLElementExtended { // TODO-89 may depend on organizat
                 el('label', {for: "password", textContent: "Password"}),
                 el('input', {id: "password", name: "password", type: "password", autocomplete: "current-password", required: true}),
               ]),
-              el('input', {id: "url", name: "url", type: "hidden", value: (this.state.url + "?lang=" + preferedLanguages.join(','))}),
+              el('input', {id: "url", name: "url", type: "hidden", value: this.urlWithLang(this.state.url)}),
               el('button', {class: "submit", type: "submit",
                 textContent: (this.state.register ? 'Submit' : 'Submit')}),
             ]),
@@ -1637,7 +1654,7 @@ class MqttLogin extends HTMLElementExtended { // TODO-89 may depend on organizat
                 el('label', {for: "phone", textContent: "Phone or Whatsapp"}),
                 el('input', {id: "phone", name: "phone", type: "text", autocomplete: "phone", required: true}),
               ]),
-              el('input', {id: "url", name: "url", type: "hidden", value: (this.state.url + "?lang=" + preferedLanguages.join(','))}),
+              el('input', {id: "url", name: "url", type: "hidden", value: this.urlWithLang(this.state.url)}),
               el('button', {class: "submit", type: "submit", textContent: 'Submit'}),
             ]),
           ]),
@@ -1711,7 +1728,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   constructor(props) {
     super(props);
     this.state = {register: false, ota_files: [], people_list: [], projects_list: [], platforms_list: [], farms_list: [],
-      selected_platform_id: null, selected_farm_id: null};
+      selected_platform_id: null, selected_farm_id: null, selected_farm_node: null, device_schema: null, selected_action: null};
     this.state.elements = {};
   }
   static get observedAttributes() { return ['register','message','url','lang','org']; }
@@ -1790,6 +1807,18 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   // organization is selected. contentFn is a MqttAdmin method, called with `this` bound.
   gatedContent(contentFn) {
     return this.state.org ? contentFn.call(this) : el('p', {}, ["Select an organization to continue."]);
+  }
+  // An "Add X" button that expands into buildForm() once clicked, and stays expanded - used for the
+  // "Add Project" and "Add Farm" forms so they don't clutter the tab until the admin wants to add one.
+  collapsibleArea(key, label, buildForm) {
+    this.state.expanded = this.state.expanded || {};
+    if (this.state.expanded[key]) {
+      return buildForm.call(this);
+    }
+    return el('button', {class: 'submit', type: 'button', textContent: `+ ${label}`, onclick: () => {
+      this.state.expanded[key] = true;
+      this.replaceElement(key, this.collapsibleArea(key, label, buildForm));
+    }});
   }
   orgDropdown(org, list, id) {
     return el('section', {}, [
@@ -1905,7 +1934,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   }
   peopleList() {
     let EL = el('form', {action: `/add_permission/${this.state.org}`, method: "post"}, [
-      el('input', {id: "url3", name: "url", type: "hidden", value: `/dashboard/admin.html`}),
+      el('input', {id: "url3", name: "url", type: "hidden", value: `/dashboard/`}),
       el('input', {id: "lang", name: "lang", type: "hidden", value: preferedLanguages.join(',')}),
       // dropdown for name and for permissions
       el('div', {class: 'dropdownsadmin'}, [
@@ -1962,10 +1991,11 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     });
     return EL;
   }
-  // Fetch registered Farm-Platforms for the selected organization, and display
+  // Fetch all registered Farm-Platforms, and display. Not org-scoped - a platform is a many-to-many
+  // relationship with orgs/projects, recorded per-mapping in api_farms (see getFarmsList).
   getPlatformsList() {
     if (this.state.org) {
-      GET(`/api/platforms_list?org=${encodeURIComponent(this.state.org)}`, {}, (err, json) => {
+      GET(`/api/platforms/list`, {}, (err, json) => {
         if (err) {
           this.message(err.message);
           return;
@@ -1977,21 +2007,20 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
           this.state.selected_platform_id = json.length === 1 ? json[0].id : null;
         }
         this.replaceElement("platforms_list_display", this.platformsListDisplay());
-        this.getFarmsList();
+        this.replaceElement("add_farm", this.collapsibleArea('add_farm', "Add Farm", this.farmRegisterForm));
       });
     }
   }
   onPlatformSelect(ev) {
     this.state.selected_platform_id = parseInt(ev.target.value, 10);
-    this.getFarmsList();
   }
   platformLabel(p) {
-    return `${p.name} (${p.org}) — user: ${p.user}` + (p.base_url ? ` — ${p.base_url}` : '');
+    return `${p.name} — user: ${p.user}` + (p.base_url ? ` — ${p.base_url}` : '');
   }
   platformsListDisplay() {
     const platforms = this.state.platforms_list || [];
     if (platforms.length === 0) {
-      return el('p', {}, ["No platforms registered for this organization yet."]);
+      return el('p', {}, ["No platforms registered yet."]);
     }
     if (platforms.length === 1) {
       return el('p', {}, [this.platformLabel(platforms[0])]);
@@ -2002,7 +2031,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     ]);
   }
   postPlatformRegister(body, formEl) {
-    POST('/api/platform_register', body, (err, json) => {
+    POST('/api/platforms/register', body, (err, json) => {
       if (err) {
         this.message(err.message);
         return;
@@ -2015,15 +2044,11 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   platformRegisterForm() {
     let EL = el('form', {}, [
       el('div', {class: 'formgroup'}, [
-        el('label', {for: 'platform_org', textContent: "Organization"}),
-        el('input', {id: 'platform_org', type: 'text', value: this.state.org, disabled: true, i8n: false}),
-      ]),
-      el('div', {class: 'formgroup'}, [
-        el('label', {for: 'platform_name', textContent: "Platform Name"}),
+        el('label', {for: 'platform_name', textContent: "Platform Name *"}),
         this.state.elements.platform_name = el('input', {id: 'platform_name', name: 'name', type: 'text', placeholder: 'e.g. LiteFarm', required: true}),
       ]),
       el('div', {class: 'formgroup'}, [
-        el('label', {for: 'platform_user', textContent: "Frugal-IoT Username"}),
+        el('label', {for: 'platform_user', textContent: "Frugal-IoT Username *"}),
         this.state.elements.platform_user = el('input', {id: 'platform_user', name: 'user', type: 'text', required: true}),
       ]),
       el('div', {class: 'formgroup'}, [
@@ -2043,7 +2068,6 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     EL.addEventListener('submit', (e) => {
       e.preventDefault();
       this.postPlatformRegister({
-        org: this.state.org,
         name: this.state.elements.platform_name.value,
         user: this.state.elements.platform_user.value,
         base_url: this.state.elements.platform_base_url.value || undefined,
@@ -2053,10 +2077,10 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     });
     return EL;
   }
-  // Fetch farm-to-project mappings for the selected platform, and display
+  // Fetch farm-to-project mappings registered for the selected organization, and display
   getFarmsList() {
-    if (this.state.selected_platform_id) {
-      GET(`/api/farms_list?platform_id=${encodeURIComponent(this.state.selected_platform_id)}`, {}, (err, json) => {
+    if (this.state.org) {
+      GET(`/api/farms/list?org=${encodeURIComponent(this.state.org)}`, {}, (err, json) => {
         if (err) {
           this.message(err.message);
           return;
@@ -2065,27 +2089,28 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
         if (!json.some(f => f.id === this.state.selected_farm_id)) {
           this.state.selected_farm_id = json.length ? json[0].id : null;
         }
+        this.state.selected_farm_node = null;
         this.replaceElement("farms_list_display", this.farmsListDisplay());
+        this.replaceElement("farm_nodes_table", this.farmNodesTable());
+        this.replaceElement("farm_node_actions", this.farmNodeActions());
+        this.getDeviceActionSchema();
       });
-    } else {
-      this.state.farms_list = [];
-      this.state.selected_farm_id = null;
-      this.replaceElement("farms_list_display", this.farmsListDisplay());
     }
   }
   onFarmSelect(ev) {
     this.state.selected_farm_id = parseInt(ev.target.value, 10);
+    this.state.selected_farm_node = null;
+    this.replaceElement("farm_nodes_table", this.farmNodesTable());
+    this.replaceElement("farm_node_actions", this.farmNodeActions());
+    this.getDeviceActionSchema();
   }
   farmLabel(f) {
     return `${f.farm_id} → ${f.org}/${f.project}`;
   }
   farmsListDisplay() {
-    if (!this.state.selected_platform_id) {
-      return el('p', {}, ["Select a platform to see its farms."]);
-    }
     const farms = this.state.farms_list || [];
     if (farms.length === 0) {
-      return el('p', {}, ["No farms registered for this platform yet."]);
+      return el('p', {}, ["No farms registered for this organization yet."]);
     }
     if (farms.length === 1) {
       return el('p', {}, [this.farmLabel(farms[0])]);
@@ -2094,6 +2119,250 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       farms.map(f =>
         el('option', {value: f.id, textContent: this.farmLabel(f), selected: f.id === this.state.selected_farm_id, i8n: false}))
     ]);
+  }
+  postFarmRegister(body, formEl) {
+    POST('/api/farms/register', body, (err, json) => {
+      if (err) {
+        this.message(err.message);
+        return;
+      }
+      this.message("Farm registered");
+      formEl.reset();
+      this.getFarmsList();
+    });
+  }
+  farmRegisterForm() {
+    const platforms = this.state.platforms_list || [];
+    if (platforms.length === 0) {
+      return el('p', {}, ["Register a platform above before adding a farm."]);
+    }
+    let EL = el('form', {}, [
+      el('div', {class: 'formgroup'}, [
+        el('label', {for: 'farm_platform_id', textContent: "Platform *"}),
+        this.state.elements.farm_platform_id = el('select', {id: 'farm_platform_id', name: 'platform_id', required: true}, [
+          platforms.map(p => el('option', {value: p.id, textContent: this.platformLabel(p), i8n: false}))
+        ]),
+      ]),
+      el('div', {class: 'formgroup'}, [
+        el('label', {for: 'farm_farm_id', textContent: "Farm ID *"}),
+        this.state.elements.farm_farm_id = el('input', {id: 'farm_farm_id', name: 'farm_id', type: 'text', required: true}),
+      ]),
+      el('div', {class: 'formgroup'}, [
+        el('label', {for: 'farm_org', textContent: "Organization"}),
+        el('input', {id: 'farm_org', type: 'text', value: this.state.org, disabled: true, i8n: false}),
+      ]),
+      el('div', {class: 'formgroup'}, [
+        el('label', {for: 'farm_project', textContent: "Project ID *"}),
+        this.state.elements.farm_project = el('input', {id: 'farm_project', name: 'project', type: 'text', placeholder: 'id', required: true,
+          pattern: '[a-z0-9]+', title: "Lower-case letters and numbers only, no spaces or punctuation"}),
+      ]),
+      el('button', {class: 'submit', type: 'submit', textContent: 'Register Farm'}),
+    ]);
+    EL.addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.postFarmRegister({
+        platform_id: parseInt(this.state.elements.farm_platform_id.value, 10),
+        'farm-platform-farm-id': this.state.elements.farm_farm_id.value,
+        'device-platform-farm-id': `${this.state.org}/${this.state.elements.farm_project.value}`,
+      }, EL);
+    });
+    return EL;
+  }
+  // A "farm" is identified by (platform_id, farm_id) - api_farms can have more than one row for the
+  // same farm when it maps to more than one Frugal-IoT project, so gather every project mapped to
+  // whichever row is currently selected, not just that one row's project.
+  selectedFarmProjectIds() {
+    const farms = this.state.farms_list || [];
+    const selected = farms.find(f => f.id === this.state.selected_farm_id);
+    if (!selected) { return []; }
+    return farms
+      .filter(f => (f.platform_id === selected.platform_id) && (f.farm_id === selected.farm_id))
+      .map(f => f.project);
+  }
+  onFarmNodeSelect(projectId, nodeId) {
+    this.state.selected_farm_node = `${projectId}/${nodeId}`;
+    this.replaceElement("farm_node_actions", this.farmNodeActions());
+    this.getDeviceActionSchema();
+  }
+  // Fully qualified device id (org/project/node) for whichever node is currently selected in the farm's
+  // nodes table, or null if none is selected.
+  selectedFarmNodeDevice() {
+    if (!this.state.selected_farm_node) { return null; }
+    return `${this.state.org}/${this.state.selected_farm_node}`;
+  }
+  onFarmNodeSchema() {
+    const device = this.selectedFarmNodeDevice();
+    if (!device) { return; }
+    window.open(`/api/devices/schema?device=${encodeURIComponent(device)}`, '_blank');
+  }
+  onFarmNodeData(e) {
+    e.preventDefault();
+    const device = this.selectedFarmNodeDevice();
+    if (!device) { return; }
+    // datetime-local values omit seconds (YYYY-MM-DDTHH:mm) - parseTimestamp on the server requires them.
+    const withSeconds = (v) => v && (v.length === 16 ? `${v}:00` : v);
+    const from = withSeconds(this.state.elements.farm_node_from.value);
+    const to = withSeconds(this.state.elements.farm_node_to.value);
+    if (!from) {
+      this.message("From date is required");
+      return;
+    }
+    let url = `/api/data?device=${encodeURIComponent(device)}&from=${encodeURIComponent(from)}`;
+    if (to) { url += `&to=${encodeURIComponent(to)}`; }
+    window.open(url, '_blank');
+  }
+  // Actions for whichever node is currently selected in "Nodes in Farm": fetch its schema, or its data
+  // over a date range - both open the raw JSON response in a new window/tab.
+  farmNodeActions() {
+    if (!this.state.selected_farm_node) {
+      return el('p', {}, ["Select a node above to see actions."]);
+    }
+    let EL = el('form', {}, [
+      el('button', {class: 'submit', type: 'button', textContent: 'Schema', onclick: this.onFarmNodeSchema.bind(this)}),
+      el('div', {class: 'formgroup'}, [
+        el('label', {for: 'farm_node_from', textContent: "From *"}),
+        this.state.elements.farm_node_from = el('input', {id: 'farm_node_from', type: 'datetime-local', required: true}),
+      ]),
+      el('div', {class: 'formgroup'}, [
+        el('label', {for: 'farm_node_to', textContent: "To"}),
+        this.state.elements.farm_node_to = el('input', {id: 'farm_node_to', type: 'datetime-local'}),
+      ]),
+      el('button', {class: 'submit', type: 'submit', textContent: 'Data'}),
+    ]);
+    EL.addEventListener('submit', this.onFarmNodeData.bind(this));
+    return EL;
+  }
+  // Fetch the selected node's Device Schema so the Action section can list its actions - triggered
+  // whenever the selected node changes.
+  getDeviceActionSchema() {
+    const device = this.selectedFarmNodeDevice();
+    this.state.device_schema = null;
+    this.state.selected_action = null;
+    if (!device) {
+      this.replaceElement("action_section", this.actionSection());
+      return;
+    }
+    GET(`/api/devices/schema?device=${encodeURIComponent(device)}`, {}, (err, json) => {
+      if (err) {
+        this.message(err.message);
+        return;
+      }
+      this.state.device_schema = json;
+      this.replaceElement("action_section", this.actionSection());
+    });
+  }
+  onActionSelect(ev) {
+    this.state.selected_action = ev.target.value;
+    this.replaceElement("action_value", this.actionValueField());
+  }
+  actionDropdown() {
+    const actions = (this.state.device_schema && this.state.device_schema.actions) || {};
+    const keys = Object.keys(actions);
+    if (!this.state.selected_action || !actions[this.state.selected_action]) {
+      this.state.selected_action = keys[0] || null;
+    }
+    return el('select', {id: 'action_select', onchange: this.onActionSelect.bind(this)}, [
+      keys.map(key =>
+        el('option', {value: key, textContent: actions[key].description || actions[key].title || key,
+          selected: key === this.state.selected_action, i8n: false}))
+    ]);
+  }
+  // The Value field's type/constraints follow the selected action's input schema (WoT Action Object,
+  // API.md Annex A.3): boolean -> toggle, number/integer -> number box constrained to minimum/maximum,
+  // anything else -> plain text.
+  actionValueField() {
+    const actions = (this.state.device_schema && this.state.device_schema.actions) || {};
+    const input = (actions[this.state.selected_action] || {}).input || {};
+    let field;
+    if (input.type === 'boolean') {
+      field = el('input', {id: 'action_value', type: 'checkbox'});
+    } else if (input.type === 'number' || input.type === 'integer') {
+      field = el('input', {id: 'action_value', type: 'number',
+        min: input.minimum, max: input.maximum, step: input.type === 'integer' ? 1 : 'any'});
+    } else {
+      field = el('input', {id: 'action_value', type: 'text'});
+    }
+    return field;
+  }
+  onActionSend() {
+    const device = this.selectedFarmNodeDevice();
+    const actions = (this.state.device_schema && this.state.device_schema.actions) || {};
+    const action = actions[this.state.selected_action];
+    if (!device || !action) { return; }
+    const href = action.forms && action.forms[0] && action.forms[0].href;
+    if (!href) {
+      this.message("This action has no invocation URL (forms[0].href) in its schema");
+      return;
+    }
+    const valueField = this.state.elements.action_value;
+    const inputType = (action.input || {}).type;
+    let value;
+    if (inputType === 'boolean') {
+      value = valueField.checked;
+    } else if (inputType === 'number' || inputType === 'integer') {
+      value = Number(valueField.value);
+    } else {
+      value = valueField.value;
+    }
+    // The schema's href is a WoT Form - it can only express a URL, not a JSON body - so invoke via
+    // GET /devices/action (API.md Section 6.6.2's companion route), appending "value" as a query param.
+    // href already carries deviceId/action, matching what GET /devices/action reads.
+    GET(`${href}&value=${encodeURIComponent(value)}`, {}, (err, json) => {
+      if (err) {
+        this.message(err.message);
+        return;
+      }
+      this.message(`Action ${this.state.selected_action} sent`);
+    });
+  }
+  // "Action" section - lets the admin invoke any action from the selected node's Device Schema.
+  actionSection() {
+    if (!this.state.selected_farm_node) {
+      return el('p', {}, ["Select a node above to send an action."]);
+    }
+    if (!this.state.device_schema) {
+      return el('p', {}, ["Loading schema..."]);
+    }
+    const actions = this.state.device_schema.actions || {};
+    if (Object.keys(actions).length === 0) {
+      return el('p', {}, ["This node has no actions in its schema."]);
+    }
+    let EL = el('form', {}, [
+      el('div', {class: 'formgroup'}, [
+        el('label', {for: 'action_select', textContent: "Action *"}),
+        this.state.elements.action_select = this.actionDropdown(),
+      ]),
+      el('div', {class: 'formgroup'}, [
+        el('label', {for: 'action_value', textContent: "Value *"}),
+        this.state.elements.action_value = this.actionValueField(),
+      ]),
+      el('button', {class: 'submit', type: 'submit', textContent: 'Send'}),
+    ]);
+    EL.addEventListener('submit', (e) => { e.preventDefault(); this.onActionSend(); });
+    return EL;
+  }
+  // Nodes for the selected farm's project(s) - same fields/UI as the Nodes tab (via nodesTableFor),
+  // filtered to just the projects api_farms maps to the currently selected farm, plus a selection column.
+  farmNodesTable() {
+    if (!this.state.selected_farm_id) {
+      return el('p', {}, ["Select a farm above to see its nodes."]);
+    }
+    return this.nodesTableFor(
+      'farm_nodes_table',
+      () => this.nodesForProjects(this.state.org, this.selectedFarmProjectIds()),
+      "No nodes found for this farm's project(s).",
+      {
+        label: "Select",
+        cell: (node) => {
+          const key = `${node.projectId}/${node.nodeId}`;
+          return el('td', {}, [
+            el('input', {type: 'radio', name: 'farm_node_select', value: key,
+              checked: this.state.selected_farm_node === key,
+              onchange: this.onFarmNodeSelect.bind(this, node.projectId, node.nodeId)}),
+          ]);
+        }
+      }
+    );
   }
   replaceElement(name, newElement) {
     if (this.state.elements[name]) {
@@ -2106,6 +2375,8 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     this.state.org =  org;
     this.state.selected_platform_id = null;
     this.state.selected_farm_id = null;
+    // Reset sort order for every nodes table back to the default before rebuilding them below.
+    this.state.nodesSort = {nodes_table: {field: 'projectId', asc: true}, farm_nodes_table: {field: 'projectId', asc: true}};
     // Rebuild the gated content of each tab first, since it re-creates the elements (e.g. ota_files,
     // people_perms_list, platforms_list_display) that the get*List() calls below then asynchronously replace.
     this.replaceElement('ota_rest', this.gatedContent(this.otaRestContent));
@@ -2115,13 +2386,17 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     this.getOtaFiles();  // Replaces ota files part asynchronously
     this.getPeopleList();  // Replaces perms and people list part asynchronously
     this.getProjectsList();  // Replaces projects list part asynchronously
-    this.getPlatformsList();  // Replaces platforms (and farms) list part asynchronously
-    this.sortNodesTable("projectId", true);
+    this.getPlatformsList();  // Replaces platforms list part asynchronously
+    this.getFarmsList();  // Replaces farms list part asynchronously
     // Note both these dropdowns are fine if this.state.org is undefined
     this.replaceElement("otaorgsdropdown", this.orgDropdown(this.state.org, this.otaOrgs,"otaorganizations"));
     this.replaceElement("adminorgsdropdown", this.orgDropdown(this.state.org, this.adminOrgs,"adminorganizations"));
     this.replaceElement("nodesorgsdropdown", this.orgDropdown(this.state.org, this.adminOrgs,"nodesorganizations"));
     this.replaceElement("apiorgsdropdown", this.orgDropdown(this.state.org, this.adminOrgs,"apiorganizations"));
+    // Keep the Dashboard tab's own organization in sync with the shared dropdown above.
+    if (this.state.elements.mqttWrapper) {
+      this.state.elements.mqttWrapper.setOrganization(org);
+    }
   }
   setDefaultOrganization() {
     let org = this.state.org;
@@ -2161,85 +2436,98 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
      }
    }
 
+   // Flattens server_config's nodes-by-project data for one org into the row shape nodesTableFor() renders.
+   nodesForOrg(org) {
+     const projects = (server_config.organizations[org] || {}).projects || {};
+     return this.nodesForProjects(org, Object.keys(projects));
+   }
+   // Same, but restricted to a specific set of project ids (e.g. those api_farms maps to a farm).
+   nodesForProjects(org, projectIds) {
+     const projects = (server_config.organizations[org] || {}).projects || {};
+     let nodes = [];
+     projectIds.forEach(projectId => {
+       const project = projects[projectId];
+       if (!project) { return; }
+       Object.entries(project.nodes || {}).forEach(([nodeId, nodeData]) => {
+         nodes.push({
+           projectId,
+           nodeId,
+           name: nodeData["frugal_iot/name"] || "",
+           description: nodeData["frugal_iot/description"] || "",
+           lastSeen: this.formatLastSeen(nodeData.lastseen),
+           otakey: nodeData["ota/key"] || ""
+         });
+       });
+     });
+     return nodes;
+   }
+
    nodesTable() {
+     return this.nodesTableFor('nodes_table', () => this.nodesForOrg(this.state.org), "No nodes found for this organization");
+   }
+
+   // Shared, sortable nodes table with an editable Project ID cell - used by both the Nodes tab
+   // (nodesTable) and the API tab's "Nodes in Farm" list (farmNodesTable).
+   // tableKey scopes both the sort state and the this.state.elements entry used to replace the table
+   // in place; getNodes() returns the (unsorted) rows to display; extraColumn, if given, adds a leading
+   // column (e.g. a selection radio) as {label, cell(node)}.
+   nodesTableFor(tableKey, getNodes, emptyMessage, extraColumn) {
      if (!this.state.org) {
        return el('p', {}, ["No organization selected"]);
      }
-
-     let org = this.state.org;
-     let projects = server_config.organizations[org].projects || {};
-     let allNodes = [];
-
-     // Collect all nodes from all projects (note these are the projects in the config, not MqttProjects)
-     Object.entries(projects).forEach(([projectId, project]) => {
-       let nodes = project.nodes || {};
-       Object.entries(nodes).forEach(([nodeId, nodeData]) => {
-          allNodes.push({
-            projectId: projectId,
-            nodeId: nodeId,
-            name: nodeData["frugal_iot/name"] || "",
-            description: nodeData["frugal_iot/description"] || "",
-            lastSeen: this.formatLastSeen(nodeData.lastseen),
-            otakey: nodeData["ota/key"] || ""
-          });
-       });
-     });
-
+     let allNodes = getNodes();
      if (allNodes.length === 0) {
-       return el('p', {}, ["No nodes found for this organization"]);
+       return el('p', {}, [emptyMessage]);
      }
 
-     // Store nodes in state for sorting
-     if (!this.state.sortField) {
-       this.state.sortField = 'projectId';
-       this.state.sortAsc = true;
-     }
+     this.state.nodesSort = this.state.nodesSort || {};
+     const sort = this.state.nodesSort[tableKey] || (this.state.nodesSort[tableKey] = {field: 'projectId', asc: true});
 
-     // Sort nodes
      allNodes.sort((a, b) => {
-       let aVal = a[this.state.sortField] || "";
-       let bVal = b[this.state.sortField] || "";
+       let aVal = a[sort.field] || "";
+       let bVal = b[sort.field] || "";
 
        if (typeof aVal === 'string') {
          aVal = aVal.toLowerCase();
          bVal = bVal.toLowerCase();
        }
 
-       if (aVal < bVal) return this.state.sortAsc ? -1 : 1;
-       if (aVal > bVal) return this.state.sortAsc ? 1 : -1;
+       if (aVal < bVal) return sort.asc ? -1 : 1;
+       if (aVal > bVal) return sort.asc ? 1 : -1;
        return 0;
      });
 
-     this.state.allNodes = allNodes;
+     const rerender = () => this.replaceElement(tableKey, this.nodesTableFor(tableKey, getNodes, emptyMessage, extraColumn));
+     const onSort = (field) => {
+       if (sort.field === field) { sort.asc = !sort.asc; } else { sort.field = field; sort.asc = true; }
+       rerender();
+     };
 
-      // Create table rows
-      let tableRows = allNodes.map((node) => [
-        el('tr', {}, [
-          this.renderProjectIdCell(node),
-          el('td', {textContent: node.nodeId, i8n: false}),
-          el('td', {textContent: node.name, i8n: false}),
-          el('td', {textContent: node.description, i8n: false}),
-          el('td', {textContent: node.lastSeen, i8n: false}),
-          el('td', {textContent: node.otakey, i8n: false}),
-        ])
-      ]);
+     const columns = [
+       {label: "Project ID", field: 'projectId', cell: (node) => this.renderProjectIdCell(node, rerender)},
+       {label: "Node ID", field: 'nodeId', cell: (node) => el('td', {textContent: node.nodeId, i8n: false})},
+       {label: "Node Name", field: 'name', cell: (node) => el('td', {textContent: node.name, i8n: false})},
+       {label: "Description", field: 'description', cell: (node) => el('td', {textContent: node.description, i8n: false})},
+       {label: "Last Seen", field: 'lastSeen', cell: (node) => el('td', {textContent: node.lastSeen, i8n: false})},
+       {label: "OTA Key", field: 'otakey', cell: (node) => el('td', {textContent: node.otakey, i8n: false})},
+     ];
 
-     // Create table headers with click handlers for sorting
-     let headerCells = [
-       {label: "Project ID", field: 'projectId'},
-       {label: "Node ID", field: 'nodeId'},
-       {label: "Node Name", field: 'name'},
-       {label: "Description", field: 'description'},
-       {label: "Last Seen", field: 'lastSeen'},
-       {label: "OTA Key", field: 'otakey'},
-     ].map(header =>
-       el('th', {
-         style: 'cursor: pointer; user-select: none; padding-right: 10px;',
-         title: 'Click to sort',
-         onclick: () => this.sortNodesTable(header.field, true),
-         textContent: header.label + (this.state.sortField === header.field ? (this.state.sortAsc ? ' ↑' : ' ↓') : '')
-       })
-     );
+     const headerCells = [
+       extraColumn ? el('th', {textContent: extraColumn.label}) : null,
+       columns.map(col =>
+         el('th', {
+           style: 'cursor: pointer; user-select: none; padding-right: 10px;',
+           title: 'Click to sort',
+           onclick: () => onSort(col.field),
+           textContent: col.label + (sort.field === col.field ? (sort.asc ? ' ↑' : ' ↓') : '')
+         })
+       ),
+     ];
+
+     const tableRows = allNodes.map((node) => el('tr', {}, [
+       extraColumn ? extraColumn.cell(node) : null,
+       columns.map(col => col.cell(node)),
+     ]));
 
      return el('table', {class: 'nodes-table', style: 'border-collapse: collapse; width: 100%;'}, [
        el('thead', {}, [
@@ -2248,19 +2536,6 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
        el('tbody', {}, tableRows),
      ]);
    }
-
-   sortNodesTable(field, rerender = true) {
-     // Toggle sort order if same field clicked
-     if (this.state.sortField === field) {
-       this.state.sortAsc = !this.state.sortAsc;
-     } else {
-       this.state.sortField = field;
-       this.state.sortAsc = true;
-     }
-      if (rerender && this.state.elements.nodes_table) {
-        this.state.elements.nodes_table.replaceWith(this.state.elements.nodes_table = this.nodesTable());
-      }
-    }
 
     projectsDropdownForNode(org, currentProjectId) {
       // Create dropdown for selecting a different project for a node
@@ -2273,7 +2548,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       ]);
     }
 
-    onNodeProjectChange(nodeId, oldProjectId, selectElement) {
+    onNodeProjectChange(nodeId, oldProjectId, selectElement, onChanged) {
       // Handle project change for a node
       const newProjectId = selectElement.value;
       if (newProjectId === oldProjectId) {
@@ -2289,14 +2564,10 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       this.message(`Project changed to ${newProjectId} for node ${nodeId}`);
 
       // Refresh the table after a short delay
-      setTimeout(() => {
-        if (this.state.elements.nodes_table) {
-          this.state.elements.nodes_table.replaceWith(this.state.elements.nodes_table = this.nodesTable());
-        }
-      }, 500);
+      setTimeout(onChanged, 500);
     }
 
-    renderProjectIdCell(node) {
+    renderProjectIdCell(node, onChanged) {
       // Create an editable cell for projectId that opens a dropdown on click
       return el('td', {
         style: 'cursor: pointer; position: relative;',
@@ -2305,16 +2576,12 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
           // Replace with dropdown
           const dropdown = this.projectsDropdownForNode(this.state.org, node.projectId);
           dropdown.addEventListener('change', (changeEvent) => {
-            this.onNodeProjectChange(node.nodeId, node.projectId, changeEvent.target);
+            this.onNodeProjectChange(node.nodeId, node.projectId, changeEvent.target, onChanged);
           });
           e.target.replaceWith(dropdown);
           dropdown.focus();
           // Close dropdown if focus lost
-          dropdown.addEventListener('blur', () => {
-            if (this.state.elements.nodes_table) {
-              this.state.elements.nodes_table.replaceWith(this.state.elements.nodes_table = this.nodesTable());
-            }
-          });
+          dropdown.addEventListener('blur', onChanged);
         }
       }, [node.projectId]);
     }
@@ -2323,7 +2590,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
    otaRestContent() {
      return el('div', {}, [
        el('form', {action: '/ota_update', method: "post", enctype: "multipart/form-data"}, [
-         el('input', {id: "url2", name: "url", type: "hidden", value: `/dashboard/admin.html`}),
+         el('input', {id: "url2", name: "url", type: "hidden", value: `/dashboard/`}),
          el('input', {id: "lang", name: "lang", type: "hidden", value: preferedLanguages.join(',')}),
          el('section', {}, [
            el('label', {for: 'projects', textContent: "Project"}),
@@ -2364,8 +2631,8 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
              el('h3', {}, ["Projects"]),
              // List of existing projects for this organization,
              this.state.elements.projects_display_list = this.projectsDisplayList(),
-             // and form to add a new project (id and name)
-             this.projectsAddForm(),
+             // and, once expanded, a form to add a new project (id and name)
+             this.state.elements.add_project = this.collapsibleArea('add_project', "Add Project", this.projectsAddForm),
        ]),
        // TODO-CSS cleanup - labels are too big
        // This should really use a superuser permission but for now its just the super admin can do this
@@ -2420,6 +2687,22 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
          el('h3', {}, ["Farms"]),
          this.state.elements.farms_list_display = this.farmsListDisplay(),
        ]),
+       el('section', {}, [
+         el('h3', {}, ["Register Farm"]),
+         this.state.elements.add_farm = this.collapsibleArea('add_farm', "Add Farm", this.farmRegisterForm),
+       ]),
+       el('section', {}, [
+         el('h3', {}, ["Nodes in Farm"]),
+         this.state.elements.farm_nodes_table = this.farmNodesTable(),
+       ]),
+       el('section', {}, [
+         el('h3', {}, ["Node Actions"]),
+         this.state.elements.farm_node_actions = this.farmNodeActions(),
+       ]),
+       el('section', {}, [
+         el('h3', {}, ["Action"]),
+         this.state.elements.action_section = this.actionSection(),
+       ]),
      ]);
    }
    render() { //TODO-89 needs styles
@@ -2433,7 +2716,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
          ]),
          el('tabbed-display', {tab: 0}, [
            el('section', {title: "Dashboard"}, [
-             el('mqtt-wrapper'),
+             this.state.elements.mqttWrapper = el('mqtt-wrapper'),
            ]),
            !this.otaOrgs.length ? null :
              el('section', {title: "OTA"}, [
@@ -3335,10 +3618,29 @@ class MqttWrapper extends HTMLElementExtended {
         this.loadAttributesFromURL();
         this.appendClient();
         this.appender();
+        this.state.ready = true;
+        if (this.state.pendingOrganization) { // setOrganization() was called before we were ready to act on it
+          const org = this.state.pendingOrganization;
+          this.state.pendingOrganization = null;
+          this.setOrganization(org);
+        }
       }
       this.renderAndReplace(); // TODO check, but should not need to renderAndReplace as render is (currently) fully static
     });
     //super.connectedCallback(); // Not doing as finishes with a re-render.
+  }
+  // Public entry point for other components (e.g. mqtt-admin's shared organization dropdown) to drive
+  // this wrapper's organization from outside, without waiting on its own connectedCallback race.
+  // TODO-14 merge with organization dropdown in mqtt-admin and add to mqtt-login and mqtt-register
+  setOrganization(org) {
+    if (!this.state.ready) {
+      this.state.pendingOrganization = org;
+      return;
+    }
+    if (!org || (this.state.organization === org)) { return; }
+    const orgSelect = this.querySelector('#organizations');
+    if (orgSelect) { orgSelect.value = org; }
+    this.onOrganization({target: {value: org}});
   }
   changeAttribute(name, value) {
     if (name === "lang") {
