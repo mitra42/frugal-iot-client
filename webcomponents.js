@@ -663,6 +663,30 @@ function el(tag, attributes = {}, children) {
   return EL(tag, attributes, children);
 }
 
+async function POSTp(httpurl, body) {
+  /**
+   *  Asynchronous function to POST a JSON body - returns promise that resolves to the JSON response or rejects an error
+   **/
+  const response = await fetch(httpurl, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body),
+  });
+  const json = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error((json && json.message) || `${httpurl} ${response.status}`);
+  }
+  return json;
+}
+function POST(httpurl, body, cb) {
+  /**
+   * POST a JSON body to a URL and cb(err, json)
+   */
+  POSTp(httpurl, body)
+    .then((json) => cb(null, json))
+    .catch((err) => cb(err));
+}
+
 // Set v as prefered language, but remove if already there
 // Note this does not redraw anything, that is a function of the caller
 function preferedLanguageSet(v) {
@@ -1686,7 +1710,8 @@ customElements.define('tabbed-display', TabbedDisplay);
 class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organization
   constructor(props) {
     super(props);
-    this.state = {register: false, ota_files: [], people_list: [], projects_list: []};
+    this.state = {register: false, ota_files: [], people_list: [], projects_list: [], platforms_list: [], farms_list: [],
+      selected_platform_id: null, selected_farm_id: null};
     this.state.elements = {};
   }
   static get observedAttributes() { return ['register','message','url','lang','org']; }
@@ -1761,6 +1786,11 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     ]);
   }
 
+  // Content behind an organization dropdown (OTA/Admin/Nodes/API tabs) should not show until an
+  // organization is selected. contentFn is a MqttAdmin method, called with `this` bound.
+  gatedContent(contentFn) {
+    return this.state.org ? contentFn.call(this) : el('p', {}, ["Select an organization to continue."]);
+  }
   orgDropdown(org, list, id) {
     return el('section', {}, [
       el('label', {for: 'organizations', textContent: "Organization"}),
@@ -1932,6 +1962,139 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     });
     return EL;
   }
+  // Fetch registered Farm-Platforms for the selected organization, and display
+  getPlatformsList() {
+    if (this.state.org) {
+      GET(`/api/platforms_list?org=${encodeURIComponent(this.state.org)}`, {}, (err, json) => {
+        if (err) {
+          this.message(err.message);
+          return;
+        }
+        this.state.platforms_list = json;
+        // Keep the current selection if still present, default to the only platform if there's exactly one,
+        // otherwise leave unselected so the admin has to choose.
+        if (!json.some(p => p.id === this.state.selected_platform_id)) {
+          this.state.selected_platform_id = json.length === 1 ? json[0].id : null;
+        }
+        this.replaceElement("platforms_list_display", this.platformsListDisplay());
+        this.getFarmsList();
+      });
+    }
+  }
+  onPlatformSelect(ev) {
+    this.state.selected_platform_id = parseInt(ev.target.value, 10);
+    this.getFarmsList();
+  }
+  platformLabel(p) {
+    return `${p.name} (${p.org}) — user: ${p.user}` + (p.base_url ? ` — ${p.base_url}` : '');
+  }
+  platformsListDisplay() {
+    const platforms = this.state.platforms_list || [];
+    if (platforms.length === 0) {
+      return el('p', {}, ["No platforms registered for this organization yet."]);
+    }
+    if (platforms.length === 1) {
+      return el('p', {}, [this.platformLabel(platforms[0])]);
+    }
+    return el('select', {id: 'platforms_select', onchange: this.onPlatformSelect.bind(this)}, [
+      platforms.map(p =>
+        el('option', {value: p.id, textContent: this.platformLabel(p), selected: p.id === this.state.selected_platform_id, i8n: false}))
+    ]);
+  }
+  postPlatformRegister(body, formEl) {
+    POST('/api/platform_register', body, (err, json) => {
+      if (err) {
+        this.message(err.message);
+        return;
+      }
+      this.message("Platform registered");
+      formEl.reset();
+      this.getPlatformsList();
+    });
+  }
+  platformRegisterForm() {
+    let EL = el('form', {}, [
+      el('div', {class: 'formgroup'}, [
+        el('label', {for: 'platform_org', textContent: "Organization"}),
+        el('input', {id: 'platform_org', type: 'text', value: this.state.org, disabled: true, i8n: false}),
+      ]),
+      el('div', {class: 'formgroup'}, [
+        el('label', {for: 'platform_name', textContent: "Platform Name"}),
+        this.state.elements.platform_name = el('input', {id: 'platform_name', name: 'name', type: 'text', placeholder: 'e.g. LiteFarm', required: true}),
+      ]),
+      el('div', {class: 'formgroup'}, [
+        el('label', {for: 'platform_user', textContent: "Frugal-IoT Username"}),
+        this.state.elements.platform_user = el('input', {id: 'platform_user', name: 'user', type: 'text', required: true}),
+      ]),
+      el('div', {class: 'formgroup'}, [
+        el('label', {for: 'platform_base_url', textContent: "Base URL"}),
+        this.state.elements.platform_base_url = el('input', {id: 'platform_base_url', name: 'base_url', type: 'url', placeholder: 'https://...'}),
+      ]),
+      el('div', {class: 'formgroup'}, [
+        el('label', {for: 'platform_auth_token', textContent: "Auth Token"}),
+        this.state.elements.platform_auth_token = el('input', {id: 'platform_auth_token', name: 'auth_token', type: 'text'}),
+      ]),
+      el('div', {class: 'formgroup'}, [
+        el('label', {for: 'platform_cookie_name', textContent: "Cookie Name"}),
+        this.state.elements.platform_cookie_name = el('input', {id: 'platform_cookie_name', name: 'cookie_name', type: 'text'}),
+      ]),
+      el('button', {class: 'submit', type: 'submit', textContent: 'Register Platform'}),
+    ]);
+    EL.addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.postPlatformRegister({
+        org: this.state.org,
+        name: this.state.elements.platform_name.value,
+        user: this.state.elements.platform_user.value,
+        base_url: this.state.elements.platform_base_url.value || undefined,
+        auth_token: this.state.elements.platform_auth_token.value || undefined,
+        cookie_name: this.state.elements.platform_cookie_name.value || undefined,
+      }, EL);
+    });
+    return EL;
+  }
+  // Fetch farm-to-project mappings for the selected platform, and display
+  getFarmsList() {
+    if (this.state.selected_platform_id) {
+      GET(`/api/farms_list?platform_id=${encodeURIComponent(this.state.selected_platform_id)}`, {}, (err, json) => {
+        if (err) {
+          this.message(err.message);
+          return;
+        }
+        this.state.farms_list = json;
+        if (!json.some(f => f.id === this.state.selected_farm_id)) {
+          this.state.selected_farm_id = json.length ? json[0].id : null;
+        }
+        this.replaceElement("farms_list_display", this.farmsListDisplay());
+      });
+    } else {
+      this.state.farms_list = [];
+      this.state.selected_farm_id = null;
+      this.replaceElement("farms_list_display", this.farmsListDisplay());
+    }
+  }
+  onFarmSelect(ev) {
+    this.state.selected_farm_id = parseInt(ev.target.value, 10);
+  }
+  farmLabel(f) {
+    return `${f.farm_id} → ${f.org}/${f.project}`;
+  }
+  farmsListDisplay() {
+    if (!this.state.selected_platform_id) {
+      return el('p', {}, ["Select a platform to see its farms."]);
+    }
+    const farms = this.state.farms_list || [];
+    if (farms.length === 0) {
+      return el('p', {}, ["No farms registered for this platform yet."]);
+    }
+    if (farms.length === 1) {
+      return el('p', {}, [this.farmLabel(farms[0])]);
+    }
+    return el('select', {id: 'farms_select', onchange: this.onFarmSelect.bind(this)}, [
+      farms.map(f =>
+        el('option', {value: f.id, textContent: this.farmLabel(f), selected: f.id === this.state.selected_farm_id, i8n: false}))
+    ]);
+  }
   replaceElement(name, newElement) {
     if (this.state.elements[name]) {
       let oldEl = this.state.elements[name];
@@ -1941,15 +2104,24 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   }
   setOrganization(org) {
     this.state.org =  org;
-    this.replaceElement("projectdropdown", this.projectDropdown(this.state.org));
+    this.state.selected_platform_id = null;
+    this.state.selected_farm_id = null;
+    // Rebuild the gated content of each tab first, since it re-creates the elements (e.g. ota_files,
+    // people_perms_list, platforms_list_display) that the get*List() calls below then asynchronously replace.
+    this.replaceElement('ota_rest', this.gatedContent(this.otaRestContent));
+    this.replaceElement('admin_rest', this.gatedContent(this.adminRestContent));
+    this.replaceElement('nodes_rest', this.gatedContent(this.nodesRestContent));
+    this.replaceElement('api_rest', this.gatedContent(this.apiRestContent));
     this.getOtaFiles();  // Replaces ota files part asynchronously
     this.getPeopleList();  // Replaces perms and people list part asynchronously
     this.getProjectsList();  // Replaces projects list part asynchronously
+    this.getPlatformsList();  // Replaces platforms (and farms) list part asynchronously
     this.sortNodesTable("projectId", true);
     // Note both these dropdowns are fine if this.state.org is undefined
     this.replaceElement("otaorgsdropdown", this.orgDropdown(this.state.org, this.otaOrgs,"otaorganizations"));
     this.replaceElement("adminorgsdropdown", this.orgDropdown(this.state.org, this.adminOrgs,"adminorganizations"));
     this.replaceElement("nodesorgsdropdown", this.orgDropdown(this.state.org, this.adminOrgs,"nodesorganizations"));
+    this.replaceElement("apiorgsdropdown", this.orgDropdown(this.state.org, this.adminOrgs,"apiorganizations"));
   }
   setDefaultOrganization() {
     let org = this.state.org;
@@ -2147,6 +2319,109 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       }, [node.projectId]);
     }
 
+   // Content of the OTA tab below the organization dropdown - only rendered once an org is selected
+   otaRestContent() {
+     return el('div', {}, [
+       el('form', {action: '/ota_update', method: "post", enctype: "multipart/form-data"}, [
+         el('input', {id: "url2", name: "url", type: "hidden", value: `/dashboard/admin.html`}),
+         el('input', {id: "lang", name: "lang", type: "hidden", value: preferedLanguages.join(',')}),
+         el('section', {}, [
+           el('label', {for: 'projects', textContent: "Project"}),
+           this.state.elements.projectdropdown = this.projectDropdown(this.state.org)
+         ]),
+         el('section', {}, [
+           el('label', {for: 'otakey', textContent: "OTA Key or Device ID"}),
+           el('input', {id: "otakey", name: "otakey", type: "text", autocomplete: "otakey", required: true}),
+         ]),
+         el('section', {}, [
+           el('label', {for: 'file', textContent: "File"}),
+           // Files should be either frugal-iot.ino.bin or firmware.bin
+           el('input', {id: "file", name: "file", type: "file", accept: ".bin",  onchange: this.onFile.bind(this), required: true}),
+           el('p', {}, ["(Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin)"]),
+           el('p', {}, ["On PlatformIO The file is typically in ", el('code',{}, ['<project>/.pio/build/<your board>/firmware.bin'])]),
+           el('p', {}, ["If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.'"]),
+           el('p', {}, ["On ArduinoIDE the file is typically in ", el('code',{}, ["<project>/build/<your board>/frugal-iot.ino.bin"])]),
+           ]),
+         el('button', {class: "submit", type: "submit", textContent: 'Upload'}),
+       ]), //form
+       el('section', {}, [
+         el('h3', {}, ["Existing OTA Files"]),
+         this.state.elements.ota_files = this.otaFilesList(),
+       ]), // section ota
+     ]);
+   }
+   // Content of the Admin tab below the organization dropdown - only rendered once an org is selected
+   adminRestContent() {
+     return el('div', {}, [
+       el('section', {}, [
+             el('h3', {}, ["Permissions"]),
+             // List of people and their permissions, with option to delete,
+             this.state.elements.people_perms_list = this.peoplePermList(), // This gets replaced when actions taken
+             // and form to add (dropdown of people and permissions)
+             this.state.elements.people_list = this.peopleList(),
+       ]),
+       el('section', {}, [
+             el('h3', {}, ["Projects"]),
+             // List of existing projects for this organization,
+             this.state.elements.projects_display_list = this.projectsDisplayList(),
+             // and form to add a new project (id and name)
+             this.projectsAddForm(),
+       ]),
+       // TODO-CSS cleanup - labels are too big
+       // This should really use a superuser permission but for now its just the super admin can do this
+       server_config.user.id !== 1 ? null : // Only show publish message to super admin, as not really a feature, more for testing and debugging
+         el('section', {}, [
+           el('h3', {}, ["Publish Message"]),
+           el('form', {}, [
+             el('div', {class: 'formgroup'}, [
+               el('label', {for: 'msg_topic', textContent: "Topic"}),
+               this.state.elements.msg_topic = el('input', {id: 'msg_topic', name: 'topic', type: 'text', placeholder: 'Enter topic', required: true}),
+             ]),
+             el('div', {class: 'formgroup'}, [
+               el('label', {for: 'msg_value', textContent: "Value"}),
+               this.state.elements.msg_value = el('input', {id: 'msg_value', name: 'value', type: 'text', placeholder: 'Enter value', required: true}),
+             ]),
+             el('div', {class: 'formgroup'}, [
+               el('label', {for: 'msg_retain', textContent: "Retain"}),
+               this.state.elements.msg_retain = el('input', {id: 'msg_retain', name: 'retain', type: 'checkbox'}),
+             ]),
+             el('div', {class: 'formgroup'}, [
+               el('label', {for: 'msg_qos', textContent: "QoS"}),
+               this.state.elements.msg_qos = el('select', {id: 'msg_qos', name: 'qos'}, [
+                 el('option', {value: 0, textContent: "0", selected: true}),
+                 el('option', {value: 1, textContent: "1"}),
+                 el('option', {value: 2, textContent: "2"}),
+               ]),
+             ]),
+             el('button', {class: 'submit', type: 'button', textContent: 'SEND', onclick: this.onPublishMessage.bind(this)}),
+           ]),
+         ]),
+     ]);
+   }
+   // Content of the Nodes tab below the organization dropdown - only rendered once an org is selected
+   nodesRestContent() {
+     return el('div', {}, [
+       el('h3', {}, ["Nodes in Organization"]),
+       this.state.elements.nodes_table = this.nodesTable(),
+     ]);
+   }
+   // Content of the API tab below the organization dropdown - only rendered once an org is selected
+   apiRestContent() {
+     return el('div', {}, [
+       el('section', {}, [
+         el('h3', {}, ["Registered Platforms"]),
+         this.state.elements.platforms_list_display = this.platformsListDisplay(),
+       ]),
+       el('section', {}, [
+         el('h3', {}, ["Register Platform"]),
+         this.platformRegisterForm(),
+       ]),
+       el('section', {}, [
+         el('h3', {}, ["Farms"]),
+         this.state.elements.farms_list_display = this.farmsListDisplay(),
+       ]),
+     ]);
+   }
    render() { //TODO-89 needs styles
      return [
        el('link', {rel: 'stylesheet', href: CssUrl}),
@@ -2162,91 +2437,28 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
            ]),
            !this.otaOrgs.length ? null :
              el('section', {title: "OTA"}, [
-              el('form', {action: '/ota_update', method: "post", enctype: "multipart/form-data"}, [
-                el('input', {id: "url2", name: "url", type: "hidden", value: `/dashboard/admin.html`}),
-                el('input', {id: "lang", name: "lang", type: "hidden", value: preferedLanguages.join(',')}),
                 this.state.elements.otaorgsdropdown = el('span',{ textContent: "Waiting"}),
-                el('section', {}, [
-                  el('label', {for: 'projects', textContent: "Project"}),
-                  this.state.elements.projectdropdown = this.projectDropdown(this.otaOrgs[0][0])
-                ]),
-                el('section', {}, [
-                  el('label', {for: 'otakey', textContent: "OTA Key or Device ID"}),
-                  el('input', {id: "otakey", name: "otakey", type: "text", autocomplete: "otakey", required: true}),
-                ]),
-                el('section', {}, [
-                  el('label', {for: 'file', textContent: "File"}),
-                  // Files should be either frugal-iot.ino.bin or firmware.bin
-                  el('input', {id: "file", name: "file", type: "file", accept: ".bin",  onchange: this.onFile.bind(this), required: true}),
-                  el('p', {}, ["(Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin)"]),
-                  el('p', {}, ["On PlatformIO The file is typically in ", el('code',{}, ['<project>/.pio/build/<your board>/firmware.bin'])]),
-                  el('p', {}, ["If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.'"]),
-                  el('p', {}, ["On ArduinoIDE the file is typically in ", el('code',{}, ["<project>/build/<your board>/frugal-iot.ino.bin"])]),
-                  ]),
-                el('button', {class: "submit", type: "submit", textContent: 'Upload'}),
-                // TODO-89 placeholder for ota files list
-              ]), //form
-              el('section', {}, [
-                el('h3', {}, ["Existing OTA Files"]),
-                this.state.elements.ota_files = this.otaFilesList(),
-              ]), // section ota
+                this.state.elements.ota_rest = this.gatedContent(this.otaRestContent),
             ]
           ), // OTA tab
 
           !this.adminOrgs.length ? null :
             el('section', {title: "Admin"}, [
               this.state.elements.adminorgsdropdown = el('span',{ textContent: "Waiting"}),
-              el('section', {}, [
-                    el('h3', {}, ["Permissions"]),
-                    // List of people and their permissions, with option to delete,
-                    this.state.elements.people_perms_list = this.peoplePermList(), // This gets replaced when actions taken
-                    // and form to add (dropdown of people and permissions)
-                    this.state.elements.people_list = this.peopleList(),
-              ]),
-              el('section', {}, [
-                    el('h3', {}, ["Projects"]),
-                    // List of existing projects for this organization,
-                    this.state.elements.projects_display_list = this.projectsDisplayList(),
-                    // and form to add a new project (id and name)
-                    this.projectsAddForm(),
-              ]),
-              // TODO-CSS cleanup - labels are too big
-              // This should really use a superuser permission but for now its just the super admin can do this
-              server_config.user.id !== 1 ? null : // Only show publish message to super admin, as not really a feature, more for testing and debugging
-                el('section', {}, [
-                  el('h3', {}, ["Publish Message"]),
-                  el('form', {}, [
-                    el('div', {class: 'formgroup'}, [
-                      el('label', {for: 'msg_topic', textContent: "Topic"}),
-                      this.state.elements.msg_topic = el('input', {id: 'msg_topic', name: 'topic', type: 'text', placeholder: 'Enter topic', required: true}),
-                    ]),
-                    el('div', {class: 'formgroup'}, [
-                      el('label', {for: 'msg_value', textContent: "Value"}),
-                      this.state.elements.msg_value = el('input', {id: 'msg_value', name: 'value', type: 'text', placeholder: 'Enter value', required: true}),
-                    ]),
-                    el('div', {class: 'formgroup'}, [
-                      el('label', {for: 'msg_retain', textContent: "Retain"}),
-                      this.state.elements.msg_retain = el('input', {id: 'msg_retain', name: 'retain', type: 'checkbox'}),
-                    ]),
-                    el('div', {class: 'formgroup'}, [
-                      el('label', {for: 'msg_qos', textContent: "QoS"}),
-                      this.state.elements.msg_qos = el('select', {id: 'msg_qos', name: 'qos'}, [
-                        el('option', {value: 0, textContent: "0", selected: true}),
-                        el('option', {value: 1, textContent: "1"}),
-                        el('option', {value: 2, textContent: "2"}),
-                      ]),
-                    ]),
-                    el('button', {class: 'submit', type: 'button', textContent: 'SEND', onclick: this.onPublishMessage.bind(this)}),
-                  ]),
-                ]),
+              this.state.elements.admin_rest = this.gatedContent(this.adminRestContent),
              ]), // Admin tab
 
            !this.adminOrgs.length ? null :
              el('section', {title: "Nodes"}, [
                this.state.elements.nodesorgsdropdown = el('span',{ textContent: "Waiting"}),
-               el('h3', {}, ["Nodes in Organization"]),
-               this.state.elements.nodes_table = this.nodesTable(),
+               this.state.elements.nodes_rest = this.gatedContent(this.nodesRestContent),
              ]), // Nodes tab
+
+           !this.adminOrgs.length ? null :
+             el('section', {title: "API"}, [
+               this.state.elements.apiorgsdropdown = el('span',{ textContent: "Waiting"}),
+               this.state.elements.api_rest = this.gatedContent(this.apiRestContent),
+             ]), // API tab
          ]),
        ]),
      ];
