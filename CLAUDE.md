@@ -202,9 +202,21 @@ const mt = document.querySelector('mqtt-wrapper')?.projectMt?.findTopic(this.sta
 
 ## Internationalisation
 
-Strings shown in the UI go through `getString(tag)`. The master language table is `const languages` in `webcomponents.js`. Dashboard-specific strings are added via `addVocabulary(yamlString)` in the dashboard's `<script>`.
+The master language table is `const languages` in `webcomponents.js`. Dashboard-specific strings are added via `addVocabulary(yamlString)` in the dashboard's `<script>`.
 
 Every `addVocabulary` block must include **all four** language sections (EN, FR, HI, ID). Strings absent from `webcomponents.js` must be explicitly added in the dashboard block — do not assume the core file covers them.
+
+### How a string gets translated
+
+There are three ways a piece of UI text is translated. If a string doesn't go through one of these, it silently stays in English regardless of the selected language:
+
+1. **Direct call to `getString(tag)`** — looks the string up in `languages`, falling back to the English value, falling back to `tag` itself. Used for names built dynamically (e.g. a graph's scale/axis name at `text: getString(this.name...)`).
+2. **Via `el(tag, attributes, children)`** — `el()` auto-translates certain *attributes* on certain *tags*, per the `i8ntags` table (currently `label`, `button`, `span`, `option`, `p`, `h1`–`h5`, `th`, all via their `textContent` attribute). Add a tag/attribute pair to `i8ntags` when a new kind of element needs translated text. Excluded even on a listed tag: values containing `:` or `/` (these are usually paths or key:value pairs, not prose), and values not starting with a letter (emoji/symbol-only content). Pass `i8n: false` on an element you know is untranslatable (a proper name, an id, dynamic per-row data).
+3. **Via a graph's scale name** — same as (1), a direct `getString()` call when building the Chart.js scale config.
+
+**Only `textContent` is translated — never a literal string passed as a DOM `children` argument.** `el('p', {}, ["Some text"])` bypasses the mechanism entirely because the filter inspects `attributes`, not `children`. Always write `el('p', {textContent: "Some text"})` instead. This applies to `p`, `h1`–`h5`, `span`, and any other tag in `i8ntags`.
+
+When adding a new UI string: add matching entries to all four language sections in `languages` (or the dashboard's `addVocabulary` block) — even if you only have the English text, add the same text under EN so `getString` doesn't silently fall through and hide missing translations.
 
 ---
 

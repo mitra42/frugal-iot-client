@@ -337,6 +337,63 @@ EN:
   buttons: buttons
   Waiting: Waiting
   No projects to display until organization selected: No projects to display until organization selected
+  Nodes: Nodes
+  API: API
+  Note this is your organization - not the organizations whose devices you want to access.: Note this is your organization - not the organizations whose devices you want to access.
+  No organization: No organization
+  Project ID: Project ID
+  Project Name: Project Name
+  Platform Name *: Platform Name *
+  Frugal-IoT Username *: Frugal-IoT Username *
+  Base URL: Base URL
+  Auth Token: Auth Token
+  Cookie Name: Cookie Name
+  Register Platform: Register Platform
+  Platform *: Platform *
+  Farm ID *: Farm ID *
+  Project ID *: Project ID *
+  Register Farm: Register Farm
+  Schema: Schema
+  From *: From *
+  To: To
+  Data: Data
+  Action *: Action *
+  Value *: Value *
+  Send: Send
+  Topic: Topic
+  Value: Value
+  Retain: Retain
+  QoS: QoS
+  SEND: SEND
+  Select: Select
+  OTA Key: OTA Key
+  Select an organization to continue.: Select an organization to continue.
+  No OTA files uploaded yet.: No OTA files uploaded yet.
+  Nobody added for this organization yet.: Nobody added for this organization yet.
+  No projects added for this organization yet.: No projects added for this organization yet.
+  No platforms registered yet.: No platforms registered yet.
+  No farms registered for this organization yet.: No farms registered for this organization yet.
+  Register a platform above before adding a farm.: Register a platform above before adding a farm.
+  Select a node above to see actions.: Select a node above to see actions.
+  Select a node above to send an action.: Select a node above to send an action.
+  Loading schema...: Loading schema...
+  This node has no actions in its schema.: This node has no actions in its schema.
+  Select a farm above to see its nodes.: Select a farm above to see its nodes.
+  No organization selected: No organization selected
+  (Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): (Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin)
+  If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.'
+  Existing OTA Files: Existing OTA Files
+  Permissions: Permissions
+  Projects: Projects
+  Publish Message: Publish Message
+  Nodes in Organization: Nodes in Organization
+  Registered Platforms: Registered Platforms
+  Farms: Farms
+  Nodes in Farm: Nodes in Farm
+  Node Actions: Node Actions
+  Action: Action
+  No nodes found for this organization: No nodes found for this organization
+  No nodes found for this farm's project(s).: No nodes found for this farm's project(s).
 FR:
   _nameAndFlag: Français 🇫🇷
   _thisLanguage: Francaise
@@ -424,6 +481,63 @@ FR:
   buttons: boutons
   Waiting: En attente
   No projects to display until organization selected: Aucun projet à afficher tant qu'une organisation n'est sélectionnée
+  Nodes: Nœuds
+  API: API
+  Note this is your organization - not the organizations whose devices you want to access.: Ceci est votre organisation - pas les organisations dont vous voulez accéder aux appareils.
+  No organization: Aucune organisation
+  Project ID: ID du projet
+  Project Name: Nom du projet
+  Platform Name *: Nom de la plateforme *
+  Frugal-IoT Username *: Nom d'utilisateur Frugal-IoT *
+  Base URL: URL de base
+  Auth Token: Jeton d'authentification
+  Cookie Name: Nom du cookie
+  Register Platform: Enregistrer la plateforme
+  Platform *: Plateforme *
+  Farm ID *: ID de la ferme *
+  Project ID *: ID du projet *
+  Register Farm: Enregistrer la ferme
+  Schema: Schéma
+  From *: De *
+  To: À
+  Data: Données
+  Action *: Action *
+  Value *: Valeur *
+  Send: Envoyer
+  Topic: Sujet
+  Value: Valeur
+  Retain: Conserver
+  QoS: QoS
+  SEND: ENVOYER
+  Select: Sélectionner
+  OTA Key: Clé OTA
+  Select an organization to continue.: Sélectionnez une organisation pour continuer.
+  No OTA files uploaded yet.: Aucun fichier OTA téléversé pour l'instant.
+  Nobody added for this organization yet.: Personne n'a encore été ajouté pour cette organisation.
+  No projects added for this organization yet.: Aucun projet ajouté pour cette organisation pour l'instant.
+  No platforms registered yet.: Aucune plateforme enregistrée pour l'instant.
+  No farms registered for this organization yet.: Aucune ferme enregistrée pour cette organisation pour l'instant.
+  Register a platform above before adding a farm.: Enregistrez une plateforme ci-dessus avant d'ajouter une ferme.
+  Select a node above to see actions.: Sélectionnez un nœud ci-dessus pour voir les actions.
+  Select a node above to send an action.: Sélectionnez un nœud ci-dessus pour envoyer une action.
+  Loading schema...: Chargement du schéma...
+  This node has no actions in its schema.: Ce nœud n'a aucune action dans son schéma.
+  Select a farm above to see its nodes.: Sélectionnez une ferme ci-dessus pour voir ses nœuds.
+  No organization selected: Aucune organisation sélectionnée
+  (Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): (Max 4 Mo, .bin uniquement, généralement frugal-iot.ino.bin ou firmware.bin)
+  If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': Si ce répertoire est invisible dans le sélecteur de fichiers, copiez le fichier ailleurs OU créez un alias vers le répertoire .pio sans point au début.
+  Existing OTA Files: Fichiers OTA existants
+  Permissions: Autorisations
+  Projects: Projets
+  Publish Message: Publier un message
+  Nodes in Organization: Nœuds dans l'organisation
+  Registered Platforms: Plateformes enregistrées
+  Farms: Fermes
+  Nodes in Farm: Nœuds dans la ferme
+  Node Actions: Actions du nœud
+  Action: Action
+  No nodes found for this organization: Aucun nœud trouvé pour cette organisation
+  No nodes found for this farm's project(s).: Aucun nœud trouvé pour le(s) projet(s) de cette ferme.
 HI:
   _nameAndFlag: हिंदी 🇮🇳
   _thisLanguage: हिंदी
@@ -511,6 +625,63 @@ HI:
   buttons: बटन
   Waiting: प्रतीक्षा में
   No projects to display until organization selected: संगठन चुने जाने तक कोई प्रोजेक्ट प्रदर्शित नहीं होगा
+  Nodes: नोड्स
+  API: एपीआई
+  Note this is your organization - not the organizations whose devices you want to access.: ध्यान दें यह आपका संगठन है - वे संगठन नहीं जिनके उपकरणों तक आप पहुंचना चाहते हैं।
+  No organization: कोई संगठन नहीं
+  Project ID: प्रोजेक्ट आईडी
+  Project Name: प्रोजेक्ट का नाम
+  Platform Name *: प्लेटफ़ॉर्म का नाम *
+  Frugal-IoT Username *: Frugal-IoT उपयोगकर्ता नाम *
+  Base URL: बेस यूआरएल
+  Auth Token: प्रमाणीकरण टोकन
+  Cookie Name: कुकी नाम
+  Register Platform: प्लेटफ़ॉर्म पंजीकृत करें
+  Platform *: प्लेटफ़ॉर्म *
+  Farm ID *: फार्म आईडी *
+  Project ID *: प्रोजेक्ट आईडी *
+  Register Farm: फार्म पंजीकृत करें
+  Schema: स्कीमा
+  From *: से *
+  To: तक
+  Data: डेटा
+  Action *: क्रिया *
+  Value *: मान *
+  Send: भेजें
+  Topic: टॉपिक
+  Value: मान
+  Retain: बनाए रखें
+  QoS: QoS
+  SEND: भेजें
+  Select: चुनें
+  OTA Key: OTA कुंजी
+  Select an organization to continue.: जारी रखने के लिए एक संगठन चुनें।
+  No OTA files uploaded yet.: अभी तक कोई OTA फ़ाइल अपलोड नहीं की गई है।
+  Nobody added for this organization yet.: इस संगठन के लिए अभी तक कोई नहीं जोड़ा गया है।
+  No projects added for this organization yet.: इस संगठन के लिए अभी तक कोई प्रोजेक्ट नहीं जोड़ा गया है।
+  No platforms registered yet.: अभी तक कोई प्लेटफ़ॉर्म पंजीकृत नहीं है।
+  No farms registered for this organization yet.: इस संगठन के लिए अभी तक कोई फार्म पंजीकृत नहीं है।
+  Register a platform above before adding a farm.: फार्म जोड़ने से पहले ऊपर एक प्लेटफ़ॉर्म पंजीकृत करें।
+  Select a node above to see actions.: क्रियाएँ देखने के लिए ऊपर एक नोड चुनें।
+  Select a node above to send an action.: क्रिया भेजने के लिए ऊपर एक नोड चुनें।
+  Loading schema...: स्कीमा लोड हो रहा है...
+  This node has no actions in its schema.: इस नोड के स्कीमा में कोई क्रिया नहीं है।
+  Select a farm above to see its nodes.: इसके नोड्स देखने के लिए ऊपर एक फार्म चुनें।
+  No organization selected: कोई संगठन चयनित नहीं
+  (Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): (अधिकतम 4MB, केवल .bin, सामान्यतः frugal-iot.ino.bin या firmware.bin)
+  If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': यदि यह निर्देशिका फ़ाइल चयनकर्ता में दिखाई नहीं देती है, तो फ़ाइल को किसी अन्य स्थान पर कॉपी करें या बिना अग्रणी बिंदु के .pio निर्देशिका के लिए एक उपनाम बनाएं।
+  Existing OTA Files: मौजूदा OTA फ़ाइलें
+  Permissions: अनुमतियाँ
+  Projects: प्रोजेक्ट्स
+  Publish Message: संदेश प्रकाशित करें
+  Nodes in Organization: संगठन में नोड्स
+  Registered Platforms: पंजीकृत प्लेटफ़ॉर्म
+  Farms: फार्म
+  Nodes in Farm: फार्म में नोड्स
+  Node Actions: नोड क्रियाएँ
+  Action: क्रिया
+  No nodes found for this organization: इस संगठन के लिए कोई नोड नहीं मिला
+  No nodes found for this farm's project(s).: इस फार्म के प्रोजेक्ट (प्रोजेक्ट्स) के लिए कोई नोड नहीं मिला।
 ID:
   _nameAndFlag: Bahasa Indonesia 🇮🇩
   _thisLanguage: Bahasa Indonesia
@@ -598,6 +769,63 @@ ID:
   buttons: tombol
   Waiting: Menunggu
   No projects to display until organization selected: Tidak ada proyek untuk ditampilkan sampai organisasi dipilih
+  Nodes: Node
+  API: API
+  Note this is your organization - not the organizations whose devices you want to access.: Ini adalah organisasi Anda - bukan organisasi yang perangkatnya ingin Anda akses.
+  No organization: Tidak ada organisasi
+  Project ID: ID Proyek
+  Project Name: Nama Proyek
+  Platform Name *: Nama Platform *
+  Frugal-IoT Username *: Nama Pengguna Frugal-IoT *
+  Base URL: URL Dasar
+  Auth Token: Token Autentikasi
+  Cookie Name: Nama Cookie
+  Register Platform: Daftarkan Platform
+  Platform *: Platform *
+  Farm ID *: ID Farm *
+  Project ID *: ID Proyek *
+  Register Farm: Daftarkan Farm
+  Schema: Skema
+  From *: Dari *
+  To: Sampai
+  Data: Data
+  Action *: Aksi *
+  Value *: Nilai *
+  Send: Kirim
+  Topic: Topik
+  Value: Nilai
+  Retain: Simpan
+  QoS: QoS
+  SEND: KIRIM
+  Select: Pilih
+  OTA Key: Kunci OTA
+  Select an organization to continue.: Pilih organisasi untuk melanjutkan.
+  No OTA files uploaded yet.: Belum ada berkas OTA yang diunggah.
+  Nobody added for this organization yet.: Belum ada yang ditambahkan untuk organisasi ini.
+  No projects added for this organization yet.: Belum ada proyek yang ditambahkan untuk organisasi ini.
+  No platforms registered yet.: Belum ada platform yang terdaftar.
+  No farms registered for this organization yet.: Belum ada farm yang terdaftar untuk organisasi ini.
+  Register a platform above before adding a farm.: Daftarkan platform di atas sebelum menambahkan farm.
+  Select a node above to see actions.: Pilih node di atas untuk melihat aksi.
+  Select a node above to send an action.: Pilih node di atas untuk mengirim aksi.
+  Loading schema...: Memuat skema...
+  This node has no actions in its schema.: Node ini tidak memiliki aksi dalam skemanya.
+  Select a farm above to see its nodes.: Pilih farm di atas untuk melihat node-nodenya.
+  No organization selected: Tidak ada organisasi yang dipilih
+  (Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): (Maks 4MB, hanya .bin, biasanya frugal-iot.ino.bin atau firmware.bin)
+  If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': Jika direktori ini tidak terlihat di pemilih berkas, salin berkas ke tempat lain ATAU buat alias ke direktori .pio tanpa titik di awal.
+  Existing OTA Files: Berkas OTA yang Ada
+  Permissions: Izin
+  Projects: Proyek
+  Publish Message: Publikasikan Pesan
+  Nodes in Organization: Node dalam Organisasi
+  Registered Platforms: Platform Terdaftar
+  Farms: Farm
+  Nodes in Farm: Node dalam Farm
+  Node Actions: Aksi Node
+  Action: Aksi
+  No nodes found for this organization: Tidak ada node ditemukan untuk organisasi ini
+  No nodes found for this farm's project(s).: Tidak ada node ditemukan untuk proyek farm ini.
 `);
 
 // Initialise from ?lang= immediately so language-picker renders with the correct selection
@@ -646,6 +874,16 @@ const i8ntags = {
   button: ["textContent"],
   span: ["textContent"],
   option: ["textContent"],
+  p: ["textContent"],
+  h1: ["textContent"],
+  h2: ["textContent"],
+  h3: ["textContent"],
+  h4: ["textContent"],
+  h5: ["textContent"],
+  th: ["textContent", "title"],
+  td: ["textContent", "title"],
+  input: ["title"],
+  section: ["title"]
 }
 // Local version of EL
 function el(tag, attributes = {}, children) {
@@ -1806,7 +2044,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   // Content behind an organization dropdown (OTA/Admin/Nodes/API tabs) should not show until an
   // organization is selected. contentFn is a MqttAdmin method, called with `this` bound.
   gatedContent(contentFn) {
-    return this.state.org ? contentFn.call(this) : el('p', {}, ["Select an organization to continue."]);
+    return this.state.org ? contentFn.call(this) : el('p', {textContent: "Select an organization to continue."});
   }
   // An "Add X" button that expands into buildForm() once clicked, and stays expanded - used for the
   // "Add Project" and "Add Farm" forms so they don't clutter the tab until the admin wants to add one.
@@ -1856,7 +2094,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   }
   otaFilesList() {
     return this.state.ota_files.length === 0 ?
-      el('p', {}, ["No OTA files uploaded yet."]) :
+      el('p', {textContent: "No OTA files uploaded yet."}) :
       el('p', {}, this.state.ota_files.map(f => [
         el('span', {class: 'pseudolink', textContent: `🗑  ${f}`, onclick: this.onOtaDelete.bind(this,`${this.state.org}/${f}`)}),
         el('br', {}),
@@ -1924,7 +2162,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   }
   peoplePermList() {
     return ((!this.state.people_list) || (!this.state.people_list.peopleperms) || (this.state.people_list.peopleperms.length === 0)) ?
-      el('p', {}, ["Nobody added for this organization yet."]) :
+      el('p', {textContent: "Nobody added for this organization yet."}) :
       el('p', {}, this.state.people_list.peopleperms.map(f => [
           el('span', {class: 'pseudolink', textContent: ' 🗑 ', onclick: this.onPermissionsDelete.bind(this,`${this.state.org}?id=${f.id}&capability=${f.capability}`)}),
           `${f.name}: ${f.capability}`,
@@ -1965,7 +2203,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   }
   projectsDisplayList() {
     return ((!this.state.projects_list) || (this.state.projects_list.length === 0)) ?
-      el('p', {}, ["No projects added for this organization yet."]) :
+      el('p', {textContent: "No projects added for this organization yet."}) :
       el('p', {}, this.state.projects_list.map(p => [
           `${p.id}: ${p.name}`,
           el('br', {}),
@@ -2020,10 +2258,10 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   platformsListDisplay() {
     const platforms = this.state.platforms_list || [];
     if (platforms.length === 0) {
-      return el('p', {}, ["No platforms registered yet."]);
+      return el('p', {textContent: "No platforms registered yet."});
     }
     if (platforms.length === 1) {
-      return el('p', {}, [this.platformLabel(platforms[0])]);
+      return el('p', {textContent: this.platformLabel(platforms[0]), i8n: false});
     }
     return el('select', {id: 'platforms_select', onchange: this.onPlatformSelect.bind(this)}, [
       platforms.map(p =>
@@ -2110,10 +2348,10 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   farmsListDisplay() {
     const farms = this.state.farms_list || [];
     if (farms.length === 0) {
-      return el('p', {}, ["No farms registered for this organization yet."]);
+      return el('p', {textContent: "No farms registered for this organization yet."});
     }
     if (farms.length === 1) {
-      return el('p', {}, [this.farmLabel(farms[0])]);
+      return el('p', {textContent: this.farmLabel(farms[0]), i8n: false});
     }
     return el('select', {id: 'farms_select', onchange: this.onFarmSelect.bind(this)}, [
       farms.map(f =>
@@ -2134,7 +2372,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   farmRegisterForm() {
     const platforms = this.state.platforms_list || [];
     if (platforms.length === 0) {
-      return el('p', {}, ["Register a platform above before adding a farm."]);
+      return el('p', {textContent: "Register a platform above before adding a farm."});
     }
     let EL = el('form', {}, [
       el('div', {class: 'formgroup'}, [
@@ -2215,7 +2453,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   // over a date range - both open the raw JSON response in a new window/tab.
   farmNodeActions() {
     if (!this.state.selected_farm_node) {
-      return el('p', {}, ["Select a node above to see actions."]);
+      return el('p', {textContent: "Select a node above to see actions."});
     }
     let EL = el('form', {}, [
       el('button', {class: 'submit', type: 'button', textContent: 'Schema', onclick: this.onFarmNodeSchema.bind(this)}),
@@ -2308,20 +2546,20 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     // GET /devices/action (API.md Section 6.6.2's companion route), appending "value" as a query param.
     // href already carries deviceId/action, matching what GET /devices/action reads.
     GET(`${href}&value=${encodeURIComponent(value)}`, {}, (err, json) => {
-      if (err) {
-        this.message(err.message);
-        return;
-      }
+        if (err) {
+          this.message(err.message);
+          return;
+        }
       this.message(`Action ${this.state.selected_action} sent`);
-    });
-  }
+      });
+    }
   // "Action" section - lets the admin invoke any action from the selected node's Device Schema.
   actionSection() {
     if (!this.state.selected_farm_node) {
-      return el('p', {}, ["Select a node above to send an action."]);
+      return el('p', {textContent: "Select a node above to send an action."});
     }
     if (!this.state.device_schema) {
-      return el('p', {}, ["Loading schema..."]);
+      return el('p', {textContent: "Loading schema..."});
     }
     const actions = this.state.device_schema.actions || {};
     if (Object.keys(actions).length === 0) {
@@ -2345,7 +2583,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   // filtered to just the projects api_farms maps to the currently selected farm, plus a selection column.
   farmNodesTable() {
     if (!this.state.selected_farm_id) {
-      return el('p', {}, ["Select a farm above to see its nodes."]);
+      return el('p', {textContent: "Select a farm above to see its nodes."});
     }
     return this.nodesTableFor(
       'farm_nodes_table',
@@ -2473,11 +2711,11 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
    // column (e.g. a selection radio) as {label, cell(node)}.
    nodesTableFor(tableKey, getNodes, emptyMessage, extraColumn) {
      if (!this.state.org) {
-       return el('p', {}, ["No organization selected"]);
+       return el('p', {textContent: "No organization selected"});
      }
      let allNodes = getNodes();
      if (allNodes.length === 0) {
-       return el('p', {}, [emptyMessage]);
+       return el('p', {textContent: emptyMessage});
      }
 
      this.state.nodesSort = this.state.nodesSort || {};
@@ -2604,15 +2842,15 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
            el('label', {for: 'file', textContent: "File"}),
            // Files should be either frugal-iot.ino.bin or firmware.bin
            el('input', {id: "file", name: "file", type: "file", accept: ".bin",  onchange: this.onFile.bind(this), required: true}),
-           el('p', {}, ["(Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin)"]),
+           el('p', {textContent: "(Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin)"}),
            el('p', {}, ["On PlatformIO The file is typically in ", el('code',{}, ['<project>/.pio/build/<your board>/firmware.bin'])]),
-           el('p', {}, ["If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.'"]),
+           el('p', {textContent: "If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.'"}),
            el('p', {}, ["On ArduinoIDE the file is typically in ", el('code',{}, ["<project>/build/<your board>/frugal-iot.ino.bin"])]),
            ]),
          el('button', {class: "submit", type: "submit", textContent: 'Upload'}),
        ]), //form
        el('section', {}, [
-         el('h3', {}, ["Existing OTA Files"]),
+         el('h3', {textContent: "Existing OTA Files"}),
          this.state.elements.ota_files = this.otaFilesList(),
        ]), // section ota
      ]);
@@ -2621,14 +2859,14 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
    adminRestContent() {
      return el('div', {}, [
        el('section', {}, [
-             el('h3', {}, ["Permissions"]),
+             el('h3', {textContent: "Permissions"}),
              // List of people and their permissions, with option to delete,
              this.state.elements.people_perms_list = this.peoplePermList(), // This gets replaced when actions taken
              // and form to add (dropdown of people and permissions)
              this.state.elements.people_list = this.peopleList(),
        ]),
        el('section', {}, [
-             el('h3', {}, ["Projects"]),
+             el('h3', {textContent: "Projects"}),
              // List of existing projects for this organization,
              this.state.elements.projects_display_list = this.projectsDisplayList(),
              // and, once expanded, a form to add a new project (id and name)
@@ -2638,7 +2876,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
        // This should really use a superuser permission but for now its just the super admin can do this
        server_config.user.id !== 1 ? null : // Only show publish message to super admin, as not really a feature, more for testing and debugging
          el('section', {}, [
-           el('h3', {}, ["Publish Message"]),
+           el('h3', {textContent: "Publish Message"}),
            el('form', {}, [
              el('div', {class: 'formgroup'}, [
                el('label', {for: 'msg_topic', textContent: "Topic"}),
@@ -2668,7 +2906,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
    // Content of the Nodes tab below the organization dropdown - only rendered once an org is selected
    nodesRestContent() {
      return el('div', {}, [
-       el('h3', {}, ["Nodes in Organization"]),
+       el('h3', {textContent: "Nodes in Organization"}),
        this.state.elements.nodes_table = this.nodesTable(),
      ]);
    }
@@ -2676,31 +2914,31 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
    apiRestContent() {
      return el('div', {}, [
        el('section', {}, [
-         el('h3', {}, ["Registered Platforms"]),
+         el('h3', {textContent: "Registered Platforms"}),
          this.state.elements.platforms_list_display = this.platformsListDisplay(),
        ]),
        el('section', {}, [
-         el('h3', {}, ["Register Platform"]),
+         el('h3', {textContent: "Register Platform"}),
          this.platformRegisterForm(),
        ]),
        el('section', {}, [
-         el('h3', {}, ["Farms"]),
+         el('h3', {textContent: "Farms"}),
          this.state.elements.farms_list_display = this.farmsListDisplay(),
        ]),
        el('section', {}, [
-         el('h3', {}, ["Register Farm"]),
+         el('h3', {textContent: "Register Farm"}),
          this.state.elements.add_farm = this.collapsibleArea('add_farm', "Add Farm", this.farmRegisterForm),
        ]),
        el('section', {}, [
-         el('h3', {}, ["Nodes in Farm"]),
+         el('h3', {textContent: "Nodes in Farm"}),
          this.state.elements.farm_nodes_table = this.farmNodesTable(),
        ]),
        el('section', {}, [
-         el('h3', {}, ["Node Actions"]),
+         el('h3', {textContent: "Node Actions"}),
          this.state.elements.farm_node_actions = this.farmNodeActions(),
        ]),
        el('section', {}, [
-         el('h3', {}, ["Action"]),
+         el('h3', {textContent: "Action"}),
          this.state.elements.action_section = this.actionSection(),
        ]),
      ]);
