@@ -905,12 +905,13 @@ function el(tag, attributes = {}, children) {
   return EL(tag, attributes, children);
 }
 
-async function POSTp(httpurl, body) {
+async function requestJSONp(method, httpurl, body) {
   /**
-   *  Asynchronous function to POST a JSON body - returns promise that resolves to the JSON response or rejects an error
+   *  Asynchronous function to send a JSON body via POST/PUT/etc - returns promise that resolves to the
+   *  JSON response or rejects an error
    **/
   const response = await fetch(httpurl, {
-    method: 'POST',
+    method,
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify(body),
   });
@@ -924,7 +925,15 @@ function POST(httpurl, body, cb) {
   /**
    * POST a JSON body to a URL and cb(err, json)
    */
-  POSTp(httpurl, body)
+  requestJSONp('POST', httpurl, body)
+    .then((json) => cb(null, json))
+    .catch((err) => cb(err));
+}
+function PUT(httpurl, body, cb) {
+  /**
+   * PUT a JSON body to a URL and cb(err, json)
+   */
+  requestJSONp('PUT', httpurl, body)
     .then((json) => cb(null, json))
     .catch((err) => cb(err));
 }
@@ -2489,71 +2498,102 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       this.replaceElement("action_section", this.actionSection());
     });
   }
+  // Everything the Action section can invoke: genuine actions, plus properties that are also writable
+  // (per the schema's own writeproperty op) - a read-write field doesn't get a separate action entry,
+  // it's modelled as one property with both ops (see frugal-iot-logger's getDeviceSchema). Each entry
+  // normalizes the bits that differ between an action's "input" and a property's own schema fields.
+  controllableFields() {
+    const schema = this.state.device_schema || {};
+    const actions = Object.entries(schema.actions || {}).map(([key, def]) => ({
+      key,
+      kind: 'action',
+      label: def.description || def.title || key,
+      dataSchema: def.input || {},
+      href: def.forms && def.forms[0] && def.forms[0].href
+    }));
+    const writableProperties = Object.entries(schema.properties || {})
+      .filter(([, def]) => (def.forms || []).some(f => (f.op || []).includes('writeproperty')))
+      .map(([key, def]) => ({
+        key,
+        kind: 'property',
+        label: def.description || def.title || key,
+        dataSchema: def,
+        href: def.forms && def.forms[0] && def.forms[0].href
+      }));
+    return [...actions, ...writableProperties];
+  }
   onActionSelect(ev) {
     this.state.selected_action = ev.target.value;
     this.replaceElement("action_value", this.actionValueField());
   }
   actionDropdown() {
-    const actions = (this.state.device_schema && this.state.device_schema.actions) || {};
-    const keys = Object.keys(actions);
-    if (!this.state.selected_action || !actions[this.state.selected_action]) {
-      this.state.selected_action = keys[0] || null;
+    const fields = this.controllableFields();
+    if (!this.state.selected_action || !fields.some(f => f.key === this.state.selected_action)) {
+      this.state.selected_action = fields.length ? fields[0].key : null;
     }
     return el('select', {id: 'action_select', onchange: this.onActionSelect.bind(this)}, [
-      keys.map(key =>
-        el('option', {value: key, textContent: actions[key].description || actions[key].title || key,
-          selected: key === this.state.selected_action, i8n: false}))
+      fields.map(f =>
+        el('option', {value: f.key, textContent: f.label, selected: f.key === this.state.selected_action, i8n: false}))
     ]);
   }
-  // The Value field's type/constraints follow the selected action's input schema (WoT Action Object,
-  // API.md Annex A.3): boolean -> toggle, number/integer -> number box constrained to minimum/maximum,
-  // anything else -> plain text.
+  // The Value field's type/constraints follow the selected field's DataSchema (API.md Annex A.2/A.3):
+  // boolean -> toggle, number/integer -> number box constrained to minimum/maximum, anything else -> text.
   actionValueField() {
-    const actions = (this.state.device_schema && this.state.device_schema.actions) || {};
-    const input = (actions[this.state.selected_action] || {}).input || {};
-    let field;
-    if (input.type === 'boolean') {
-      field = el('input', {id: 'action_value', type: 'checkbox'});
-    } else if (input.type === 'number' || input.type === 'integer') {
-      field = el('input', {id: 'action_value', type: 'number',
-        min: input.minimum, max: input.maximum, step: input.type === 'integer' ? 1 : 'any'});
+    const field = this.controllableFields().find(f => f.key === this.state.selected_action);
+    const dataSchema = (field && field.dataSchema) || {};
+    let input;
+    if (dataSchema.type === 'boolean') {
+      input = el('input', {id: 'action_value', type: 'checkbox'});
+    } else if (dataSchema.type === 'number' || dataSchema.type === 'integer') {
+      input = el('input', {id: 'action_value', type: 'number',
+        min: dataSchema.minimum, max: dataSchema.maximum, step: dataSchema.type === 'integer' ? 1 : 'any'});
     } else {
-      field = el('input', {id: 'action_value', type: 'text'});
+      input = el('input', {id: 'action_value', type: 'text'});
     }
-    return field;
+    return input;
   }
   onActionSend() {
     const device = this.selectedFarmNodeDevice();
-    const actions = (this.state.device_schema && this.state.device_schema.actions) || {};
-    const action = actions[this.state.selected_action];
-    if (!device || !action) { return; }
-    const href = action.forms && action.forms[0] && action.forms[0].href;
-    if (!href) {
-      this.message("This action has no invocation URL (forms[0].href) in its schema");
+    const field = this.controllableFields().find(f => f.key === this.state.selected_action);
+    if (!device || !field) { return; }
+    if (!field.href) {
+      this.message("This field has no invocation URL (forms[0].href) in its schema");
       return;
     }
     const valueField = this.state.elements.action_value;
-    const inputType = (action.input || {}).type;
     let value;
-    if (inputType === 'boolean') {
+    if (field.dataSchema.type === 'boolean') {
       value = valueField.checked;
-    } else if (inputType === 'number' || inputType === 'integer') {
+    } else if (field.dataSchema.type === 'number' || field.dataSchema.type === 'integer') {
       value = Number(valueField.value);
     } else {
       value = valueField.value;
     }
-    // The schema's href is a WoT Form - it can only express a URL, not a JSON body - so invoke via
-    // GET /devices/action (API.md Section 6.6.2's companion route), appending "value" as a query param.
-    // href already carries deviceId/action, matching what GET /devices/action reads.
-    GET(`${href}&value=${encodeURIComponent(value)}`, {}, (err, json) => {
+    if (field.kind === 'action') {
+      // The schema's href is a WoT Form - it can only express a URL, not a JSON body - so invoke via
+      // GET /devices/action (API.md Section 6.6.2.1), appending "value" as a query param. href already
+      // carries deviceId/action, matching what GET /devices/action reads.
+      GET(`${field.href}&value=${encodeURIComponent(value)}`, {}, (err, json) => {
         if (err) {
           this.message(err.message);
           return;
         }
-      this.message(`Action ${this.state.selected_action} sent`);
+        this.message(`Action ${field.key} sent`);
+      });
+    } else {
+      // Property forms.href already carries deviceId/property (also used for GET-to-read) - PUT the
+      // new value as a JSON body, there being no standard WoT convention for a writeproperty body.
+      PUT(field.href, {value}, (err, json) => {
+        if (err) {
+          this.message(err.message);
+          return;
+        }
+        this.message(`Property ${field.key} set`);
       });
     }
-  // "Action" section - lets the admin invoke any action from the selected node's Device Schema.
+  }
+  // "Action" section - lets the admin invoke any action, or set any writable property, from the
+  // selected node's Device Schema.
   actionSection() {
     if (!this.state.selected_farm_node) {
       return el('p', {textContent: "Select a node above to send an action."});
@@ -2561,9 +2601,8 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     if (!this.state.device_schema) {
       return el('p', {textContent: "Loading schema..."});
     }
-    const actions = this.state.device_schema.actions || {};
-    if (Object.keys(actions).length === 0) {
-      return el('p', {}, ["This node has no actions in its schema."]);
+    if (this.controllableFields().length === 0) {
+      return el('p', {textContent: "This node has no actions or writable properties in its schema."});
     }
     let EL = el('form', {}, [
       el('div', {class: 'formgroup'}, [
