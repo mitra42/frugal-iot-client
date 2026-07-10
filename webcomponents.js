@@ -394,6 +394,9 @@ EN:
   Action: Action
   No nodes found for this organization: No nodes found for this organization
   No nodes found for this farm's project(s).: No nodes found for this farm's project(s).
+  Lower-case letters and numbers only, no spaces or punctuation: Lower-case letters and numbers only, no spaces or punctuation
+  Click to sort: Click to sort
+  Click to change project: Click to change project
 FR:
   _nameAndFlag: Français 🇫🇷
   _thisLanguage: Francaise
@@ -538,6 +541,9 @@ FR:
   Action: Action
   No nodes found for this organization: Aucun nœud trouvé pour cette organisation
   No nodes found for this farm's project(s).: Aucun nœud trouvé pour le(s) projet(s) de cette ferme.
+  Lower-case letters and numbers only, no spaces or punctuation: Lettres minuscules et chiffres uniquement, sans espaces ni ponctuation
+  Click to sort: Cliquez pour trier
+  Click to change project: Cliquez pour changer de projet
 HI:
   _nameAndFlag: हिंदी 🇮🇳
   _thisLanguage: हिंदी
@@ -682,6 +688,9 @@ HI:
   Action: क्रिया
   No nodes found for this organization: इस संगठन के लिए कोई नोड नहीं मिला
   No nodes found for this farm's project(s).: इस फार्म के प्रोजेक्ट (प्रोजेक्ट्स) के लिए कोई नोड नहीं मिला।
+  Lower-case letters and numbers only, no spaces or punctuation: केवल छोटे अक्षर और अंक, कोई स्पेस या विरामचिह्न नहीं
+  Click to sort: क्रमबद्ध करने के लिए क्लिक करें
+  Click to change project: प्रोजेक्ट बदलने के लिए क्लिक करें
 ID:
   _nameAndFlag: Bahasa Indonesia 🇮🇩
   _thisLanguage: Bahasa Indonesia
@@ -826,6 +835,9 @@ ID:
   Action: Aksi
   No nodes found for this organization: Tidak ada node ditemukan untuk organisasi ini
   No nodes found for this farm's project(s).: Tidak ada node ditemukan untuk proyek farm ini.
+  Lower-case letters and numbers only, no spaces or punctuation: Hanya huruf kecil dan angka, tanpa spasi atau tanda baca
+  Click to sort: Klik untuk mengurutkan
+  Click to change project: Klik untuk mengubah proyek
 `);
 
 // Initialise from ?lang= immediately so language-picker renders with the correct selection
@@ -2156,11 +2168,13 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     const qos = parseInt(this.state.elements.msg_qos.value);
 
     if (!topic || !value) {
+      // TODO-TRANSLATE
       this.message("Topic and Value are required");
       return;
     }
 
     mqtt_client.publish(topic, value, {retain: retain, qos: qos});
+    // TODO-TRANSLATE
     this.message(`Published to ${topic}`);
 
     // Clear the form
@@ -2226,6 +2240,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
         el('input', {id: 'project_id', name: 'id', type: 'text', placeholder: 'id', required: true,
           pattern: '[a-z0-9]+', title: "Lower-case letters and numbers only, no spaces or punctuation"}),
         el('label', {for: 'project_name', textContent: "Project Name"}),
+        // TODO-TRANSLATE
         el('input', {id: 'project_name', name: 'name', type: 'text', placeholder: 'Name', required: true}),
         el('button', {class: "submit", type: "submit", textContent: 'Add'}),
       ]),
@@ -2283,6 +2298,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
         this.message(err.message);
         return;
       }
+      // TODO-TRANSLATE
       this.message("Platform registered");
       formEl.reset();
       this.getPlatformsList();
@@ -2373,6 +2389,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
         this.message(err.message);
         return;
       }
+      // TODO-TRANSLATE
       this.message("Farm registered");
       formEl.reset();
       this.getFarmsList();
@@ -2451,6 +2468,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     const from = withSeconds(this.state.elements.farm_node_from.value);
     const to = withSeconds(this.state.elements.farm_node_to.value);
     if (!from) {
+      // TODO-TRANSLATE
       this.message("From date is required");
       return;
     }
@@ -2557,6 +2575,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     const field = this.controllableFields().find(f => f.key === this.state.selected_action);
     if (!device || !field) { return; }
     if (!field.href) {
+      // TODO-TRANSLATE
       this.message("This field has no invocation URL (forms[0].href) in its schema");
       return;
     }
@@ -2578,6 +2597,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
           this.message(err.message);
           return;
         }
+        // TODO-TRANSLATE
         this.message(`Action ${field.key} sent`);
       });
     } else {
@@ -2588,6 +2608,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
           this.message(err.message);
           return;
         }
+        // TODO-TRANSLATE
         this.message(`Property ${field.key} set`);
       });
     }
@@ -2838,6 +2859,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
 
       console.log(`Publishing ${topic} = ${message}`);
       mqtt_client.publish(topic, message, {retain: false, qos: 1});
+      // TODO-TRANSLATE
       this.message(`Project changed to ${newProjectId} for node ${nodeId}`);
 
       // Refresh the table after a short delay
@@ -2882,8 +2904,10 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
            // Files should be either frugal-iot.ino.bin or firmware.bin
            el('input', {id: "file", name: "file", type: "file", accept: ".bin",  onchange: this.onFile.bind(this), required: true}),
            el('p', {textContent: "(Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin)"}),
+           // TODO-TRANSLATE
            el('p', {}, ["On PlatformIO The file is typically in ", el('code',{}, ['<project>/.pio/build/<your board>/firmware.bin'])]),
            el('p', {textContent: "If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.'"}),
+           // TODO-TRANSLATE
            el('p', {}, ["On ArduinoIDE the file is typically in ", el('code',{}, ["<project>/build/<your board>/frugal-iot.ino.bin"])]),
            ]),
          el('button', {class: "submit", type: "submit", textContent: 'Upload'}),
@@ -2919,10 +2943,12 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
            el('form', {}, [
              el('div', {class: 'formgroup'}, [
                el('label', {for: 'msg_topic', textContent: "Topic"}),
+               // TODO-TRANSLATE
                this.state.elements.msg_topic = el('input', {id: 'msg_topic', name: 'topic', type: 'text', placeholder: 'Enter topic', required: true}),
              ]),
              el('div', {class: 'formgroup'}, [
                el('label', {for: 'msg_value', textContent: "Value"}),
+               // TODO-TRANSLATE
                this.state.elements.msg_value = el('input', {id: 'msg_value', name: 'value', type: 'text', placeholder: 'Enter value', required: true}),
              ]),
              el('div', {class: 'formgroup'}, [
@@ -3814,6 +3840,7 @@ class MqttWrapper extends HTMLElementExtended {
       if (!this.state.organization || !this.state.project) {   // n, !(o,p)
         let [o,p] = nodeId2OrgProject(this.state.node);
         if (!o) {
+          // TODO-TRANSLATE
           this.message(`Unable to find node=${this.state.node}`);
           return;
         } else {
@@ -3860,6 +3887,7 @@ class MqttWrapper extends HTMLElementExtended {
           // noinspection JSUnresolvedReference
           let o = Object.entries(server_config.organizations).find( o => o[1].projects[this.state.project]);
           if (!o) {
+            // TODO-TRANSLATE
             this.message(`Unable to find project=${this.state.project}`);
             return;
           } else {
