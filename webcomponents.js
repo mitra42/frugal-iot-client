@@ -354,7 +354,7 @@ EN:
   Project ID *: Project ID *
   Register Farm: Register Farm
   Schema: Schema
-  From *: From *
+  From: From
   To: To
   Data: Data
   Action *: Action *
@@ -397,6 +397,24 @@ EN:
   Lower-case letters and numbers only, no spaces or punctuation: Lower-case letters and numbers only, no spaces or punctuation
   Click to sort: Click to sort
   Click to change project: Click to change project
+  Topic and Value are required: Topic and Value are required
+  "Published to ": "Published to "
+  Platform registered: Platform registered
+  Farm registered: Farm registered
+  This field has no invocation URL (forms[0].href) in its schema: This field has no invocation URL (forms[0].href) in its schema
+  sent: sent
+  Property: Property
+  set: set
+  Project changed to: Project changed to
+  for node: for node
+  "On PlatformIO The file is typically in ": "On PlatformIO The file is typically in "
+  "On ArduinoIDE the file is typically in ": "On ArduinoIDE the file is typically in "
+  Unable to find node: Unable to find node
+  Unable to find project: Unable to find project
+  id: id
+  e.g. LiteFarm: e.g. LiteFarm
+  Enter topic: Enter topic
+  Enter value: Enter value
 FR:
   _nameAndFlag: Français 🇫🇷
   _thisLanguage: Francaise
@@ -409,8 +427,9 @@ FR:
   connected: connecté
   connecting: connexion
   Control: Contrôle
-  Dashboard: Tableau de bord  
-  eCO2: eCO2  
+  Dashboard: Tableau de bord
+  Description: Description
+  eCO2: eCO2
   Email: Email
   ENS AHT: ENS AHT  
   Greater Than: Supérieur à
@@ -501,7 +520,7 @@ FR:
   Project ID *: ID du projet *
   Register Farm: Enregistrer la ferme
   Schema: Schéma
-  From *: De *
+  From: De
   To: À
   Data: Données
   Action *: Action *
@@ -544,6 +563,24 @@ FR:
   Lower-case letters and numbers only, no spaces or punctuation: Lettres minuscules et chiffres uniquement, sans espaces ni ponctuation
   Click to sort: Cliquez pour trier
   Click to change project: Cliquez pour changer de projet
+  Topic and Value are required: Le sujet et la valeur sont requis
+  "Published to ": "Publié sur "
+  Platform registered: Plateforme enregistrée
+  Farm registered: Ferme enregistrée
+  This field has no invocation URL (forms[0].href) in its schema: Ce champ n'a pas d'URL d'invocation (forms[0].href) dans son schéma
+  sent: envoyé
+  Property: Propriété
+  set: défini
+  Project changed to: Projet changé en
+  for node: pour le nœud
+  "On PlatformIO The file is typically in ": "Sur PlatformIO, le fichier se trouve généralement dans "
+  "On ArduinoIDE the file is typically in ": "Sur ArduinoIDE, le fichier se trouve généralement dans "
+  Unable to find node: Impossible de trouver le nœud
+  Unable to find project: Impossible de trouver le projet
+  id: id
+  e.g. LiteFarm: par ex. LiteFarm
+  Enter topic: Entrez le sujet
+  Enter value: Entrez la valeur
 HI:
   _nameAndFlag: हिंदी 🇮🇳
   _thisLanguage: हिंदी
@@ -556,8 +593,9 @@ HI:
   connected: जुड़े हुए
   connecting: कनेक्ट हो रहा है
   Control: नियंत्रण
-  Dashboard: डैशबोर्ड  
-  eCO2: ईसीओ2  
+  Dashboard: डैशबोर्ड
+  Description: विवरण
+  eCO2: ईसीओ2
   Email: ईमेल
   ENS AHT: ईएनएस एएचटी  
   Greater Than: इससे बड़ा
@@ -648,7 +686,7 @@ HI:
   Project ID *: प्रोजेक्ट आईडी *
   Register Farm: फार्म पंजीकृत करें
   Schema: स्कीमा
-  From *: से *
+  From: से
   To: तक
   Data: डेटा
   Action *: क्रिया *
@@ -691,6 +729,24 @@ HI:
   Lower-case letters and numbers only, no spaces or punctuation: केवल छोटे अक्षर और अंक, कोई स्पेस या विरामचिह्न नहीं
   Click to sort: क्रमबद्ध करने के लिए क्लिक करें
   Click to change project: प्रोजेक्ट बदलने के लिए क्लिक करें
+  Topic and Value are required: टॉपिक और मान आवश्यक हैं
+  "Published to ": "पर प्रकाशित किया गया "
+  Platform registered: प्लेटफ़ॉर्म पंजीकृत किया गया
+  Farm registered: फार्म पंजीकृत किया गया
+  This field has no invocation URL (forms[0].href) in its schema: इस फ़ील्ड के स्कीमा में कोई इनवोकेशन यूआरएल (forms[0].href) नहीं है
+  sent: भेजा गया
+  Property: प्रॉपर्टी
+  set: सेट किया गया
+  Project changed to: प्रोजेक्ट बदलकर किया गया
+  for node: नोड के लिए
+  "On PlatformIO The file is typically in ": "PlatformIO पर फ़ाइल सामान्यतः यहाँ होती है "
+  "On ArduinoIDE the file is typically in ": "ArduinoIDE पर फ़ाइल सामान्यतः यहाँ होती है "
+  Unable to find node: नोड नहीं मिल सका
+  Unable to find project: प्रोजेक्ट नहीं मिल सका
+  id: आईडी
+  e.g. LiteFarm: उदाहरण के लिए LiteFarm
+  Enter topic: टॉपिक दर्ज करें
+  Enter value: मान दर्ज करें
 ID:
   _nameAndFlag: Bahasa Indonesia 🇮🇩
   _thisLanguage: Bahasa Indonesia
@@ -703,7 +759,8 @@ ID:
   connected: terhubung
   connecting: menghubungkan
   Control: Kontrol
-  Dashboard: Dasbor  
+  Dashboard: Dasbor
+  Description: Deskripsi
   eCO2: eCO2  
   Email: Email
   ENS AHT: ENS AHT  
@@ -795,7 +852,7 @@ ID:
   Project ID *: ID Proyek *
   Register Farm: Daftarkan Farm
   Schema: Skema
-  From *: Dari *
+  From: Dari
   To: Sampai
   Data: Data
   Action *: Aksi *
@@ -838,6 +895,24 @@ ID:
   Lower-case letters and numbers only, no spaces or punctuation: Hanya huruf kecil dan angka, tanpa spasi atau tanda baca
   Click to sort: Klik untuk mengurutkan
   Click to change project: Klik untuk mengubah proyek
+  Topic and Value are required: Topik dan Nilai wajib diisi
+  "Published to ": "Dipublikasikan ke "
+  Platform registered: Platform terdaftar
+  Farm registered: Farm terdaftar
+  This field has no invocation URL (forms[0].href) in its schema: Bidang ini tidak memiliki URL pemanggilan (forms[0].href) dalam skemanya
+  sent: terkirim
+  Property: Properti
+  set: diatur
+  Project changed to: Proyek diubah menjadi
+  for node: untuk node
+  "On PlatformIO The file is typically in ": "Di PlatformIO berkas biasanya ada di "
+  "On ArduinoIDE the file is typically in ": "Di ArduinoIDE berkas biasanya ada di "
+  Unable to find node: Tidak dapat menemukan node
+  Unable to find project: Tidak dapat menemukan proyek
+  id: id
+  e.g. LiteFarm: misalnya LiteFarm
+  Enter topic: Masukkan topik
+  Enter value: Masukkan nilai
 `);
 
 // Initialise from ?lang= immediately so language-picker renders with the correct selection
@@ -894,8 +969,9 @@ const i8ntags = {
   h5: ["textContent"],
   th: ["textContent", "title"],
   td: ["textContent", "title"],
-  input: ["title"],
-  section: ["title"]
+  input: ["title", "placeholder"],
+  section: ["title"],
+  button: ["textContent"],
 }
 // Local version of EL
 function el(tag, attributes = {}, children) {
@@ -1993,11 +2069,12 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   static get observedAttributes() { return ['register','message','url','lang','org']; }
   static get boolAttributes() { return ['register']; }
 
-  message(msg) {
-    console.error(msg);
-    this.state.message = msg;
+  message(msg, i8n=true) {
+    const i8nmsg = i8n ? getString(msg) : msg;
+    console.error(i8nmsg);
+    this.state.message = i8nmsg;
     if (this.state.elements.message) {
-      this.state.elements.message.textContent = msg;
+      this.state.elements.message.textContent = i8nmsg;
     }
     //this.append(el('div', {class: 'message', textContent: msg}));
   }
@@ -2068,7 +2145,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     return this.state.org ? contentFn.call(this) : el('p', {textContent: "Select an organization to continue."});
   }
   // An "Add X" button that expands into buildForm() once clicked, and stays expanded - used for the
-  // "Add Project" and "Add Farm" forms so they don't clutter the tab until the admin wants to add one.
+  // "Add Project", "Add Platform" and "Add Farm" forms so they don't clutter the tab until the admin wants to add one.
   collapsibleArea(key, label, buildForm) {
     this.state.expanded = this.state.expanded || {};
     if (this.state.expanded[key]) {
@@ -2168,14 +2245,12 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     const qos = parseInt(this.state.elements.msg_qos.value);
 
     if (!topic || !value) {
-      // TODO-TRANSLATE
       this.message("Topic and Value are required");
       return;
     }
 
     mqtt_client.publish(topic, value, {retain: retain, qos: qos});
-    // TODO-TRANSLATE
-    this.message(`Published to ${topic}`);
+    this.message(`${getString('Published to ')}${topic}`, false);
 
     // Clear the form
     this.state.elements.msg_topic.value = '';
@@ -2240,7 +2315,6 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
         el('input', {id: 'project_id', name: 'id', type: 'text', placeholder: 'id', required: true,
           pattern: '[a-z0-9]+', title: "Lower-case letters and numbers only, no spaces or punctuation"}),
         el('label', {for: 'project_name', textContent: "Project Name"}),
-        // TODO-TRANSLATE
         el('input', {id: 'project_name', name: 'name', type: 'text', placeholder: 'Name', required: true}),
         el('button', {class: "submit", type: "submit", textContent: 'Add'}),
       ]),
@@ -2298,7 +2372,6 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
         this.message(err.message);
         return;
       }
-      // TODO-TRANSLATE
       this.message("Platform registered");
       formEl.reset();
       this.getPlatformsList();
@@ -2338,7 +2411,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
         cookie_name: this.state.elements.platform_cookie_name.value || undefined,
       }, EL);
     });
-    return EL;
+    return el('div', {}, [el('h3', {textContent: "Register Platform"}), EL]);
   }
   // Fetch farm-to-project mappings registered for the selected organization, and display
   getFarmsList() {
@@ -2389,7 +2462,6 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
         this.message(err.message);
         return;
       }
-      // TODO-TRANSLATE
       this.message("Farm registered");
       formEl.reset();
       this.getFarmsList();
@@ -2398,7 +2470,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   farmRegisterForm() {
     const platforms = this.state.platforms_list || [];
     if (platforms.length === 0) {
-      return el('p', {textContent: "Register a platform above before adding a farm."});
+      return el('div', {}, [el('h3', {textContent: "Register Farm"}), el('p', {textContent: "Register a platform above before adding a farm."})]);
     }
     let EL = el('form', {}, [
       el('div', {class: 'formgroup'}, [
@@ -2430,7 +2502,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
         'device-platform-farm-id': `${this.state.org}/${this.state.elements.farm_project.value}`,
       }, EL);
     });
-    return EL;
+    return el('div', {}, [el('h3', {textContent: "Register Farm"}), EL]);
   }
   // A "farm" is identified by (platform_id, farm_id) - api_farms can have more than one row for the
   // same farm when it maps to more than one Frugal-IoT project, so gather every project mapped to
@@ -2466,18 +2538,19 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     // datetime-local values omit seconds (YYYY-MM-DDTHH:mm) - parseTimestamp on the server requires them.
     const withSeconds = (v) => v && (v.length === 16 ? `${v}:00` : v);
     const from = withSeconds(this.state.elements.farm_node_from.value);
-    const to = withSeconds(this.state.elements.farm_node_to.value);
     if (!from) {
-      // TODO-TRANSLATE
-      this.message("From date is required");
+      // No date range given - show current values instead (API.md 6.6.5.2, property omitted).
+      window.open(`/api/devices/property?deviceId=${encodeURIComponent(device)}`, '_blank');
       return;
     }
+    const to = withSeconds(this.state.elements.farm_node_to.value);
     let url = `/api/data?device=${encodeURIComponent(device)}&from=${encodeURIComponent(from)}`;
     if (to) { url += `&to=${encodeURIComponent(to)}`; }
     window.open(url, '_blank');
   }
   // Actions for whichever node is currently selected in "Nodes in Farm": fetch its schema, or its data
-  // over a date range - both open the raw JSON response in a new window/tab.
+  // over a date range (or, with no From date, its current property values) - all open the raw JSON
+  // response in a new window/tab.
   farmNodeActions() {
     if (!this.state.selected_farm_node) {
       return el('p', {textContent: "Select a node above to see actions."});
@@ -2485,8 +2558,8 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     let EL = el('form', {}, [
       el('button', {class: 'submit', type: 'button', textContent: 'Schema', onclick: this.onFarmNodeSchema.bind(this)}),
       el('div', {class: 'formgroup'}, [
-        el('label', {for: 'farm_node_from', textContent: "From *"}),
-        this.state.elements.farm_node_from = el('input', {id: 'farm_node_from', type: 'datetime-local', required: true}),
+        el('label', {for: 'farm_node_from', textContent: "From"}),
+        this.state.elements.farm_node_from = el('input', {id: 'farm_node_from', type: 'datetime-local'}),
       ]),
       el('div', {class: 'formgroup'}, [
         el('label', {for: 'farm_node_to', textContent: "To"}),
@@ -2575,7 +2648,6 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     const field = this.controllableFields().find(f => f.key === this.state.selected_action);
     if (!device || !field) { return; }
     if (!field.href) {
-      // TODO-TRANSLATE
       this.message("This field has no invocation URL (forms[0].href) in its schema");
       return;
     }
@@ -2597,8 +2669,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
           this.message(err.message);
           return;
         }
-        // TODO-TRANSLATE
-        this.message(`Action ${field.key} sent`);
+        this.message(`${getString("Action")} ${field.key} ${getString("sent")}`, false);
       });
     } else {
       // Property forms.href already carries deviceId/property (also used for GET-to-read) - PUT the
@@ -2608,8 +2679,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
           this.message(err.message);
           return;
         }
-        // TODO-TRANSLATE
-        this.message(`Property ${field.key} set`);
+        this.message(`${getString("Property")} ${field.key} ${getString("set")}`, false);
       });
     }
   }
@@ -2817,8 +2887,10 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
            style: 'cursor: pointer; user-select: none; padding-right: 10px;',
            title: 'Click to sort',
            onclick: () => onSort(col.field),
-           textContent: col.label + (sort.field === col.field ? (sort.asc ? ' ↑' : ' ↓') : '')
-         })
+         }, [
+           el('span', {textContent: col.label}),
+           sort.field === col.field ? (sort.asc ? ' ↑' : ' ↓') : '',
+         ])
        ),
      ];
 
@@ -2859,8 +2931,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
 
       console.log(`Publishing ${topic} = ${message}`);
       mqtt_client.publish(topic, message, {retain: false, qos: 1});
-      // TODO-TRANSLATE
-      this.message(`Project changed to ${newProjectId} for node ${nodeId}`);
+      this.message(`${getString("Project changed to")} ${newProjectId} ${getString("for node")} ${nodeId}`);
 
       // Refresh the table after a short delay
       setTimeout(onChanged, 500);
@@ -2904,11 +2975,9 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
            // Files should be either frugal-iot.ino.bin or firmware.bin
            el('input', {id: "file", name: "file", type: "file", accept: ".bin",  onchange: this.onFile.bind(this), required: true}),
            el('p', {textContent: "(Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin)"}),
-           // TODO-TRANSLATE
-           el('p', {}, ["On PlatformIO The file is typically in ", el('code',{}, ['<project>/.pio/build/<your board>/firmware.bin'])]),
+           el('p', {}, [getString("On PlatformIO The file is typically in "), el('code',{}, ['<project>/.pio/build/<your board>/firmware.bin'])]),
            el('p', {textContent: "If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.'"}),
-           // TODO-TRANSLATE
-           el('p', {}, ["On ArduinoIDE the file is typically in ", el('code',{}, ["<project>/build/<your board>/frugal-iot.ino.bin"])]),
+           el('p', {}, [getString("On ArduinoIDE the file is typically in "), el('code',{}, ["<project>/build/<your board>/frugal-iot.ino.bin"])]),
            ]),
          el('button', {class: "submit", type: "submit", textContent: 'Upload'}),
        ]), //form
@@ -2943,12 +3012,11 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
            el('form', {}, [
              el('div', {class: 'formgroup'}, [
                el('label', {for: 'msg_topic', textContent: "Topic"}),
-               // TODO-TRANSLATE
                this.state.elements.msg_topic = el('input', {id: 'msg_topic', name: 'topic', type: 'text', placeholder: 'Enter topic', required: true}),
              ]),
              el('div', {class: 'formgroup'}, [
                el('label', {for: 'msg_value', textContent: "Value"}),
-               // TODO-TRANSLATE
+               el('label', {for: 'msg_value', textContent: "Value"}),
                this.state.elements.msg_value = el('input', {id: 'msg_value', name: 'value', type: 'text', placeholder: 'Enter value', required: true}),
              ]),
              el('div', {class: 'formgroup'}, [
@@ -2983,15 +3051,13 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
          this.state.elements.platforms_list_display = this.platformsListDisplay(),
        ]),
        el('section', {}, [
-         el('h3', {textContent: "Register Platform"}),
-         this.platformRegisterForm(),
+         this.state.elements.add_platform = this.collapsibleArea('add_platform', "Add Platform", this.platformRegisterForm),
        ]),
        el('section', {}, [
          el('h3', {textContent: "Farms"}),
          this.state.elements.farms_list_display = this.farmsListDisplay(),
        ]),
        el('section', {}, [
-         el('h3', {textContent: "Register Farm"}),
          this.state.elements.add_farm = this.collapsibleArea('add_farm', "Add Farm", this.farmRegisterForm),
        ]),
        el('section', {}, [
@@ -3001,9 +3067,6 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
        el('section', {}, [
          el('h3', {textContent: "Node Actions"}),
          this.state.elements.farm_node_actions = this.farmNodeActions(),
-       ]),
-       el('section', {}, [
-         el('h3', {textContent: "Action"}),
          this.state.elements.action_section = this.actionSection(),
        ]),
      ]);
@@ -3840,8 +3903,7 @@ class MqttWrapper extends HTMLElementExtended {
       if (!this.state.organization || !this.state.project) {   // n, !(o,p)
         let [o,p] = nodeId2OrgProject(this.state.node);
         if (!o) {
-          // TODO-TRANSLATE
-          this.message(`Unable to find node=${this.state.node}`);
+          this.message(`${getString("Unable to find node")}=${this.state.node}`);
           return;
         } else {
           this.state.organization = o;
@@ -3887,8 +3949,7 @@ class MqttWrapper extends HTMLElementExtended {
           // noinspection JSUnresolvedReference
           let o = Object.entries(server_config.organizations).find( o => o[1].projects[this.state.project]);
           if (!o) {
-            // TODO-TRANSLATE
-            this.message(`Unable to find project=${this.state.project}`);
+            this.message(`${getString("Unable to find project")}=${this.state.project}`, false);
             return;
           } else {
             this.state.organization = o[0];
