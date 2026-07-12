@@ -2066,7 +2066,7 @@ customElements.define('tabbed-display', TabbedDisplay);
 class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organization
   constructor(props) {
     super(props);
-    this.state = {register: false, ota_files: [], people_list: [], projects_list: [], platforms_list: [], farms_list: [],
+    this.state = {register: false, ota_files: [], people_list: [], projects_list: [], platforms_list: [], farms_list: [], farm_nodes_list: [],
       selected_platform_id: null, selected_farm_id: null, selected_farm_node: null, device_schema: null, selected_action: null};
     this.state.elements = {};
   }
@@ -2431,7 +2431,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
         }
         this.state.selected_farm_node = null;
         this.replaceElement("farms_list_display", this.farmsListDisplay());
-        this.replaceElement("farm_nodes_table", this.farmNodesTable());
+        this.getFarmNodesList();
         this.replaceElement("farm_node_actions", this.farmNodeActions());
         this.getDeviceActionSchema();
       });
@@ -2440,7 +2440,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   onFarmSelect(ev) {
     this.state.selected_farm_id = parseInt(ev.target.value, 10);
     this.state.selected_farm_node = null;
-    this.replaceElement("farm_nodes_table", this.farmNodesTable());
+    this.getFarmNodesList();
     this.replaceElement("farm_node_actions", this.farmNodeActions());
     this.getDeviceActionSchema();
   }
@@ -2518,6 +2518,44 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     return farms
       .filter(f => (f.platform_id === selected.platform_id) && (f.farm_id === selected.farm_id))
       .map(f => f.project);
+  }
+  // Fetch the selected farm's nodes via GET /api/devices/list (API.md 6.7) rather than reading
+  // server_config locally - this is the API tab, so it should exercise the same API a real
+  // Farm-Platform would use. A farm can map to more than one project, so one request per project id,
+  // joined into a single row set once all have replied.
+  getFarmNodesList() {
+    const org = this.state.org;
+    const projectIds = this.selectedFarmProjectIds();
+    if (!org || projectIds.length === 0) {
+      this.state.farm_nodes_list = [];
+      this.replaceElement("farm_nodes_table", this.farmNodesTable());
+      return;
+    }
+    let remaining = projectIds.length;
+    let allNodes = [];
+    projectIds.forEach(projectId => {
+      const devicePlatformFarmId = `${org}/${projectId}`;
+      GET(`/api/devices/list?device-platform-farm-id=${encodeURIComponent(devicePlatformFarmId)}`, {}, (err, json) => {
+        if (err) {
+          this.message(err.message);
+        } else {
+          json.forEach(device => {
+            allNodes.push({
+              projectId,
+              nodeId: device.id.split('/').slice(2).join('/'),
+              name: device.title || "",
+              description: device.description || "",
+              lastSeen: this.formatLastSeen(device.lastSeen ? device.lastSeen * 1000 : null),
+              otakey: device.otaKey || ""
+            });
+          });
+        }
+        if (--remaining === 0) {
+          this.state.farm_nodes_list = allNodes;
+          this.replaceElement("farm_nodes_table", this.farmNodesTable());
+        }
+      });
+    });
   }
   onFarmNodeSelect(projectId, nodeId) {
     this.state.selected_farm_node = `${projectId}/${nodeId}`;
@@ -2714,14 +2752,15 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     return EL;
   }
   // Nodes for the selected farm's project(s) - same fields/UI as the Nodes tab (via nodesTableFor),
-  // filtered to just the projects api_farms maps to the currently selected farm, plus a selection column.
+  // fetched from GET /api/devices/list by getFarmNodesList() rather than read locally, since this is
+  // the API tab and should exercise the real Farm-Platform-facing API.
   farmNodesTable() {
     if (!this.state.selected_farm_id) {
       return el('p', {textContent: "Select a farm above to see its nodes."});
     }
     return this.nodesTableFor(
       'farm_nodes_table',
-      () => this.nodesForProjects(this.state.org, this.selectedFarmProjectIds()),
+      () => this.state.farm_nodes_list || [],
       "No nodes found for this farm's project(s).",
       {
         label: "Select",
