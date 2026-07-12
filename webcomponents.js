@@ -2016,6 +2016,10 @@ class TabbedDisplay extends HTMLElementExtended {
   tabSelect(tab) {
     this.changeAttribute('tab', tab);
     this.renderAndReplace();
+    // Let a parent lazily load a tab's data only once it's actually selected, rather than eagerly
+    // for every tab whenever e.g. the organization changes - see MqttAdmin.onTabChange.
+    const title = this.children[tab] && this.children[tab].getAttribute('title');
+    this.dispatchEvent(new CustomEvent('tabchange', {detail: {tab, title}}));
   }
   updateActive(value) {
     // Note this may get called before children added, so careful not to change 'tab'
@@ -2067,7 +2071,11 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   constructor(props) {
     super(props);
     this.state = {register: false, ota_files: [], people_list: [], projects_list: [], platforms_list: [], farms_list: [], farm_nodes_list: [],
-      selected_platform_id: null, selected_farm_id: null, selected_farm_node: null, device_schema: null, selected_action: null};
+      selected_platform_id: null, selected_farm_id: null, selected_farm_node: null, device_schema: null, selected_action: null,
+      // Default tab is "Dashboard" (index 0 in render()) - tabsNeedingLoad tracks which of the other,
+      // network-backed tabs (OTA/Admin/API) still need their data (re-)fetched for the current
+      // organization; see setOrganization and onTabChange.
+      activeTabTitle: 'Dashboard', tabsNeedingLoad: new Set()};
     this.state.elements = {};
   }
   static get observedAttributes() { return ['register','message','url','lang','org']; }
@@ -2109,10 +2117,9 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
         server_config = json;
         this.loadAttributesFromURL();
         this.renderAndReplace(); // TODO check, but should not need to renderAndReplace as render is (currently) fully static
+        // setDefaultOrganization -> setOrganization already (lazily) loads whichever tab is active -
+        // no need to separately fetch OTA/Admin data here too.
         this.setDefaultOrganization();
-        this.getOtaFiles();
-        this.getPeopleList();
-        this.getProjectsList();
       }
     });
     //super.connectedCallback(); // Not doing as finishes with a re-render.
@@ -2788,17 +2795,27 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     this.state.selected_farm_id = null;
     // Reset sort order for every nodes table back to the default before rebuilding them below.
     this.state.nodesSort = {nodes_table: {field: 'projectId', asc: true}, farm_nodes_table: {field: 'projectId', asc: true}};
+    // Clear out data fetched for the previous organization so a not-yet-visited tab shows an empty/
+    // loading state rather than briefly showing the previous organization's data.
+    this.state.ota_files = [];
+    this.state.people_list = [];
+    this.state.projects_list = [];
+    this.state.platforms_list = [];
+    this.state.farms_list = [];
+    this.state.farm_nodes_list = [];
     // Rebuild the gated content of each tab first, since it re-creates the elements (e.g. ota_files,
-    // people_perms_list, platforms_list_display) that the get*List() calls below then asynchronously replace.
+    // people_perms_list, platforms_list_display) that loadTabData() below then asynchronously replaces.
     this.replaceElement('ota_rest', this.gatedContent(this.otaRestContent));
     this.replaceElement('admin_rest', this.gatedContent(this.adminRestContent));
     this.replaceElement('nodes_rest', this.gatedContent(this.nodesRestContent));
     this.replaceElement('api_rest', this.gatedContent(this.apiRestContent));
-    this.getOtaFiles();  // Replaces ota files part asynchronously
-    this.getPeopleList();  // Replaces perms and people list part asynchronously
-    this.getProjectsList();  // Replaces projects list part asynchronously
-    this.getPlatformsList();  // Replaces platforms list part asynchronously
-    this.getFarmsList();  // Replaces farms list part asynchronously
+    // Only OTA/Admin/API tabs do their own network fetch (Nodes reads server_config, already loaded,
+    // and Dashboard is handled by mqtt-wrapper) - mark them all as needing a refetch for the new
+    // organization, but only actually fetch whichever tab is currently active; the rest load lazily
+    // if/when the user switches to them (see onTabChange), to avoid a server-side fetch per tab on
+    // every organization change.
+    this.state.tabsNeedingLoad = new Set(['OTA', 'Admin', 'API']);
+    this.loadTabIfNeeded(this.state.activeTabTitle);
     // Note both these dropdowns are fine if this.state.org is undefined
     this.replaceElement("otaorgsdropdown", this.orgDropdown(this.state.org, this.otaOrgs,"otaorganizations"));
     this.replaceElement("adminorgsdropdown", this.orgDropdown(this.state.org, this.adminOrgs,"adminorganizations"));
@@ -2820,6 +2837,29 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   }
   onOrganization(e) {
     this.setOrganization(e.target.value);
+  }
+  // Fired by tabbed-display's 'tabchange' event (see TabbedDisplay.tabSelect) whenever the user
+  // switches tabs - lazily loads that tab's data if it hasn't been fetched yet for the current org.
+  onTabChange({title}) {
+    this.state.activeTabTitle = title;
+    this.loadTabIfNeeded(title);
+  }
+  loadTabIfNeeded(title) {
+    if (!this.state.tabsNeedingLoad.has(title)) { return; }
+    this.state.tabsNeedingLoad.delete(title);
+    this.loadTabData(title);
+  }
+  // Only OTA/Admin/API have their own server round trip - Nodes and Dashboard need nothing here.
+  loadTabData(title) {
+    if (title === 'OTA') {
+      this.getOtaFiles();
+    } else if (title === 'Admin') {
+      this.getPeopleList();
+      this.getProjectsList();
+    } else if (title === 'API') {
+      this.getPlatformsList();
+      this.getFarmsList();
+    }
   }
    onFile(e) {
      //TODO-14 do some sanity check on the files. See https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/input/file
@@ -3115,15 +3155,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
      ]);
    }
    render() { //TODO-89 needs styles
-     return [
-       el('link', {rel: 'stylesheet', href: CssUrl}),
-       el('div', {class: 'mqtt-admin'},[
-         // This is a top bar, holds message and language picker
-         el('div',{class: 'message'},[
-           this.state.elements.message = el('span', {textContent: this.state.message}),
-           el('language-picker'),
-         ]),
-         el('tabbed-display', {tab: 0}, [
+     const tabbedDisplay = el('tabbed-display', {tab: 0}, [
            el('section', {title: "Dashboard"}, [
              this.state.elements.mqttWrapper = el('mqtt-wrapper'),
            ]),
@@ -3151,7 +3183,18 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
                this.state.elements.apiorgsdropdown = el('span',{ textContent: "Waiting"}),
                this.state.elements.api_rest = this.gatedContent(this.apiRestContent),
              ]), // API tab
+     ]);
+     // Lazily load a tab's data only once the user actually switches to it - see onTabChange.
+     tabbedDisplay.addEventListener('tabchange', (e) => this.onTabChange(e.detail));
+     return [
+       el('link', {rel: 'stylesheet', href: CssUrl}),
+       el('div', {class: 'mqtt-admin'},[
+         // This is a top bar, holds message and language picker
+         el('div',{class: 'message'},[
+           this.state.elements.message = el('span', {textContent: this.state.message}),
+           el('language-picker'),
          ]),
+         tabbedDisplay,
        ]),
      ];
    }
