@@ -254,665 +254,669 @@ const languages = yaml.load(`
 EN:
   _nameAndFlag: English 🇬🇧
   _thisLanguage: English
+  (Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): (Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin)
+  Action: Action
+  Action *: Action *
+  Add: Add
+  Admin: Admin
+  All: All
+  API: API
   AQI: AQI
   AQI500: AQI500
+  Auth Token: Auth Token
+  Base URL: Base URL
+  Battery: Battery
   Brightness: Brightness
   Built in LED: Built in LED
+  buttons: buttons
+  Click to change project: Click to change project
+  Click to sort: Click to sort
+  Climate: Climate
   close: close
   Color:  Color
   connected: connected
   connecting: connecting
   Control: Control
+  Cookie Name: Cookie Name
   Dashboard: Dashboard
+  Data: Data
   Description: Description
+  ds18b20: ds18b20
+  e.g. LiteFarm: e.g. LiteFarm
   eCO2: eCO2
   Email: Email
   ENS AHT: ENS AHT
+  Enter topic: Enter topic
+  Enter value: Enter value
+  Existing OTA Files: Existing OTA Files
+  Farm ID *: Farm ID *
+  Farm registered: Farm registered
+  Farms: Farms
+  File: File
+  for node: for node
+  From: From
+  Frugal-IoT Username *: Frugal-IoT Username *
   Greater Than: Greater Than
-  Humidity control: Humidity control
+  heating: heating
+  humidifier: humidifier
   Humidity: Humidity
+  humidity: humidity
+  Humidity control: Humidity control
   Hysteresis: Hysteresis
   Hysterisis: Hysteresis
+  id: id
+  If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.'
   Key: Key
+  Last Seen: Last Seen
   LED: LED
   Limit: Limit
   Load Cell: Load Cell
+  Loading schema...: Loading schema...
+  Lower-case letters and numbers only, no spaces or punctuation: Lower-case letters and numbers only, no spaces or punctuation
+  Manual: Manual
   Name: Name
   Never seen: Never seen
+  No farms registered for this organization yet.: No farms registered for this organization yet.
+  No nodes found for this farm's project(s).: No nodes found for this farm's project(s).
+  No nodes found for this organization: No nodes found for this organization
+  No organization: No organization
+  No organization selected: No organization selected
+  No OTA files uploaded yet.: No OTA files uploaded yet.
+  No platforms registered yet.: No platforms registered yet.
+  No projects added for this organization yet.: No projects added for this organization yet.
+  No projects to display until organization selected: No projects to display until organization selected
+  Nobody added for this organization yet.: Nobody added for this organization yet.
+  Node Actions: Node Actions
   Node ID:  Node ID
   Node Name:  Node Name
+  Nodes: Nodes
+  Nodes in Farm: Nodes in Farm
+  Nodes in Organization: Nodes in Organization
   Not selected: Not selected
+  Note this is your organization - not the organizations whose devices you want to access.: Note this is your organization - not the organizations whose devices you want to access.
   Now: Now
+  now: now
   offline: offline
   On: On
+  "On ArduinoIDE the file is typically in ": "On ArduinoIDE the file is typically in "
+  "On PlatformIO The file is typically in ": "On PlatformIO The file is typically in "
   Organization: Organization
   OTA: OTA
+  OTA binary uploaded: OTA binary uploaded
+  OTA Key: OTA Key
+  OTA Key or Device ID: OTA Key or Device ID
   Out: Out
+  out: out
   Password: Password
+  Permissions: Permissions
   Phone or Whatsapp: Phone or Whatsapp
+  Platform *: Platform *
+  Platform Name *: Platform Name *
+  Platform registered: Platform registered
   Please login: Please login
   Project: Project
+  Project changed to: Project changed to
+  Project ID: Project ID
+  Project ID *: Project ID *
+  Project Name: Project Name
+  Projects: Projects
+  Property: Property
+  Publish Message: Publish Message
+  "Published to ": "Published to "
+  QoS: QoS
   reconnect: reconnect
   Register: Register
+  Register a platform above before adding a farm.: Register a platform above before adding a farm.
+  Register Farm: Register Farm
+  Register Platform: Register Platform
+  Registered Platforms: Registered Platforms
   Relay: Relay
+  Retain: Retain
+  Schema: Schema
+  Select: Select
+  Select a farm above to see its nodes.: Select a farm above to see its nodes.
+  Select a node above to see actions.: Select a node above to see actions.
+  Select a node above to send an action.: Select a node above to send an action.
+  Select an organization to continue.: Select an organization to continue.
+  Send: Send
+  SEND: SEND
+  sent: sent
   server: server
+  set: set
+  Setpoint: Setpoint
   SHT: SHT
   SHT30: SHT30
   Sign In: Sign In
+  Soil: Soil
+  Soil Moisture: Soil Moisture
+  Soil Temperature: Soil Temperature
   Sonoff R2 switch: Sonoff R2 switch
   Sonoff switch: Sonoff switch
-  Submit: Submit
-  Temperature: Temperature
-  TVOC: TVOC
-  Unused: Unused
-  undefined: undefined
-  Username: Username
-  Last Seen: Last Seen
-  Soil: Soil
-  ds18b20: ds18b20
-  Soil Temperature: Soil Temperature
-  Soil Moisture: Soil Moisture
-  System: System
-  WiFi: WiFi
   SSID: SSID
-  OTA binary uploaded: OTA binary uploaded
-  All: All
-  OTA Key or Device ID: OTA Key or Device ID
-  File: File
-  Upload: Upload
-  Battery: Battery
-  Voltage: Voltage
-  Time On (s): Time On (s)
-  heating: heating
-  humidifier: humidifier
-  now: now
+  Submit: Submit
+  System: System
+  Temperature: Temperature
   temperature: temperature
-  humidity: humidity
-  out: out
-  Climate: Climate
-  Setpoint: Setpoint
-  Admin: Admin
-  Add: Add
-  Manual: Manual
-  buttons: buttons
-  Waiting: Waiting
-  No projects to display until organization selected: No projects to display until organization selected
-  Nodes: Nodes
-  API: API
-  Note this is your organization - not the organizations whose devices you want to access.: Note this is your organization - not the organizations whose devices you want to access.
-  No organization: No organization
-  Project ID: Project ID
-  Project Name: Project Name
-  Platform Name *: Platform Name *
-  Frugal-IoT Username *: Frugal-IoT Username *
-  Base URL: Base URL
-  Auth Token: Auth Token
-  Cookie Name: Cookie Name
-  Register Platform: Register Platform
-  Platform *: Platform *
-  Farm ID *: Farm ID *
-  Project ID *: Project ID *
-  Register Farm: Register Farm
-  Schema: Schema
-  From: From
-  To: To
-  Data: Data
-  Action *: Action *
-  Value *: Value *
-  Send: Send
-  Topic: Topic
-  Value: Value
-  Retain: Retain
-  QoS: QoS
-  SEND: SEND
-  Select: Select
-  OTA Key: OTA Key
-  Select an organization to continue.: Select an organization to continue.
-  No OTA files uploaded yet.: No OTA files uploaded yet.
-  Nobody added for this organization yet.: Nobody added for this organization yet.
-  No projects added for this organization yet.: No projects added for this organization yet.
-  No platforms registered yet.: No platforms registered yet.
-  No farms registered for this organization yet.: No farms registered for this organization yet.
-  Register a platform above before adding a farm.: Register a platform above before adding a farm.
-  Select a node above to see actions.: Select a node above to see actions.
-  Select a node above to send an action.: Select a node above to send an action.
-  Loading schema...: Loading schema...
-  This node has no actions in its schema.: This node has no actions in its schema.
-  Select a farm above to see its nodes.: Select a farm above to see its nodes.
-  No organization selected: No organization selected
-  (Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): (Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin)
-  If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.'
-  Existing OTA Files: Existing OTA Files
-  Permissions: Permissions
-  Projects: Projects
-  Publish Message: Publish Message
-  Nodes in Organization: Nodes in Organization
-  Registered Platforms: Registered Platforms
-  Farms: Farms
-  Nodes in Farm: Nodes in Farm
-  Node Actions: Node Actions
-  Action: Action
-  No nodes found for this organization: No nodes found for this organization
-  No nodes found for this farm's project(s).: No nodes found for this farm's project(s).
-  Lower-case letters and numbers only, no spaces or punctuation: Lower-case letters and numbers only, no spaces or punctuation
-  Click to sort: Click to sort
-  Click to change project: Click to change project
-  Topic and Value are required: Topic and Value are required
-  "Published to ": "Published to "
-  Platform registered: Platform registered
-  Farm registered: Farm registered
   This field has no invocation URL (forms[0].href) in its schema: This field has no invocation URL (forms[0].href) in its schema
-  sent: sent
-  Property: Property
-  set: set
-  Project changed to: Project changed to
-  for node: for node
-  "On PlatformIO The file is typically in ": "On PlatformIO The file is typically in "
-  "On ArduinoIDE the file is typically in ": "On ArduinoIDE the file is typically in "
+  This node has no actions in its schema.: This node has no actions in its schema.
+  Time On (s): Time On (s)
+  To: To
+  Topic: Topic
+  Topic and Value are required: Topic and Value are required
+  TVOC: TVOC
   Unable to find node: Unable to find node
   Unable to find project: Unable to find project
-  id: id
-  e.g. LiteFarm: e.g. LiteFarm
-  Enter topic: Enter topic
-  Enter value: Enter value
+  Unauthorized: Unauthorized
+  undefined: undefined
+  Unused: Unused
+  Upload: Upload
+  Username: Username
+  Value: Value
+  Value *: Value *
+  Voltage: Voltage
+  Waiting: Waiting
+  WiFi: WiFi
 FR:
   _nameAndFlag: Français 🇫🇷
   _thisLanguage: Francaise
+  (Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): (Max 4 Mo, .bin uniquement, généralement frugal-iot.ino.bin ou firmware.bin)
+  Action: Action
+  Action *: Action *
+  Add: Ajouter
+  Admin: Admin
+  All: Tous
+  API: API
   AQI: IQA  
   AQI500: IQA500  
+  Auth Token: Jeton d'authentification
+  Base URL: URL de base
+  Battery: Batterie
   Brightness: Luminosité  
   Built in LED: LED intégrée
+  buttons: boutons
+  Click to change project: Cliquez pour changer de projet
+  Click to sort: Cliquez pour trier
+  Climate: Climat
   close: fermer
   Color: Couleur  
   connected: connecté
   connecting: connexion
   Control: Contrôle
+  Cookie Name: Nom du cookie
   Dashboard: Tableau de bord
+  Data: Données
   Description: Description
+  ds18b20: ds18b20
+  e.g. LiteFarm: par ex. LiteFarm
   eCO2: eCO2
   Email: Email
   ENS AHT: ENS AHT  
+  Enter topic: Entrez le sujet
+  Enter value: Entrez la valeur
+  Existing OTA Files: Fichiers OTA existants
+  Farm ID *: ID de la ferme *
+  Farm registered: Ferme enregistrée
+  Farms: Fermes
+  File: Fichier
+  for node: pour le nœud
+  From: De
+  Frugal-IoT Username *: Nom d'utilisateur Frugal-IoT *
   Greater Than: Supérieur à
-  Humidity control: Contrôle de l'humidité
+  heating: chauffage
+  humidifier: humidificateur
   Humidity: Humidité
-  Hysterisis: Hystérésis
+  humidity: humidité
+  Humidity control: Contrôle de l'humidité
   Hysteresis: Hystérésis
+  hysteresis: hystérésis
+  Hysterisis: Hystérésis
+  hysterisis: hystérésis
+  id: id
+  If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': Si ce répertoire est invisible dans le sélecteur de fichiers, copiez le fichier ailleurs OU créez un alias vers le répertoire .pio sans point au début.
   Key: Clé
+  Last Seen: Dernière activité
   LED: LED
   Limit: Limite
   Load Cell: Cellule de charge
+  Loading schema...: Chargement du schéma...
+  Lower-case letters and numbers only, no spaces or punctuation: Lettres minuscules et chiffres uniquement, sans espaces ni ponctuation
+  Manual: Manuel
   Name: Nom 
   Never seen: Jamais vu
+  No farms registered for this organization yet.: Aucune ferme enregistrée pour cette organisation pour l'instant.
+  No nodes found for this farm's project(s).: Aucun nœud trouvé pour le(s) projet(s) de cette ferme.
+  No nodes found for this organization: Aucun nœud trouvé pour cette organisation
+  No organization: Aucune organisation
+  No organization selected: Aucune organisation sélectionnée
+  No OTA files uploaded yet.: Aucun fichier OTA téléversé pour l'instant.
+  No platforms registered yet.: Aucune plateforme enregistrée pour l'instant.
+  No projects added for this organization yet.: Aucun projet ajouté pour cette organisation pour l'instant.
+  No projects to display until organization selected: Aucun projet à afficher tant qu'une organisation n'est sélectionnée
+  Nobody added for this organization yet.: Personne n'a encore été ajouté pour cette organisation.
+  Node Actions: Actions du nœud
   Node Id: ID du nœud
   Node Name: Nom du nœud  
+  Nodes: Nœuds
+  Nodes in Farm: Nœuds dans la ferme
+  Nodes in Organization: Nœuds dans l'organisation
   Not selected: Non sélectionné
+  Note this is your organization - not the organizations whose devices you want to access.: Ceci est votre organisation - pas les organisations dont vous voulez accéder aux appareils.
   Now: Maintenant
+  now: maintenant
   offline: hors ligne
   On: Allumé
+  "On ArduinoIDE the file is typically in ": "Sur ArduinoIDE, le fichier se trouve généralement dans "
+  "On PlatformIO The file is typically in ": "Sur PlatformIO, le fichier se trouve généralement dans "
   Organization: Organisation
   OTA: OTA
+  OTA binary uploaded: Binaire OTA téléversé
+  OTA Key: Clé OTA
+  OTA Key or Device ID: Clé OTA ou ID de l’appareil
   Out: Sortie
+  out: sortie
   Password: Mot de passe
+  Permissions: Autorisations
   Phone or Whatsapp: Téléphone ou Whatsapp
+  Platform *: Plateforme *
+  Platform Name *: Nom de la plateforme *
+  Platform registered: Plateforme enregistrée
   Please login: Veuillez vous connecter
   Project: Projet
+  Project changed to: Projet changé en
+  Project ID: ID du projet
+  Project ID *: ID du projet *
+  Project Name: Nom du projet
+  Projects: Projets
+  Property: Propriété
+  Publish Message: Publier un message
+  "Published to ": "Publié sur "
+  QoS: QoS
   reconnect: reconnecter
   Register: Registre
+  Register a platform above before adding a farm.: Enregistrez une plateforme ci-dessus avant d'ajouter une ferme.
+  Register Farm: Enregistrer la ferme
+  Register Platform: Enregistrer la plateforme
+  Registered Platforms: Plateformes enregistrées
   Relay: Relais
+  Retain: Conserver
+  Schema: Schéma
+  Select: Sélectionner
+  Select a farm above to see its nodes.: Sélectionnez une ferme ci-dessus pour voir ses nœuds.
+  Select a node above to see actions.: Sélectionnez un nœud ci-dessus pour voir les actions.
+  Select a node above to send an action.: Sélectionnez un nœud ci-dessus pour envoyer une action.
+  Select an organization to continue.: Sélectionnez une organisation pour continuer.
+  Send: Envoyer
+  SEND: ENVOYER
+  sent: envoyé
   server: serveur
+  set: défini
+  Setpoint: consigne
   SHT: SHT
   SHT30: SHT30
   Sign In: Se connecter
+  Soil: Sol
+  Soil Moisture: Humidité du sol
+  Soil Temperature: Température du sol
   Sonoff R2 switch: Interrupteur Sonoff R2
   Sonoff switch: Interrupteur Sonoff
-  Submit: Soumettre
-  Temperature: Température
-  TVOC: COVT  
-  Unused: Inutilisé
-  undefined: indéfini
-  Username: Nom de User
-  Last Seen: Dernière activité
-  Soil: Sol
-  ds18b20: ds18b20
-  Soil Temperature: Température du sol
-  Soil Moisture: Humidité du sol
-  System: Système
-  WiFi: WiFi
   SSID: SSID
-  OTA binary uploaded: Binaire OTA téléversé
-  All: Tous
-  OTA Key or Device ID: Clé OTA ou ID de l’appareil
-  File: Fichier
-  Upload: Téléverser
-  Battery: Batterie
-  Voltage: Tension
-  Time On (s): Durée active (s)
-  heating: chauffage
-  humidifier: humidificateur
-  hysteresis: hystérésis
-  hysterisis: hystérésis
-  now: maintenant
+  Submit: Soumettre
+  System: Système
+  Temperature: Température
   temperature: température
-  humidity: humidité
-  out: sortie
-  Climate: Climat
-  Setpoint: consigne
-  Admin: Admin
-  Add: Ajouter
-  Manual: Manuel
-  buttons: boutons
-  Waiting: En attente
-  No projects to display until organization selected: Aucun projet à afficher tant qu'une organisation n'est sélectionnée
-  Nodes: Nœuds
-  API: API
-  Note this is your organization - not the organizations whose devices you want to access.: Ceci est votre organisation - pas les organisations dont vous voulez accéder aux appareils.
-  No organization: Aucune organisation
-  Project ID: ID du projet
-  Project Name: Nom du projet
-  Platform Name *: Nom de la plateforme *
-  Frugal-IoT Username *: Nom d'utilisateur Frugal-IoT *
-  Base URL: URL de base
-  Auth Token: Jeton d'authentification
-  Cookie Name: Nom du cookie
-  Register Platform: Enregistrer la plateforme
-  Platform *: Plateforme *
-  Farm ID *: ID de la ferme *
-  Project ID *: ID du projet *
-  Register Farm: Enregistrer la ferme
-  Schema: Schéma
-  From: De
-  To: À
-  Data: Données
-  Action *: Action *
-  Value *: Valeur *
-  Send: Envoyer
-  Topic: Sujet
-  Value: Valeur
-  Retain: Conserver
-  QoS: QoS
-  SEND: ENVOYER
-  Select: Sélectionner
-  OTA Key: Clé OTA
-  Select an organization to continue.: Sélectionnez une organisation pour continuer.
-  No OTA files uploaded yet.: Aucun fichier OTA téléversé pour l'instant.
-  Nobody added for this organization yet.: Personne n'a encore été ajouté pour cette organisation.
-  No projects added for this organization yet.: Aucun projet ajouté pour cette organisation pour l'instant.
-  No platforms registered yet.: Aucune plateforme enregistrée pour l'instant.
-  No farms registered for this organization yet.: Aucune ferme enregistrée pour cette organisation pour l'instant.
-  Register a platform above before adding a farm.: Enregistrez une plateforme ci-dessus avant d'ajouter une ferme.
-  Select a node above to see actions.: Sélectionnez un nœud ci-dessus pour voir les actions.
-  Select a node above to send an action.: Sélectionnez un nœud ci-dessus pour envoyer une action.
-  Loading schema...: Chargement du schéma...
-  This node has no actions in its schema.: Ce nœud n'a aucune action dans son schéma.
-  Select a farm above to see its nodes.: Sélectionnez une ferme ci-dessus pour voir ses nœuds.
-  No organization selected: Aucune organisation sélectionnée
-  (Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): (Max 4 Mo, .bin uniquement, généralement frugal-iot.ino.bin ou firmware.bin)
-  If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': Si ce répertoire est invisible dans le sélecteur de fichiers, copiez le fichier ailleurs OU créez un alias vers le répertoire .pio sans point au début.
-  Existing OTA Files: Fichiers OTA existants
-  Permissions: Autorisations
-  Projects: Projets
-  Publish Message: Publier un message
-  Nodes in Organization: Nœuds dans l'organisation
-  Registered Platforms: Plateformes enregistrées
-  Farms: Fermes
-  Nodes in Farm: Nœuds dans la ferme
-  Node Actions: Actions du nœud
-  Action: Action
-  No nodes found for this organization: Aucun nœud trouvé pour cette organisation
-  No nodes found for this farm's project(s).: Aucun nœud trouvé pour le(s) projet(s) de cette ferme.
-  Lower-case letters and numbers only, no spaces or punctuation: Lettres minuscules et chiffres uniquement, sans espaces ni ponctuation
-  Click to sort: Cliquez pour trier
-  Click to change project: Cliquez pour changer de projet
-  Topic and Value are required: Le sujet et la valeur sont requis
-  "Published to ": "Publié sur "
-  Platform registered: Plateforme enregistrée
-  Farm registered: Ferme enregistrée
   This field has no invocation URL (forms[0].href) in its schema: Ce champ n'a pas d'URL d'invocation (forms[0].href) dans son schéma
-  sent: envoyé
-  Property: Propriété
-  set: défini
-  Project changed to: Projet changé en
-  for node: pour le nœud
-  "On PlatformIO The file is typically in ": "Sur PlatformIO, le fichier se trouve généralement dans "
-  "On ArduinoIDE the file is typically in ": "Sur ArduinoIDE, le fichier se trouve généralement dans "
+  This node has no actions in its schema.: Ce nœud n'a aucune action dans son schéma.
+  Time On (s): Durée active (s)
+  To: À
+  Topic: Sujet
+  Topic and Value are required: Le sujet et la valeur sont requis
+  TVOC: COVT  
   Unable to find node: Impossible de trouver le nœud
   Unable to find project: Impossible de trouver le projet
-  id: id
-  e.g. LiteFarm: par ex. LiteFarm
-  Enter topic: Entrez le sujet
-  Enter value: Entrez la valeur
+  Unauthorized: Non autorisé
+  undefined: indéfini
+  Unused: Inutilisé
+  Upload: Téléverser
+  Username: Nom de User
+  Value: Valeur
+  Value *: Valeur *
+  Voltage: Tension
+  Waiting: En attente
+  WiFi: WiFi
 HI:
   _nameAndFlag: हिंदी 🇮🇳
   _thisLanguage: हिंदी
+  (Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): (अधिकतम 4MB, केवल .bin, सामान्यतः frugal-iot.ino.bin या firmware.bin)
+  Action: क्रिया
+  Action *: क्रिया *
+  Add: जोड़ें
+  Admin: एडमिन
+  All: सभी
+  API: एपीआई
   AQI: वायु गुणवत्ता सूचकांक  
   AQI500: वायु गुणवत्ता सूचकांक 500  
+  Auth Token: प्रमाणीकरण टोकन
+  Base URL: बेस यूआरएल
+  Battery: बैटरी
   Brightness: चमक  
   Built in LED: बिल्ट-इन एलईडी
+  buttons: बटन
+  Click to change project: प्रोजेक्ट बदलने के लिए क्लिक करें
+  Click to sort: क्रमबद्ध करने के लिए क्लिक करें
+  Climate: जलवायु
   close: बंद करें
   Color: रंग  
   connected: जुड़े हुए
   connecting: कनेक्ट हो रहा है
   Control: नियंत्रण
+  Cookie Name: कुकी नाम
   Dashboard: डैशबोर्ड
+  Data: डेटा
   Description: विवरण
+  ds18b20: ds18b20
+  e.g. LiteFarm: उदाहरण के लिए LiteFarm
   eCO2: ईसीओ2
   Email: ईमेल
   ENS AHT: ईएनएस एएचटी  
+  Enter topic: टॉपिक दर्ज करें
+  Enter value: मान दर्ज करें
+  Existing OTA Files: मौजूदा OTA फ़ाइलें
+  Farm ID *: फार्म आईडी *
+  Farm registered: फार्म पंजीकृत किया गया
+  Farms: फार्म
+  File: फ़ाइल
+  for node: नोड के लिए
+  From: से
+  Frugal-IoT Username *: Frugal-IoT उपयोगकर्ता नाम *
   Greater Than: इससे बड़ा
-  Humidity control: आर्द्रता नियंत्रण
+  heating: हीटिंग
+  humidifier: ह्यूमिडिफ़ायर
   Humidity: आर्द्रता
+  humidity: आर्द्रता
+  Humidity control: आर्द्रता नियंत्रण
   Hysteresis: हिस्टेरिसिस
+  hysteresis: हिस्टेरेसिस
   Hysterisis: हिस्टेरिसिस
+  hysterisis: हिस्टेरेसिस
+  id: आईडी
+  If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': यदि यह निर्देशिका फ़ाइल चयनकर्ता में दिखाई नहीं देती है, तो फ़ाइल को किसी अन्य स्थान पर कॉपी करें या बिना अग्रणी बिंदु के .pio निर्देशिका के लिए एक उपनाम बनाएं।
   Key: कुंजी
+  Last Seen: अंतिम बार देखा गया
   LED: एलईडी
   Limit: सीमा
   Load Cell: लोड सेल
+  Loading schema...: स्कीमा लोड हो रहा है...
+  Lower-case letters and numbers only, no spaces or punctuation: केवल छोटे अक्षर और अंक, कोई स्पेस या विरामचिह्न नहीं
+  Manual: मैनुअल
   Name: नाम
   Never seen: कभी नहीं देखा
+  No farms registered for this organization yet.: इस संगठन के लिए अभी तक कोई फार्म पंजीकृत नहीं है।
+  No nodes found for this farm's project(s).: इस फार्म के प्रोजेक्ट (प्रोजेक्ट्स) के लिए कोई नोड नहीं मिला।
+  No nodes found for this organization: इस संगठन के लिए कोई नोड नहीं मिला
+  No organization: कोई संगठन नहीं
+  No organization selected: कोई संगठन चयनित नहीं
+  No OTA files uploaded yet.: अभी तक कोई OTA फ़ाइल अपलोड नहीं की गई है।
+  No platforms registered yet.: अभी तक कोई प्लेटफ़ॉर्म पंजीकृत नहीं है।
+  No projects added for this organization yet.: इस संगठन के लिए अभी तक कोई प्रोजेक्ट नहीं जोड़ा गया है।
+  No projects to display until organization selected: संगठन चुने जाने तक कोई प्रोजेक्ट प्रदर्शित नहीं होगा
+  Nobody added for this organization yet.: इस संगठन के लिए अभी तक कोई नहीं जोड़ा गया है।
+  Node Actions: नोड क्रियाएँ
   Node ID: नोड आईडी
   Node Name: नोड नाम 
+  Nodes: नोड्स
+  Nodes in Farm: फार्म में नोड्स
+  Nodes in Organization: संगठन में नोड्स
   Not selected: चयनित नहीं
+  Note this is your organization - not the organizations whose devices you want to access.: ध्यान दें यह आपका संगठन है - वे संगठन नहीं जिनके उपकरणों तक आप पहुंचना चाहते हैं।
   Now: अभी
+  now: अभी
   offline: ऑफ़लाइन
   On: चालू
+  "On ArduinoIDE the file is typically in ": "ArduinoIDE पर फ़ाइल सामान्यतः यहाँ होती है "
+  "On PlatformIO The file is typically in ": "PlatformIO पर फ़ाइल सामान्यतः यहाँ होती है "
   Organization: संगठन
   OTA: ओटीए
+  OTA binary uploaded: OTA बाइनरी अपलोड की गई
+  OTA Key: OTA कुंजी
+  OTA Key or Device ID: OTA कुंजी या डिवाइस आईडी
   Out: आउट
+  out: आउट
   Password: पासवर्ड
+  Permissions: अनुमतियाँ
   Phone or Whatsapp: फ़ोन या व्हाट्सएप
+  Platform *: प्लेटफ़ॉर्म *
+  Platform Name *: प्लेटफ़ॉर्म का नाम *
+  Platform registered: प्लेटफ़ॉर्म पंजीकृत किया गया
   Please login: कृपया लॉगिन करें
   Project: परियोजना
+  Project changed to: प्रोजेक्ट बदलकर किया गया
+  Project ID: प्रोजेक्ट आईडी
+  Project ID *: प्रोजेक्ट आईडी *
+  Project Name: प्रोजेक्ट का नाम
+  Projects: प्रोजेक्ट्स
+  Property: प्रॉपर्टी
+  Publish Message: संदेश प्रकाशित करें
+  "Published to ": "पर प्रकाशित किया गया "
+  QoS: QoS
   reconnect: पुनः कनेक्ट करें
   Register: पंजीकरण करें
+  Register a platform above before adding a farm.: फार्म जोड़ने से पहले ऊपर एक प्लेटफ़ॉर्म पंजीकृत करें।
+  Register Farm: फार्म पंजीकृत करें
+  Register Platform: प्लेटफ़ॉर्म पंजीकृत करें
+  Registered Platforms: पंजीकृत प्लेटफ़ॉर्म
   Relay: रिले
+  Retain: बनाए रखें
+  Schema: स्कीमा
+  Select: चुनें
+  Select a farm above to see its nodes.: इसके नोड्स देखने के लिए ऊपर एक फार्म चुनें।
+  Select a node above to see actions.: क्रियाएँ देखने के लिए ऊपर एक नोड चुनें।
+  Select a node above to send an action.: क्रिया भेजने के लिए ऊपर एक नोड चुनें।
+  Select an organization to continue.: जारी रखने के लिए एक संगठन चुनें।
+  Send: भेजें
+  SEND: भेजें
+  sent: भेजा गया
   server: सर्वर
+  set: सेट किया गया
+  Setpoint: सेटपॉइंट
   SHT: एसएचटी
   SHT30: एसएचटी30
   Sign In: साइन इन करें
+  Soil: मिट्टी
+  Soil Moisture: मिट्टी की नमी
+  Soil Temperature: मिट्टी का तापमान
   Sonoff R2 switch: सोनऑफ R2 स्विच
   Sonoff switch: सोनऑफ स्विच
-  Submit: जमा करें
-  Temperature: तापमान
-  TVOC: टीवीओसी  
-  Unused: अप्रयुक्त
-  undefined: अपरिभाषित
-  Username: उपयोगकर्ता नाम
-  Last Seen: अंतिम बार देखा गया
-  Soil: मिट्टी
-  ds18b20: ds18b20
-  Soil Temperature: मिट्टी का तापमान
-  Soil Moisture: मिट्टी की नमी
-  System: सिस्टम
-  WiFi: वाई-फ़ाई
   SSID: SSID
-  OTA binary uploaded: OTA बाइनरी अपलोड की गई
-  All: सभी
-  OTA Key or Device ID: OTA कुंजी या डिवाइस आईडी
-  File: फ़ाइल
-  Upload: अपलोड
-  Battery: बैटरी
-  Voltage: वोल्टेज
-  Time On (s): चालू समय (से)
-  heating: हीटिंग
-  humidifier: ह्यूमिडिफ़ायर
-  hysteresis: हिस्टेरेसिस
-  hysterisis: हिस्टेरेसिस
-  now: अभी
+  Submit: जमा करें
+  System: सिस्टम
+  Temperature: तापमान
   temperature: तापमान
-  humidity: आर्द्रता
-  out: आउट
-  Climate: जलवायु
-  Setpoint: सेटपॉइंट
-  Admin: एडमिन
-  Add: जोड़ें
-  Manual: मैनुअल
-  buttons: बटन
-  Waiting: प्रतीक्षा में
-  No projects to display until organization selected: संगठन चुने जाने तक कोई प्रोजेक्ट प्रदर्शित नहीं होगा
-  Nodes: नोड्स
-  API: एपीआई
-  Note this is your organization - not the organizations whose devices you want to access.: ध्यान दें यह आपका संगठन है - वे संगठन नहीं जिनके उपकरणों तक आप पहुंचना चाहते हैं।
-  No organization: कोई संगठन नहीं
-  Project ID: प्रोजेक्ट आईडी
-  Project Name: प्रोजेक्ट का नाम
-  Platform Name *: प्लेटफ़ॉर्म का नाम *
-  Frugal-IoT Username *: Frugal-IoT उपयोगकर्ता नाम *
-  Base URL: बेस यूआरएल
-  Auth Token: प्रमाणीकरण टोकन
-  Cookie Name: कुकी नाम
-  Register Platform: प्लेटफ़ॉर्म पंजीकृत करें
-  Platform *: प्लेटफ़ॉर्म *
-  Farm ID *: फार्म आईडी *
-  Project ID *: प्रोजेक्ट आईडी *
-  Register Farm: फार्म पंजीकृत करें
-  Schema: स्कीमा
-  From: से
-  To: तक
-  Data: डेटा
-  Action *: क्रिया *
-  Value *: मान *
-  Send: भेजें
-  Topic: टॉपिक
-  Value: मान
-  Retain: बनाए रखें
-  QoS: QoS
-  SEND: भेजें
-  Select: चुनें
-  OTA Key: OTA कुंजी
-  Select an organization to continue.: जारी रखने के लिए एक संगठन चुनें।
-  No OTA files uploaded yet.: अभी तक कोई OTA फ़ाइल अपलोड नहीं की गई है।
-  Nobody added for this organization yet.: इस संगठन के लिए अभी तक कोई नहीं जोड़ा गया है।
-  No projects added for this organization yet.: इस संगठन के लिए अभी तक कोई प्रोजेक्ट नहीं जोड़ा गया है।
-  No platforms registered yet.: अभी तक कोई प्लेटफ़ॉर्म पंजीकृत नहीं है।
-  No farms registered for this organization yet.: इस संगठन के लिए अभी तक कोई फार्म पंजीकृत नहीं है।
-  Register a platform above before adding a farm.: फार्म जोड़ने से पहले ऊपर एक प्लेटफ़ॉर्म पंजीकृत करें।
-  Select a node above to see actions.: क्रियाएँ देखने के लिए ऊपर एक नोड चुनें।
-  Select a node above to send an action.: क्रिया भेजने के लिए ऊपर एक नोड चुनें।
-  Loading schema...: स्कीमा लोड हो रहा है...
-  This node has no actions in its schema.: इस नोड के स्कीमा में कोई क्रिया नहीं है।
-  Select a farm above to see its nodes.: इसके नोड्स देखने के लिए ऊपर एक फार्म चुनें।
-  No organization selected: कोई संगठन चयनित नहीं
-  (Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): (अधिकतम 4MB, केवल .bin, सामान्यतः frugal-iot.ino.bin या firmware.bin)
-  If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': यदि यह निर्देशिका फ़ाइल चयनकर्ता में दिखाई नहीं देती है, तो फ़ाइल को किसी अन्य स्थान पर कॉपी करें या बिना अग्रणी बिंदु के .pio निर्देशिका के लिए एक उपनाम बनाएं।
-  Existing OTA Files: मौजूदा OTA फ़ाइलें
-  Permissions: अनुमतियाँ
-  Projects: प्रोजेक्ट्स
-  Publish Message: संदेश प्रकाशित करें
-  Nodes in Organization: संगठन में नोड्स
-  Registered Platforms: पंजीकृत प्लेटफ़ॉर्म
-  Farms: फार्म
-  Nodes in Farm: फार्म में नोड्स
-  Node Actions: नोड क्रियाएँ
-  Action: क्रिया
-  No nodes found for this organization: इस संगठन के लिए कोई नोड नहीं मिला
-  No nodes found for this farm's project(s).: इस फार्म के प्रोजेक्ट (प्रोजेक्ट्स) के लिए कोई नोड नहीं मिला।
-  Lower-case letters and numbers only, no spaces or punctuation: केवल छोटे अक्षर और अंक, कोई स्पेस या विरामचिह्न नहीं
-  Click to sort: क्रमबद्ध करने के लिए क्लिक करें
-  Click to change project: प्रोजेक्ट बदलने के लिए क्लिक करें
-  Topic and Value are required: टॉपिक और मान आवश्यक हैं
-  "Published to ": "पर प्रकाशित किया गया "
-  Platform registered: प्लेटफ़ॉर्म पंजीकृत किया गया
-  Farm registered: फार्म पंजीकृत किया गया
   This field has no invocation URL (forms[0].href) in its schema: इस फ़ील्ड के स्कीमा में कोई इनवोकेशन यूआरएल (forms[0].href) नहीं है
-  sent: भेजा गया
-  Property: प्रॉपर्टी
-  set: सेट किया गया
-  Project changed to: प्रोजेक्ट बदलकर किया गया
-  for node: नोड के लिए
-  "On PlatformIO The file is typically in ": "PlatformIO पर फ़ाइल सामान्यतः यहाँ होती है "
-  "On ArduinoIDE the file is typically in ": "ArduinoIDE पर फ़ाइल सामान्यतः यहाँ होती है "
+  This node has no actions in its schema.: इस नोड के स्कीमा में कोई क्रिया नहीं है।
+  Time On (s): चालू समय (से)
+  To: तक
+  Topic: टॉपिक
+  Topic and Value are required: टॉपिक और मान आवश्यक हैं
+  TVOC: टीवीओसी  
   Unable to find node: नोड नहीं मिल सका
   Unable to find project: प्रोजेक्ट नहीं मिल सका
-  id: आईडी
-  e.g. LiteFarm: उदाहरण के लिए LiteFarm
-  Enter topic: टॉपिक दर्ज करें
-  Enter value: मान दर्ज करें
+  Unauthorized: अनधिकृत
+  undefined: अपरिभाषित
+  Unused: अप्रयुक्त
+  Upload: अपलोड
+  Username: उपयोगकर्ता नाम
+  Value: मान
+  Value *: मान *
+  Voltage: वोल्टेज
+  Waiting: प्रतीक्षा में
+  WiFi: वाई-फ़ाई
 ID:
   _nameAndFlag: Bahasa Indonesia 🇮🇩
   _thisLanguage: Bahasa Indonesia
+  (Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): (Maks 4MB, hanya .bin, biasanya frugal-iot.ino.bin atau firmware.bin)
+  Action: Aksi
+  Action *: Aksi *
+  Add: Tambah
+  Admin: Admin
+  All: Semua
+  API: API
   AQI: Indeks Kualitas Udara  
   AQI500: Indeks Kualitas Udara 500  
+  Auth Token: Token Autentikasi
+  Base URL: URL Dasar
+  Battery: Baterai
   Brightness: Kecerahan  
   Built in LED: LED bawaan
+  buttons: tombol
+  Click to change project: Klik untuk mengubah proyek
+  Click to sort: Klik untuk mengurutkan
+  Climate: Iklim
   close: tutup
   Color: Warna  
   connected: terhubung
   connecting: menghubungkan
   Control: Kontrol
+  Cookie Name: Nama Cookie
   Dashboard: Dasbor
+  Data: Data
   Description: Deskripsi
+  ds18b20: ds18b20
+  e.g. LiteFarm: misalnya LiteFarm
   eCO2: eCO2  
   Email: Email
   ENS AHT: ENS AHT  
+  Enter topic: Masukkan topik
+  Enter value: Masukkan nilai
+  Existing OTA Files: Berkas OTA yang Ada
+  Farm ID *: ID Farm *
+  Farm registered: Farm terdaftar
+  Farms: Farm
+  File: Berkas
+  for node: untuk node
+  From: Dari
+  Frugal-IoT Username *: Nama Pengguna Frugal-IoT *
   Greater Than: Lebih dari
-  Humidity control: Kontrol kelembapan
+  heating: pemanas
+  humidifier: pelembap
   Humidity: Kelembapan
+  humidity: kelembapan
+  Humidity control: Kontrol kelembapan
   Hysteresis: Histeresis
+  hysteresis: histeresis
   Hysterisis: Histeresis
+  hysterisis: histeresis
+  id: id
+  If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': Jika direktori ini tidak terlihat di pemilih berkas, salin berkas ke tempat lain ATAU buat alias ke direktori .pio tanpa titik di awal.
   Key: Kunci
+  Last Seen: Terakhir Dilihat
   LED: LED
   Limit: Batas
   Load Cell: Sel Beban
+  Loading schema...: Memuat skema...
+  Lower-case letters and numbers only, no spaces or punctuation: Hanya huruf kecil dan angka, tanpa spasi atau tanda baca
+  Manual: Manual
   Name: Nama
   Never seen: Belum pernah terlihat
+  No farms registered for this organization yet.: Belum ada farm yang terdaftar untuk organisasi ini.
+  No nodes found for this farm's project(s).: Tidak ada node ditemukan untuk proyek farm ini.
+  No nodes found for this organization: Tidak ada node ditemukan untuk organisasi ini
+  No organization: Tidak ada organisasi
+  No organization selected: Tidak ada organisasi yang dipilih
+  No OTA files uploaded yet.: Belum ada berkas OTA yang diunggah.
+  No platforms registered yet.: Belum ada platform yang terdaftar.
+  No projects added for this organization yet.: Belum ada proyek yang ditambahkan untuk organisasi ini.
+  No projects to display until organization selected: Tidak ada proyek untuk ditampilkan sampai organisasi dipilih
+  Nobody added for this organization yet.: Belum ada yang ditambahkan untuk organisasi ini.
+  Node Actions: Aksi Node
   Node ID: ID Node
   Node Name: Nama Node  
+  Nodes: Node
+  Nodes in Farm: Node dalam Farm
+  Nodes in Organization: Node dalam Organisasi
   Not selected: Tidak dipilih
+  Note this is your organization - not the organizations whose devices you want to access.: Ini adalah organisasi Anda - bukan organisasi yang perangkatnya ingin Anda akses.
   Now: Sekarang
+  now: sekarang
   offline: offline
   On: Hidup
+  "On ArduinoIDE the file is typically in ": "Di ArduinoIDE berkas biasanya ada di "
+  "On PlatformIO The file is typically in ": "Di PlatformIO berkas biasanya ada di "
   Organization: Organisasi
   OTA: OTA
+  OTA binary uploaded: Biner OTA diunggah
+  OTA Key: Kunci OTA
+  OTA Key or Device ID: Kunci OTA atau ID Perangkat
   Out: Keluar
+  out: keluar
   Password: Kata Sandi
+  Permissions: Izin
   Phone or Whatsapp: Telepon atau Whatsapp
+  Platform *: Platform *
+  Platform Name *: Nama Platform *
+  Platform registered: Platform terdaftar
   Please login: Silakan masuk
   Project: Proyek
+  Project changed to: Proyek diubah menjadi
+  Project ID: ID Proyek
+  Project ID *: ID Proyek *
+  Project Name: Nama Proyek
+  Projects: Proyek
+  Property: Properti
+  Publish Message: Publikasikan Pesan
+  "Published to ": "Dipublikasikan ke "
+  QoS: QoS
   reconnect: sambungkan kembali
   Register: Daftar
+  Register a platform above before adding a farm.: Daftarkan platform di atas sebelum menambahkan farm.
+  Register Farm: Daftarkan Farm
+  Register Platform: Daftarkan Platform
+  Registered Platforms: Platform Terdaftar
   Relay: Relay
+  Retain: Simpan
+  Schema: Skema
+  Select: Pilih
+  Select a farm above to see its nodes.: Pilih farm di atas untuk melihat node-nodenya.
+  Select a node above to see actions.: Pilih node di atas untuk melihat aksi.
+  Select a node above to send an action.: Pilih node di atas untuk mengirim aksi.
+  Select an organization to continue.: Pilih organisasi untuk melanjutkan.
+  Send: Kirim
+  SEND: KIRIM
+  sent: terkirim
   server: server
+  set: diatur
+  Setpoint: titik setel
   SHT: SHT
   SHT30: SHT30
   Sign In: Masuk
+  Soil: Tanah
+  Soil Moisture: Kelembapan Tanah
+  Soil Temperature: Suhu Tanah
   Sonoff R2 switch: Saklar Sonoff R2
   Sonoff switch: Saklar Sonoff
-  Submit: Kirim
-  Temperature: Suhu
-  TVOC: TVOC  
-  Unused: Tidak digunakan
-  undefined: tidak ditentukan
-  Username: Nama Pengguna
-  Last Seen: Terakhir Dilihat
-  Soil: Tanah
-  ds18b20: ds18b20
-  Soil Temperature: Suhu Tanah
-  Soil Moisture: Kelembapan Tanah
-  System: Sistem
-  WiFi: WiFi
   SSID: SSID
-  OTA binary uploaded: Biner OTA diunggah
-  All: Semua
-  OTA Key or Device ID: Kunci OTA atau ID Perangkat
-  File: Berkas
-  Upload: Unggah
-  Battery: Baterai
-  Voltage: Tegangan
-  Time On (s): Waktu Nyala (d)
-  heating: pemanas
-  humidifier: pelembap
-  hysteresis: histeresis
-  hysterisis: histeresis
-  now: sekarang
+  Submit: Kirim
+  System: Sistem
+  Temperature: Suhu
   temperature: suhu
-  humidity: kelembapan
-  out: keluar
-  Climate: Iklim
-  Setpoint: titik setel
-  Admin: Admin
-  Add: Tambah
-  Manual: Manual
-  buttons: tombol
-  Waiting: Menunggu
-  No projects to display until organization selected: Tidak ada proyek untuk ditampilkan sampai organisasi dipilih
-  Nodes: Node
-  API: API
-  Note this is your organization - not the organizations whose devices you want to access.: Ini adalah organisasi Anda - bukan organisasi yang perangkatnya ingin Anda akses.
-  No organization: Tidak ada organisasi
-  Project ID: ID Proyek
-  Project Name: Nama Proyek
-  Platform Name *: Nama Platform *
-  Frugal-IoT Username *: Nama Pengguna Frugal-IoT *
-  Base URL: URL Dasar
-  Auth Token: Token Autentikasi
-  Cookie Name: Nama Cookie
-  Register Platform: Daftarkan Platform
-  Platform *: Platform *
-  Farm ID *: ID Farm *
-  Project ID *: ID Proyek *
-  Register Farm: Daftarkan Farm
-  Schema: Skema
-  From: Dari
-  To: Sampai
-  Data: Data
-  Action *: Aksi *
-  Value *: Nilai *
-  Send: Kirim
-  Topic: Topik
-  Value: Nilai
-  Retain: Simpan
-  QoS: QoS
-  SEND: KIRIM
-  Select: Pilih
-  OTA Key: Kunci OTA
-  Select an organization to continue.: Pilih organisasi untuk melanjutkan.
-  No OTA files uploaded yet.: Belum ada berkas OTA yang diunggah.
-  Nobody added for this organization yet.: Belum ada yang ditambahkan untuk organisasi ini.
-  No projects added for this organization yet.: Belum ada proyek yang ditambahkan untuk organisasi ini.
-  No platforms registered yet.: Belum ada platform yang terdaftar.
-  No farms registered for this organization yet.: Belum ada farm yang terdaftar untuk organisasi ini.
-  Register a platform above before adding a farm.: Daftarkan platform di atas sebelum menambahkan farm.
-  Select a node above to see actions.: Pilih node di atas untuk melihat aksi.
-  Select a node above to send an action.: Pilih node di atas untuk mengirim aksi.
-  Loading schema...: Memuat skema...
-  This node has no actions in its schema.: Node ini tidak memiliki aksi dalam skemanya.
-  Select a farm above to see its nodes.: Pilih farm di atas untuk melihat node-nodenya.
-  No organization selected: Tidak ada organisasi yang dipilih
-  (Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): (Maks 4MB, hanya .bin, biasanya frugal-iot.ino.bin atau firmware.bin)
-  If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': Jika direktori ini tidak terlihat di pemilih berkas, salin berkas ke tempat lain ATAU buat alias ke direktori .pio tanpa titik di awal.
-  Existing OTA Files: Berkas OTA yang Ada
-  Permissions: Izin
-  Projects: Proyek
-  Publish Message: Publikasikan Pesan
-  Nodes in Organization: Node dalam Organisasi
-  Registered Platforms: Platform Terdaftar
-  Farms: Farm
-  Nodes in Farm: Node dalam Farm
-  Node Actions: Aksi Node
-  Action: Aksi
-  No nodes found for this organization: Tidak ada node ditemukan untuk organisasi ini
-  No nodes found for this farm's project(s).: Tidak ada node ditemukan untuk proyek farm ini.
-  Lower-case letters and numbers only, no spaces or punctuation: Hanya huruf kecil dan angka, tanpa spasi atau tanda baca
-  Click to sort: Klik untuk mengurutkan
-  Click to change project: Klik untuk mengubah proyek
-  Topic and Value are required: Topik dan Nilai wajib diisi
-  "Published to ": "Dipublikasikan ke "
-  Platform registered: Platform terdaftar
-  Farm registered: Farm terdaftar
   This field has no invocation URL (forms[0].href) in its schema: Bidang ini tidak memiliki URL pemanggilan (forms[0].href) dalam skemanya
-  sent: terkirim
-  Property: Properti
-  set: diatur
-  Project changed to: Proyek diubah menjadi
-  for node: untuk node
-  "On PlatformIO The file is typically in ": "Di PlatformIO berkas biasanya ada di "
-  "On ArduinoIDE the file is typically in ": "Di ArduinoIDE berkas biasanya ada di "
+  This node has no actions in its schema.: Node ini tidak memiliki aksi dalam skemanya.
+  Time On (s): Waktu Nyala (d)
+  To: Sampai
+  Topic: Topik
+  Topic and Value are required: Topik dan Nilai wajib diisi
+  TVOC: TVOC  
   Unable to find node: Tidak dapat menemukan node
   Unable to find project: Tidak dapat menemukan proyek
-  id: id
-  e.g. LiteFarm: misalnya LiteFarm
-  Enter topic: Masukkan topik
-  Enter value: Masukkan nilai
+  Unauthorized: Tidak sah
+  undefined: tidak ditentukan
+  Unused: Tidak digunakan
+  Upload: Unggah
+  Username: Nama Pengguna
+  Value: Nilai
+  Value *: Nilai *
+  Voltage: Tegangan
+  Waiting: Menunggu
+  WiFi: WiFi
 `);
 
 // Initialise from ?lang= immediately so language-picker renders with the correct selection
@@ -2654,7 +2658,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     const valueField = this.state.elements.action_value;
     let value;
     if (field.dataSchema.type === 'boolean') {
-      value = valueField.checked;
+      value = valueField.checked ? 1 : 0;
     } else if (field.dataSchema.type === 'number' || field.dataSchema.type === 'integer') {
       value = Number(valueField.value);
     } else {
