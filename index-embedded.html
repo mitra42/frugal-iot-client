@@ -24,8 +24,10 @@
 <body>
 <h1>This is an example of embedding a widget in a page</h1>
 <div style="display:none">
-    <!-- every embedded page needs a mqtt-client, it sets up the MQTT connection to the broker -->
-    <mqtt-client server="wss://frugaliot.naturalinnovation.org/wss"></mqtt-client>
+    <!-- every embedded page needs a mqtt-client, it sets up the MQTT connection to the broker.
+         username is the organization whose topics this page displays, password its mqtt_password
+         from that organization's config file on the server - it will not connect without them. -->
+    <mqtt-client server="wss://frugaliot.naturalinnovation.org/wss" username="dev" password="public"></mqtt-client>
 </div>
 <div style="float:right;border:2px,solid,blue;width:50%">
     <!-- this is a simple display widget - in this case a meter bar -->

@@ -144,6 +144,7 @@ _adapters._date.override({
 // TODO mqtt_client should be inside the MqttClient class
 // https://github.com/mitra42/frugal-iot-client/issues/41
 let mqtt_client; // MQTT client - talking to server
+let mqtt_client_username; // Organization mqtt_client was connected as, so a change of organization can be spotted
 // TODO mqtt_subscriptions should be inside the MqttClient class but its non trivial as currently have no way to find that class
 let mqtt_subscriptions = [];   // [{topic, cb(message)}]
 let unique_id = 1; // Just used as a label for auto-generated elements
@@ -206,13 +207,31 @@ function unshiftUnique(arr, v) {
 function mqtt_subscribe(topic, cb) { // cb(message)
   console.log("Subscribing to ", topic);
   mqtt_subscriptions.push({topic, cb});
-  if (mqtt_client.connected) {
+  // There may be no client yet - it only connects once it knows which organization's credentials to use
+  if (mqtt_client && mqtt_client.connected) {
     mqtt_client.subscribe(topic, (err) => {
       if (err) console.error(err);
     })
   } else {
     console.log("Delaying till connected"); // It will resubscribe from "subscriptions"
   }
+}
+// Drop every subscription belonging to an organization - all its topics start with the organization id.
+// Called when switching organization, both to tell the broker (if still connected) and so that the
+// connection made for the new organization does not resubscribe to the old organization's topics.
+function mqtt_unsubscribe_organization(org) {
+  if (!org) { return; }
+  const prefix = `${org}/`;
+  mqtt_subscriptions = mqtt_subscriptions.filter((s) => {
+    if (!s.topic.startsWith(prefix)) { return true; } // e.g. "$SYS/#" belongs to no organization
+    console.log("Unsubscribing from ", s.topic);
+    if (mqtt_client && mqtt_client.connected) {
+      mqtt_client.unsubscribe(s.topic, (err) => {
+        if (err) console.error(err);
+      });
+    }
+    return false;
+  });
 }
 // See https://www.chartjs.org/docs/latest/samples/line/segments.html
 const skipped = (ctx, value) => ctx.p0.skip || ctx.p1.skip ? value : undefined;
@@ -1801,27 +1820,44 @@ class MqttTopicNode extends MqttTopic {
   }
 }
 
-/* Manages a connection to a MQTT broker */
+/* Manages a connection to a MQTT broker
+   The broker credentials are per-organization - username is the organization id and password its
+   mqtt_password, both from /config.json (or given as attributes, e.g. by an embedded page).
+   Nothing is connected until they are known, which for the dashboard means until an organization
+   has been chosen - see MqttWrapper.setClientCredentials.
+   TODO-security this gives anyone with READ on an organization its full broker credentials, i.e. the
+   ability to publish, so web-level read-only is not broker-level read-only.
+*/
 class MqttClient extends HTMLElementExtended {
   // This appears to be reconnecting properly, but if not see mqtt (library I think)'s README
-  static get observedAttributes() { return ['server']; }
+  static get observedAttributes() { return ['server', 'username', 'password']; }
 
   setStatus(text) {
     this.state.status = text;
     this.renderAndReplace();
     // TODO Could maybe just sent textContent of a <span> sitting in a slot ?
   }
-  shouldLoadWhenConnected() { return !!this.state.server; } /* Only load when has a server specified */
+  /* Only load when know the server and which organization's credentials to use */
+  shouldLoadWhenConnected() { return !!(this.state.server && this.state.username && this.state.password); }
 
-  // Called from connectedCallBack when MqttWrapper.appendClient called to add MqttClient
+  // Called from connectedCallBack when MqttWrapper.appendClient called to add MqttClient,
+  // and again from attributeChangedCallback when the credentials arrive or the organization changes.
   loadContent() {
+    if (mqtt_client && (mqtt_client_username !== this.state.username)) {
+      // Organization changed, and each has its own broker credentials, so the connection cannot be reused.
+      console.log("Reconnecting to broker as", this.state.username);
+      mqtt_unsubscribe_organization(mqtt_client_username); // Leave the old organization's topics behind
+      mqtt_client.end(true);
+      mqtt_client = undefined;
+    }
     if (!mqtt_client) {
       // See https://stackoverflow.com/questions/69709461/mqtt-websocket-connection-failed
       this.setStatus("connecting");
+      mqtt_client_username = this.state.username;
       mqtt_client = mqtt.connect(this.state.server, {
         connectTimeout: 5000,
-        username: "public", //TODO-30 parameterize this - read config.json then use password from there
-        password: "public",
+        username: this.state.username, // Organization id
+        password: this.state.password, // That organization's mqtt_password
         // Remainder do not appear to be needed
         //hostname: "127.0.0.1",
         //port: 9012, // Has to be configured in mosquitto configuration
@@ -1884,9 +1920,13 @@ class MqttClient extends HTMLElementExtended {
         el('summary', {}, [
           el('span', {class: 'status', textContent: this.state.status}),
             ]),
-        el('span',{textContent: "server"}),
+        el('span',{textContent: "server", i8n: false}),
         el('span',{textContent: ": "}),
-        el('span',{textContent: this.state.server}),
+        el('span',{textContent: this.state.server, i8n: false}),
+        el('br'),
+        el('span',{textContent: "organization", i8n: false}),
+        el('span',{textContent: ": "}),
+        el('span',{textContent: this.state.username, i8n: false}), // Username on the broker is the organization id
       ]),
     ];
   }
@@ -2257,6 +2297,10 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
 
     if (!topic || !value) {
       this.message("Topic and Value are required");
+      return;
+    }
+    if (!mqtt_client) { // Not connected until an organization is chosen, as its credentials are needed
+      this.message("Choose an organization first, so there is a broker connection to publish on");
       return;
     }
 
@@ -3938,6 +3982,7 @@ class MqttWrapper extends HTMLElementExtended {
   onOrganization(e) {
     this.state.organization = e.target.value;
     this.setAttribute('organization', this.state.organization);
+    this.setClientCredentials(); // Different organization means different broker credentials
     this.state.project = null;
     if (this.state.projectEl) {
       this.removeChild(this.state.projectEl);
@@ -3955,12 +4000,30 @@ class MqttWrapper extends HTMLElementExtended {
     }
   }
   appendClient() {
-    // TODO-security at some point we'll need one client per org and to use username and password from config.yaml which by then should be in config.d
-    // TODO-security but that should be trivial if only ever display one org
+    // The client does not connect until setClientCredentials tells it which organization to connect as,
+    // so append it whether or not an organization has been chosen yet - it also shows connection status.
     // noinspection JSUnresolvedReference
-    this.append(
-      el('mqtt-client', {slot: 'client', server: server_config.mqtt.broker}) // typically "wss://frugaliot.naturalinnovation.org/wss"
-    )
+    this.state.elements.client = el('mqtt-client', {slot: 'client', server: server_config.mqtt.broker}); // typically "wss://frugaliot.naturalinnovation.org/wss"
+    this.append(this.state.elements.client);
+    this.setClientCredentials(); // In case the organization was already known, e.g. from the URL or a markup attribute
+  }
+  // Give mqtt-client the broker credentials of the currently selected organization - each organization
+  // has its own account on the broker. Called whenever the organization is or becomes known; connecting
+  // (or reconnecting as another organization) is then up to MqttClient.loadContent.
+  setClientCredentials() {
+    const org = this.state.organization;
+    const clientEl = this.state.elements.client;
+    if (!clientEl || !org) { return; }
+    // noinspection JSUnresolvedReference
+    const orgConfig = server_config.organizations[org];
+    if (!orgConfig || !orgConfig.mqtt_password) {
+      this.message(`No broker password for organization ${org}`); // Cannot subscribe to anything without it
+      return;
+    }
+    // Password first: each setAttribute reconsiders connecting, and it is the change of username that
+    // triggers a reconnect, so the new password must already be in place when that happens.
+    clientEl.setAttribute('password', orgConfig.mqtt_password);
+    clientEl.setAttribute('username', org);
   }
   // Creates the MqttTopicProject and (unless headless) its paired MqttProject DOM element.
   // Always returns the MqttTopicProject. appender() accesses the element via mt.element when needed.
