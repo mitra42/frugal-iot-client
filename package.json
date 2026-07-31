@@ -25,7 +25,6 @@
   "license": "MIT",
   "main": "webcomponents.js",
   "name": "frugal-iot-client",
-  "private": true,
   "repository": "https://github.com/mitra42/frugal-iot-client",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
