@@ -269,3 +269,24 @@ div.mqtt-text {
     flex: 1 1 auto;
 }
 
+/* USB flashing - stylesheet is loaded inside the mqtt-flash shadow root, so match the wrapper div */
+.mqtt-flash {
+    .flash-status {
+        margin: 0.5em 0;
+        p { margin: 0.2em 0; }
+    }
+    .warning { color: #b35c00; font-weight: bold; }
+    .error { color: #b30000; font-weight: bold; }
+    .flash-log {
+        background: #f4f4f4;
+        border: 1px solid #ccc;
+        padding: 0.5em;
+        max-height: 15em;
+        overflow: auto;
+        white-space: pre-wrap;
+        font-size: small;
+    }
+    progress { width: 100%; }
+    button { margin-right: 0.5em; }
+}
+

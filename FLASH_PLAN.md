@@ -114,8 +114,14 @@ Flash mode (`qio` vs `dio`) is **not detectable** from the chip, and the bootloa
 removes the variable entirely.
 
 Pass `flashSize: "detect"` (a legal `FlashSizeValues` member) and let esptool-js patch the bootloader
-header from the real chip, rather than threading a detected string through for that purpose.
-`detectFlashSize()` is still needed separately, to *choose the partition table*.
+header from the real chip, rather than threading a detected string through for that purpose. The
+capacity byte is still read separately, to *choose the partition table*.
+
+Pass **`flashMode: "keep"` and `flashFreq: "keep"`** rather than naming `dio`/`80m` explicitly. The
+shipped bootloaders are already built `dio_80m`, so `keep` preserves exactly the intended settings —
+and it matters on ESP8266, where the *application* image sits at the bootloader offset and so would
+itself be rewritten with mode/frequency settings its flash may not support. Only the size gets
+patched.
 
 ### Octal (OPI) flash is not supported — detect and refuse
 
@@ -148,8 +154,8 @@ already covered by *which OTA file the user picks*.
 
 ### Flash-size detection is chip-agnostic, including S3
 
-`DETECTED_FLASH_SIZES` is defined **once**, on the base ROM class — no per-chip override anywhere in
-the bundle — so an S3 takes exactly the same path as a C3. The table maps the JEDEC capacity byte:
+`DETECTED_FLASH_SIZES` is defined **once** in the whole bundle, on `ESPLoader` itself rather than on
+any ROM class — so an S3 takes exactly the same path as a C3. The table maps the JEDEC capacity byte:
 
 ```
 0x16 → 4MB    0x17 → 8MB    0x18 → 16MB   0x19 → 32MB   0x1A → 64MB   0x1B → 128MB
@@ -167,6 +173,11 @@ it is a sanity check, not the primary source.
 is unrecognized. That is exactly the case that would brick a 2 MB board — and on an S3 it is also the
 likely signature of unsupported octal flash. Always display the detected size, and when it came from
 the fallback rather than a real table match, require explicit confirmation instead of proceeding.
+
+Because distinguishing a real 4 MB from the fallback 4 MB requires the table, and because reading a
+property off a minified bundle is a fragile dependency, the client keeps its own copy of the
+capacity-byte map (`DetectedFlashSizes`) and derives both the size and the *was-it-guessed* flag from
+that. It is a stable JEDEC convention, so the duplication is cheap.
 
 ---
 
@@ -501,12 +512,19 @@ MD5/304 logic that would return `304` instead of bytes.
 
 ### 2. No change needed: serving `base/`
 
-The `express.static(config.server.publicdir)` catch-all already serves the client directory, so
-`/base/**` works as soon as the files are committed.
+The client directory is `config.server.htmldir`, served by `express.static` under **`/dashboard`** —
+not by the `publicdir` catch-all, which is a different directory. So the base files are reachable at
+`/dashboard/base/...`, and the client must therefore use a **relative** URL (`./base`), exactly as
+`CssUrl = './frugaliot.css'` already does. An absolute `/base/...` would 404.
 
-One caveat: that handler sets `immutable, maxAge: 1 day`. If a base binary is ever corrected in place,
-browsers will hold the stale copy for a day. Cheap fix — carry a version in `boards.json` and append
-it as a query string when fetching the parts.
+Two caveats:
+
+- That handler sets `immutable, maxAge: 1 day`. If a base binary is ever corrected in place, browsers
+  hold the stale copy for a day. Cheap fix — carry the `version` from `boards.json` as a query string
+  when fetching the parts.
+- A relative URL means the flasher only works on a page served from the client directory. That is
+  fine for the OTA tab, but the flasher could not be dropped into an externally hosted
+  `index-embedded.html` without switching to an absolute base URL.
 
 ### 3. Verify only: no restrictive `Permissions-Policy`
 
@@ -523,13 +541,31 @@ an iframe, the *parent* page needs `allow="serial"` on the iframe.
 
 ## Phasing
 
-| Phase | Delivers | Server change |
-|---|---|---|
-| 1 | `MqttFlash` element; local `.bin`; chip + flash-size detection; app-only flash at the detected app-slot offset; progress + esptool log | none |
-| 2 | Base bundles committed for C3/S2/S3; partition-table parsing; full provision in one `writeFlash`; all four refusal checks | none |
-| 3 | Read-back detection of provision vs. app-only, with the override button; serial boot log streamed after reset | none |
-| 4 | ⚡ on the OTA file list — flash a server-hosted binary | `/ota_get` route |
-| 5 | *(optional)* serial config hand-off, needs a firmware addition | none |
+| Phase | Delivers | Server change | Status |
+|---|---|---|---|
+| 1 | `MqttFlash` element; local `.bin`; chip + flash-size detection; app-only flash at the detected app-slot offset; progress + esptool log | none | built |
+| 2 | Base bundles committed for C3/S2/S3; partition-table parsing; full provision in one `writeFlash`; all four refusal checks | none | built |
+| 3 | Read-back detection of provision vs. app-only, with the override button; serial boot log streamed after reset | none | built |
+| 4 | ⚡ on the OTA file list — flash a server-hosted binary | `/ota_get` route | built |
+| 5 | *(optional)* serial config hand-off, needs a firmware addition | none | not started |
+
+### What is verified, and what still needs a board
+
+Verified without hardware: partition tables round-trip to the intended geometry (app slot identical in
+all three schemes, each table summing exactly to its flash size); parsing of real `partitions.bin`
+files, of erased flash, and of garbage; littlefs superblock detection; `imageChipId`; `boards.json`
+internally consistent and every referenced file present; base files served correctly at
+`/dashboard/base/...` and byte-identical over HTTP; `/ota_get` returns 401 unauthenticated.
+
+**Everything that touches a board is untested** — `writeFlash`, the provision/app-only read-back,
+`after("hard_reset")`, and the boot-log reopen have never run against real silicon. Treat the first
+run as a bring-up exercise, ideally on a board you are willing to re-flash over USB by other means.
+The specific things most likely to need adjustment:
+
+- whether `writeFlash` tolerates the omitted `calculateMD5Hash` (see Client change 7)
+- whether 921600 baud is reliable on CH340 adapters, or the default should drop to 460800
+- whether the 20-second boot-log window is long enough to see WiFi come up
+- whether unsupported octal flash on an S3 really does surface as the capacity-byte fallback
 
 ---
 

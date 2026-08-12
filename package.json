@@ -11,6 +11,7 @@
     "chart.js": "^4.5.1",
     "csv-parse": "^5.6.0",
     "dial-gauge": "^0.1.5",
+    "esptool-js": "^0.6.1",
     "html-element-extended": "^0.1.6",
     "js-yaml": "^4.2.0",
     "luxon": "^3.7.2",
