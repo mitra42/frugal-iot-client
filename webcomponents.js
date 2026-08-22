@@ -1541,20 +1541,38 @@ class MqttTopic {
         }
       })
       .then(csvData => {
+        // The server appends to these files as readings arrive, so one can end mid-line if the
+        // power was cut while it was being written - a truncated number, a missing column, or an
+        // opening quote with nothing after it. These options make the parser drop whatever is
+        // damaged and return the rest, instead of rejecting the whole file, which would lose a
+        // day of readings over one bad byte at the end.
         // noinspection JSCheckFunctionSignatures
-        parse(csvData, (err, newdata) => {
+        parse(csvData, {relax_quotes: true, relax_column_count: true, skip_records_with_error: true}, (err, newdata) => {
           if (err) {
-            console.error(err); // Intentionally not passing error back
-          } else if (newdata.length === 0) {
-            XXX(["No data in", filepath]);
+            console.error("Could not read", filepath, err.message);
+            this.markNoDataForDay();
+            cb(null); // Not an error to the caller - one unreadable day should not stop the rest
           } else {
-            console.log(`retrieved ${newdata.length} records for ${this.topicPath}`);
-            let newprocdata = newdata.map(r => {
-              return {
-                time: parseInt(r[0]),
-                value: this.valueFromText(r[1])  // TODO-72 need function for this as presuming its float
-              };
-            });
+            // A record can survive the parse but still be unusable - a torn last line often leaves
+            // just a timestamp, or half of one
+            let newprocdata = newdata
+              .filter(r => (r.length >= 2) && !isNaN(parseInt(r[0])))
+              .map(r => {
+                return {
+                  time: parseInt(r[0]),
+                  value: this.valueFromText(r[1])  // TODO-72 need function for this as presuming its float
+                };
+              });
+            if (newdata.length !== newprocdata.length) {
+              console.warn(`ignored ${newdata.length - newprocdata.length} damaged record(s) in ${filepath}`);
+            }
+            if (newprocdata.length === 0) {
+              XXX(["No data in", filepath]);
+              this.markNoDataForDay();
+              cb(null); // Nothing to add, but the caller still has to be told this one is finished
+              return;
+            }
+            console.log(`retrieved ${newprocdata.length} records for ${this.topicPath}`);
             let olddata = this.data.splice(0, Infinity);
             for (let dd of newprocdata) {
               this.data.push(dd);
@@ -1576,16 +1594,23 @@ class MqttTopic {
       })
       .catch(ignored => {
         // Did not get any data, draw dotted line from beginning of day to now (and end of prev data to start this day)
-        let t = new Date(this.graph.state.dateFrom) // Have to explicitly copy it else pointer
-          .setUTCHours(0,0,0,0)
-          .valueOf();
-        this.data.splice(0, 0, {
-          time: t,
-          value: null,
-        });
+        this.markNoDataForDay();
         //console.error(err); - dont need error - the fetch will also report it, so it is just a repeat.
         cb(null); // Dont break caller
       }); // May want to report filename here
+  }
+
+  // Nothing usable for this day, whether the file was missing, empty or damaged. A null point at
+  // the start of the day makes the graph draw a dotted line across the gap rather than joining the
+  // days either side as though nothing were missing.
+  markNoDataForDay() {
+    let t = new Date(this.graph.state.dateFrom) // Have to explicitly copy it else pointer
+      .setUTCHours(0,0,0,0)
+      .valueOf();
+    this.data.splice(0, 0, {
+      time: t,
+      value: null,
+    });
   }
 
   removeDataBefore(date) { // note date may be null
