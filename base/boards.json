@@ -1,7 +1,7 @@
 {
-  "version": 1,
-  "coreVersion": "esp32-3.3.11",
-  "comment": "Base bundles for USB flashing - see FLASH_PLAN.md. Bootloaders are dio_80m and are flash-size independent (esptool patches the header at write time). Partition tables are chip-independent. boot_app0.bin is universal.",
+  "version": 7,
+  "coreVersion": "pioarduino framework-arduinoespressif32 3.3.9",
+  "comment": "Base bundles for USB flashing - see FLASH_PLAN.md. Bootloaders MUST come from the same framework the firmware is built against: generated from pioarduino framework-arduinoespressif32-libs/<chip>/bin/bootloader_qio_80m.elf via 'esptool elf2image --flash-mode dio --flash-freq 80m --flash-size 4MB'. The C3 one is byte-identical to a real pioarduino build; S2/S3 use the same recipe but are unverified against a reference build. The Arduino IDE core's dio_80m ELF produces a DIFFERENT bootloader that did not work. Flash-size independent (esptool patches the header at write time). Partition tables are chip-independent. boot_app0.bin is universal.",
   "otadata": "boot_app0.bin",
   "partitionTableOffset": 32768,
   "bootloaderByChip": {
@@ -21,5 +21,7 @@
     "frugal_8mb": "partitions/frugal_8mb.bin",
     "frugal_16mb": "partitions/frugal_16mb.bin"
   },
-  "wholeImageChips": ["ESP8266"]
+  "wholeImageChips": [
+    "ESP8266"
+  ]
 }

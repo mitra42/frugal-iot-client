@@ -113,9 +113,16 @@ Flash mode (`qio` vs `dio`) is **not detectable** from the chip, and the bootloa
 `dio` works on every board (`qio` is merely faster), so shipping only the `dio_80m` bootloader
 removes the variable entirely.
 
-Pass `flashSize: "detect"` (a legal `FlashSizeValues` member) and let esptool-js patch the bootloader
-header from the real chip, rather than threading a detected string through for that purpose. The
-capacity byte is still read separately, to *choose the partition table*.
+Pass `flashSize` as the **literal detected size string** (`"4MB"`), not `"detect"`. `"detect"` is a
+legal `FlashSizeValues` member but *not* on this code path: `writeFlash` calls `flashSizeBytes()`,
+which only parses `"KB"`/`"MB"` substrings and returns `-1` for anything else. Every file then fails
+`data.length + address > -1`, so `writeFlash` throws `File 1 doesn't fit in the available flash`
+before erasing or writing a single byte — a silent-looking failure with no board activity at all.
+(`parseFlashSizeArg()` would likewise reject it, since `chip.FLASH_SIZES` only has `1MB`…`128MB`.)
+
+Passing the real size is better than the other legal option, `"keep"`: `"keep"` skips the bounds check
+entirely, whereas a literal size both patches the header correctly and gives a free
+does-it-fit-in-flash guard on top of our own app-partition check.
 
 Pass **`flashMode: "keep"` and `flashFreq: "keep"`** rather than naming `dio`/`80m` explicitly. The
 shipped bootloaders are already built `dio_80m`, so `keep` preserves exactly the intended settings —
@@ -549,6 +556,94 @@ an iframe, the *parent* page needs `allow="serial"` on the iframe.
 | 4 | ⚡ on the OTA file list — flash a server-hosted binary | `/ota_get` route | built |
 | 5 | *(optional)* serial config hand-off, needs a firmware addition | none | not started |
 
+### The bootloader must come from the same framework as the firmware
+
+**This was the root cause of a long debug and is the single most important thing on this page.**
+
+Base bootloaders must be generated from the framework the firmware is *built against*, not from
+whatever ESP32 core happens to be installed. Frugal IoT builds with **pioarduino's**
+platform-espressif32, so:
+
+```bash
+esptool --chip esp32c3 elf2image --flash-mode dio --flash-freq 80m --flash-size 4MB \
+  -o base/bootloader/esp32c3.bin \
+  ~/.platformio/packages/framework-arduinoespressif32-libs/esp32c3/bin/bootloader_qio_80m.elf
+```
+
+Note it is the **`qio_80m` ELF with the header patched to DIO** — that is what pioarduino does, and the
+result is byte-identical to `.pio/build/<env>/bootloader.bin`. The Arduino IDE core's `dio_80m` ELF
+produces a *different* binary (18688 vs 19520 bytes) which does not work.
+
+**The symptom is deeply misleading.** With a mismatched bootloader the board boots, the app runs, and
+sensors, WiFi scanning and MQTT queuing all work — but LittleFS fails:
+
+```
+E esp_littlefs: lfs.c:1383:error: Corrupted dir pair at {0x0, 0x1}
+E esp_littlefs: mount failed,  (-84)
+E [LittleFS.cpp:107] format(): Formatting LittleFS failed! Error: -1
+```
+
+Nothing points at the bootloader. Hours went into littlefs disk formats before spotting it.
+
+**The diagnostic that finds it in seconds:** compare the ROM banner's second-stage loader sizes
+between a known-good IDE flash and one of ours.
+
+| | |
+|---|---|
+| after an IDE flash (works) | `load:0x3fcd5820,len:0x110c` `len:0xb54` `len:0x2f8c` |
+| after ours, wrong bootloader | `load:0x3fcd5820,len:0x1010` `len:0x9f4` `len:0x2ea4` |
+
+Different lengths mean different bootloaders. Always check this first when a provisioned board
+misbehaves in any way.
+
+### The filesystem partition is left erased — the firmware formats it
+
+Provisioning writes **four** regions (bootloader, partition table, otadata, app) and deliberately does
+*not* touch the filesystem partition. `LittleFS.begin(true)` formats it on first boot, and the log
+reads:
+
+```
+LittleFS E esp_littlefs: ... Corrupted dir pair at {0x0, 0x1}   <- expected, partition is erased
+E esp_littlefs: mount failed,  (-84)                             <- expected
+[E] disableCore0WDT()                                            <- format() running
+initialization done.                                             <- formatted and mounted
+Creating:/frugal_iot ... Creating:/mqtt                          <- directories created
+```
+
+Those first two error lines are normal on a freshly provisioned board and are **not** a fault.
+
+This was not obvious. An earlier iteration shipped pre-formatted blank images because `format()` was
+failing with `-1` — but that turned out to be the bootloader mismatch above, and once the bootloader
+was right the firmware formatted its own partition without help. The machinery was removed. Recorded
+in case it is ever needed again (an **ESP8266** would need it, since its `ESPFS.begin()` takes no
+format-on-fail argument):
+
+- pioarduino's builder uses **`littlefs-python`**, not `mklittlefs`, with
+  `read_size=1, prog_size=1, cache_size=block_size, lookahead_size=32, block_cycles=500, name_max=64,
+  disk_version=2.1`. `prog_size=1` is the critical one — other tools pad metadata commits to 128 or
+  256 bytes, whose CRCs then fail to validate and produce `Corrupted dir pair`.
+- `mklittlefs` 0.2.3 emits disk 2.0 with 256-byte padding; `@wasm-os/mklfs` 0.1.0 emits disk 2.1 but
+  `name_max` 255, over `CONFIG_LITTLEFS_OBJ_NAME_LEN=64`, with no wasm export to change it. **Neither
+  produces a mountable image.**
+- A blank filesystem is 8 KB whatever the partition size — only the superblock pair has content.
+
+### Other bring-up fixes worth remembering
+
+- **`flashSize` must be a literal size string.** `writeFlash`'s `flashSizeBytes()` only parses
+  `"KB"`/`"MB"`; `'detect'` becomes `-1` and every file fails its fits-in-flash check, throwing before
+  a single byte is written.
+- **Never let a failed diagnostic read default to erasing.** `deviceInspect` originally treated an
+  unreadable board as "needs provisioning", which silently erased a working board.
+- **`readFlash` waits `FLASH_READ_TIMEOUT` = 100 s** for its first packet. Bound every read or Connect
+  appears to hang.
+- **`eraseAll` is silently ignored unless the stub is running** (`IS_STUB && eraseAll`).
+- **`base/` is served `immutable, maxAge: 1 day`.** `boards.json` must be fetched with
+  `cache: 'no-cache'` and the part binaries cache-busted with its `version`, or edits are invisible
+  for a day and you debug a stale manifest.
+- **Verify writes before resetting.** Provisioning reads the partition table back and reports whether
+  it matches. Reading the *filesystem* back after a boot is useless — the app rewrites block 0 on its
+  first mount attempt, so a post-boot readback never shows what was written. That trap cost real time.
+
 ### What is verified, and what still needs a board
 
 Verified without hardware: partition tables round-trip to the intended geometry (app slot identical in
@@ -557,15 +652,62 @@ files, of erased flash, and of garbage; littlefs superblock detection; `imageChi
 internally consistent and every referenced file present; base files served correctly at
 `/dashboard/base/...` and byte-identical over HTTP; `/ota_get` returns 401 unauthenticated.
 
-**Everything that touches a board is untested** — `writeFlash`, the provision/app-only read-back,
-`after("hard_reset")`, and the boot-log reopen have never run against real silicon. Treat the first
-run as a bring-up exercise, ideally on a board you are willing to re-flash over USB by other means.
-The specific things most likely to need adjustment:
+Confirmed on hardware (ESP32-C3, 4 MB): ⚡ selects a server-hosted binary; `Connect board` resolves it
+to `4MB (min_spiffs)`; **app-only flash writes and verifies** — 1365808 bytes (828304 compressed) at
+`0x10000` in 10.8 s, followed by a successful hard reset. `calculateMD5Hash` being omitted is fine —
+`writeFlash` skips verification without complaint.
 
-- whether `writeFlash` tolerates the omitted `calculateMD5Hash` (see Client change 7)
+Three bugs fixed during bring-up:
+
+1. `flashSize: "detect"` made `writeFlash` throw before touching the board (see above).
+2. Any flash attempt releases the loader, so the Flash button correctly stayed disabled but gave no
+   visible reason. Errors now render in the status area with a "reconnect" prompt.
+3. The boot log was hard-coded to 115200 and its read loop could not time out. `reader.read()` never
+   resolves on a silent port and the `while (Date.now() < deadline)` condition is only tested
+   *between* reads, so a quiet board hung the whole operation with no closing marker. The loop now
+   races each read against the deadline, always terminates, and says why it saw nothing.
+
+### Serial monitor
+
+The log is a real monitor, not a fixed capture: it streams until **Stop monitor** is pressed. The
+original 25-second window turned out to be an arbitrary cutoff that ended a working log mid-stream,
+so the timeout now covers only the case where *nothing at all* arrives — once the first byte lands,
+plain `read()` runs indefinitely and `monitorStop()` settles the pending read with `cancel()`, so no
+polling is involved.
+
+`Monitor` also works standalone, requesting a port if none is held, so a running board can be watched
+without flashing it. It is stopped before `Connect` since esptool cannot open a port the monitor holds.
+
+### Serial monitor speed
+
+frugal-iot's `startSerial()` picks the rate by toolchain, so the boot log needs a selector rather
+than a constant:
+
+| Build | Rate |
+|---|---|
+| PlatformIO | `SERIAL_BAUD`, default **460800** |
+| Arduino IDE | **115200** |
+| ESP8266 ROM boot messages | 74880 |
+
+Two further reasons a boot log can be legitimately empty, both reported in the log rather than left
+mysterious: the firmware only prints when built with **`ANY_DEBUG`**, and `startSerial()` deliberately
+waits 5 s before its first line (hence a 25 s capture window).
+
+**Full provisioning is confirmed working** on an ESP32-C3 4 MB (LOLIN C3 Pico, `min_spiffs`): erase,
+bootloader, partition table, otadata, blank filesystem and app in one pass, after which the board
+mounts LittleFS, creates its `/wifi`, `/frugal_iot`, … directories and brings up the captive portal at
+192.168.4.1. App-only update is confirmed too.
+
+Confirmed with the filesystem partition left erased: the firmware formats and mounts it itself, so no
+blank-filesystem image is shipped.
+
+Still untested:
+
+- the **S2 and S3 bootloaders**, generated with the same recipe but never checked against a reference
+  build from those boards
 - whether 921600 baud is reliable on CH340 adapters, or the default should drop to 460800
-- whether the 20-second boot-log window is long enough to see WiFi come up
 - whether unsupported octal flash on an S3 really does surface as the capacity-byte fallback
+- ESP8266 end to end (single whole image at `0x0`, no base bundle)
 
 ---
 

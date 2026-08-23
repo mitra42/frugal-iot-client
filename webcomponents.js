@@ -299,6 +299,7 @@ EN:
   connecting: connecting
   Control: Control
   Cookie Name: Cookie Name
+  Could not read the board - assuming it is already provisioned: Could not read the board - assuming it is already provisioned
   Dashboard: Dashboard
   Data: Data
   Description: Description
@@ -343,6 +344,8 @@ EN:
   Loading schema...: Loading schema...
   Lower-case letters and numbers only, no spaces or punctuation: Lower-case letters and numbers only, no spaces or punctuation
   Manual: Manual
+  Monitor: Monitor
+  Monitor speed: Monitor speed
   Name: Name
   Never seen: Never seen
   No board connected: No board connected
@@ -396,6 +399,7 @@ EN:
   "Published to ": "Published to "
   QoS: QoS
   reconnect: reconnect
+  Reconnect the board to flash again: Reconnect the board to flash again
   Register: Register
   Register a platform above before adding a farm.: Register a platform above before adding a farm.
   Register Farm: Register Farm
@@ -425,6 +429,7 @@ EN:
   Sonoff switch: Sonoff switch
   Speed: Speed
   SSID: SSID
+  Stop monitor: Stop monitor
   Submit: Submit
   System: System
   Temperature: Temperature
@@ -480,6 +485,7 @@ FR:
   connecting: connexion
   Control: Contrôle
   Cookie Name: Nom du cookie
+  Could not read the board - assuming it is already provisioned: Impossible de lire la carte - on suppose qu'elle est déjà provisionnée
   Dashboard: Tableau de bord
   Data: Données
   Description: Description
@@ -526,6 +532,8 @@ FR:
   Loading schema...: Chargement du schéma...
   Lower-case letters and numbers only, no spaces or punctuation: Lettres minuscules et chiffres uniquement, sans espaces ni ponctuation
   Manual: Manuel
+  Monitor: Moniteur
+  Monitor speed: Vitesse du moniteur
   Name: Nom 
   Never seen: Jamais vu
   No board connected: Aucune carte connectée
@@ -579,6 +587,7 @@ FR:
   "Published to ": "Publié sur "
   QoS: QoS
   reconnect: reconnecter
+  Reconnect the board to flash again: Reconnectez la carte pour flasher à nouveau
   Register: Registre
   Register a platform above before adding a farm.: Enregistrez une plateforme ci-dessus avant d'ajouter une ferme.
   Register Farm: Enregistrer la ferme
@@ -608,6 +617,7 @@ FR:
   Sonoff switch: Interrupteur Sonoff
   Speed: Vitesse
   SSID: SSID
+  Stop monitor: Arrêter moniteur
   Submit: Soumettre
   System: Système
   Temperature: Température
@@ -663,6 +673,7 @@ HI:
   connecting: कनेक्ट हो रहा है
   Control: नियंत्रण
   Cookie Name: कुकी नाम
+  Could not read the board - assuming it is already provisioned: बोर्ड पढ़ा नहीं जा सका - मान लिया गया कि यह पहले से प्रोविजन किया हुआ है
   Dashboard: डैशबोर्ड
   Data: डेटा
   Description: विवरण
@@ -709,6 +720,8 @@ HI:
   Loading schema...: स्कीमा लोड हो रहा है...
   Lower-case letters and numbers only, no spaces or punctuation: केवल छोटे अक्षर और अंक, कोई स्पेस या विरामचिह्न नहीं
   Manual: मैनुअल
+  Monitor: मॉनिटर
+  Monitor speed: मॉनिटर गति
   Name: नाम
   Never seen: कभी नहीं देखा
   No board connected: कोई बोर्ड कनेक्ट नहीं है
@@ -762,6 +775,7 @@ HI:
   "Published to ": "पर प्रकाशित किया गया "
   QoS: QoS
   reconnect: पुनः कनेक्ट करें
+  Reconnect the board to flash again: फिर से फ्लैश करने के लिए बोर्ड को दोबारा कनेक्ट करें
   Register: पंजीकरण करें
   Register a platform above before adding a farm.: फार्म जोड़ने से पहले ऊपर एक प्लेटफ़ॉर्म पंजीकृत करें।
   Register Farm: फार्म पंजीकृत करें
@@ -791,6 +805,7 @@ HI:
   Sonoff switch: सोनऑफ स्विच
   Speed: गति
   SSID: SSID
+  Stop monitor: मॉनिटर बंद करें
   Submit: जमा करें
   System: सिस्टम
   Temperature: तापमान
@@ -846,6 +861,7 @@ ID:
   connecting: menghubungkan
   Control: Kontrol
   Cookie Name: Nama Cookie
+  Could not read the board - assuming it is already provisioned: Tidak dapat membaca papan - dianggap sudah diprovisioning
   Dashboard: Dasbor
   Data: Data
   Description: Deskripsi
@@ -892,6 +908,8 @@ ID:
   Loading schema...: Memuat skema...
   Lower-case letters and numbers only, no spaces or punctuation: Hanya huruf kecil dan angka, tanpa spasi atau tanda baca
   Manual: Manual
+  Monitor: Monitor
+  Monitor speed: Kecepatan monitor
   Name: Nama
   Never seen: Belum pernah terlihat
   No board connected: Tidak ada papan terhubung
@@ -945,6 +963,7 @@ ID:
   "Published to ": "Dipublikasikan ke "
   QoS: QoS
   reconnect: sambungkan kembali
+  Reconnect the board to flash again: Hubungkan kembali papan untuk flash lagi
   Register: Daftar
   Register a platform above before adding a farm.: Daftarkan platform di atas sebelum menambahkan farm.
   Register Farm: Daftarkan Farm
@@ -974,6 +993,7 @@ ID:
   Sonoff switch: Saklar Sonoff
   Speed: Kecepatan
   SSID: SSID
+  Stop monitor: Hentikan monitor
   Submit: Kirim
   System: Sistem
   Temperature: Suhu
@@ -2210,6 +2230,13 @@ const AppPartitionSize = 0x1e0000;
 const ImageMagic = 0xe9;
 const LittleFsMagic = [0x6c, 0x69, 0x74, 0x74, 0x6c, 0x65, 0x66, 0x73]; // "littlefs" in the superblock
 const FlashBaudRates = [921600, 460800, 230400, 115200];
+// frugal-iot's SERIAL_BAUD defaults to 460800 under PlatformIO, 115200 from the Arduino IDE;
+// 74880 is the ESP8266 ROM's own boot-message rate
+const MonitorBaudRates = [460800, 115200, 921600, 74880];
+const BootLogMs = 25000; // startSerial() waits 5s before printing, then WiFi/captive portal follows
+// esptool-js's readFlash waits FLASH_READ_TIMEOUT (100s) for its first packet, which stalls Connect
+// on any board that does not answer the stub's read command
+const FlashReadMs = 8000;
 // JEDEC capacity byte -> size, mirroring esptool-js's own table so we can tell a real detection from
 // its silent 4MB fallback, which on an S3 is also the signature of unsupported octal flash
 const DetectedFlashSizes = {
@@ -2258,6 +2285,9 @@ function bytesInclude(haystack, needle) {
 function imageChipId(bytes) {
   return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint16(12, true);
 }
+function bytesToHex(bytes, count) {
+  return Array.from(bytes.subarray(0, count)).map((b) => b.toString(16).padStart(2, '0')).join(' ');
+}
 function bytesToSizeString(n) {
   return n >= 1048576 ? `${(n / 1048576).toFixed(2)}MB` : `${Math.round(n / 1024)}KB`;
 }
@@ -2267,8 +2297,10 @@ async function fetchBytes(url) {
   if (!res.ok) throw new Error(`${url} ${res.status}`);
   return new Uint8Array(await res.arrayBuffer());
 }
+// base/ is served with `immutable, maxAge: 1 day`, so boards.json must be revalidated explicitly or
+// an edit is invisible for a day - the part binaries are then cache-busted with its version
 async function fetchJson(url) {
-  const res = await fetch(url);
+  const res = await fetch(url, {cache: 'no-cache'});
   if (!res.ok) throw new Error(`${url} ${res.status}`);
   return res.json();
 }
@@ -2276,7 +2308,8 @@ async function fetchJson(url) {
 class MqttFlash extends HTMLElementExtended {
   constructor(props) {
     super(props);
-    this.state = {elements: {}, log: [], app: null, device: null, busy: false, baudrate: FlashBaudRates[0]};
+    this.state = {elements: {}, log: [], app: null, device: null, busy: false,
+      baudrate: FlashBaudRates[0], monitorBaudrate: MonitorBaudRates[0]};
   }
   get supported() { return 'serial' in navigator; }
   // esploader goes null after flashing, so a second flash needs a reconnect rather than a stale loader
@@ -2349,6 +2382,7 @@ class MqttFlash extends HTMLElementExtended {
     if (!this.supported || this.state.busy) return;
     const portPromise = navigator.serial.requestPort(); // must be called before any await, inside the gesture
     this.state.busy = true;
+    this.state.error = null;
     this.statusRender();
     portPromise
       .then((port) => this.connectAndInspect(port))
@@ -2360,6 +2394,7 @@ class MqttFlash extends HTMLElementExtended {
       .then(() => { this.state.busy = false; this.statusRender(); });
   }
   async connectAndInspect(port) {
+    await this.monitorStop();      // the monitor holds the port open, so esptool cannot have it
     await this.transportRelease(); // clicking Connect twice must not stack transports on one port
     const {ESPLoader, Transport} = await import('esptool-js'); // 214KB, so not loaded until first use
     const transport = new Transport(port, true);
@@ -2398,14 +2433,28 @@ class MqttFlash extends HTMLElementExtended {
       return;
     }
     dev.scheme = scheme;
+    const partUrl = (p) => `${BaseUrl}/${p}?v=${boards.version}`; // busts the immutable cache
     dev.base = {
-      bootloader: {url: `${BaseUrl}/${bootloaderPath}`, address: this.state.esploader.chip.BOOTLOADER_FLASH_OFFSET},
-      partitions: {url: `${BaseUrl}/${boards.partitionsByScheme[scheme]}`, address: boards.partitionTableOffset},
-      otadata: {url: `${BaseUrl}/${boards.otadata}`, address: null}, // from the partition table below
+      bootloader: {url: partUrl(bootloaderPath), address: this.state.esploader.chip.BOOTLOADER_FLASH_OFFSET},
+      partitions: {url: partUrl(boards.partitionsByScheme[scheme]), address: boards.partitionTableOffset},
+      otadata: {url: partUrl(boards.otadata), address: null}, // from the partition table below
     };
+    // The filesystem partition is deliberately left erased - the firmware's LittleFS.begin(true)
+    // formats it on first boot. See FLASH_PLAN.md: it only appeared unable to when we were writing a
+    // bootloader from the wrong framework.
     dev.appAddress = AppPartitionOffset;
     dev.appLimit = AppPartitionSize;
     await this.deviceInspect();
+  }
+  // Returns null rather than stalling, so a board that will not answer the stub's read command does
+  // not hold up Connect for 100s per read
+  async readFlashBounded(offset, length) {
+    const read = this.state.esploader.readFlash(offset, length)
+      .catch((e) => { this.logLine(`(read of 0x${offset.toString(16)} failed: ${e.message})`); return null; });
+    const timeout = new Promise((resolve) => setTimeout(() => resolve(null), FlashReadMs));
+    const bytes = await Promise.race([read, timeout]);
+    if (!bytes) this.logLine(`(could not read 0x${offset.toString(16)} - skipping inspection)`);
+    return bytes;
   }
   async deviceInspect() {
     const dev = this.state.device;
@@ -2413,25 +2462,48 @@ class MqttFlash extends HTMLElementExtended {
     const bootloaderOffset = esploader.chip.BOOTLOADER_FLASH_OFFSET;
     const reasons = [];
     let onDeviceParts = [];
-    try {
-      // Read whole 4096-byte blocks - readFlash works in blocks and partitionsParse stops at the
-      // first record without the magic anyway
-      const head = await esploader.readFlash(bootloaderOffset, 4096);
-      if (head[0] !== ImageMagic) reasons.push("no bootloader");
-      onDeviceParts = partitionsParse(await esploader.readFlash(PartitionTableOffset, 4096));
-      const app = partitionApp(onDeviceParts);
-      if (!onDeviceParts.length) reasons.push("no partition table");
-      else if (!app) reasons.push("no app partition");
-      // Only the app slot has to match - a differently sized filesystem is still safe to keep
-      else if (app.offset !== AppPartitionOffset || app.size !== AppPartitionSize) reasons.push("app partition differs");
-    } catch (e) {
-      reasons.push(`could not read flash (${e.message})`);
+    // Read whole 4096-byte blocks - readFlash works in blocks and partitionsParse stops at the
+    // first record without the magic anyway
+    const head = await this.readFlashBounded(bootloaderOffset, 4096);
+    const table = head && await this.readFlashBounded(PartitionTableOffset, 4096);
+    if (!head || !table) {
+      // Never fall through to provisioning here - erasing a board because a diagnostic read failed
+      // is destructive, so require an explicit "Provision instead" click
+      dev.inspected = false;
+      dev.provision = false;
+      this.logLine("Could not inspect the board - assuming it is already provisioned. Use \"Provision instead\" if this is a new board.");
+      return;
+    }
+    dev.inspected = true;
+    if (head[0] !== ImageMagic) reasons.push("no bootloader");
+    onDeviceParts = partitionsParse(table);
+    const app = partitionApp(onDeviceParts);
+    if (!onDeviceParts.length) reasons.push("no partition table");
+    else if (!app) reasons.push("no app partition");
+    // Only the app slot has to match - a differently sized filesystem is still safe to keep
+    else if (app.offset !== AppPartitionOffset || app.size !== AppPartitionSize) reasons.push("app partition differs");
+    // Worth always logging - a layout that disagrees with the base explains most boot failures
+    if (onDeviceParts.length) {
+      this.logLine("On-device partition table:");
+      onDeviceParts.forEach((p) => this.logLine(
+        `  ${p.label.padEnd(10)} type=0x${p.type.toString(16).padStart(2, '0')}` +
+        ` subtype=0x${p.subtype.toString(16).padStart(2, '0')}` +
+        ` offset=0x${p.offset.toString(16).padStart(6, '0')} size=${bytesToSizeString(p.size)}`));
     }
     if (!reasons.length) {
       const fs = partitionFs(onDeviceParts);
-      if (fs) {
-        const sb = await esploader.readFlash(fs.offset, 4096);
+      const sb = fs && await this.readFlashBounded(fs.offset, 4096);
+      if (fs && sb) {
         dev.hasConfig = bytesInclude(sb, LittleFsMagic);
+        const blank = sb.every((b) => b === 0xff);
+        // Only a byte-pattern match, not proof the filesystem mounts - stale bytes from a previous,
+        // differently sized filesystem match too
+        this.logLine(`Filesystem partition at 0x${fs.offset.toString(16)}: ` + (dev.hasConfig
+          ? "littlefs byte pattern present (may still be stale or unmountable)"
+          : blank ? "erased (0xff) - unformatted" : "not littlefs and not erased - stale data"));
+        this.logLine(`  on device: ${bytesToHex(sb, 32)}`);
+      } else if (!fs) {
+        this.logLine("No filesystem partition in the on-device table");
       }
     }
     dev.provision = reasons.length > 0;
@@ -2452,9 +2524,12 @@ class MqttFlash extends HTMLElementExtended {
   onFlash() {
     if (!this.ready) return;
     this.state.busy = true;
+    this.state.error = null;
     this.statusRender();
     this.flash()
-      .catch((e) => this.logLine(`Error: ${e.message}`))
+      // Surfaced in the status area as well as the log - flashing releases the loader either way, so
+      // the Flash button stays disabled and the reason has to be visible
+      .catch((e) => { this.state.error = e.message; this.logLine(`Error: ${e.message}`); })
       .then(() => { this.state.busy = false; this.statusRender(); });
   }
   // Refusals rather than warnings - a bad combination here means a board that will not boot
@@ -2484,11 +2559,13 @@ class MqttFlash extends HTMLElementExtended {
       const [bootloader, partitions, otadata] = await Promise.all(
         [dev.base.bootloader, dev.base.partitions, dev.base.otadata].map((p) => fetchBytes(p.url)));
       // otadata goes wherever the table we are about to write says, not at a hardcoded offset
-      const otadataPart = partitionOtadata(partitionsParse(partitions));
+      const baseParts = partitionsParse(partitions);
+      const otadataPart = partitionOtadata(baseParts);
       if (!otadataPart) throw new Error(`${dev.base.partitions.url} has no otadata partition`);
       files.push({data: bootloader, address: dev.base.bootloader.address});
       files.push({data: partitions, address: dev.base.partitions.address});
       files.push({data: otadata, address: otadataPart.offset});
+      dev.verifyAddress = dev.base.partitions.address; // read back below to confirm the write landed
     }
     files.push({data: this.state.app.bytes, address: dev.appAddress});
     return files;
@@ -2503,7 +2580,10 @@ class MqttFlash extends HTMLElementExtended {
     try {
       await esploader.writeFlash({
         fileArray,
-        flashSize: 'detect',   // patch only the size into the header, from the real chip
+        // Must be a literal size string. writeFlash's flashSizeBytes() only parses "KB"/"MB", so
+        // 'detect' silently becomes -1 and every file then fails its "fits in flash" check, even
+        // though 'detect' is a legal FlashSizeValues member on other code paths.
+        flashSize: dev.flashSize,
         // 'keep' preserves the mode/freq the image was built with. Our base bootloaders are already
         // dio_80m, and on an ESP8266 the app image itself sits at the bootloader offset and would
         // otherwise be rewritten to settings its flash may not support.
@@ -2516,43 +2596,121 @@ class MqttFlash extends HTMLElementExtended {
           if (bar) { bar.max = total; bar.value = written; }
         },
       });
+      // Read the partition table back before resetting - the app rewrites nothing here, but doing it
+      // now catches a failed write immediately instead of leaving a mysteriously dead board
+      if (dev.verifyAddress != null) {
+        const wrote = fileArray.find((f) => f.address === dev.verifyAddress);
+        const back = await this.readFlashBounded(dev.verifyAddress, 4096);
+        if (wrote && back) {
+          let differsAt = -1;
+          const n = Math.min(back.length, wrote.data.length);
+          for (let i = 0; i < n; i++) if (back[i] !== wrote.data[i]) { differsAt = i; break; }
+          this.logLine(differsAt < 0
+            ? `Partition table write verified at 0x${dev.verifyAddress.toString(16)} (${n} bytes match)`
+            : `Partition table write did NOT verify at 0x${dev.verifyAddress.toString(16)}, first difference at byte ${differsAt}`);
+        }
+      }
       this.logLine("Flash complete - resetting. Reconnect the board if you want to flash again.");
       await esploader.after("hard_reset");
       dev.flashed = true;
     } finally {
       await this.transportRelease(); // a failed flash must still free the port
     }
-    await this.bootLogStream();
+    this.monitorStart(); // not awaited - it now runs until stopped
   }
-  // Reopen the port with plain WebSerial to show what the board says on boot
-  async bootLogStream() {
-    const port = this.state.port;
-    if (!port) return;
-    this.logLine("---- boot log ----");
+  // DTR/RTS drive EN and IO0 on boards with the usual auto-reset circuit - RTS left asserted holds
+  // the chip in reset and it prints nothing at all. Releasing both then pulsing RTS restarts it, so
+  // the log is captured from the beginning rather than from wherever esptool's reset left off.
+  async bootReset(port) {
+    if (!port.setSignals) return;
     try {
-      await port.open({baudRate: 115200});
+      await port.setSignals({dataTerminalReady: false, requestToSend: true});
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      await port.setSignals({dataTerminalReady: false, requestToSend: false});
     } catch (e) {
-      this.logLine(`(could not reopen port for boot log: ${e.message})`);
+      XXX(`boot log reset signals: ${e.message}`);
+    }
+  }
+  // Reopen the port with plain WebSerial and stream it until stopped. Runs indefinitely once the
+  // board is talking - the timeout only covers the case where nothing arrives at all.
+  monitorStart() {
+    if (this.state.monitoring || !this.state.port) return this.state.monitorDone || Promise.resolve();
+    this.state.monitoring = true;
+    this.state.monitorDone = this.monitorStream(this.state.port)
+      .catch((e) => XXX(`monitor stream: ${e.message}`)) // cleanup below must run either way
+      .then(() => {
+        this.state.monitoring = false;
+        this.state.monitorReader = null;
+        this.statusRender();
+      });
+    this.statusRender();
+    return this.state.monitorDone;
+  }
+  // cancel() settles the pending read(), so no polling is needed to notice the stop
+  monitorStop() {
+    if (!this.state.monitoring) return Promise.resolve();
+    this.state.monitoring = false;
+    const reader = this.state.monitorReader;
+    if (reader) reader.cancel().catch((e) => XXX(`monitor cancel: ${e.message}`));
+    return this.state.monitorDone || Promise.resolve();
+  }
+  onMonitor() {
+    if (this.state.monitoring) { this.monitorStop(); return; }
+    if (this.state.port) {
+      // esptool still holds the port after Connect and it cannot be opened twice, so hand it over
+      this.transportRelease().then(() => this.monitorStart());
       return;
     }
-    const decoder = new TextDecoder();
-    const reader = port.readable.getReader();
-    this.state.bootReader = reader;
-    const stopAt = Date.now() + 20000; // long enough to see WiFi come up or the captive portal start
+    const portPromise = navigator.serial.requestPort(); // inside the gesture, before any await
+    portPromise
+      .then((port) => { this.state.port = port; return this.monitorStart(); })
+      .catch((e) => { this.state.error = e.message; this.logLine(`Error: ${e.message}`); this.statusRender(); });
+  }
+  async monitorStream(port) {
+    const baud = this.state.monitorBaudrate;
+    this.logLine(`---- monitor (${baud} baud) ----`);
     try {
-      while (Date.now() < stopAt) {
-        const {value, done} = await reader.read();
-        if (done) break;
-        if (value) this.logWrite(decoder.decode(value, {stream: true}));
+      await port.open({baudRate: baud});
+    } catch (e) {
+      this.logLine(`(could not open port: ${e.message})`);
+      return;
+    }
+    let reader = null;
+    let quiet = true;
+    try {
+      await this.bootReset(port);
+      if (!port.readable) throw new Error("port has no readable stream");
+      const decoder = new TextDecoder();
+      reader = port.readable.getReader();
+      this.state.monitorReader = reader;
+      const quietUntil = Date.now() + BootLogMs;
+      while (this.state.monitoring) {
+        // Until the first byte arrives, read() may never resolve, so it needs a deadline. Once the
+        // board is talking, plain read() is right - monitorStop() settles it with cancel().
+        const chunk = quiet
+          ? await Promise.race([
+              reader.read(),
+              new Promise((resolve) => setTimeout(() => resolve('timeout'), Math.max(250, quietUntil - Date.now()))),
+            ])
+          : await reader.read();
+        if (chunk === 'timeout' || chunk.done) break;
+        if (chunk.value && chunk.value.length) {
+          quiet = false;
+          this.logWrite(decoder.decode(chunk.value, {stream: true}));
+        }
       }
     } catch (e) {
-      this.logLine(`(boot log ended: ${e.message})`);
+      this.logLine(`(monitor ended: ${e.message})`);
     } finally {
-      try { await reader.cancel(); } catch (e) { XXX(`boot log reader cancel: ${e.message}`); }
-      reader.releaseLock();
-      this.state.bootReader = null;
-      try { await port.close(); } catch (e) { XXX(`boot log port close: ${e.message}`); }
-      this.logLine("---- end of boot log ----");
+      if (reader) {
+        try { await reader.cancel(); } catch (e) { XXX(`monitor reader cancel: ${e.message}`); }
+        try { reader.releaseLock(); } catch (e) { XXX(`monitor reader release: ${e.message}`); }
+      }
+      try { await port.close(); } catch (e) { XXX(`monitor port close: ${e.message}`); }
+      if (quiet) {
+        this.logLine("(no output - check the monitor speed, that the build defines ANY_DEBUG, or reconnect: a board on native USB re-enumerates after reset and needs picking again)");
+      }
+      this.logLine("---- monitor stopped ----");
     }
   }
 
@@ -2561,6 +2719,13 @@ class MqttFlash extends HTMLElementExtended {
     const dev = this.state.device;
     const app = this.state.app;
     const lines = [];
+    if (this.state.error) {
+      lines.push(el('p', {class: 'error', i8n: false, textContent: this.state.error}));
+    }
+    // The loader is released after any flash attempt, so say why the Flash button is disabled
+    if (dev && !this.state.esploader) {
+      lines.push(el('p', {textContent: "Reconnect the board to flash again"}));
+    }
     lines.push(el('p', {}, [
       el('span', {textContent: "Firmware"}),
       el('span', {i8n: false, textContent: app ? ` ${app.name} (${bytesToSizeString(app.bytes.length)})` : " -"}),
@@ -2590,6 +2755,9 @@ class MqttFlash extends HTMLElementExtended {
         ]),
       ]));
     }
+    if (dev.inspected === false) {
+      lines.push(el('p', {class: 'warning', textContent: "Could not read the board - assuming it is already provisioned"}));
+    }
     if (dev.provision) {
       lines.push(el('p', {class: 'warning', textContent: "Full provision - all configuration on the board will be erased"}));
     } else {
@@ -2608,6 +2776,11 @@ class MqttFlash extends HTMLElementExtended {
     if (flashButton) flashButton.disabled = !this.ready;
     const connectButton = this.state.elements.connectButton;
     if (connectButton) connectButton.disabled = this.state.busy;
+    const monitorButton = this.state.elements.monitorButton;
+    if (monitorButton) {
+      monitorButton.textContent = getString(this.state.monitoring ? "Stop monitor" : "Monitor");
+      monitorButton.disabled = this.state.busy;
+    }
   }
   render() {
     if (!this.supported) {
@@ -2628,10 +2801,15 @@ class MqttFlash extends HTMLElementExtended {
         el('label', {for: 'flashbaud', textContent: "Speed"}),
         el('select', {id: 'flashbaud', onchange: (ev) => { this.state.baudrate = Number(ev.target.value); }},
           FlashBaudRates.map((b) => el('option', {i8n: false, value: b, textContent: String(b)}))),
+        el('label', {for: 'monitorbaud', textContent: "Monitor speed"}),
+        el('select', {id: 'monitorbaud', onchange: (ev) => { this.state.monitorBaudrate = Number(ev.target.value); }},
+          MonitorBaudRates.map((b) => el('option', {i8n: false, value: b, textContent: String(b)}))),
         this.state.elements.connectButton = el('button', {class: 'submit', type: 'button',
           textContent: "Connect board", onclick: this.onConnect.bind(this)}),
         this.state.elements.flashButton = el('button', {class: 'submit', type: 'button', disabled: true,
           textContent: "Flash", onclick: this.onFlash.bind(this)}),
+        this.state.elements.monitorButton = el('button', {class: 'submit', type: 'button',
+          textContent: "Monitor", onclick: this.onMonitor.bind(this)}),
         this.state.elements.status = el('div', {class: 'flash-status'}, this.statusLines()),
         this.state.elements.progress = el('progress', {max: 100, value: 0}),
         this.state.elements.log = el('pre', {class: 'flash-log', i8n: false}),
