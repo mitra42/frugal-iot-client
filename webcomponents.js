@@ -285,6 +285,7 @@ EN:
   Auth Token: Auth Token
   Base URL: Base URL
   Battery: Battery
+  Board: Board
   Brightness: Brightness
   Built in LED: Built in LED
   buttons: buttons
@@ -293,6 +294,7 @@ EN:
   Climate: Climate
   close: close
   Color:  Color
+  Connect board: Connect board
   connected: connected
   connecting: connecting
   Control: Control
@@ -312,9 +314,17 @@ EN:
   Farm registered: Farm registered
   Farms: Farms
   File: File
+  Firmware: Firmware
+  Firmware file: Firmware file
+  Flash: Flash
+  Flash over USB: Flash over USB
+  Flash size was not detected reliably - flash anyway: Flash size was not detected reliably - flash anyway
+  Flash this over USB: Flash this over USB
+  Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer: Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer
   for node: for node
   From: From
   Frugal-IoT Username *: Frugal-IoT Username *
+  Full provision - all configuration on the board will be erased: Full provision - all configuration on the board will be erased
   Greater Than: Greater Than
   heating: heating
   humidifier: humidifier
@@ -335,6 +345,7 @@ EN:
   Manual: Manual
   Name: Name
   Never seen: Never seen
+  No board connected: No board connected
   No farms registered for this organization yet.: No farms registered for this organization yet.
   No nodes found for this farm's project(s).: No nodes found for this farm's project(s).
   No nodes found for this organization: No nodes found for this organization
@@ -380,6 +391,7 @@ EN:
   Project Name: Project Name
   Projects: Projects
   Property: Property
+  Provision instead (erases config): Provision instead (erases config)
   Publish Message: Publish Message
   "Published to ": "Published to "
   QoS: QoS
@@ -411,6 +423,7 @@ EN:
   Soil Temperature: Soil Temperature
   Sonoff R2 switch: Sonoff R2 switch
   Sonoff switch: Sonoff switch
+  Speed: Speed
   SSID: SSID
   Submit: Submit
   System: System
@@ -427,7 +440,10 @@ EN:
   Unable to find project: Unable to find project
   Unauthorized: Unauthorized
   undefined: undefined
+  Unsupported board: Unsupported board
   Unused: Unused
+  Updating the app only: Updating the app only
+  Updating the app only - the existing configuration will be preserved: Updating the app only - the existing configuration will be preserved
   Upload: Upload
   Username: Username
   Value: Value
@@ -450,6 +466,7 @@ FR:
   Auth Token: Jeton d'authentification
   Base URL: URL de base
   Battery: Batterie
+  Board: Carte
   Brightness: Luminosité  
   Built in LED: LED intégrée
   buttons: boutons
@@ -458,6 +475,7 @@ FR:
   Climate: Climat
   close: fermer
   Color: Couleur  
+  Connect board: Connecter la carte
   connected: connecté
   connecting: connexion
   Control: Contrôle
@@ -477,9 +495,17 @@ FR:
   Farm registered: Ferme enregistrée
   Farms: Fermes
   File: Fichier
+  Firmware: Micrologiciel
+  Firmware file: Fichier micrologiciel
+  Flash: Flasher
+  Flash over USB: Flasher par USB
+  Flash size was not detected reliably - flash anyway: Taille de la mémoire flash non détectée de façon fiable - flasher quand même
+  Flash this over USB: Flasher ceci par USB
+  Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer: Le flashage nécessite l'API Web Serial - utilisez Chrome, Edge ou Opera sur un ordinateur de bureau
   for node: pour le nœud
   From: De
   Frugal-IoT Username *: Nom d'utilisateur Frugal-IoT *
+  Full provision - all configuration on the board will be erased: Provisionnement complet - toute la configuration de la carte sera effacée
   Greater Than: Supérieur à
   heating: chauffage
   humidifier: humidificateur
@@ -502,6 +528,7 @@ FR:
   Manual: Manuel
   Name: Nom 
   Never seen: Jamais vu
+  No board connected: Aucune carte connectée
   No farms registered for this organization yet.: Aucune ferme enregistrée pour cette organisation pour l'instant.
   No nodes found for this farm's project(s).: Aucun nœud trouvé pour le(s) projet(s) de cette ferme.
   No nodes found for this organization: Aucun nœud trouvé pour cette organisation
@@ -547,6 +574,7 @@ FR:
   Project Name: Nom du projet
   Projects: Projets
   Property: Propriété
+  Provision instead (erases config): Provisionner plutôt (effacer la configuration)
   Publish Message: Publier un message
   "Published to ": "Publié sur "
   QoS: QoS
@@ -578,6 +606,7 @@ FR:
   Soil Temperature: Température du sol
   Sonoff R2 switch: Interrupteur Sonoff R2
   Sonoff switch: Interrupteur Sonoff
+  Speed: Vitesse
   SSID: SSID
   Submit: Soumettre
   System: Système
@@ -594,7 +623,10 @@ FR:
   Unable to find project: Impossible de trouver le projet
   Unauthorized: Non autorisé
   undefined: indéfini
+  Unsupported board: Carte non prise en charge
   Unused: Inutilisé
+  Updating the app only: Mise à jour de l'application uniquement
+  Updating the app only - the existing configuration will be preserved: Mise à jour de l'application uniquement - la configuration existante sera conservée
   Upload: Téléverser
   Username: Nom de User
   Value: Valeur
@@ -617,6 +649,7 @@ HI:
   Auth Token: प्रमाणीकरण टोकन
   Base URL: बेस यूआरएल
   Battery: बैटरी
+  Board: बोर्ड
   Brightness: चमक  
   Built in LED: बिल्ट-इन एलईडी
   buttons: बटन
@@ -625,6 +658,7 @@ HI:
   Climate: जलवायु
   close: बंद करें
   Color: रंग  
+  Connect board: बोर्ड कनेक्ट करें
   connected: जुड़े हुए
   connecting: कनेक्ट हो रहा है
   Control: नियंत्रण
@@ -644,9 +678,17 @@ HI:
   Farm registered: फार्म पंजीकृत किया गया
   Farms: फार्म
   File: फ़ाइल
+  Firmware: फर्मवेयर
+  Firmware file: फर्मवेयर फ़ाइल
+  Flash: फ्लैश करें
+  Flash over USB: USB से फ्लैश करें
+  Flash size was not detected reliably - flash anyway: फ्लैश आकार का विश्वसनीय पता नहीं चला - फिर भी फ्लैश करें
+  Flash this over USB: इसे USB से फ्लैश करें
+  Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer: फ्लैश करने के लिए Web Serial API आवश्यक है - डेस्कटॉप कंप्यूटर पर Chrome, Edge या Opera का उपयोग करें
   for node: नोड के लिए
   From: से
   Frugal-IoT Username *: Frugal-IoT उपयोगकर्ता नाम *
+  Full provision - all configuration on the board will be erased: पूर्ण प्रोविजनिंग - बोर्ड की सारी कॉन्फ़िगरेशन मिट जाएगी
   Greater Than: इससे बड़ा
   heating: हीटिंग
   humidifier: ह्यूमिडिफ़ायर
@@ -669,6 +711,7 @@ HI:
   Manual: मैनुअल
   Name: नाम
   Never seen: कभी नहीं देखा
+  No board connected: कोई बोर्ड कनेक्ट नहीं है
   No farms registered for this organization yet.: इस संगठन के लिए अभी तक कोई फार्म पंजीकृत नहीं है।
   No nodes found for this farm's project(s).: इस फार्म के प्रोजेक्ट (प्रोजेक्ट्स) के लिए कोई नोड नहीं मिला।
   No nodes found for this organization: इस संगठन के लिए कोई नोड नहीं मिला
@@ -714,6 +757,7 @@ HI:
   Project Name: प्रोजेक्ट का नाम
   Projects: प्रोजेक्ट्स
   Property: प्रॉपर्टी
+  Provision instead (erases config): इसके बजाय प्रोविजन करें (कॉन्फ़िगरेशन मिटेगी)
   Publish Message: संदेश प्रकाशित करें
   "Published to ": "पर प्रकाशित किया गया "
   QoS: QoS
@@ -745,6 +789,7 @@ HI:
   Soil Temperature: मिट्टी का तापमान
   Sonoff R2 switch: सोनऑफ R2 स्विच
   Sonoff switch: सोनऑफ स्विच
+  Speed: गति
   SSID: SSID
   Submit: जमा करें
   System: सिस्टम
@@ -761,7 +806,10 @@ HI:
   Unable to find project: प्रोजेक्ट नहीं मिल सका
   Unauthorized: अनधिकृत
   undefined: अपरिभाषित
+  Unsupported board: असमर्थित बोर्ड
   Unused: अप्रयुक्त
+  Updating the app only: केवल ऐप अपडेट हो रहा है
+  Updating the app only - the existing configuration will be preserved: केवल ऐप अपडेट हो रहा है - मौजूदा कॉन्फ़िगरेशन सुरक्षित रहेगी
   Upload: अपलोड
   Username: उपयोगकर्ता नाम
   Value: मान
@@ -784,6 +832,7 @@ ID:
   Auth Token: Token Autentikasi
   Base URL: URL Dasar
   Battery: Baterai
+  Board: Papan
   Brightness: Kecerahan  
   Built in LED: LED bawaan
   buttons: tombol
@@ -792,6 +841,7 @@ ID:
   Climate: Iklim
   close: tutup
   Color: Warna  
+  Connect board: Hubungkan papan
   connected: terhubung
   connecting: menghubungkan
   Control: Kontrol
@@ -811,9 +861,17 @@ ID:
   Farm registered: Farm terdaftar
   Farms: Farm
   File: Berkas
+  Firmware: Firmware
+  Firmware file: Berkas firmware
+  Flash: Flash
+  Flash over USB: Flash melalui USB
+  Flash size was not detected reliably - flash anyway: Ukuran flash tidak terdeteksi dengan pasti - flash saja
+  Flash this over USB: Flash ini melalui USB
+  Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer: Flashing memerlukan Web Serial API - gunakan Chrome, Edge atau Opera di komputer desktop
   for node: untuk node
   From: Dari
   Frugal-IoT Username *: Nama Pengguna Frugal-IoT *
+  Full provision - all configuration on the board will be erased: Provisioning penuh - semua konfigurasi pada papan akan dihapus
   Greater Than: Lebih dari
   heating: pemanas
   humidifier: pelembap
@@ -836,6 +894,7 @@ ID:
   Manual: Manual
   Name: Nama
   Never seen: Belum pernah terlihat
+  No board connected: Tidak ada papan terhubung
   No farms registered for this organization yet.: Belum ada farm yang terdaftar untuk organisasi ini.
   No nodes found for this farm's project(s).: Tidak ada node ditemukan untuk proyek farm ini.
   No nodes found for this organization: Tidak ada node ditemukan untuk organisasi ini
@@ -881,6 +940,7 @@ ID:
   Project Name: Nama Proyek
   Projects: Proyek
   Property: Properti
+  Provision instead (erases config): Provisioning saja (menghapus konfigurasi)
   Publish Message: Publikasikan Pesan
   "Published to ": "Dipublikasikan ke "
   QoS: QoS
@@ -912,6 +972,7 @@ ID:
   Soil Temperature: Suhu Tanah
   Sonoff R2 switch: Saklar Sonoff R2
   Sonoff switch: Saklar Sonoff
+  Speed: Kecepatan
   SSID: SSID
   Submit: Kirim
   System: Sistem
@@ -928,7 +989,10 @@ ID:
   Unable to find project: Tidak dapat menemukan proyek
   Unauthorized: Tidak sah
   undefined: tidak ditentukan
+  Unsupported board: Papan tidak didukung
   Unused: Tidak digunakan
+  Updating the app only: Hanya memperbarui aplikasi
+  Updating the app only - the existing configuration will be preserved: Hanya memperbarui aplikasi - konfigurasi yang ada akan dipertahankan
   Upload: Unggah
   Username: Nama Pengguna
   Value: Nilai
@@ -2132,6 +2196,451 @@ class TabbedDisplay extends HTMLElementExtended {
 }
 customElements.define('tabbed-display', TabbedDisplay);
 
+// ---------- USB flashing over WebSerial ----------
+// The .bin files the OTA tab handles are application images. An ESP32 also needs a bootloader,
+// partition table and otadata, which are app-independent and kept in base/ - see FLASH_PLAN.md.
+const BaseUrl = './base';
+const PartitionTableOffset = 0x8000;
+const PartitionTableMagic = 0x50aa; // AA 50 on the wire
+const PartitionType = {app: 0x00, data: 0x01};
+const PartitionSubtype = {factory: 0x00, ota0: 0x10, otadata: 0x00, spiffs: 0x82, littlefs: 0x83};
+// Every Frugal IoT scheme keeps app0 here, so one firmware.bin suits any flash size - see FLASH_PLAN.md
+const AppPartitionOffset = 0x10000;
+const AppPartitionSize = 0x1e0000;
+const ImageMagic = 0xe9;
+const LittleFsMagic = [0x6c, 0x69, 0x74, 0x74, 0x6c, 0x65, 0x66, 0x73]; // "littlefs" in the superblock
+const FlashBaudRates = [921600, 460800, 230400, 115200];
+// JEDEC capacity byte -> size, mirroring esptool-js's own table so we can tell a real detection from
+// its silent 4MB fallback, which on an S3 is also the signature of unsupported octal flash
+const DetectedFlashSizes = {
+  0x12: "256KB", 0x13: "512KB", 0x14: "1MB", 0x15: "2MB", 0x16: "4MB", 0x17: "8MB", 0x18: "16MB",
+  0x19: "32MB", 0x1a: "64MB", 0x1b: "128MB", 0x1c: "256MB",
+  0x20: "64MB", 0x21: "128MB", 0x22: "256MB",
+  0x32: "256KB", 0x33: "512KB", 0x34: "1MB", 0x35: "2MB", 0x36: "4MB", 0x37: "8MB", 0x38: "16MB",
+  0x39: "32MB", 0x3a: "64MB",
+};
+
+// 32-byte records: magic u16, type, subtype, offset u32, size u32, label[16], flags u32
+function partitionsParse(bytes) {
+  const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const parts = [];
+  for (let o = 0; o + 32 <= bytes.length; o += 32) {
+    if (dv.getUint16(o, true) !== PartitionTableMagic) break;
+    parts.push({
+      type: bytes[o + 2],
+      subtype: bytes[o + 3],
+      offset: dv.getUint32(o + 4, true),
+      size: dv.getUint32(o + 8, true),
+      label: new TextDecoder().decode(bytes.subarray(o + 12, o + 28)).replace(/\0.*$/, ''),
+    });
+  }
+  return parts;
+}
+function partitionApp(parts) {
+  return parts.find((p) => p.type === PartitionType.app &&
+    (p.subtype === PartitionSubtype.factory || p.subtype === PartitionSubtype.ota0));
+}
+function partitionOtadata(parts) {
+  return parts.find((p) => p.type === PartitionType.data && p.subtype === PartitionSubtype.otadata);
+}
+// Arduino's LittleFS keeps the partition labelled "spiffs", so match on subtype not label
+function partitionFs(parts) {
+  return parts.find((p) => p.type === PartitionType.data &&
+    (p.subtype === PartitionSubtype.spiffs || p.subtype === PartitionSubtype.littlefs));
+}
+function bytesInclude(haystack, needle) {
+  for (let i = 0; i + needle.length <= haystack.length; i++) {
+    if (needle.every((b, j) => haystack[i + j] === b)) return true;
+  }
+  return false;
+}
+// ESP32 image header holds chip_id at byte 12; ESP8266 images have no such field
+function imageChipId(bytes) {
+  return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint16(12, true);
+}
+function bytesToSizeString(n) {
+  return n >= 1048576 ? `${(n / 1048576).toFixed(2)}MB` : `${Math.round(n / 1024)}KB`;
+}
+// GET() parses JSON, so it cannot fetch a firmware image
+async function fetchBytes(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${url} ${res.status}`);
+  return new Uint8Array(await res.arrayBuffer());
+}
+async function fetchJson(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${url} ${res.status}`);
+  return res.json();
+}
+
+class MqttFlash extends HTMLElementExtended {
+  constructor(props) {
+    super(props);
+    this.state = {elements: {}, log: [], app: null, device: null, busy: false, baudrate: FlashBaudRates[0]};
+  }
+  get supported() { return 'serial' in navigator; }
+  // esploader goes null after flashing, so a second flash needs a reconnect rather than a stale loader
+  get ready() {
+    return !!(this.state.app && this.state.device && this.state.esploader && !this.state.device.refusal && !this.state.busy);
+  }
+  async transportRelease() {
+    if (this.state.transport) {
+      try { await this.state.transport.disconnect(); } catch (e) { XXX(`transport disconnect: ${e.message}`); }
+    }
+    this.state.transport = null;
+    this.state.esploader = null;
+  }
+
+  // ---- logging ----
+  logTrim() {
+    if (this.state.log.length > 400) this.state.log.splice(0, this.state.log.length - 400);
+    const pre = this.state.elements.log;
+    if (pre) {
+      pre.textContent = this.state.log.join('\n');
+      pre.scrollTop = pre.scrollHeight;
+    }
+  }
+  logLine(text) {
+    this.state.log.push(String(text));
+    this.logTrim();
+  }
+  // esptool writes progress without newlines, so append to the last line
+  logWrite(text) {
+    const lines = String(text).replace(/\r/g, '').split('\n');
+    if (!this.state.log.length) this.state.log.push('');
+    this.state.log[this.state.log.length - 1] += lines.shift();
+    lines.forEach((l) => this.state.log.push(l));
+    this.logTrim();
+  }
+  get terminal() {
+    return {
+      clean: () => { this.state.log = []; this.logTrim(); },
+      writeLine: (data) => this.logLine(data),
+      write: (data) => this.logWrite(data),
+    };
+  }
+
+  // ---- app image source ----
+  onLocalFile(ev) {
+    const file = ev.target.files && ev.target.files[0];
+    if (!file) return;
+    file.arrayBuffer().then((buf) => {
+      this.state.app = {name: file.name, bytes: new Uint8Array(buf)};
+      this.logLine(`Selected ${file.name} (${bytesToSizeString(this.state.app.bytes.length)})`);
+      this.statusRender();
+    });
+  }
+  // Called by MqttAdmin when the ⚡ beside a server-hosted OTA file is clicked
+  setRemoteSource(org, path) {
+    const url = `/ota_get/${org}/${path}`;
+    this.logLine(`Fetching ${url}`);
+    fetch(url)
+      .then((res) => { if (!res.ok) throw new Error(`${url} ${res.status}`); return res.arrayBuffer(); })
+      .then((buf) => {
+        this.state.app = {name: `${path}/firmware.bin`, bytes: new Uint8Array(buf)};
+        this.logLine(`Selected ${this.state.app.name} (${bytesToSizeString(this.state.app.bytes.length)})`);
+        this.statusRender();
+      })
+      .catch((e) => { this.logLine(`Error: ${e.message}`); this.statusRender(); });
+  }
+
+  // ---- connect and inspect ----
+  onConnect() {
+    if (!this.supported || this.state.busy) return;
+    const portPromise = navigator.serial.requestPort(); // must be called before any await, inside the gesture
+    this.state.busy = true;
+    this.statusRender();
+    portPromise
+      .then((port) => this.connectAndInspect(port))
+      .catch((e) => {
+        this.logLine(`Error: ${e.message}`);
+        this.state.device = null;
+        return this.transportRelease(); // otherwise a half-open port stays locked
+      })
+      .then(() => { this.state.busy = false; this.statusRender(); });
+  }
+  async connectAndInspect(port) {
+    await this.transportRelease(); // clicking Connect twice must not stack transports on one port
+    const {ESPLoader, Transport} = await import('esptool-js'); // 214KB, so not loaded until first use
+    const transport = new Transport(port, true);
+    const esploader = new ESPLoader({transport, baudrate: this.state.baudrate, terminal: this.terminal});
+    const description = await esploader.main(); // returns the description, not the chip name
+    const chipName = esploader.chip.CHIP_NAME;
+    const flashIdCapacity = (await esploader.readFlashId()) >> 16 & 0xff;
+    const flashSizeGuessed = !DetectedFlashSizes[flashIdCapacity];
+    const flashSize = DetectedFlashSizes[flashIdCapacity] || await esploader.detectFlashSize();
+    this.state.port = port;
+    this.state.transport = transport;
+    this.state.esploader = esploader;
+    this.state.device = {chipName, description, flashSize, flashSizeGuessed};
+    if (flashSizeGuessed) {
+      this.logLine(`WARNING: flash size not recognised (capacity byte 0x${flashIdCapacity.toString(16)}), assuming ${flashSize}`);
+      if (chipName === "ESP32-S3") this.logLine("On an S3 this is the signature of octal (OPI) flash, which cannot be flashed from a browser.");
+    }
+    await this.planBuild();
+  }
+  // Decide provision vs app-only by reading the board back - see FLASH_PLAN.md
+  async planBuild() {
+    const dev = this.state.device;
+    const boards = this.state.boards || (this.state.boards = await fetchJson(`${BaseUrl}/boards.json`));
+    if (boards.wholeImageChips.includes(dev.chipName)) {
+      dev.wholeImage = true;                 // ESP8266 firmware.bin is a complete image at 0x0
+      dev.provision = false;                 // and does not overlap the filesystem
+      dev.appAddress = 0x0;
+      dev.appLimit = null;
+      return;
+    }
+    const scheme = boards.schemeByChipAndSize[`${dev.chipName}-${dev.flashSize}`];
+    const bootloaderPath = boards.bootloaderByChip[dev.chipName];
+    if (!scheme || !bootloaderPath) {
+      dev.refusal = `No base bundle for ${dev.chipName} ${dev.flashSize}`;
+      this.logLine(`Unsupported board: ${dev.refusal}`);
+      return;
+    }
+    dev.scheme = scheme;
+    dev.base = {
+      bootloader: {url: `${BaseUrl}/${bootloaderPath}`, address: this.state.esploader.chip.BOOTLOADER_FLASH_OFFSET},
+      partitions: {url: `${BaseUrl}/${boards.partitionsByScheme[scheme]}`, address: boards.partitionTableOffset},
+      otadata: {url: `${BaseUrl}/${boards.otadata}`, address: null}, // from the partition table below
+    };
+    dev.appAddress = AppPartitionOffset;
+    dev.appLimit = AppPartitionSize;
+    await this.deviceInspect();
+  }
+  async deviceInspect() {
+    const dev = this.state.device;
+    const esploader = this.state.esploader;
+    const bootloaderOffset = esploader.chip.BOOTLOADER_FLASH_OFFSET;
+    const reasons = [];
+    let onDeviceParts = [];
+    try {
+      // Read whole 4096-byte blocks - readFlash works in blocks and partitionsParse stops at the
+      // first record without the magic anyway
+      const head = await esploader.readFlash(bootloaderOffset, 4096);
+      if (head[0] !== ImageMagic) reasons.push("no bootloader");
+      onDeviceParts = partitionsParse(await esploader.readFlash(PartitionTableOffset, 4096));
+      const app = partitionApp(onDeviceParts);
+      if (!onDeviceParts.length) reasons.push("no partition table");
+      else if (!app) reasons.push("no app partition");
+      // Only the app slot has to match - a differently sized filesystem is still safe to keep
+      else if (app.offset !== AppPartitionOffset || app.size !== AppPartitionSize) reasons.push("app partition differs");
+    } catch (e) {
+      reasons.push(`could not read flash (${e.message})`);
+    }
+    if (!reasons.length) {
+      const fs = partitionFs(onDeviceParts);
+      if (fs) {
+        const sb = await esploader.readFlash(fs.offset, 4096);
+        dev.hasConfig = bytesInclude(sb, LittleFsMagic);
+      }
+    }
+    dev.provision = reasons.length > 0;
+    dev.provisionReasons = reasons;
+    this.logLine(dev.provision
+      ? `Board needs provisioning: ${reasons.join(', ')}`
+      : `Board already provisioned${dev.hasConfig ? " and has a filesystem - config will be preserved" : ""}`);
+  }
+  onProvisionOverride() {
+    if (!this.state.device) return;
+    this.state.device.provision = true;
+    this.state.device.provisionReasons = ["requested"];
+    this.logLine("Provisioning requested - existing configuration will be erased");
+    this.statusRender();
+  }
+
+  // ---- flash ----
+  onFlash() {
+    if (!this.ready) return;
+    this.state.busy = true;
+    this.statusRender();
+    this.flash()
+      .catch((e) => this.logLine(`Error: ${e.message}`))
+      .then(() => { this.state.busy = false; this.statusRender(); });
+  }
+  // Refusals rather than warnings - a bad combination here means a board that will not boot
+  appCheck() {
+    const dev = this.state.device;
+    const bytes = this.state.app.bytes;
+    if (bytes[0] !== ImageMagic) {
+      throw new Error(`${this.state.app.name} is not an ESP firmware image (first byte 0x${bytes[0].toString(16)}, expected 0xe9)`);
+    }
+    if (!dev.wholeImage) {
+      const chipId = imageChipId(bytes);
+      if (chipId !== this.state.esploader.chip.IMAGE_CHIP_ID) {
+        throw new Error(`${this.state.app.name} was built for chip id ${chipId}, but this board is ${dev.chipName} (chip id ${this.state.esploader.chip.IMAGE_CHIP_ID})`);
+      }
+      if (dev.appLimit && bytes.length > dev.appLimit) {
+        throw new Error(`${this.state.app.name} is ${bytesToSizeString(bytes.length)}, larger than the ${bytesToSizeString(dev.appLimit)} app partition`);
+      }
+    }
+    if (dev.flashSizeGuessed && !this.state.confirmed) {
+      throw new Error("Flash size was not detected reliably - tick the confirmation box to flash anyway");
+    }
+  }
+  async fileArrayBuild() {
+    const dev = this.state.device;
+    const files = [];
+    if (dev.provision && !dev.wholeImage) {
+      const [bootloader, partitions, otadata] = await Promise.all(
+        [dev.base.bootloader, dev.base.partitions, dev.base.otadata].map((p) => fetchBytes(p.url)));
+      // otadata goes wherever the table we are about to write says, not at a hardcoded offset
+      const otadataPart = partitionOtadata(partitionsParse(partitions));
+      if (!otadataPart) throw new Error(`${dev.base.partitions.url} has no otadata partition`);
+      files.push({data: bootloader, address: dev.base.bootloader.address});
+      files.push({data: partitions, address: dev.base.partitions.address});
+      files.push({data: otadata, address: otadataPart.offset});
+    }
+    files.push({data: this.state.app.bytes, address: dev.appAddress});
+    return files;
+  }
+  async flash() {
+    const dev = this.state.device;
+    const esploader = this.state.esploader;
+    this.appCheck();
+    const fileArray = await this.fileArrayBuild();
+    fileArray.forEach((f) => this.logLine(`Will write ${bytesToSizeString(f.data.length)} at 0x${f.address.toString(16)}`));
+    if (this.state.elements.progress) this.state.elements.progress.value = 0;
+    try {
+      await esploader.writeFlash({
+        fileArray,
+        flashSize: 'detect',   // patch only the size into the header, from the real chip
+        // 'keep' preserves the mode/freq the image was built with. Our base bootloaders are already
+        // dio_80m, and on an ESP8266 the app image itself sits at the bootloader offset and would
+        // otherwise be rewritten to settings its flash may not support.
+        flashMode: 'keep',
+        flashFreq: 'keep',
+        eraseAll: dev.provision,
+        compress: true,
+        reportProgress: (index, written, total) => {
+          const bar = this.state.elements.progress;
+          if (bar) { bar.max = total; bar.value = written; }
+        },
+      });
+      this.logLine("Flash complete - resetting. Reconnect the board if you want to flash again.");
+      await esploader.after("hard_reset");
+      dev.flashed = true;
+    } finally {
+      await this.transportRelease(); // a failed flash must still free the port
+    }
+    await this.bootLogStream();
+  }
+  // Reopen the port with plain WebSerial to show what the board says on boot
+  async bootLogStream() {
+    const port = this.state.port;
+    if (!port) return;
+    this.logLine("---- boot log ----");
+    try {
+      await port.open({baudRate: 115200});
+    } catch (e) {
+      this.logLine(`(could not reopen port for boot log: ${e.message})`);
+      return;
+    }
+    const decoder = new TextDecoder();
+    const reader = port.readable.getReader();
+    this.state.bootReader = reader;
+    const stopAt = Date.now() + 20000; // long enough to see WiFi come up or the captive portal start
+    try {
+      while (Date.now() < stopAt) {
+        const {value, done} = await reader.read();
+        if (done) break;
+        if (value) this.logWrite(decoder.decode(value, {stream: true}));
+      }
+    } catch (e) {
+      this.logLine(`(boot log ended: ${e.message})`);
+    } finally {
+      try { await reader.cancel(); } catch (e) { XXX(`boot log reader cancel: ${e.message}`); }
+      reader.releaseLock();
+      this.state.bootReader = null;
+      try { await port.close(); } catch (e) { XXX(`boot log port close: ${e.message}`); }
+      this.logLine("---- end of boot log ----");
+    }
+  }
+
+  // ---- render ----
+  statusLines() {
+    const dev = this.state.device;
+    const app = this.state.app;
+    const lines = [];
+    lines.push(el('p', {}, [
+      el('span', {textContent: "Firmware"}),
+      el('span', {i8n: false, textContent: app ? ` ${app.name} (${bytesToSizeString(app.bytes.length)})` : " -"}),
+    ]));
+    if (!dev) {
+      lines.push(el('p', {textContent: "No board connected"}));
+      return lines;
+    }
+    lines.push(el('p', {}, [
+      el('span', {textContent: "Board"}),
+      el('span', {i8n: false, textContent: ` ${dev.description} ${dev.flashSize}${dev.scheme ? ` (${dev.scheme})` : ''}`}),
+    ]));
+    if (dev.refusal) {
+      lines.push(el('p', {class: 'error'}, [
+        el('span', {textContent: "Unsupported board"}),
+        el('span', {i8n: false, textContent: ` - ${dev.refusal}`}),
+      ]));
+      return lines;
+    }
+    if (dev.flashSizeGuessed) {
+      // Held in state, not read off the checkbox - statusRender() rebuilds these elements
+      lines.push(el('p', {class: 'warning'}, [
+        el('label', {}, [
+          el('input', {type: 'checkbox', checked: this.state.confirmed,
+            onchange: (ev) => { this.state.confirmed = ev.target.checked; }}),
+          el('span', {textContent: "Flash size was not detected reliably - flash anyway"}),
+        ]),
+      ]));
+    }
+    if (dev.provision) {
+      lines.push(el('p', {class: 'warning', textContent: "Full provision - all configuration on the board will be erased"}));
+    } else {
+      lines.push(el('p', {textContent: dev.hasConfig
+        ? "Updating the app only - the existing configuration will be preserved"
+        : "Updating the app only"}));
+      lines.push(el('button', {class: 'submit', type: 'button', textContent: "Provision instead (erases config)",
+        onclick: this.onProvisionOverride.bind(this)}));
+    }
+    return lines;
+  }
+  statusRender() {
+    const status = this.state.elements.status;
+    if (status) status.replaceChildren(...this.statusLines());
+    const flashButton = this.state.elements.flashButton;
+    if (flashButton) flashButton.disabled = !this.ready;
+    const connectButton = this.state.elements.connectButton;
+    if (connectButton) connectButton.disabled = this.state.busy;
+  }
+  render() {
+    if (!this.supported) {
+      return [
+        el('link', {rel: 'stylesheet', href: CssUrl}),
+        el('div', {class: 'mqtt-flash'}, [
+          el('h4', {textContent: "Flash over USB"}),
+          el('p', {textContent: "Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer"}),
+        ]),
+      ];
+    }
+    return [
+      el('link', {rel: 'stylesheet', href: CssUrl}),
+      el('div', {class: 'mqtt-flash'}, [
+        el('h4', {textContent: "Flash over USB"}),
+        el('label', {for: 'flashfile', textContent: "Firmware file"}),
+        el('input', {id: 'flashfile', type: 'file', accept: '.bin', onchange: this.onLocalFile.bind(this)}),
+        el('label', {for: 'flashbaud', textContent: "Speed"}),
+        el('select', {id: 'flashbaud', onchange: (ev) => { this.state.baudrate = Number(ev.target.value); }},
+          FlashBaudRates.map((b) => el('option', {i8n: false, value: b, textContent: String(b)}))),
+        this.state.elements.connectButton = el('button', {class: 'submit', type: 'button',
+          textContent: "Connect board", onclick: this.onConnect.bind(this)}),
+        this.state.elements.flashButton = el('button', {class: 'submit', type: 'button', disabled: true,
+          textContent: "Flash", onclick: this.onFlash.bind(this)}),
+        this.state.elements.status = el('div', {class: 'flash-status'}, this.statusLines()),
+        this.state.elements.progress = el('progress', {max: 100, value: 0}),
+        this.state.elements.log = el('pre', {class: 'flash-log', i8n: false}),
+      ]),
+    ];
+  }
+}
+customElements.define('mqtt-flash', MqttFlash);
+
 class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organization
   constructor(props) {
     super(props);
@@ -2266,10 +2775,15 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     console.log(ev,val);
     this.getOrDeleteOtaFiles(`/ota_delete/${val}`);
   }
+  onOtaFlash(path) {
+    const flashEl = this.state.elements.flash;
+    if (flashEl) flashEl.setRemoteSource(this.state.org, path);
+  }
   otaFilesList() {
     return this.state.ota_files.length === 0 ?
       el('p', {textContent: "No OTA files uploaded yet."}) :
       el('p', {}, this.state.ota_files.map(f => [
+        el('span', {class: 'pseudolink', title: getString("Flash this over USB"), textContent: '⚡', onclick: this.onOtaFlash.bind(this, f)}),
         el('span', {class: 'pseudolink', textContent: `🗑  ${f}`, onclick: this.onOtaDelete.bind(this,`${this.state.org}/${f}`)}),
         el('br', {}),
         ])
@@ -3137,6 +3651,9 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
          el('h3', {textContent: "Existing OTA Files"}),
          this.state.elements.ota_files = this.otaFilesList(),
        ]), // section ota
+       el('section', {}, [
+         this.state.elements.flash = el('mqtt-flash', {}),
+       ]), // section flash
      ]);
    }
    // Content of the Admin tab below the organization dropdown - only rendered once an org is selected
