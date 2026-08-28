@@ -412,6 +412,37 @@ getters. Four things came out of reviewing it in the harness:
   schema's own units, and removes the hardcoded units D-23 complained about. The old UI gets the
   same improvement: `3940` became `3940 mV` and a lone `✓` became `Relay ✓`.
 
+**Front mode is done.** Three row kinds off `nodeMt.frontRows`, built from the widgets the client
+already has, plus the header buttons (⌄ collapse, ⚙ back) and the battery / last-seen footer.
+
+- **Widgets are pre-bound (`el.mt`) but deliberately not registered as `mt.element`.** Only one
+  element can hold that at a time, so binding would have this card competing with a graph, a second
+  card, or the old UI for the same topic. The card pushes values into its own children from
+  `refresh()` instead — which is also why the "clear the back-reference when rebuilding" footgun in
+  CLAUDE.md does not apply here.
+- **The `label` attribute never worked.** Every widget rendered `this.mt.name` regardless, so
+  `dashboard_example.html`'s `label:` has always been ignored. A `displayLabel` getter now prefers
+  the attribute, which is what lets a card show "Soil Temperature" where the topic is called
+  "Temperature".
+- **The bar showed the raw value** — `30.142857` — which made `width` pointless. `mqtt-bar` and
+  `mqtt-text` now display `mt.formatted`, and the bar gained the min/max end labels §9 asked for.
+  Both improvements land on the old UI too: `3940` → `3940 mV`, `30.142857` → `30.1°C`, and every
+  bar now says what its range is.
+
+Reviewing the front turned up four more, three of them in code that predates the cards:
+
+- **A bar whose reading was below min showed a stub of fill, not an empty bar.** `MqttBar.width`
+  returned a negative percentage, which is not a width, so the fill shrank to fit its own text.
+  Clamped to 0..100, so under-range empties the bar and over-range fills it, with the true value
+  still printed. The `out-of-range` scenario now carries one of each.
+- **The range-end labels rendered as "0100".** `mqtt-bar`'s host is `display: inline` by default, so
+  its shadow content shrink-wraps and `justify-content: space-between` had no width to work across.
+  The host is a block now.
+- **`frugaliot.css` had a stray `}`**, at what was line 263, leaving every rule after it parsed at
+  brace depth −1. It has presumably been there a while.
+- **The collapse control was a `⌄`**, which reads as "there is more below" — the opposite of what it
+  does. It is now a `✕`, and sits last so it lands in the corner.
+
 **And one real bug that change exposed.** In `MqttReceiver.topicValueSet` the group roll-up
 (`setAttribute`, which triggers `reSummarize`) ran *before* `valueSet` mirrored the value into the
 data tree. Any summary built from the data tree was therefore one message behind — and empty for a

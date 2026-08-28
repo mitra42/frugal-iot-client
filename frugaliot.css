@@ -260,7 +260,6 @@ div.mqtt-text {
             button { font-size: x-large; padding: 10px; border-radius: 10px; }
         }
     }
-}
 /* Claude suggested this not to impact the Login page - not sure if it does */
 /* Fix: was width:50% shared with the 2-tab login view, breaking the 5-tab dashboard bar */
 
@@ -368,3 +367,56 @@ div.mqtt-text {
 }
 .fi-card__meta { display: flex; align-items: center; gap: 8px; }
 .fi-battery { height: 1em; width: auto; vertical-align: middle; }
+
+/* Front of a card: a flat ordered list of rows, no module grouping (CARDS_UX.md D-17) */
+.fi-card--front .fi-card__rows { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; }
+.fi-row { padding: 2px 0; }
+.fi-row--control {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    border-top: 1px solid var(--fi-border);
+    padding-top: 6px;
+    margin-top: 4px;
+}
+.fi-row__label { color: var(--fi-muted); font-size: 0.9em; }
+.fi-row__rule  { font-variant-numeric: tabular-nums; }
+/* A reading past its declared range is a broken sensor, or a range that needs revisiting */
+.fi-row--outofrange { color: #c0392b; }
+.fi-card__foot {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px solid var(--fi-border);
+    color: var(--fi-muted);
+    font-size: 0.85em;
+    font-variant-numeric: tabular-nums;
+}
+.fi-btn {
+    background: none;
+    border: 0;
+    font-size: 1.1em;
+    line-height: 1;
+    padding: 4px 6px;
+    min-width: 32px;
+    min-height: 32px;
+    cursor: pointer;
+    color: var(--fi-muted);
+}
+.fi-btn:hover { color: var(--fi-text); }
+.fi-card--front, .fi-card--back { cursor: default; }
+/* The host is display:inline by default, so its shadow content shrink-wraps and the range ends
+   land next to each other. Making the host a block gives them the bar's full width to sit across. */
+mqtt-bar { display: block; }
+/* Range ends under a bar, so a fill level means something without knowing the sensor.
+   Selector is heavier than it looks because it has to beat ":host-context(details[open]) div"
+   near the top of this file, which forces display:block on every div in a shadow root inside an
+   open <details> - that is every bar in the node/group UI, and it flattened these onto one line. */
+div.outer.mqtt-bar > div.ends {
+    display: flex;
+    justify-content: space-between;
+    color: var(--fi-muted, #6b6b6b);
+    font-size: 0.75em;
+    font-variant-numeric: tabular-nums;
+}

@@ -84,7 +84,7 @@
                     "Voltage"
                   <img class="icon">
                   <span class="val">
-                    "3940"
+                    "3940 mV"
         <div class="topics">
           <slot>
     <mqtt-groupsht group="sht" name="SHT" class="group sht">
@@ -107,7 +107,12 @@
             <div class="bar">
               <span class="left">
                 <span class="val">
-                  "30.142857"
+                  "30.1°C"
+            <div class="ends">
+              <span class="min">
+                "0"
+              <span class="max">
+                "50"
             <slot>
       <mqtt-bar type="float" min="0" max="100" color="blue">
         #shadow
@@ -119,7 +124,12 @@
             <div class="bar">
               <span class="left">
                 <span class="val">
-                  "85.1"
+                  "85.1%RH"
+            <div class="ends">
+              <span class="min">
+                "0"
+              <span class="max">
+                "100"
             <slot>
     <mqtt-grouprelay group="relay" name="Relay" class="group relay">
       #shadow
@@ -157,7 +167,7 @@
                   "Now"
                 <span class="wiredinput">
                   <span class="val">
-                    "30.142857"
+                    "30.1"
                   <span class="wired">
                     "Greenhouse North:SHT:Temperature"
               <mqtt-choosetopic name="Now" value="dev/lotus/esp8266-fb94bb/sht/temperature" type="float">

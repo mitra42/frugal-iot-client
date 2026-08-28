@@ -1,0 +1,60 @@
+<mqtt-devicecard mode="front">
+  <div class="fi-card fi-card--front fi-status-live">
+    <div class="fi-card__head">
+      <span class="fi-status">
+        "●"
+      <span class="fi-card__name">
+        "Greenhouse North"
+      <span class="fi-card__meta">
+        <img class="fi-battery">
+      <button class="fi-btn">
+        "⚙"
+      <button class="fi-btn fi-btn--close">
+        "✕"
+    <div class="fi-card__rows">
+      <div class="fi-row fi-row--reading">
+        <mqtt-bar topic="dev/lotus/esp8266-fb94bb/sht/temperature" value="30.142857" label="Temperature" type="float" min="0" max="50" color="red">
+          #shadow
+            <div class="outer mqtt-bar">
+              <div class="name">
+                <label>
+                  "Temperature"
+                <img class="icon">
+              <div class="bar">
+                <span class="left">
+                  <span class="val">
+                    "30.1°C"
+              <div class="ends">
+                <span class="min">
+                  "0"
+                <span class="max">
+                  "50"
+              <slot>
+      <div class="fi-row fi-row--reading">
+        <mqtt-bar topic="dev/lotus/esp8266-fb94bb/sht/humidity" value="85.1" label="Humidity" type="float" min="0" max="100" color="blue">
+          #shadow
+            <div class="outer mqtt-bar">
+              <div class="name">
+                <label>
+                  "Humidity"
+                <img class="icon">
+              <div class="bar">
+                <span class="left">
+                  <span class="val">
+                    "85.1%RH"
+              <div class="ends">
+                <span class="min">
+                  "0"
+                <span class="max">
+                  "100"
+              <slot>
+      <div class="fi-row fi-row--control">
+        <span class="fi-row__label">
+          "Control"
+        <span class="fi-row__rule">
+          "Relay = SHT:Temperature > 32 +/- 3 ✓"
+    <div class="fi-card__foot">
+      <span class="fi-foot__battery">
+        "3940 mV"
+      <span class="fi-foot__age">
+        "now"

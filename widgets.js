@@ -155,6 +155,10 @@ class MqttReceiver extends MqttElement {
       return false;
     }
   }
+  // What to call this on screen: whatever the caller asked for, else the topic's own name
+  get displayLabel() {
+    return this.state.label || (this.mt && this.mt.name);
+  }
   //TODO maybe able to just setAttribute("value", val) - which would also do type conversion string to number
   valueSet(val) {
     // Note val can be of many types - it will be subclass dependent
@@ -205,7 +209,7 @@ class MqttReceiver extends MqttElement {
   renderLabel() {
     // noinspection JSUnresolvedVariable
     return [
-      el('label', {for: this.mt.topicPath, textContent: this.mt.name}),
+      el('label', {for: this.mt.topicPath, textContent: this.displayLabel}),
       !this.state.graphable ? null
       : el('img', {class: "icon", src: `${ImagesUrl}icon_graph.svg`, onclick: this.opengraph.bind(this)})
     ];
@@ -308,7 +312,7 @@ class MqttText extends MqttTransmitter {
   valueSet(val) {
     super.valueSet(val);
     if (this.state.elements.textValue) {
-      this.state.elements.textValue.textContent = val;
+      this.state.elements.textValue.textContent = this.mt.formatted;
     } else if (this.state.elements.inputValue) {
       this.state.elements.inputValue.value = val;
     }
@@ -331,7 +335,7 @@ class MqttText extends MqttTransmitter {
   renderValue(val) {
     // I think val should always be this.state.value, even when called in renderMaybeWired with wiredTopicValue
     //if (val != this.state.value) { XXX(["Mistaken assumption in MqttText.renderValue"])} // TODO-64
-    return this.state.elements.textValue = el('span',{class: "val", textContent: val || "", i8n: false, /*onclick: this.onClick.bind(this)*/});
+    return this.state.elements.textValue = el('span',{class: "val", textContent: this.mt.formatted || val || "", i8n: false, /*onclick: this.onClick.bind(this)*/});
   }
   render() {
     return this.renderMaybeWired("mqtt-text "+(this.mt && this.mt.twig && this.mt.twig.replaceAll('/','_') || ""));
@@ -469,15 +473,17 @@ class MqttBar extends MqttReceiver {
       this.state.elements.inner.style.width = `${this.width}%`;
     }
     if (this.state.elements.textValue) {
-      this.state.elements.textValue.textContent = val;
+      this.state.elements.textValue.textContent = this.mt.formatted;
     }
     return false; // Note will not re-render children like a MqttSlider because these are inserted into DOM via a "slot"
   }
+  // How much of the bar to fill, as a percentage. Clamped: a reading below min gave a negative
+  // width, which is not a width at all, so the fill shrank to fit its own text instead.
   get width() {
-    return this.state.type === "exponential"
+    const pct = this.state.type === "exponential"
       ? 100*(Math.log(this.state.value/(this.state.min||1))/Math.log(this.state.max/(this.state.min||1)))
-      : 100*(this.state.value-this.state.min)/(this.state.max-this.state.min)
-    ;
+      : 100*(this.state.value-this.state.min)/(this.state.max-this.state.min);
+    return Number.isFinite(pct) ? Math.max(0, Math.min(100, pct)) : 0;
   }
   changeAttribute(name, valueString) {
     super.changeAttribute(name, valueString); // Change from string to number etc and store on this.state
@@ -508,18 +514,24 @@ class MqttBar extends MqttReceiver {
       el('div', {class: "outer mqtt-bar"}, [
 
         el('div', {class: "name"}, [
-          el('label', {for: this.mt.topicPath, textContent: this.mt.name}),
+          el('label', {for: this.mt.topicPath, textContent: this.displayLabel}),
           !this.state.graphable ? null
           : el('img', {class: "icon", src: `${ImagesUrl}icon_graph.svg`, onclick: this.opengraph.bind(this)}),
         ]),
         el('div', {class: "bar", id: this.mt.topicPath},[
           // Note width overridden as value changes
           this.state.elements.inner = el('span', {class: "left", style: `width:${this.width}%; background-color:${this.state.color};`},[
-            this.state.elements.textValue = el('span', {class: "val", textContent: this.state.value}),
+            this.state.elements.textValue = el('span', {class: "val", i8n: false, textContent: this.mt.formatted}),
           ]),
           //Do not appear to need this - and it sometimes wraps, so if re-enabled, need to make sure always horiz next to left
           //el('span', {class: "right", style: "width:"+(100-width)+"%"}),
         ]),
+        // The ends of the range, so a bar means something without having to know the sensor
+        ((this.state.min === undefined) || (this.state.max === undefined)) ? null
+          : el('div', {class: "ends"}, [
+            el('span', {class: "min", i8n: false, textContent: String(this.state.min)}),
+            el('span', {class: "max", i8n: false, textContent: String(this.state.max)}),
+          ]),
         el('slot',{}), // Children would be a setpoint, but not using currently
       ]),
     ];
@@ -547,7 +559,7 @@ class MqttGauge extends MqttReceiver {
       el('link', {rel: 'stylesheet', href: CssUrl}),
       el('div', {class: "outer mqtt-gauge"}, [
         this.state.elements.dg = el('dial-gauge', {
-          "main-title": this.mt.name,
+          "main-title": this.displayLabel,
           "sub-title": "",
           "scale-start": this.state.min,
           "scale-end": this.state.max,
@@ -635,7 +647,7 @@ class MqttSlider extends MqttTransmitter {
       el('div', {class: "mqtt-slider outer"}, [
         el('div', {class: "name"}, [ //TODO maybe use a label
           // noinspection JSUnresolvedReference
-          el('span', {textContent: this.mt.name}),
+          el('span', {textContent: this.displayLabel}),
           el('span', {class: "val", textContent: this.state.value}), // TODO restrict number of DP
         ]),
         this.slider,  // <div.setpoint><child></div

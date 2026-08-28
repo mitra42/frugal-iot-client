@@ -266,6 +266,7 @@ EN:
   Click to sort: Click to sort
   Climate: Climate
   close: close
+  Collapse: Collapse
   Color:  Color
   Connect board: Connect board
   connected: connected
@@ -313,6 +314,7 @@ EN:
   Last Seen: Last Seen
   LED: LED
   Limit: Limit
+  live: Live
   Load Cell: Load Cell
   Loading schema...: Loading schema...
   Lower-case letters and numbers only, no spaces or punctuation: Lower-case letters and numbers only, no spaces or punctuation
@@ -320,6 +322,7 @@ EN:
   Monitor: Monitor
   Monitor speed: Monitor speed
   Name: Name
+  never: Never seen
   Never seen: Never seen
   No board connected: No board connected
   No farms registered for this organization yet.: No farms registered for this organization yet.
@@ -392,6 +395,7 @@ EN:
   server: server
   set: set
   Setpoint: Setpoint
+  Settings: Settings
   SHT: SHT
   SHT30: SHT30
   Sign In: Sign In
@@ -402,6 +406,7 @@ EN:
   Sonoff switch: Sonoff switch
   Speed: Speed
   SSID: SSID
+  stale: Not reported recently
   Stop monitor: Stop monitor
   Submit: Submit
   System: System
@@ -452,6 +457,7 @@ FR:
   Click to sort: Cliquez pour trier
   Climate: Climat
   close: fermer
+  Collapse: Réduire
   Color: Couleur  
   Connect board: Connecter la carte
   connected: connecté
@@ -501,6 +507,7 @@ FR:
   Last Seen: Dernière activité
   LED: LED
   Limit: Limite
+  live: En ligne
   Load Cell: Cellule de charge
   Loading schema...: Chargement du schéma...
   Lower-case letters and numbers only, no spaces or punctuation: Lettres minuscules et chiffres uniquement, sans espaces ni ponctuation
@@ -508,6 +515,7 @@ FR:
   Monitor: Moniteur
   Monitor speed: Vitesse du moniteur
   Name: Nom 
+  never: Jamais vu
   Never seen: Jamais vu
   No board connected: Aucune carte connectée
   No farms registered for this organization yet.: Aucune ferme enregistrée pour cette organisation pour l'instant.
@@ -580,6 +588,7 @@ FR:
   server: serveur
   set: défini
   Setpoint: consigne
+  Settings: Réglages
   SHT: SHT
   SHT30: SHT30
   Sign In: Se connecter
@@ -590,6 +599,7 @@ FR:
   Sonoff switch: Interrupteur Sonoff
   Speed: Vitesse
   SSID: SSID
+  stale: Pas de nouvelles récentes
   Stop monitor: Arrêter moniteur
   Submit: Soumettre
   System: Système
@@ -640,6 +650,7 @@ HI:
   Click to sort: क्रमबद्ध करने के लिए क्लिक करें
   Climate: जलवायु
   close: बंद करें
+  Collapse: छोटा करें
   Color: रंग  
   Connect board: बोर्ड कनेक्ट करें
   connected: जुड़े हुए
@@ -689,6 +700,7 @@ HI:
   Last Seen: अंतिम बार देखा गया
   LED: एलईडी
   Limit: सीमा
+  live: चालू
   Load Cell: लोड सेल
   Loading schema...: स्कीमा लोड हो रहा है...
   Lower-case letters and numbers only, no spaces or punctuation: केवल छोटे अक्षर और अंक, कोई स्पेस या विरामचिह्न नहीं
@@ -696,6 +708,7 @@ HI:
   Monitor: मॉनिटर
   Monitor speed: मॉनिटर गति
   Name: नाम
+  never: कभी नहीं देखा
   Never seen: कभी नहीं देखा
   No board connected: कोई बोर्ड कनेक्ट नहीं है
   No farms registered for this organization yet.: इस संगठन के लिए अभी तक कोई फार्म पंजीकृत नहीं है।
@@ -768,6 +781,7 @@ HI:
   server: सर्वर
   set: सेट किया गया
   Setpoint: सेटपॉइंट
+  Settings: सेटिंग्स
   SHT: एसएचटी
   SHT30: एसएचटी30
   Sign In: साइन इन करें
@@ -778,6 +792,7 @@ HI:
   Sonoff switch: सोनऑफ स्विच
   Speed: गति
   SSID: SSID
+  stale: हाल में रिपोर्ट नहीं
   Stop monitor: मॉनिटर बंद करें
   Submit: जमा करें
   System: सिस्टम
@@ -828,6 +843,7 @@ ID:
   Click to sort: Klik untuk mengurutkan
   Climate: Iklim
   close: tutup
+  Collapse: Ciutkan
   Color: Warna  
   Connect board: Hubungkan papan
   connected: terhubung
@@ -877,6 +893,7 @@ ID:
   Last Seen: Terakhir Dilihat
   LED: LED
   Limit: Batas
+  live: Aktif
   Load Cell: Sel Beban
   Loading schema...: Memuat skema...
   Lower-case letters and numbers only, no spaces or punctuation: Hanya huruf kecil dan angka, tanpa spasi atau tanda baca
@@ -884,6 +901,7 @@ ID:
   Monitor: Monitor
   Monitor speed: Kecepatan monitor
   Name: Nama
+  never: Belum pernah terlihat
   Never seen: Belum pernah terlihat
   No board connected: Tidak ada papan terhubung
   No farms registered for this organization yet.: Belum ada farm yang terdaftar untuk organisasi ini.
@@ -956,6 +974,7 @@ ID:
   server: server
   set: diatur
   Setpoint: titik setel
+  Settings: Pengaturan
   SHT: SHT
   SHT30: SHT30
   Sign In: Masuk
@@ -966,6 +985,7 @@ ID:
   Sonoff switch: Saklar Sonoff
   Speed: Kecepatan
   SSID: SSID
+  stale: Belum melapor baru-baru ini
   Stop monitor: Hentikan monitor
   Submit: Kirim
   System: Sistem

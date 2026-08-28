@@ -53,9 +53,10 @@ export const scenarios = {
   },
 
   'out-of-range': {
-    // temperature is min 0 max 50 in topics.yaml, so -999 is a broken sensor
-    title: 'Reading outside its declared min/max',
-    messages: device('esp8266-broken', 'Broken Probe', { 'sht/temperature': '-999', 'sht/humidity': '85' }),
+    // temperature is 0..50 and humidity 0..100 in topics.yaml, so one is far below its range and
+    // the other above it - the two ends look different and both need checking
+    title: 'Readings below and above their declared min/max',
+    messages: device('esp8266-broken', 'Broken Probe', { 'sht/temperature': '-999', 'sht/humidity': '118.4' }),
   },
 
   'control-wired': {

@@ -85,6 +85,99 @@ describe('summary mode', () => {
   });
 });
 
+describe('front mode', () => {
+  test('one row per front row, in the declared order', () => {
+    const { card, nodeMt } = cardFor('control-wired', 'esp8266-fb94bb', { mode: 'front', at: T0 });
+    assert.equal(card.querySelectorAll('.fi-row').length, nodeMt.frontRows.length);
+    card.remove();
+  });
+
+  test('a reading becomes the widget its display: asks for, with its range', () => {
+    const { card } = cardFor('one-device', 'esp8266-fb94bb', { mode: 'front', at: T0 });
+    const bar = card.querySelector('mqtt-bar');
+    assert.ok(bar, 'temperature has display: bar');
+    assert.equal(bar.getAttribute('min'), '0');
+    assert.equal(bar.getAttribute('max'), '50');
+    assert.ok(bar.mt, 'pre-bound, so it does not fabricate a topic of its own');
+    card.remove();
+  });
+
+  test('a widget is not bound as mt.element, so nothing competes for the topic', () => {
+    const { card, nodeMt } = cardFor('one-device', 'esp8266-fb94bb', { mode: 'front', at: T0 });
+    assert.equal(nodeMt.groups.sht.topics.temperature.element, undefined);
+    card.remove();
+  });
+
+  test('the label is the disambiguated one, not the raw topic name', () => {
+    const { card } = cardFor('default-front', 'esp8266-two-temps', { mode: 'front', at: T0 });
+    const labels = [...card.querySelectorAll('mqtt-bar')].map((b) => b.getAttribute('label'));
+    assert.ok(labels.includes('Soil Temperature'), `got ${labels}`);
+    card.remove();
+  });
+
+  test('an actuator is a live control the user can tap', () => {
+    // default-front takes the default ordering, which puts actuators after the readings
+    const { card } = cardFor('default-front', 'esp8266-two-temps', { mode: 'front', at: T0 });
+    assert.ok(card.querySelector('.fi-row--actuator mqtt-toggle'), 'the relay should be tappable');
+    card.remove();
+  });
+
+  test('a control module is read-only on the front, and shows its rule', () => {
+    const { card } = cardFor('control-wired', 'esp8266-fb94bb', { mode: 'front', at: T0 });
+    const control = card.querySelector('.fi-row--control');
+    assert.ok(control, 'the control should have a row');
+    assert.equal(control.querySelectorAll('input, button, select').length, 0, 'read-only on the front');
+    assert.match(control.textContent, /> 32/, 'and the rule, not just the state');
+    card.remove();
+  });
+
+  test('a device only shows what its entry declares - the rest is on the back', () => {
+    // This device publishes relay/on, but the sht30 entry does not list it, so it is not on the front
+    const { card, nodeMt } = cardFor('control-wired', 'esp8266-fb94bb', { mode: 'front', at: T0 });
+    assert.ok(nodeMt.groups.relay, 'the device does have a relay');
+    assert.equal(card.querySelector('.fi-row--actuator'), null);
+    card.remove();
+  });
+
+  test('an out-of-range reading is marked at both ends of the range', () => {
+    const { card } = cardFor('out-of-range', 'esp8266-broken', { mode: 'front', at: T0 });
+    assert.equal(card.querySelectorAll('.fi-row--outofrange').length, 2);
+    const [below, above] = [...card.querySelectorAll('mqtt-bar')];
+    // A value under min gave a negative width, so the fill shrank to its own text instead of
+    // emptying; one over max would have overflowed the track
+    assert.equal(below.width, 0, 'below min should empty the bar');
+    assert.equal(above.width, 100, 'above max should fill it');
+    assert.match(below.mt.formatted, /-999/, 'and the real value is still shown');
+    assert.match(above.mt.formatted, /118.4/);
+    card.remove();
+  });
+
+  test('the footer carries battery and last seen', () => {
+    const { card } = cardFor('one-device', 'esp8266-fb94bb', { mode: 'front', at: T0 });
+    const foot = card.querySelector('.fi-card__foot');
+    assert.match(foot.textContent, /3940 mV/);
+    assert.ok(foot.querySelector('.fi-foot__age'));
+    card.remove();
+  });
+
+  test('collapse goes back to the summary, the gear goes to the back', () => {
+    const { card } = cardFor('one-device', 'esp8266-fb94bb', { mode: 'front', at: T0 });
+    card.querySelector('.fi-btn:not(.fi-btn--close)').click();
+    assert.equal(card.getAttribute('mode'), 'back');
+    card.setAttribute('mode', 'front');
+    card.querySelector('.fi-btn--close').click();
+    assert.equal(card.getAttribute('mode'), 'summary');
+    card.remove();
+  });
+
+  test('the front is not one big click target', () => {
+    const { card } = cardFor('one-device', 'esp8266-fb94bb', { mode: 'front', at: T0 });
+    card.querySelector('.fi-card').click();
+    assert.equal(card.getAttribute('mode'), 'front', 'clicking the body must not change mode');
+    card.remove();
+  });
+});
+
 describe('it updates in place as messages arrive', () => {
   test('a new value changes the chip without rebuilding the card', () => {
     const { card, nodeMt, projectMt } = cardFor('one-device', 'esp8266-fb94bb', { at: T0 });
@@ -103,10 +196,14 @@ describe('it updates in place as messages arrive', () => {
 });
 
 describe('rendered output', () => {
-  for (const [scenario, nodeId] of [['one-device', 'esp8266-fb94bb'], ['mixed-sensors', 'esp8266-agri']]) {
-    test(`${scenario} summary card`, () => {
-      const { card } = cardFor(scenario, nodeId, { at: T0 });
-      const file = new URL(`./snapshots/card-${scenario}.txt`, import.meta.url);
+  for (const [scenario, nodeId, mode] of [
+    ['one-device', 'esp8266-fb94bb', 'summary'],
+    ['mixed-sensors', 'esp8266-agri', 'summary'],
+    ['control-wired', 'esp8266-fb94bb', 'front'],
+  ]) {
+    test(`${scenario} ${mode} card`, () => {
+      const { card } = cardFor(scenario, nodeId, { at: T0, mode });
+      const file = new URL(`./snapshots/card-${scenario}-${mode}.txt`, import.meta.url);
       const text = snapshot(card);
       if (update || !existsSync(file)) writeFileSync(file, text);
       else assert.equal(text, readFileSync(file, 'utf8'));

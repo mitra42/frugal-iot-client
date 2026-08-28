@@ -84,7 +84,7 @@
                     "Voltage"
                   <img class="icon">
                   <span class="val">
-                    "3940"
+                    "3940 mV"
         <div class="topics">
           <slot>
     <mqtt-group group="quantumflux" name="quantumflux" class="group quantumflux">
