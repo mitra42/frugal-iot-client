@@ -1,0 +1,14 @@
+<mqtt-devicecard mode="summary">
+  <div class="fi-card fi-card--summary fi-status-live">
+    <div class="fi-card__head">
+      <span class="fi-status">
+        "●"
+      <span class="fi-card__name">
+        "Bed 3"
+      <span class="fi-card__meta">
+        <img class="fi-battery">
+    <div class="fi-card__chips">
+      <span class="fi-chip">
+        "38%"
+      <span class="fi-chip">
+        "18.3°C"

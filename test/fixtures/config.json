@@ -1283,10 +1283,6 @@
      "aht21/humidity",
      "ens160/aqi",
      "controlhysteresis"
-    ],
-    "summary": [
-     "aht21/temperature",
-     "ens160/aqi"
     ]
    },
    "lilygohigrow": {
@@ -1316,10 +1312,6 @@
      "sht/temperature",
      "sht/humidity",
      "controlhysteresis"
-    ],
-    "summary": [
-     "sht/temperature",
-     "sht/humidity"
     ]
    },
    "soil": {
@@ -1336,9 +1328,6 @@
    "sonoff": {
     "front": [
      "relay/on",
-     "controlhysteresis"
-    ],
-    "summary": [
      "controlhysteresis"
     ]
    },

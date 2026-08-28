@@ -290,3 +290,81 @@ div.mqtt-text {
     button { margin-right: 0.5em; }
 }
 
+
+/* ============================================================================
+ * Device cards - see CARDS_UX.md
+ *
+ * These render in the light DOM, not a shadow root, so ordinary selectors reach them and the
+ * fi- prefix is what keeps them from colliding with anything else on the page.
+ *
+ * Colours and spacing are custom properties because those DO cross a shadow boundary, so the
+ * widgets inside a card (mqtt-bar and friends) can be themed from here without :host-context.
+ * ========================================================================= */
+:root {
+    --fi-card-bg:  #ffffff;
+    --fi-border:   #e3e3e3;
+    --fi-text:     #1a1a1a;
+    --fi-muted:    #6b6b6b;
+    --fi-radius:   8px;
+    --fi-gap:      12px;
+    /* Status: paired with a different shape in the markup, never colour alone */
+    --fi-live:     #2e9e4f;
+    --fi-stale:    #d98a0b;
+    --fi-offline:  #9a9a9a;
+}
+
+.fi-card {
+    background: var(--fi-card-bg);
+    border: 1px solid var(--fi-border);
+    border-radius: var(--fi-radius);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .06);
+    padding: 10px 12px;
+    min-height: 44px;          /* A touch target, on a phone held at arm's length */
+    cursor: pointer;
+    color: var(--fi-text);
+}
+.fi-card__head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+.fi-card__name {
+    font-weight: 600;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.fi-card__meta {
+    color: var(--fi-muted);
+    font-size: 0.85em;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+.fi-card__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 4px;
+}
+/* The value is the loudest thing on the card - these get read outdoors, on a phone, in sunlight */
+.fi-chip {
+    font-size: 1.2em;
+    font-variant-numeric: tabular-nums;   /* so digits do not jitter as values update */
+}
+.fi-status { font-size: 0.85em; line-height: 1; }
+.fi-status-live    .fi-status { color: var(--fi-live); }
+.fi-status-stale   .fi-status { color: var(--fi-stale); }
+.fi-status-offline .fi-status,
+.fi-status-never   .fi-status { color: var(--fi-offline); }
+/* A stale reading is still information, so it stays legible rather than being hidden */
+.fi-status-stale   .fi-card__chips,
+.fi-status-offline .fi-card__chips { opacity: 0.55; }
+.fi-status-never   .fi-card__chips { display: none; }
+
+@media (max-width: 1001px) {
+    .fi-card { font-size: 1.3em; padding: 14px; }
+}
+.fi-card__meta { display: flex; align-items: center; gap: 8px; }
+.fi-battery { height: 1em; width: auto; vertical-align: middle; }

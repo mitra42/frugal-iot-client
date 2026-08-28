@@ -377,8 +377,19 @@ Three sources, first match wins: **D-36**
 1. the device entry's `summary:` list;
 2. otherwise the **first two entries of its `front:` list** — so the common device declares `front:`
    only and gets a sensible summary for free;
-3. otherwise every contributing module (§4.1), **capped at two** — the same two as rule (2), so a
-   device with six sensors still gets a one-line summary rather than a paragraph.
+3. otherwise every contributing module (§4.1).
+
+Rules (2) and (3) are capped at **four** chips, which is enough for temperature + humidity + air
+quality + a control — two was too few, and an ENS160 device could not say what it was for. A declared
+`summary:` list is not capped: if an author asks for six, they get six. **D-36**
+
+A **control contributes a chip, not its rule**: `Relay ✓`, where the front row shows
+`Relay = Temperature > 32 ±3 ✓`. Two methods, `summaryShort()` and `summaryText()`, because a
+sentence in a chip row wraps the card to three lines. **D-38**
+
+A **control that drives nothing is left off the summary altogether** — a device often carries a
+control that was never wired up, and an idle one should not take a place on a four-chip line. It
+still appears on the front, which is where you would go to wire it. **D-40**
 
 `summary:` is kept as a separate key rather than always derived, because the one-line view genuinely
 differs from the full one often enough to matter — a soil sensor whose summary is the moisture but
@@ -525,6 +536,10 @@ The trailing ⚙ is app/admin settings (existing `mqtt-admin`), distinct from a 
 
 Offered because the brief asks for them; all cheap to change later if they are wrong.
 
+- **Battery**: on the summary, the level icon alone — the summary is a glanceable view and the level
+  is already in the icon's shape, so the number is clutter. The percentage stays on the icon's title
+  and appears as text on the front. A bare "47%" beside a device name was the worst of both: it does
+  not say what is 47%, and it reads as a humidity or a soil moisture.
 - **Card**: white, 8px radius, 1px hairline border (`#e3e3e3`) plus a 1px soft shadow. Not the
   heavy black border of today. (Note: the current CSS writes `border: 1px,black,solid` in several
   places, which is invalid CSS and silently does nothing — worth fixing while here.)
@@ -716,8 +731,11 @@ Reopening one means revisiting this document, not deciding it in code.
 | D-33 | Nodes card gating | `ADMIN`, as today — do not widen access as a side effect of a redesign |
 | D-34 | `devices.yaml` key matching | device id, then exact OTA key, then longest prefix of the OTA key |
 | D-35 | Which topics need `width`? | `float` and `exponential` only — 25 topics; ints derive their field width from `min`/`max` |
-| D-36 | Is a device `summary:` list required? | No — defaults to the first two entries of `front:` |
+| D-36 | Is a device `summary:` list required? | No — defaults to the first four entries of `front:`; a declared list is uncapped |
 | D-37 | Module summary flag polarity | `summary: false` to opt out — opt-in would have flagged 23 of 33 modules |
+| D-38 | A control on the summary line | A chip (`Relay ✓`) via `summaryShort()`, not its whole rule |
+| D-39 | Battery on the summary line | The level icon alone; the percentage lives on its title and on the front |
+| D-40 | An unwired control on the summary | Omitted — it is doing nothing. Still shown on the front |
 
 ---
 

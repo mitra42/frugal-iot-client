@@ -391,6 +391,35 @@ Three details worth knowing:
 
 ### Phase 5 — The card
 
+**Summary mode is done.** `cards.js` holds `mqtt-devicecard`, light DOM, reading only data-tree
+getters. Four things came out of reviewing it in the harness:
+
+- A bare `47%` beside the device name says nothing about *what* is 47%. It is now the battery level
+  icon alone (`images/Battery0-6.png`, already in the repo and reached for by the old UI's dead
+  `topicChanged` code) — the summary is a glanceable view and the level is in the icon's shape, so
+  the number is clutter. The percentage is on the icon's title and will be text on the front. The age
+  shows whenever the device is not live (D-39).
+- An unwired control is left off the summary entirely (D-40): a device often carries a control nobody
+  wired up, and it should not take one of the four places. It still appears on the front.
+- The summary cap of two was too tight — an ENS160 device wants temperature, humidity and air
+  quality, and a control besides. Raised to four for the fallbacks; a declared `summary:` list is
+  uncapped (D-36).
+- A control was missing from the summary entirely, because `sht30`'s `summary:` list stopped short
+  of it. Those redundant lists are deleted from `devices.yaml` so the default picks the control up,
+  and a control now contributes a **chip** — `Relay ✓` — rather than its whole rule (D-38).
+- The hand-written module summaries read raw state and hardcoded `°C`/`%RH`, so a summary showed
+  `30.142857°C`. They now go through `mt.formatted`, which gives them width-based rounding and the
+  schema's own units, and removes the hardcoded units D-23 complained about. The old UI gets the
+  same improvement: `3940` became `3940 mV` and a lone `✓` became `Relay ✓`.
+
+**And one real bug that change exposed.** In `MqttReceiver.topicValueSet` the group roll-up
+(`setAttribute`, which triggers `reSummarize`) ran *before* `valueSet` mirrored the value into the
+data tree. Any summary built from the data tree was therefore one message behind — and empty for a
+topic that reports only once. The tree is now updated first, before anything is asked to re-render,
+which is the right order regardless.
+
+
+
 `mqtt-devicecard`, light DOM, `mode="summary|front|back"`, bound to its `MqttTopicNode` by the
 existing `el.mt` / `mt.element` convention (pre-bind before `appendChild`, per `CLAUDE.md`).
 

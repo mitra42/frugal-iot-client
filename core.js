@@ -49,6 +49,9 @@ let mqtt_subscriptions = [];   // [{topic, cb(message)}]
 let unique_id = 1; // Just used as a label for auto-generated elements
 // What to assume a node's reporting interval is before it has sent a second message
 const DEFAULT_REPORT_INTERVAL_MS = 300000;
+// How many chips a summary line falls back to when the device does not declare its own. Enough for
+// temperature + humidity + air quality + a control; a declared summary: list is not capped at all.
+const SUMMARY_CHIP_LIMIT = 4;
 // A label for the next auto-generated element. A function because an imported binding cannot be
 // assigned to, and MqttChooseTopic lives in another module.
 function nextUniqueId() { return ++unique_id; }
@@ -173,6 +176,19 @@ function unitSymbol(code) {
 function unitSuffix(code) {
   const sym = unitSymbol(code);
   return sym && /^[a-zA-Z]/.test(sym) ? ` ${sym}` : sym;
+}
+
+// "3 min ago". Intl does the plurals and the wording, so none of this needs a languages entry -
+// which hand-rolling would, in four languages, for every unit.
+function relativeTime(ms) {
+  const rtf = new Intl.RelativeTimeFormat(preferedLanguages[0] || 'en', { numeric: 'auto', style: 'narrow' });
+  const s = Math.round(ms / 1000);
+  if (Math.abs(s) < 60) return rtf.format(-s, 'second');
+  const m = Math.round(s / 60);
+  if (Math.abs(m) < 60) return rtf.format(-m, 'minute');
+  const h = Math.round(m / 60);
+  if (Math.abs(h) < 24) return rtf.format(-h, 'hour');
+  return rtf.format(-Math.round(h / 24), 'day');
 }
 
 function moduleTemplate(groupId) {
@@ -1707,18 +1723,24 @@ class MqttTopicGroup extends MqttTopic {
   summaryText() {
     return null; // Most modules have no summary of their own
   }
+  // The chip form, for the one-line summary. Same as summaryText for a sensor, but a control's
+  // rule is a sentence and a summary wants "Relay ✓", not "Relay = SHT:Temperature > 32 +/- 3 ✓".
+  summaryShort() {
+    return this.summaryText();
+  }
   trueFalseSymbol(val) {
     return (val === undefined) ? '?' : (val ? '✓' : '✗');
   }
 }
 class MqttTopicGroupRelay extends MqttTopicGroup {
+  // Named, because a lone ✓ on a summary line does not say what is on
   summaryText() {
-    return `${this.trueFalseSymbol(this.state.on)}`
+    return `${this.state.name} ${this.trueFalseSymbol(this.state.on)}`
   }
 }
 class MqttTopicGroupSoil extends MqttTopicGroup {
   summaryText() {
-    return `${this.state.soil}%`
+    return this.topics.soil.formatted;
   }
 }
 class MqttTopicGroupOta extends MqttTopicGroup {
@@ -1728,17 +1750,17 @@ class MqttTopicGroupOta extends MqttTopicGroup {
 }
 class MqttTopicGroupBattery extends MqttTopicGroup {
   summaryText() {
-    return `${this.state.battery}`
+    return this.topics.battery.formatted;
   }
 }
 class MqttTopicGroupDS18B20 extends MqttTopicGroup {
   summaryText() {
-    return `${this.state.ds18b20}°C`
+    return this.topics.ds18b20.formatted;
   }
 }
 class MqttTopicGroupHt extends MqttTopicGroup {
   summaryText() {
-    return `${this.state.temperature}°C ${this.state.humidity}%RH`
+    return `${this.topics.temperature.formatted} ${this.topics.humidity.formatted}`;
   }
 }
 class MqttTopicGroupControlHysteresis extends MqttTopicGroup {
@@ -1755,6 +1777,16 @@ class MqttTopicGroupControlHysteresis extends MqttTopicGroup {
     return this.state.manual
       ? getString('Manual')
       : `${this.nameOrValue("",this.state.out_wired)} = ${this.nameOrValue(this.state.now,this.state.now_wired)} ${this.state.greater ? ">" : "<"} ${this.nameOrValue(this.state.limit,this.state.limit_wired)} ${hysteresis ? "+/-" : ""} ${hysteresis ? hysteresis : ""} ${this.trueFalseSymbol(this.state.out)}`;
+  }
+  summaryShort() {
+    if (this.state.manual) return getString('Manual');
+    // A control whose output is wired to nothing is not doing anything. Plenty of devices carry a
+    // control they never wired up, and it should not take a place on the summary line. The front
+    // still shows it, because that is where you would go to wire it.
+    if (!this.state.out_wired) return null;
+    // Named by what it drives; fall back to the module name if that topic has not arrived yet
+    const what = this.nameOrValue("", this.state.out_wired) || this.state.name;
+    return `${what} ${this.trueFalseSymbol(this.state.out)}`;
   }
 }
 // Which MqttTopicGroup subclass a module gets - the data-tree counterpart of looking up
@@ -1937,6 +1969,20 @@ class MqttTopicNode extends MqttTopic {
     return 'offline';
   }
 
+  // The battery reading and where it sits in its declared range, for the status strip. Percent is
+  // null when the range is not declared, rather than a made-up number.
+  get battery() {
+    const g = this.groups.battery;
+    const mt = g && g.topics.battery;
+    if (!mt || (typeof mt.state.value !== 'number')) return null;
+    const { min, max } = mt;
+    const percent = ((min === undefined) || (max === undefined) || (max <= min)) ? null
+      : Math.max(0, Math.min(100, Math.round(((mt.state.value - min) / (max - min)) * 100)));
+    // images/Battery0.png .. Battery6.png - the icon says "battery" so the number does not have to
+    const level = (percent === null) ? null : Math.min(6, Math.round((percent / 100) * 6));
+    return { mt, percent, level };
+  }
+
   get otaKey() {
     const ota = this.groups.ota;
     return ota && ota.topics.key && ota.topics.key.state.value;
@@ -2014,16 +2060,16 @@ class MqttTopicNode extends MqttTopic {
   get summaryChips() {
     const cfg = this.deviceConfig;
     const fromList = (list) => list.map((e) => this.resolveEntry(e)).filter(Boolean)
-      .map((r) => ({ text: r.mt ? r.mt.formatted : r.groupMt.summaryText(), row: r }))
+      .map((r) => ({ text: r.mt ? r.mt.formatted : r.groupMt.summaryShort(), row: r }))
       .filter((c) => (c.text !== null) && (c.text !== ''));
-    if (cfg && cfg.summary) return fromList(cfg.summary);
-    if (cfg && cfg.front) return fromList(cfg.front.slice(0, 2));
+    if (cfg && cfg.summary) return fromList(cfg.summary);   // declared: however many were asked for
+    if (cfg && cfg.front) return fromList(cfg.front.slice(0, SUMMARY_CHIP_LIMIT));
     return this.orderedGroupIds
       .filter((groupId) => contributesToSummary(groupId))
-      .map((groupId) => ({ text: this.groups[groupId].summaryText(),
+      .map((groupId) => ({ text: this.groups[groupId].summaryShort(),
                            row: { kind: 'control', groupMt: this.groups[groupId] } }))
       .filter((c) => (c.text !== null) && (c.text !== ''))
-      .slice(0, 2);
+      .slice(0, SUMMARY_CHIP_LIMIT);
   }
 
   // Data-tree group creation: builds MqttTopicGroup and its template topics with no paired DOM element.
@@ -2467,6 +2513,8 @@ export {
   preferedLanguageSet,
   preferedLanguages,
   redirectToLogin,
+  relativeTime,
+  SUMMARY_CHIP_LIMIT,
   server_config,
   setClock,
   topicMatches,

@@ -26,6 +26,8 @@
         #bar label { display: flex; gap: 4px; align-items: center; }
         #title { font-weight: bold; margin-right: auto; }
         #stage { padding: 12px; }
+    /* A plain flow for now - the grid, with drag and ordering, is phase 6 */
+    #stage.cards { display: flex; flex-direction: column; gap: 10px; max-width: 460px; }
         #note { padding: 0 12px 12px; color: #666; font-size: 0.9em; }
     </style>
 </head>
@@ -33,7 +35,11 @@
 <div id="bar">
     <span id="title">Mock harness</span>
     <label>Scenario <select id="scenario"></select></label>
-    <label><input type="checkbox" id="headless"> headless (data tree only)</label>
+    <label>View <select id="view">
+        <option value="cards">cards (new)</option>
+        <option value="nodeview">node/group UI (existing)</option>
+        <option value="headless">headless (data tree only)</option>
+    </select></label>
     <button id="rerun">Re-run</button>
 </div>
 <div id="note"></div>
@@ -43,6 +49,8 @@
 <script type="module">
   import { scenarios, loadConfig, runScenario } from './mock.js';
   import { snapshot } from './serialize.js';
+  import '../cards.js';
+  import { el } from '../webcomponents.js';
 
   // The fixture is generated from the real server schema - see fixtures/regenerate.js
   const config = await (await fetch('./fixtures/config.json')).json();
@@ -54,23 +62,38 @@
 
   function run() {
     const name = picker.value;
-    const headless = document.getElementById('headless').checked;
+    const view = document.getElementById('view').value;
     const stage = document.getElementById('stage');
     const tree = document.getElementById('tree');
     stage.replaceChildren();
+    stage.className = view;
     document.getElementById('note').textContent =
       `${scenarios[name].messages.length} messages replayed with no broker.`;
-    const { projectEl } = runScenario(name, { headless, container: stage });
-    // Headless builds no elements, so show the serialized data tree instead of an empty stage
-    tree.style.display = headless ? '' : 'none';
-    if (headless) tree.textContent = 'Headless: data tree built, no elements rendered.';
-    else if (projectEl) tree.textContent = snapshot(projectEl);
+
+    // The cards read the data tree, so they need no elements of their own built for them
+    const { projectMt, projectEl } = runScenario(name, { headless: view !== 'nodeview', container: stage });
+
+    if (view === 'cards') {
+      Object.values(projectMt.nodes).forEach((nodeMt) => {
+        const card = el('mqtt-devicecard', { mode: 'summary' });
+        card.mt = nodeMt;   // Deliberately not nodeMt.element - that is for an MqttNode, and
+                            // MqttTopicNode.topicValueSet would call DOM methods a card does not have
+        stage.append(card);
+      });
+    }
+    tree.style.display = (view === 'headless') ? '' : 'none';
+    if (view === 'headless') {
+      tree.textContent = Object.values(projectMt.nodes).map((n) =>
+        `${n.nodeId}  ${n.status}\n  summary: ${n.summaryChips.map((c) => c.text).join('  ')}\n` +
+        n.frontRows.map((r) => `  ${r.kind.padEnd(9)}${(r.label || '').padEnd(20)}${r.mt ? r.mt.formatted : r.groupMt.summaryText()}`).join('\n')
+      ).join('\n\n');
+    }
     location.hash = name;
   }
 
   picker.value = location.hash.slice(1) in scenarios ? location.hash.slice(1) : Object.keys(scenarios)[0];
   picker.addEventListener('change', run);
-  document.getElementById('headless').addEventListener('change', run);
+  document.getElementById('view').addEventListener('change', run);
   document.getElementById('rerun').addEventListener('click', run);
   run();
 </script>

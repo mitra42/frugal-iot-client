@@ -137,18 +137,37 @@ describe('the summary line', () => {
     assert.deepEqual(projectMt.nodes['esp8266-fb94bb'].summaryChips.map((c) => c.text), ['30.1°C', '85.1%RH']);
   });
 
-  test('with no entry at all it is the modules own summaries, capped at two', () => {
+  test('with no entry at all it is the modules own summaries, capped', () => {
     const { projectMt } = mock.runScenario('default-front');
     const chips = projectMt.nodes['esp8266-two-temps'].summaryChips;
-    assert.ok(chips.length <= 2, `${chips.length} chips is a paragraph, not a summary`);
+    assert.ok(chips.length <= core.SUMMARY_CHIP_LIMIT, `${chips.length} chips is a paragraph`);
     assert.ok(chips.every((c) => c.text));
+  });
+
+  test('a control is a chip, not its whole rule', () => {
+    // "Relay ✓" on the summary line; the full rule belongs on the front row
+    const { projectMt } = mock.runScenario('control-wired');
+    const groupMt = projectMt.nodes['esp8266-fb94bb'].groups.controlhysteresis;
+    assert.equal(groupMt.summaryShort(), 'Relay ✓');
+    assert.match(groupMt.summaryText(), /> 32/);
+  });
+
+  test('a control that drives nothing stays off the summary', () => {
+    // A device often carries a control nobody wired up - it should not take a place on the line
+    const { projectMt } = mock.runScenario('control-unwired');
+    const nodeMt = projectMt.nodes['esp8266-fb94bb'];
+    const groupMt = nodeMt.groups.controlhysteresis;
+    assert.equal(groupMt.state.out_wired, undefined);
+    assert.equal(groupMt.summaryShort(), null);
+    assert.ok(!nodeMt.summaryChips.some((c) => c.row.groupMt === groupMt));
+    assert.match(groupMt.summaryText(), /> 32/, 'the front still shows the rule');
   });
 
   test('a module summary works with no element - the point of moving it to the data tree', () => {
     const { projectMt } = mock.runScenario('control-wired', { headless: true });
     const groups = projectMt.nodes['esp8266-fb94bb'].groups;
     assert.equal(groups.sht.element, undefined, 'headless: there should be no element');
-    assert.equal(groups.sht.summaryText(), '30.142857°C 85.1%RH');
+    assert.equal(groups.sht.summaryText(), '30.1°C 85.1%RH'); // formatted, and units from the schema
     assert.match(groups.controlhysteresis.summaryText(), /^Relay = SHT:Temperature > 32/);
   });
 

@@ -119,6 +119,10 @@ class MqttReceiver extends MqttElement {
       // Its trying to set our value
       let value = this.mt.valueFromText(message);
       let now = Date.now();
+      // Update the data tree before anything is told to re-render. The group roll-up below triggers
+      // reSummarize, and a summary built from the data tree would otherwise be a message behind -
+      // or empty, for a topic that has only reported once.
+      this.mt.state.value = value;
       this.mt.data.push({value, time: now}); // Same format as graph dataset expects
       const leafAttr = leafAttribute(topicPath);
       const groupMt = this.mt.groupMt;

@@ -7,7 +7,7 @@
 
 // Attributes worth recording. Deliberately not `style` (layout churn) or `id` on inputs
 // (topic paths already appear via `topic`).
-const KEEP = ['topic', 'group', 'name', 'value', 'label', 'class', 'slot', 'type', 'min', 'max', 'color', 'checked', 'open'];
+const KEEP = ['topic', 'group', 'name', 'value', 'label', 'class', 'slot', 'type', 'min', 'max', 'color', 'checked', 'open', 'mode'];
 
 // Values that change run to run and would make a snapshot useless.
 function stableValue(name, value) {

@@ -75,7 +75,7 @@
                     "Battery"
                   <div>
                     <span>
-                      "3940"
+                      "3940 mV"
                 <slot>
             <mqtt-text min="3000" max="5000" color="green">
               #shadow
@@ -95,7 +95,7 @@
               "SHT"
             <div>
               <span>
-                "30.142857°C 85.1%RH"
+                "30.1°C 85.1%RH"
           <slot>
       <mqtt-bar type="float" min="0" max="50" color="red">
         #shadow
@@ -173,7 +173,7 @@
               "Relay"
             <div>
               <span>
-                "✓"
+                "Relay ✓"
           <slot>
       <mqtt-toggle color="black">
         #shadow

@@ -75,7 +75,7 @@
                     "Battery"
                   <div>
                     <span>
-                      "3940"
+                      "3940 mV"
                 <slot>
             <mqtt-text min="3000" max="5000" color="green">
               #shadow
