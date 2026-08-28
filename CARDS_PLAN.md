@@ -28,7 +28,7 @@ Phases are ordered by what they unblock. Sizes are relative, not hours.
 | 1 | `html-element-extended`: light-DOM rendering | S | 5 | **DONE** |
 | 2 | Schema: `devices.yaml`, `width`, `units`, capabilities | M | 4, 8 | **DONE** |
 | 3 | Split `webcomponents.js` | M | — (but easier before 4+) | **DONE** |
-| 4 | Data tree: move roll-up down, add derived getters | M | 5, 6 | yes |
+| 4 | Data tree: move roll-up down, add derived getters | M | 5, 6 | **DONE** |
 | 5 | The card element — summary / front / back | L | 6, 7 | no (needs a page) |
 | 6 | The grid — layout, drag, `localStorage` | M | 7 | no |
 | 7 | The new page, project front/back, admin cards | L | — | yes |
@@ -356,20 +356,38 @@ wrappers that call it, and disappear with `nodeview.js`.
 This is the one architectural change of consequence in the plan, it is squarely within "derived
 values are getters on the data tree", and it makes every summary unit-testable with no DOM.
 
-**4b. New getters**, per §3.2:
+**4a turned out easier than feared.** `groupMt.state[leafAttr]` was *already* being mirrored on
+every message, in both the element path (`MqttReceiver.topicValueSet`) and the headless one
+(`MqttTopic.message_received`). So `MqttTopicGroup` already held exactly the state the element
+subclasses were reading, and the summary logic moved across essentially verbatim. What was needed
+around it:
 
-- `mt.formatted` — `width` → decimals from `min`/`max`, plus unit symbol; never truncates.
-- `unitSymbol(code)` — the SenML → display map (`Cel` → `°C`, `deg` → `°`), its own table, **not**
-  the `languages` table (D-23).
-- `nodeMt.frontRows` — the ordered resolved list (§4.2 precedence).
-- `nodeMt.summaryChips` — the same for the summary line (§4.1), falling back to module
-  `summaryText()`.
-- `nodeMt.status` — `live | stale | offline | never`, from `Watchdog` and `lastseen`.
-- `nodeMt.deviceConfig` — the `devices.yaml` entry for this device, by device id then OTA key.
-- `mt.outOfRange` — value outside `min`/`max`.
-- Label disambiguation (§4.3): topic `name`, module `name` on collision, device `label:` overrides.
+- `MqttTopicGroup` subclasses in `core.js` (`…Relay`, `…Soil`, `…Ota`, `…Battery`, `…DS18B20`,
+  `…Ht`, `…ControlHysteresis`), chosen by a `topicGroupClasses` registry keyed on module id — the
+  data-tree counterpart of looking up `mqtt-group${groupId}` as a custom element.
+- `groupMt.nodeMt` and `groupMt.twig` set at creation, so `projectMt` resolves (the control summary
+  needs it to name what its inputs are wired to) and `topicPath` is right for a group.
+- The group element now links to its group topic (`el.mt` / `mt.element`), which it never did.
+- `MqttSummaryGroup.summaryText()` delegates to `this.mt.summaryText()`; the per-module element
+  subclasses keep only what is genuinely presentational — `MqttGroupLedbuiltin.renderSummary()`
+  draws a coloured dot rather than returning text, so it stays.
 
-All testable in tier 1 with no DOM. Write those tests as the getters land, not after.
+**4b, all done and all tested with no DOM:** `mt.decimals`, `mt.formatted`, `mt.outOfRange`,
+`unitSymbol`/`unitSuffix`, `nodeMt.status`, `nodeMt.age`, `nodeMt.otaKey`, `nodeMt.deviceConfig`,
+`nodeMt.orderedGroupIds`, `nodeMt.labelFor`, `nodeMt.resolveEntry`, `nodeMt.frontRows`,
+`nodeMt.defaultFrontEntries`, `nodeMt.summaryChips`.
+
+Three details worth knowing:
+
+- **Status needs no timer.** `noteMessage()` learns the reporting interval as messages arrive, the
+  same smoothing `Watchdog` does, but derives `live | stale | offline | never` from arithmetic rather
+  than a `setTimeout`. That makes it testable, and `setClock()` in core lets a test decide what "now"
+  is. The old UI keeps its timer-driven `Watchdog` until `nodeview.js` retires.
+- **Group order comes from `modules.yaml`, not from message arrival**, or a card would reorder itself
+  between loads depending on which sensor reported first.
+- **A declared row is dropped when the device lacks that module.** `devices.yaml` is keyed by
+  application, so it lists what the application *can* have; a device whose control never reported
+  must not get an empty row. Pinned by a test.
 
 ### Phase 5 — The card
 
@@ -429,6 +447,20 @@ every new string; the §9 visual pass including `--fi-*` tokens and fixing the i
 `border: 1px,black,solid` declarations.
 
 ## 5. Risks
+
+**A bug found and fixed while doing this.** The control summary ended with
+`trueFalseSymbol(this.state.on)`, but no control module has an `on` leaf. The firmware's
+`Control_Hysteresis` publishes an `OUTbool` named **`out`** (`src/control/hysteresis.cpp:58`), and
+the `on` topic in `topics.yaml` is `rw: w` — an *actuator's* leaf, as on `relay` and `ledbuiltin`.
+So that symbol had always rendered `?`. Fixed in three places:
+
+- `MqttTopicGroupControlHysteresis.summaryText()` reads `state.out`;
+- the element's `observedAttributes`/`boolAttributes` observe `out` rather than `on`, or the summary
+  would not refresh when the output changed;
+- `dashboard_example.html` had the same bug twice — its on/off dot read `groupMt.state.on`, so it has
+  never lit.
+
+The snapshot records the fix: `Relay = SHT:Temperature > 32 +/- 3 ✓`.
 
 | Risk | Bites when | Mitigation |
 |---|---|---|

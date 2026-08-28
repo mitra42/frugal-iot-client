@@ -146,7 +146,7 @@
               "Control"
             <div>
               <span>
-                "Relay = SHT:Temperature > 32 +/- 3 ?"
+                "Relay = SHT:Temperature > 32 +/- 3 ✓"
           <slot>
       <mqtt-text min="0" max="100" color="black">
         #shadow

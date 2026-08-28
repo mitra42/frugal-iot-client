@@ -47,6 +47,8 @@ let mqtt_client_username; // Organization mqtt_client was connected as, so a cha
 // TODO mqtt_subscriptions should be inside the MqttClient class but its non trivial as currently have no way to find that class
 let mqtt_subscriptions = [];   // [{topic, cb(message)}]
 let unique_id = 1; // Just used as a label for auto-generated elements
+// What to assume a node's reporting interval is before it has sent a second message
+const DEFAULT_REPORT_INTERVAL_MS = 300000;
 // A label for the next auto-generated element. A function because an imported binding cannot be
 // assigned to, and MqttChooseTopic lives in another module.
 function nextUniqueId() { return ++unique_id; }
@@ -148,6 +150,50 @@ function mqtt_unsubscribe_organization(org) {
   });
 }
 // See https://www.chartjs.org/docs/latest/samples/line/segments.html
+// Time, behind a seam so a test can decide what "now" is instead of waiting for it.
+let _clock = Date.now;
+function nowMs() { return _clock(); }
+function setClock(fn) { _clock = fn || Date.now; }
+
+// SenML unit codes are not display symbols - "Cel" has to render as "°C". Anything absent from the
+// table is shown as it stands, which is right for V, mV, mA, mm, hPa, ppm and most of the rest.
+// This is deliberately not the languages table: el() skips values that start with a non-letter or
+// contain "/", which is most unit symbols, and a missing entry there renders the bare code.
+const unitSymbols = {
+  Cel: '°C',
+  deg: '°',
+  lat: '°',
+  lon: '°',
+  count: '',   // a count of satellites is "7", not "7 count"
+};
+function unitSymbol(code) {
+  return (code === undefined || code === null) ? '' : (unitSymbols[code] !== undefined ? unitSymbols[code] : code);
+}
+// A space before a word, none before a symbol: "3.94 V" but "30.1°C" and "38%"
+function unitSuffix(code) {
+  const sym = unitSymbol(code);
+  return sym && /^[a-zA-Z]/.test(sym) ? ` ${sym}` : sym;
+}
+
+function moduleTemplate(groupId) {
+  return server_config && server_config.schema && server_config.schema.modules[groupId];
+}
+// TODO-L4 a name prefix, until modules.yaml carries `control: true`
+function isControlModule(groupId) { return groupId.startsWith('control'); }
+// insidefrugaliot modules feed the status strip, not the summary; anything else contributes unless
+// modules.yaml says summary: false
+function contributesToSummary(groupId) {
+  const m = moduleTemplate(groupId);
+  return !!m && (m.summary !== false) && !m.insidefrugaliot;
+}
+// Groups in the order modules.yaml declares them, rather than the order their messages happened to
+// arrive, so a card looks the same on every load
+function moduleOrder(groupId) {
+  const modules = (server_config && server_config.schema && server_config.schema.modules) || {};
+  const i = Object.keys(modules).indexOf(groupId);
+  return i === -1 ? Number.MAX_SAFE_INTEGER : i;
+}
+
 function topicMatches(subscriptionTopic, messageTopic) {
   if (subscriptionTopic.endsWith('/#')) {
     return (
@@ -1193,6 +1239,28 @@ class MqttTopic {
       }
     }
   }
+  // How many decimals to show. Derived from width and the declared range rather than from the
+  // current value, so the count does not change as the value moves across a power of ten.
+  get decimals() {
+    if (this.width === undefined) return (this.type === 'int') ? 0 : 1;
+    const intWidth = Math.max(String(Math.trunc(this.min || 0)).length,
+                              String(Math.trunc(this.max || 0)).length);
+    return Math.max(0, this.width - intWidth - 1);
+  }
+  // The value as a card shows it: rounded per width, with its unit. Never truncated - a sensor
+  // reporting -999 into a width of 4 overflows the field rather than being shown as -99.
+  get formatted() {
+    const v = this.state.value;
+    if (v === undefined || v === null || v === '') return '';
+    if (typeof v !== 'number') return String(v);
+    return v.toFixed(this.decimals) + unitSuffix(this.units);
+  }
+  // Outside its declared range - a broken sensor, or a range that needs revisiting
+  get outOfRange() {
+    const v = this.state.value;
+    if (typeof v !== 'number') return false;
+    return ((this.min !== undefined) && (v < this.min)) || ((this.max !== undefined) && (v > this.max));
+  }
   // Return the topic this is wired to or undefined
   get wiredTopic() {
     const projMt = this.projectMt;
@@ -1633,7 +1701,78 @@ class MqttTopic {
 // topics: { leaf → MqttTopic } — inherited lazy map via get topics().
 // Paired with an optional MqttGroup element via this.element.
 class MqttTopicGroup extends MqttTopic {
+  // Values roll up here as they arrive - see the groupMt.state[leafAttr] assignments in
+  // MqttTopic.message_received and MqttReceiver.topicValueSet - so a summary can be built with no
+  // DOM at all. That is why this lives on the data tree and not on the group element.
+  summaryText() {
+    return null; // Most modules have no summary of their own
+  }
+  trueFalseSymbol(val) {
+    return (val === undefined) ? '?' : (val ? '✓' : '✗');
+  }
 }
+class MqttTopicGroupRelay extends MqttTopicGroup {
+  summaryText() {
+    return `${this.trueFalseSymbol(this.state.on)}`
+  }
+}
+class MqttTopicGroupSoil extends MqttTopicGroup {
+  summaryText() {
+    return `${this.state.soil}%`
+  }
+}
+class MqttTopicGroupOta extends MqttTopicGroup {
+  summaryText() {
+    return `${this.state.key}`
+  }
+}
+class MqttTopicGroupBattery extends MqttTopicGroup {
+  summaryText() {
+    return `${this.state.battery}`
+  }
+}
+class MqttTopicGroupDS18B20 extends MqttTopicGroup {
+  summaryText() {
+    return `${this.state.ds18b20}°C`
+  }
+}
+class MqttTopicGroupHt extends MqttTopicGroup {
+  summaryText() {
+    return `${this.state.temperature}°C ${this.state.humidity}%RH`
+  }
+}
+class MqttTopicGroupControlHysteresis extends MqttTopicGroup {
+  // A wired input shows the name of what it is wired to, rather than the value copied from it
+  nameOrValue(val, wired) {
+    const projMt = this.projectMt;
+    return wired && projMt && projMt.findTopic(wired) && projMt.findTopic(wired).usableName || val;
+  }
+  summaryText() {
+    let hysteresis = this.state.hysteresis || this.state.hysterisis || 0
+    // "out", not "on": a control's output leaf is "out" (Control_Hysteresis publishes an OUTbool
+    // named "out"), and no control module declares an "on" - that is an actuator's leaf. Reading
+    // "on" here meant this symbol was always "?".
+    return this.state.manual
+      ? getString('Manual')
+      : `${this.nameOrValue("",this.state.out_wired)} = ${this.nameOrValue(this.state.now,this.state.now_wired)} ${this.state.greater ? ">" : "<"} ${this.nameOrValue(this.state.limit,this.state.limit_wired)} ${hysteresis ? "+/-" : ""} ${hysteresis ? hysteresis : ""} ${this.trueFalseSymbol(this.state.out)}`;
+  }
+}
+// Which MqttTopicGroup subclass a module gets - the data-tree counterpart of looking up
+// `mqtt-group${groupId}` as a custom element. A module with no entry gets the plain MqttTopicGroup
+// and so has no summary. TODO-D20 these hand-written summaries are to be replaced by a
+// `summary: [leaves]` list in modules.yaml; the entries here go as each module gains one.
+const topicGroupClasses = {
+  relay: MqttTopicGroupRelay,
+  soil: MqttTopicGroupSoil,
+  ota: MqttTopicGroupOta,
+  battery: MqttTopicGroupBattery,
+  ds18b20: MqttTopicGroupDS18B20,
+  ht: MqttTopicGroupHt,
+  sht: MqttTopicGroupHt,
+  dht: MqttTopicGroupHt,
+  controlhysteresis: MqttTopicGroupControlHysteresis,
+  controlhysterisis: MqttTopicGroupControlHysteresis, // TODO-legacy-hysterisis
+};
 
 // Project-level data node in the topic tree. Receives discovery messages and creates nodes.
 // Created by MqttWrapper.addProject; paired with MqttProject element via this.element.
@@ -1685,6 +1824,7 @@ class MqttTopicProject extends MqttTopic {
 class MqttTopicNode extends MqttTopic {
   // Route directly on the data-tree object rather than through the element.
   message_received(topicPath, message) {
+    this.noteMessage();
     this.topicValueSet(topicPath, message);
     if (this.graphdataset) this.graphdataset.dataChanged();
   }
@@ -1773,16 +1913,132 @@ class MqttTopicNode extends MqttTopic {
       }
     }
   }
+  // ===== What the cards read. All of this works with no DOM, which is the point. =====
+
+  // Learn the reporting interval as messages arrive, the way Watchdog does for the old UI, but with
+  // no timer, so status can be reasoned about and tested.
+  noteMessage() {
+    const now = nowMs();
+    if (this.lastMessageAt) {
+      const delta = now - this.lastMessageAt;
+      this.expectedInterval = this.expectedInterval ? (this.expectedInterval * 2 / 3) + (delta / 3) : delta;
+    }
+    this.lastMessageAt = now;
+  }
+  get age() { return this.lastMessageAt ? nowMs() - this.lastMessageAt : null; }
+  // live | stale | offline | never. A device that has never said anything is not the same as one
+  // that has gone quiet, and a card shows them differently.
+  get status() {
+    if (!this.lastMessageAt) return 'never';
+    const expected = this.expectedInterval || DEFAULT_REPORT_INTERVAL_MS;
+    const age = this.age;
+    if (age <= expected * 1.5) return 'live';
+    if (age <= expected * 4) return 'stale';
+    return 'offline';
+  }
+
+  get otaKey() {
+    const ota = this.groups.ota;
+    return ota && ota.topics.key && ota.topics.key.state.value;
+  }
+  // The devices.yaml entry: this device's own id first, then its exact OTA key, then the longest
+  // key the OTA key starts with - see CARDS_UX.md 4.6.
+  get deviceConfig() {
+    const devices = (server_config && server_config.schema && server_config.schema.devices) || {};
+    if (devices[this.nodeId]) return devices[this.nodeId];
+    const key = this.otaKey;
+    if (!key) return undefined;
+    if (devices[key]) return devices[key];
+    const prefixes = Object.keys(devices).filter((k) => key.startsWith(k));
+    if (!prefixes.length) return undefined;
+    return devices[prefixes.sort((a, b) => b.length - a.length)[0]];
+  }
+
+  // Group ids in the order modules.yaml declares them, not the order messages happened to arrive,
+  // so a card looks the same on every load
+  get orderedGroupIds() {
+    return Object.keys(this.groups).sort((a, b) => moduleOrder(a) - moduleOrder(b));
+  }
+
+  // A reading's label: its own name, unless another front row carries the same one, in which case
+  // the module name says what is actually being measured - "Soil Temperature", not
+  // "Temperature (DS18B20)". See CARDS_UX.md 4.3.
+  labelFor(mt, allMts) {
+    const clash = allMts.some((other) => (other !== mt) && (other.name === mt.name));
+    return clash ? (mt.groupName || mt.name) : mt.name;
+  }
+
+  // One entry of a front/summary list: "sht/temperature", or a bare control module id
+  resolveEntry(entry) {
+    if (entry.includes('/')) {
+      const [groupId, leaf] = entry.split('/');
+      const groupMt = this.groups[groupId];
+      const mt = groupMt && groupMt.topics[leaf];
+      if (!mt) return null; // check-schema catches a typo; a device simply lacking that sensor is normal
+      return { kind: (mt.rw === 'w') ? 'actuator' : 'reading', mt, groupMt };
+    }
+    const groupMt = this.groups[entry];
+    return groupMt ? { kind: 'control', groupMt } : null;
+  }
+
+  // The front of the card, in order: the device's declared list, or the default of graphable
+  // readings, then actuators, then one row per control.
+  get frontRows() {
+    const cfg = this.deviceConfig;
+    const entries = (cfg && cfg.front) || this.defaultFrontEntries;
+    const rows = entries.map((e) => this.resolveEntry(e)).filter(Boolean);
+    const mts = rows.filter((r) => r.mt).map((r) => r.mt);
+    rows.forEach((r) => {
+      r.label = r.mt ? this.labelFor(r.mt, mts) : (r.groupMt.state.name || r.groupMt.group);
+    });
+    return rows;
+  }
+  get defaultFrontEntries() {
+    const readings = [], actuators = [], controls = [];
+    this.orderedGroupIds.forEach((groupId) => {
+      const m = moduleTemplate(groupId);
+      if (!m || m.insidefrugaliot || (groupId === 'frugal_iot')) return; // these feed the status strip
+      if (isControlModule(groupId)) { controls.push(groupId); return; }
+      (m.topics || []).forEach((t) => {
+        const mt = this.groups[groupId].topics[t.leaf];
+        if (!mt) return;
+        if (mt.rw === 'w') actuators.push(`${groupId}/${t.leaf}`);
+        else if (mt.graphable) readings.push(`${groupId}/${t.leaf}`);
+      });
+    });
+    return readings.concat(actuators, controls);
+  }
+
+  // The one-line summary: the device's summary list, else the first two of its front list, else the
+  // contributing modules' own summaries - capped at two either way. See CARDS_UX.md 4.7.
+  get summaryChips() {
+    const cfg = this.deviceConfig;
+    const fromList = (list) => list.map((e) => this.resolveEntry(e)).filter(Boolean)
+      .map((r) => ({ text: r.mt ? r.mt.formatted : r.groupMt.summaryText(), row: r }))
+      .filter((c) => (c.text !== null) && (c.text !== ''));
+    if (cfg && cfg.summary) return fromList(cfg.summary);
+    if (cfg && cfg.front) return fromList(cfg.front.slice(0, 2));
+    return this.orderedGroupIds
+      .filter((groupId) => contributesToSummary(groupId))
+      .map((groupId) => ({ text: this.groups[groupId].summaryText(),
+                           row: { kind: 'control', groupMt: this.groups[groupId] } }))
+      .filter((c) => (c.text !== null) && (c.text !== ''))
+      .slice(0, 2);
+  }
+
   // Data-tree group creation: builds MqttTopicGroup and its template topics with no paired DOM element.
   // MqttNode.addGroupFromTemplate delegates here and then adds the DOM element on top.
   addGroupFromTemplate(groupId) {
     if (this.groups[groupId]) return false;
     const moduleTemplate = server_config.schema.modules[groupId];
     const groupName = moduleTemplate ? moduleTemplate.name : groupId;
-    const groupMt = new MqttTopicGroup();
+    const GroupClass = topicGroupClasses[groupId] || MqttTopicGroup;
+    const groupMt = new GroupClass();
     groupMt.name = groupName;
     groupMt.state.name = groupName;
     groupMt.group = groupId;
+    groupMt.twig = groupId;   // So topicPath resolves to org/project/node/group
+    groupMt.nodeMt = this;    // So projectMt works, which a control summary needs to name its wiring
     this._groups[groupId] = groupMt;
     if (!moduleTemplate) {
       XXX(["Unknown group - no template found", groupId]);
@@ -2185,6 +2441,7 @@ customElements.define('mqtt-wrapper', MqttWrapper);
 
 export {
   CssUrl,
+  DEFAULT_REPORT_INTERVAL_MS,
   ImagesUrl,
   MqttTopic,
   MqttTopicGroup,
@@ -2206,9 +2463,13 @@ export {
   mqtt_subscribe,
   mqtt_unsubscribe_organization,
   nextUniqueId,
+  nowMs,
   preferedLanguageSet,
   preferedLanguages,
   redirectToLogin,
   server_config,
+  setClock,
   topicMatches,
+  unitSuffix,
+  unitSymbol,
 };

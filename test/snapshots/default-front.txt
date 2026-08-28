@@ -8,10 +8,10 @@
           "Lotus Ponds"
       <div class="nodes">
         <slot>
-  <mqtt-node topic="dev/lotus/esp8266-agri" name="">
+  <mqtt-node topic="dev/lotus/esp8266-two-temps" name="">
     #shadow
       <div class="outer mqtt-node offline">
-        <mqtt-groupfrugaliot group="frugal_iot" name="Bed 3" class="group frugal_iot">
+        <mqtt-groupfrugaliot group="frugal_iot" name="Two Temperatures" class="group frugal_iot">
           #shadow
             <details>
               <summary>
@@ -31,19 +31,19 @@
                 <label>
                   "Node ID"
                 <span class="val">
-                  "esp8266-agri"
+                  "esp8266-two-temps"
           <mqtt-text class="name" slot="name">
             #shadow
               <div class="mqtt-text frugal_iot_name outer">
                 <label>
                   "Node Name"
-                <input name="dev/lotus/esp8266-agri/frugal_iot/name" class="val" type="text">
+                <input name="dev/lotus/esp8266-two-temps/frugal_iot/name" class="val" type="text">
           <mqtt-text class="description" slot="description">
             #shadow
               <div class="mqtt-text frugal_iot_description outer">
                 <label>
                   "Description"
-                <input name="dev/lotus/esp8266-agri/frugal_iot/description" class="val" type="text">
+                <input name="dev/lotus/esp8266-two-temps/frugal_iot/description" class="val" type="text">
           <mqtt-text class="lastseen" slot="lastseen">
             #shadow
               <div class="mqtt-text frugal_iot_lastseen outer">
@@ -58,7 +58,7 @@
                     "OTA"
                   <div>
                     <span>
-                      "agri_d1_mini"
+                      "workbench_c3"
                 <slot>
             <mqtt-text>
               #shadow
@@ -66,7 +66,7 @@
                   <label>
                     "Key"
                   <span class="val">
-                    "agri_d1_mini"
+                    "workbench_c3"
           <mqtt-groupbattery group="battery" name="Battery" class="group battery">
             #shadow
               <details class="mqtt-group battery">
@@ -165,3 +165,20 @@
                 <span class="val">
                   "38"
             <slot>
+    <mqtt-grouprelay group="relay" name="Relay" class="group relay">
+      #shadow
+        <details class="mqtt-group relay">
+          <summary>
+            <span>
+              "Relay"
+            <div>
+              <span>
+                "✓"
+          <slot>
+      <mqtt-toggle color="black">
+        #shadow
+          <div class="mqtt-toggle outer">
+            <label>
+              "On"
+            <img class="icon">
+            <input class="val" type="checkbox">

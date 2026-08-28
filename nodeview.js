@@ -186,6 +186,8 @@ class MqttNode extends MqttReceiver {
     this.groups[groupId] = el(grouptag, {class: `group ${groupId}`, group: groupId, name: groupName, slot: ((moduleTemplate && moduleTemplate.slot) || null)}, []);
     // Data-tree: creates MqttTopicGroup + all template topics (also fires frugaliot:controlgroup)
     this.mt.addGroupFromTemplate(groupId);
+    this.groups[groupId].mt = this.mt.groups[groupId];
+    this.mt.groups[groupId].element = this.groups[groupId];
     // DOM: populate topic elements into the group before connecting it to the node
     Object.values(this.mt.groups[groupId].topics).forEach(mt => {
       mt.node = this;
@@ -328,8 +330,9 @@ class MqttSummaryGroup extends MqttGroup {
       el('span', {i8n: false, textContent: this.summaryText()})
     ]); // Colored circle with thin black border
   }
-  trueFalseSymbol(val) {
-    return (val === undefined) ? '?' : (val ? '✓' : '✗');
+  // The text itself comes from the data tree, so a card can have it without an element existing
+  summaryText() {
+    return this.mt ? this.mt.summaryText() : '';
   }
 }
 class MqttGroupLedbuiltin extends MqttSummaryGroup {
@@ -346,53 +349,35 @@ class MqttGroupRelay extends MqttSummaryGroup {
   static get observedAttributes() { return MqttGroup.observedAttributes.concat(['on']);}
   static get boolAttributes() { return MqttGroup.boolAttributes.concat(['on']);}
 
-  summaryText() {
-        return `${this.trueFalseSymbol(this.state.on)}`
-  }
 }
 customElements.define('mqtt-grouprelay', MqttGroupRelay);
 class MqttGroupSoil extends MqttSummaryGroup {
   static get observedAttributes() { return MqttGroup.observedAttributes.concat(['soil']);}
   static get floatAttributes() { return MqttGroup.boolAttributes.concat(['soil']);}
 
-  summaryText() {
-    return `${this.state.soil}%`
-  }
 }
 customElements.define('mqtt-groupsoil', MqttGroupSoil);
 class MqttGroupOta extends MqttSummaryGroup {
   static get observedAttributes() { return MqttGroup.observedAttributes.concat(['key']);}
 
-  summaryText() {
-    return `${this.state.key}`
-  }
 }
 customElements.define('mqtt-groupota', MqttGroupOta);
 class MqttGroupBattery extends MqttSummaryGroup {
   static get observedAttributes() { return MqttGroup.observedAttributes.concat(['battery']);}
   static get integerAttributes() { return MqttGroup.boolAttributes.concat(['battery']);}
 
-  summaryText() {
-    return `${this.state.battery}`
-  }
 }
 customElements.define('mqtt-groupbattery', MqttGroupBattery);
 class MqttGroupDS18B20 extends MqttSummaryGroup {
   static get observedAttributes() { return MqttGroup.observedAttributes.concat(['ds18b20']);}
   static get floatAttributes() { return MqttGroup.boolAttributes.concat(['ds18b20']);}
 
-  summaryText() {
-    return `${this.state.ds18b20}°C`
-  }
 }
 customElements.define('mqtt-groupds18b20', MqttGroupDS18B20);
 class MqttGroupHt extends MqttSummaryGroup {
   static get observedAttributes() { return MqttGroup.observedAttributes.concat(['temperature', 'humidity']);}
   static get floatAttributes() { return MqttGroup.boolAttributes.concat(['temperature', 'humidity']);}
 
-  summaryText() {
-    return `${this.state.temperature}°C ${this.state.humidity}%RH`
-  }
 }
 customElements.define('mqtt-groupht', MqttGroupHt);
 class MqttGroupSht extends MqttGroupHt {
@@ -402,21 +387,12 @@ class MqttGroupDht extends MqttGroupHt {
 }
 customElements.define('mqtt-groupdht', MqttGroupDht);
 class MqttGroupControlHysteresis extends MqttSummaryGroup {
-  static get observedAttributes() { return MqttGroup.observedAttributes.concat(['on','now','now_wired','greater','limit','limit_wired','hysteresis','hysterisis','out_wired', 'manual']);}
-  static get boolAttributes() { return MqttGroup.boolAttributes.concat(['on', 'greater', 'manual']);}
+  static get observedAttributes() { return MqttGroup.observedAttributes.concat(['out','now','now_wired','greater','limit','limit_wired','hysteresis','hysterisis','out_wired', 'manual']);}
+  static get boolAttributes() { return MqttGroup.boolAttributes.concat(['out', 'greater', 'manual']);}
   static get floatAttributes() { return MqttGroup.floatAttributes.concat(['now','limit','hysteresis','hysterisis']);}
 
   //constructor() { super(); } // Just for debugging - TODO remove
 
-  nameOrValue(val,wired) {
-    return wired && this.project.findTopic(wired) && this.project.findTopic(wired).usableName || val;
-  }
-  summaryText() {
-    let hysteresis = this.state.hysteresis || this.state.hysterisis || 0
-    return this.state.manual
-      ? getString('Manual')
-      : `${this.nameOrValue("",this.state.out_wired)} = ${this.nameOrValue(this.state.now,this.state.now_wired)} ${this.state.greater ? ">" : "<"} ${this.nameOrValue(this.state.limit,this.state.limit_wired)} ${hysteresis ? "+/-" : ""} ${hysteresis ? hysteresis : ""} ${this.trueFalseSymbol(this.state.on)}`;
-  }
 }
 customElements.define('mqtt-groupcontrolhysteresis', MqttGroupControlHysteresis);
 // TODO - delete when sure all nodes updated (esp Winam)

@@ -4,7 +4,7 @@
  * Works unchanged in node (see setup.js) and in a browser (see mock.html), because the only seam
  * it uses is mqtt_deliver - the same call the real client makes for every message it receives.
  */
-import { configSet, el, mqtt_deliver, mqtt_unsubscribe_organization, MqttTopicProject } from '../webcomponents.js';
+import { configSet, el, mqtt_deliver, mqtt_unsubscribe_organization, setClock, MqttTopicProject } from '../webcomponents.js';
 
 const ORG = 'dev';
 const PROJECT = 'lotus';
@@ -38,6 +38,18 @@ export const scenarios = {
   'no-readings': {
     title: 'Device discovered but silent - no readings yet',
     messages: [[`${ORG}/${PROJECT}`, 'esp8266-newborn']],
+  },
+
+  'default-front': {
+    // No devices.yaml entry matches "workbench_c3", so the default ordering applies - and two
+    // temperature sources exercise the label-collision rule
+    title: 'Unconfigured device (default front) with two temperature sources',
+    messages: device('esp8266-two-temps', 'Two Temperatures', {
+      ...SHT,
+      'ds18b20/ds18b20': '18.3',
+      'soil/soil': '38',
+      'relay/on': 'true',
+    }, { ota: 'workbench_c3' }),
   },
 
   'out-of-range': {
@@ -91,31 +103,37 @@ export const scenarios = {
   },
 
   'mixed-sensors': {
-    // Two temperature sources on one device - exercises the §4.3 label-collision rule
-    title: 'SHT and DS18B20 on one device (label collision)',
-    messages: device('esp8266-two-temps', 'Two Temperatures', {
+    // The agri entry in devices.yaml declares soil and ds18b20 ahead of the SHT
+    title: 'Soil, DS18B20 and SHT, ordered by the agri devices.yaml entry',
+    messages: device('esp8266-agri', 'Bed 3', {
       ...SHT,
       'ds18b20/ds18b20': '18.3',
       'soil/soil': '38',
-    }),
+    }, { ota: 'agri_d1_mini' }),
   },
 };
 
-// Time-dependent states (live / stale / offline / never-seen) and `manual` are deliberately absent:
-// nodeMt.status does not exist until CARDS_PLAN.md phase 4, and faking them here would test the fake.
-// Add them with that phase, driven by an injectable clock rather than real timers.
+// `manual` is still absent: the node implements it in examples/sonoff, but no module declares it,
+// so nothing arrives on that topic. See CARDS_UX.md L-2.
 
 export function loadConfig(config) {
   configSet(config);
+}
+
+// Freeze "now" so status (live / stale / offline) can be tested without waiting for it.
+// setNow(null) hands the clock back to Date.now.
+export function setNow(t) {
+  setClock(t === null ? null : () => t);
 }
 
 // Build a project data tree and replay a scenario into it.
 // headless: true builds the data tree only. headless: false builds the existing node/group UI too,
 // which is how the same scenarios give that UI a regression check - see CARDS_PLAN.md phase 0.
 // Returns { projectMt, projectEl } (projectEl is null when headless).
-export function runScenario(name, { headless = true, container = null } = {}) {
+export function runScenario(name, { headless = true, container = null, at = null } = {}) {
   const scenario = scenarios[name];
   if (!scenario) throw new Error(`No such scenario: ${name}`);
+  if (at !== null) setNow(at); // Deliver the whole scenario at one instant
   // Subscriptions are module-level and would otherwise leak between scenarios, delivering one
   // scenario's messages into the previous scenario's tree.
   mqtt_unsubscribe_organization(ORG);

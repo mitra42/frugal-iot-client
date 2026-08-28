@@ -28,7 +28,7 @@ function checkSnapshot(name, text) {
 }
 
 describe('existing node/group UI renders unchanged', () => {
-  for (const name of ['one-device', 'control-wired', 'mixed-sensors', 'no-readings', 'unknown-module']) {
+  for (const name of ['one-device', 'control-wired', 'mixed-sensors', 'default-front', 'no-readings', 'unknown-module']) {
     test(name, () => {
       const container = document.createElement('div');
       document.body.append(container);

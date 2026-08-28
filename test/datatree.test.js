@@ -156,14 +156,14 @@ describe('controls and wiring', () => {
 describe('two temperature sources', () => {
   test('both are present under their own modules', () => {
     const { projectMt } = mock.runScenario('mixed-sensors');
-    const nodeMt = projectMt.nodes['esp8266-two-temps'];
+    const nodeMt = projectMt.nodes['esp8266-agri'];
     assert.equal(nodeMt.groups.sht.topics.temperature.state.value, 30.142857);
     assert.equal(nodeMt.groups.ds18b20.topics.ds18b20.state.value, 18.3);
   });
 
   test('the module names are what disambiguates them', () => {
     const { projectMt } = mock.runScenario('mixed-sensors');
-    const nodeMt = projectMt.nodes['esp8266-two-temps'];
+    const nodeMt = projectMt.nodes['esp8266-agri'];
     assert.equal(nodeMt.groups.sht.state.name, 'SHT');
     assert.equal(nodeMt.groups.ds18b20.state.name, 'Soil Temperature');
   });
