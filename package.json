@@ -1,7 +1,7 @@
 {
   "author": {
-    "name": "Mitra Ardron",
     "email": "mitra@mitra.biz",
+    "name": "Mitra Ardron",
     "url": "https://www.mitra.biz"
   },
   "browserslist": "> 20%, not dead",
@@ -18,6 +18,9 @@
     "mqtt": "^5.15.1"
   },
   "description": "Frugal IoT client",
+  "devDependencies": {
+    "jsdom": "^30.0.1"
+  },
   "homepage": "https://github.com/mitra42/frugal-iot-client",
   "keywords": [
     "mqtt",
@@ -28,7 +31,9 @@
   "name": "frugal-iot-client",
   "repository": "https://github.com/mitra42/frugal-iot-client",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "fixtures": "node test/fixtures/regenerate.js",
+    "test": "node --test test/*.test.js",
+    "test:update": "UPDATE_SNAPSHOTS=1 node --test test/*.test.js"
   },
   "type": "module",
   "version": "1.3.13"

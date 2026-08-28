@@ -20,7 +20,10 @@ import {_drawfill} from './filler.drawing.js';
 import {_shouldApplyFill} from './filler.helper.js';
 import {_decodeFill, _resolveTarget} from './filler.options.js';
 */
-const CssUrl = './frugaliot.css';
+// Resolved against this module's URL, not the document's, so a page in a subdirectory
+// (e.g. test/mock.html) still finds them - a document-relative path 404s from there.
+const CssUrl = new URL('./frugaliot.css', import.meta.url).href;
+const ImagesUrl = new URL('./images/', import.meta.url).href;
 function XXX(args) {
   // Put a breakpoint here for debugging and intersperse XXX() in code.
   if (typeof(args) === 'string') {
@@ -214,6 +217,16 @@ function mqtt_subscribe(topic, cb) { // cb(message)
     })
   } else {
     console.log("Delaying till connected"); // It will resubscribe from "subscriptions"
+  }
+}
+// Route a received message to every matching subscription.
+// Separate from the client's on('message') so a test or mock can inject messages with no broker.
+function mqtt_deliver(topic, msg) {
+  // The subscriptions are all going to be MqttNode which will then look at rest of topic
+  for (let o of mqtt_subscriptions) {
+    if (topicMatches(o.topic, topic)) { // Matches trailing wildcards, but not middle ones
+      o.cb(topic, msg);
+    }
   }
 }
 // Drop every subscription belonging to an organization - all its topics start with the organization id.
@@ -1062,6 +1075,11 @@ function getString(tag) {
   return getStringFrom(languages, tag) || languages.EN[tag] || tag;
 }
 
+// server_config is assigned from /config.json in normal use; funnelled through here so a mock or
+// test can supply the same shape without a server.
+function configSet(json) {
+  server_config = json;
+}
 // List of tags to try and translate
 const i8ntags = {
   label: ["textContent"],
@@ -2009,13 +2027,7 @@ class MqttClient extends HTMLElementExtended {
         // TODO - check whether topic is string or buffer.
         let msg = message.toString();
         console.log("Received", topic, " ", msg);
-        // The subscriptions are all going to be MqttNode which will then look at rest of topic
-        for (let o of mqtt_subscriptions) {
-          if (topicMatches(o.topic, topic)) { // Matches trailing wildcards, but not middle ones
-            o.cb(topic, msg);
-          }
-        }
-        //mqtt_client.end();
+        mqtt_deliver(topic, msg);
       });
     } else {
       // console.log("XXX already started connection") // We expect this, probably one time
@@ -2866,7 +2878,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
         //}
         return;
       } else { // got config
-        server_config = json;
+        configSet(json);
         this.loadAttributesFromURL();
         this.renderAndReplace(); // TODO check, but should not need to renderAndReplace as render is (currently) fully static
         // setDefaultOrganization -> setOrganization already (lazily) loads whichever tab is active -
@@ -4160,7 +4172,7 @@ class MqttReceiver extends MqttElement {
     return [
       el('label', {for: this.mt.topicPath, textContent: this.mt.name}),
       !this.state.graphable ? null
-      : el('img', {class: "icon", src: 'images/icon_graph.svg', onclick: this.opengraph.bind(this)})
+      : el('img', {class: "icon", src: `${ImagesUrl}icon_graph.svg`, onclick: this.opengraph.bind(this)})
     ];
   }
   renderWiredInput() {
@@ -4449,7 +4461,7 @@ class MqttBar extends MqttReceiver {
       <div  class="outer mqtt-bar">
         <div class="name">
           <label for="${this.mt.topicPath}">${this.mt.name}</label>
-          ${this.state.graphable ? `<img class="icon" src="images/icon_graph.svg" onclick="${this.opengraph.bind(this)}">` : ''}
+          ${this.state.graphable ? `<img class="icon" src="${ImagesUrl}icon_graph.svg" onclick="${this.opengraph.bind(this)}">` : ''}
         </div>
         <div class="bar" id="${this.mt.topicPath}">
           <span class="left" style="width:${this.width}%; background-color:${this.state.color};"><!--needs to set state.elements.inner -->
@@ -4468,7 +4480,7 @@ class MqttBar extends MqttReceiver {
         el('div', {class: "name"}, [
           el('label', {for: this.mt.topicPath, textContent: this.mt.name}),
           !this.state.graphable ? null
-          : el('img', {class: "icon", src: 'images/icon_graph.svg', onclick: this.opengraph.bind(this)}),
+          : el('img', {class: "icon", src: `${ImagesUrl}icon_graph.svg`, onclick: this.opengraph.bind(this)}),
         ]),
         el('div', {class: "bar", id: this.mt.topicPath},[
           // Note width overridden as value changes
@@ -4515,7 +4527,7 @@ class MqttGauge extends MqttReceiver {
           "style": `--dg-arc-color:${this.state.color}`,
         }),
         !this.state.graphable ? null
-          : el('img', {class: "icon", src: 'images/icon_graph.svg', onclick: this.opengraph.bind(this)}),
+          : el('img', {class: "icon", src: `${ImagesUrl}icon_graph.svg`, onclick: this.opengraph.bind(this)}),
       ]),
     ];
   }
@@ -4849,7 +4861,7 @@ class MqttWrapper extends HTMLElementExtended {
         //}
         return;
       } else { // got config
-        server_config = json;
+        configSet(json);
         this.loadAttributesFromURL();
         this.appendClient();
         this.appender();
@@ -5113,7 +5125,7 @@ class MqttNode extends MqttReceiver {
     switch (leaf) {
       case "battery":
         let bars = Math.min(6,Math.floor(parseInt(value) * 6/4200));
-        this.groups.frugal_iot.state.elements.batteryIndicator.src = `images/Battery${bars}.png`;
+        this.groups.frugal_iot.state.elements.batteryIndicator.src = `${ImagesUrl}Battery${bars}.png`;
         break;
     }
   }
@@ -5720,4 +5732,6 @@ document.addEventListener('frugaliot:publish', ({detail}) => {
 
 // Public API for custom dashboards and pages that import this module.
 // Add further exports here as dashboard needs grow (e.g. getString for i18n).
-export { el, getString, getStringFrom, addVocabulary, preferedLanguageSet, XXX };
+export { el, getString, getStringFrom, addVocabulary, preferedLanguageSet, XXX,
+  mqtt_deliver, mqtt_subscribe, mqtt_unsubscribe_organization, configSet, topicMatches,
+  MqttTopic, MqttTopicGroup, MqttTopicNode, MqttTopicProject };

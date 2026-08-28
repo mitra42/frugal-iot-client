@@ -711,6 +711,105 @@ Still untested:
 
 ---
 
+## Next steps
+
+### 1. Arduino-IDE-built firmware probably needs a different bootloader
+
+Almost certainly yes — the Arduino IDE core's `dio_80m` ELF (18688 bytes) is a different binary from
+pioarduino's `qio_80m`-with-DIO-header (19520 bytes), and that mismatch is exactly what broke
+LittleFS. We currently ship only the pioarduino one.
+
+Better than a warning comment on the page: **read the framework out of the app image.** Every ESP-IDF
+app carries an `esp_app_desc_t` at offset `0x20` (24-byte image header + 8-byte segment header), magic
+`0xABCD5432`, with `version`, `project_name`, `time`, `date` and `idf_ver` as fixed-width strings.
+The current `firmware.bin` reports:
+
+```
+idf_ver: v5.5.4    project_name: arduino-lib-builder    date: Jun 2 2026
+```
+
+So the flasher can parse the selected firmware, display what built it, and either pick a matching
+bootloader or refuse when it doesn't match the one on offer — turning an invisible, badly-misleading
+failure into an explicit refusal. Needs `idf_ver` recorded per bootloader in `boards.json`, which
+means capturing it when the bootloader is harvested.
+
+### 2. Writing WiFi config does bring the littlefs machinery back — so don't do it that way
+
+Pre-writing `/wifi/<ssid>` files means *building* a littlefs image, which reintroduces the whole
+generator problem: disk 2.1, `name_max` 64, `prog_size` 1, and no in-browser library that can produce
+that combination (`@wasm-os/mklfs` cannot set `name_max` at all).
+
+Given how sensitive this proved, prefer **serial config hand-off**: after flashing we still hold the
+port, and `System_Captive::dispatch` already consumes `topicTwig value` pairs, with
+`set/wifi/<ssid>` = password being an existing convention. The firmware then writes its own files
+using its own littlefs, so there is no format coupling, a list of networks is natural, and it doubles
+as a re-configure tool for boards already in the field. Small firmware addition; no client-side
+filesystem generation.
+
+**Reuse the intake the node already has.** The firmware does not need a new way to *apply* config —
+only a new way to *receive* it. Today the same values arrive over HTTP: the captive portal builds a
+form from `addString` / `addNumber` / `addBool` / `addButton`, and `addSTARoute` registers POST
+handlers on the station interface, so config comes in as query/form key-value pairs, is turned into
+`topicTwig` + value, and goes through `dispatch()` to `writeConfigToFS()`. MQTT `set/...` messages
+land in the same place.
+
+So the work is a **transport**, not a mechanism: read the same key-value pairs from USB serial and
+feed them into that existing dispatch. That keeps one code path for HTTP, MQTT and USB, and means
+anything configurable through the captive portal is automatically configurable at flash time. Worth
+settling on the serial line format (a `topicTwig value` pair per line is enough, terminated so a
+partial line is never applied) and whether the node echoes each accepted setting so the flasher can
+confirm rather than assume.
+
+### 3. Monitor needs Clear and Copy buttons
+
+The log is hard to work with once long. Two buttons beside Monitor, two new strings in four languages.
+
+### 4. `fs.cpp` reports a scary failure that isn't one
+
+On a freshly provisioned board the normal path prints `Corrupted dir pair`, `mount failed (-84)` and a
+`disableCore0WDT` error before quietly succeeding — and `"initialization done."` is gated behind
+`SYSTEM_LITTLEFS_DEBUG`, so an ordinary build shows only the alarming half. Worth fixing in
+`System_LittleFS::pre_setup`: suppress the component's log level around `begin(true)` (e.g.
+`esp_log_level_set("esp_littlefs", ESP_LOG_NONE)`, restoring afterwards) and print one clear line for
+each outcome, with the failure case *not* gated behind a debug flag. Firmware repo change.
+
+### 5. ESP8266 end to end
+
+Single whole image at `0x0`, no base bundle. Note it cannot format its own filesystem — its
+`ESPFS.begin()` takes no format-on-fail argument — so this is the one case that may genuinely need the
+pre-formatted blank image described above.
+
+### 6. S2 and S3 bootloaders
+
+Generated with the C3 recipe but never checked against a reference build. The check is exactly what
+settled the C3: build the firmware for an S2/S3 env and compare `.pio/build/<env>/bootloader.bin`
+against `base/bootloader/esp32s{2,3}.bin`.
+
+### 7. Auto-detect chip type and refuse a binary built for the wrong chip
+
+Partly built already: `appCheck()` compares the app image's `chip_id` (u16 at byte 12) against
+`esploader.chip.IMAGE_CHIP_ID` and throws on mismatch. But it has never been exercised — every test so
+far used a correctly matched C3 image — so it needs a deliberate wrong-chip attempt to confirm the
+refusal fires, reads clearly, and leaves the board untouched. Also worth checking whether esptool-js
+rejects it independently, so we know whether our check is the only guard or a second one.
+
+Two related refusals in the same code path are likewise untested: an app larger than the app
+partition, and a `<chip>-<flashsize>` combination absent from `boards.json`.
+
+### 8. UI polish
+
+Nothing structural — the flow works but is a little unintuitive. Known rough edges:
+
+- `Flash` is disabled until *both* a board and a firmware are chosen, with no hint saying so; the
+  reason should be visible rather than inferred from a grey button.
+- Provision vs app-only is auto-detected and reported in prose, but the destructive case deserves to
+  read as clearly destructive.
+- A hard reload silently clears the chosen firmware, which is surprising mid-session.
+- Ordering of the controls (file, speed, monitor speed, Connect, Flash, Monitor) has grown by
+  accretion rather than by how it is actually used.
+
+---
+
 ## Open questions
 
 - **Octal-flash S3 detection.** Confirm on a real ESP32-S3-WROOM-2 that unsupported OPI flash shows up

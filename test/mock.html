@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frugal IoT — mock harness</title>
+    <link href="../frugaliot.css" rel="stylesheet" type="text/css">
+    <script type="importmap">
+        {
+        "imports": {
+            "@kurkle/color": "/node_modules/@kurkle/color/dist/color.esm.js",
+            "chart.js": "/node_modules/chart.js/dist/Chart.js",
+            "dial-gauge": "/node_modules/dial-gauge/dial-gauge.js",
+            "luxon": "/node_modules/luxon/src/luxon.js",
+            "chartjs-adapter-luxon": "/node_modules/chartjs-adapter-luxon/dist/chartjs-adapter-luxon.esm.js",
+            "csv-parse": "/node_modules/csv-parse/dist/esm/index.js",
+            "esptool-js": "/node_modules/esptool-js/bundle.js"
+            }
+        }
+    </script>
+    <style>
+        body { font-family: sans-serif; margin: 0; background: #f5f5f5; }
+        #bar { position: sticky; top: 0; background: #007bff; color: white; padding: 8px 12px;
+               display: flex; gap: 12px; align-items: center; flex-wrap: wrap; z-index: 10; }
+        #bar select, #bar button { font-size: 1em; }
+        #bar label { display: flex; gap: 4px; align-items: center; }
+        #title { font-weight: bold; margin-right: auto; }
+        #stage { padding: 12px; }
+        #note { padding: 0 12px 12px; color: #666; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+<div id="bar">
+    <span id="title">Mock harness</span>
+    <label>Scenario <select id="scenario"></select></label>
+    <label><input type="checkbox" id="headless"> headless (data tree only)</label>
+    <button id="rerun">Re-run</button>
+</div>
+<div id="note"></div>
+<div id="stage"></div>
+<pre id="tree" style="display:none;padding:12px;font-size:0.85em"></pre>
+
+<script type="module">
+  import { scenarios, loadConfig, runScenario } from './mock.js';
+  import { snapshot } from './serialize.js';
+
+  // The fixture is generated from the real server schema - see fixtures/regenerate.js
+  const config = await (await fetch('./fixtures/config.json')).json();
+  loadConfig(config);
+
+  const picker = document.getElementById('scenario');
+  Object.entries(scenarios).forEach(([key, s]) =>
+    picker.append(Object.assign(document.createElement('option'), { value: key, textContent: s.title })));
+
+  function run() {
+    const name = picker.value;
+    const headless = document.getElementById('headless').checked;
+    const stage = document.getElementById('stage');
+    const tree = document.getElementById('tree');
+    stage.replaceChildren();
+    document.getElementById('note').textContent =
+      `${scenarios[name].messages.length} messages replayed with no broker.`;
+    const { projectEl } = runScenario(name, { headless, container: stage });
+    // Headless builds no elements, so show the serialized data tree instead of an empty stage
+    tree.style.display = headless ? '' : 'none';
+    if (headless) tree.textContent = 'Headless: data tree built, no elements rendered.';
+    else if (projectEl) tree.textContent = snapshot(projectEl);
+    location.hash = name;
+  }
+
+  picker.value = location.hash.slice(1) in scenarios ? location.hash.slice(1) : Object.keys(scenarios)[0];
+  picker.addEventListener('change', run);
+  document.getElementById('headless').addEventListener('change', run);
+  document.getElementById('rerun').addEventListener('click', run);
+  run();
+</script>
+</body>
+</html>

@@ -1,0 +1,1252 @@
+{
+ "schema": {
+  "modules": {
+   "aht20": {
+    "name": "AHT20",
+    "topics": [
+     {
+      "leaf": "temperature"
+     },
+     {
+      "leaf": "humidity"
+     }
+    ]
+   },
+   "aht21": {
+    "name": "AHT21",
+    "topics": [
+     {
+      "leaf": "temperature"
+     },
+     {
+      "leaf": "humidity"
+     }
+    ]
+   },
+   "battery": {
+    "name": "Battery",
+    "insidefrugaliot": true,
+    "topics": [
+     {
+      "leaf": "battery"
+     }
+    ]
+   },
+   "bme280": {
+    "name": "BME280",
+    "topics": [
+     {
+      "leaf": "temperature"
+     },
+     {
+      "leaf": "humidity"
+     },
+     {
+      "leaf": "pressure",
+      "max": 1100,
+      "min": 300
+     }
+    ]
+   },
+   "bme680": {
+    "name": "BME680",
+    "topics": [
+     {
+      "leaf": "temperature"
+     },
+     {
+      "leaf": "humidity"
+     },
+     {
+      "leaf": "pressure",
+      "max": 1100,
+      "min": 300
+     },
+     {
+      "leaf": "gas"
+     }
+    ]
+   },
+   "bmp280": {
+    "name": "BMP280",
+    "topics": [
+     {
+      "leaf": "temperature"
+     },
+     {
+      "leaf": "pressure",
+      "max": 1100,
+      "min": 300
+     }
+    ]
+   },
+   "button": {
+    "name": "Button",
+    "topics": [
+     {
+      "leaf": "button"
+     }
+    ]
+   },
+   "captive": {
+    "name": "Captive",
+    "topics": [
+     {
+      "leaf": "language_code"
+     }
+    ]
+   },
+   "carousel": {
+    "name": "Display carousel",
+    "topics": [
+     {
+      "leaf": "select"
+     }
+    ]
+   },
+   "controlblinken": {
+    "name": "Control Blinken",
+    "topics": [
+     {
+      "leaf": "timeon"
+     },
+     {
+      "leaf": "timeoff"
+     },
+     {
+      "leaf": "out"
+     }
+    ]
+   },
+   "controlhysteresis": {
+    "name": "Control",
+    "topics": [
+     {
+      "leaf": "now",
+      "leaf_from": "controlfloat",
+      "name": "Now"
+     },
+     {
+      "leaf": "greater",
+      "leaf_from": "controlintoggle",
+      "name": "Greater Than"
+     },
+     {
+      "leaf": "limit",
+      "leaf_from": "controlfloat",
+      "name": "Limit"
+     },
+     {
+      "leaf": "hysteresis",
+      "leaf_from": "controlfloat",
+      "name": "Hysterisis",
+      "max": 100,
+      "wireable": false
+     },
+     {
+      "leaf": "out",
+      "leaf_from": "controlouttoggle",
+      "name": "Out"
+     }
+    ]
+   },
+   "controlhysterisis": {
+    "name": "Control",
+    "topics": [
+     {
+      "leaf": "now",
+      "leaf_from": "controlfloat",
+      "name": "Now"
+     },
+     {
+      "leaf": "greater",
+      "leaf_from": "controlintoggle",
+      "name": "Greater Than"
+     },
+     {
+      "leaf": "limit",
+      "leaf_from": "controlfloat",
+      "name": "Limit"
+     },
+     {
+      "leaf": "hysterisis",
+      "leaf_from": "controlfloat",
+      "name": "Hysterisis",
+      "max": 100,
+      "wireable": false
+     },
+     {
+      "leaf": "out",
+      "leaf_from": "controlouttoggle",
+      "name": "Out"
+     }
+    ]
+   },
+   "dht": {
+    "name": "DHT",
+    "topics": [
+     {
+      "leaf": "temperature"
+     },
+     {
+      "leaf": "humidity"
+     }
+    ]
+   },
+   "ds18b20": {
+    "name": "Soil Temperature",
+    "topics": [
+     {
+      "leaf": "ds18b20",
+      "leaf_from": "temperature"
+     }
+    ]
+   },
+   "do": {
+    "name": "Dissolved Oxygen",
+    "topics": [
+     {
+      "leaf": "do"
+     }
+    ]
+   },
+   "ens160": {
+    "name": "ENS160",
+    "topics": [
+     {
+      "leaf": "temperature",
+      "leaf_from": "controlfloat",
+      "name": "Temperature",
+      "max": 50,
+      "color": "red"
+     },
+     {
+      "leaf": "humidity",
+      "leaf_from": "controlfloat",
+      "name": "Humidity",
+      "color": "blue"
+     },
+     {
+      "leaf": "aqi"
+     },
+     {
+      "leaf": "tvoc"
+     },
+     {
+      "leaf": "eco2"
+     },
+     {
+      "leaf": "aqi500"
+     }
+    ]
+   },
+   "ensaht": {
+    "name": "ENS AHT",
+    "topics": [
+     {
+      "leaf": "temperature"
+     },
+     {
+      "leaf": "humidity"
+     },
+     {
+      "leaf": "aqi"
+     },
+     {
+      "leaf": "tvoc"
+     },
+     {
+      "leaf": "eco2"
+     },
+     {
+      "leaf": "aqi500"
+     }
+    ]
+   },
+   "frugal_iot": {
+    "name": "XXX",
+    "topics": [
+     {
+      "leaf": "id"
+     },
+     {
+      "leaf": "name"
+     },
+     {
+      "leaf": "description"
+     },
+     {
+      "leaf": "lastseen"
+     }
+    ]
+   },
+   "gps": {
+    "name": "GPS",
+    "topics": [
+     {
+      "leaf": "latitude"
+     },
+     {
+      "leaf": "longitude"
+     },
+     {
+      "leaf": "altitude"
+     },
+     {
+      "leaf": "course"
+     },
+     {
+      "leaf": "speed"
+     },
+     {
+      "leaf": "satellites"
+     },
+     {
+      "leaf": "hdop"
+     },
+     {
+      "leaf": "position"
+     },
+     {
+      "leaf": "utc_time"
+     }
+    ]
+   },
+   "health": {
+    "name": "System",
+    "insidefrugaliot": true,
+    "topics": [
+     {
+      "leaf": "wifibars"
+     },
+     {
+      "leaf": "wifissid"
+     }
+    ]
+   },
+   "ht": {
+    "name": "HT",
+    "topics": [
+     {
+      "leaf": "temperature"
+     },
+     {
+      "leaf": "humidity"
+     }
+    ]
+   },
+   "ina219": {
+    "name": "Power Monitor",
+    "topics": [
+     {
+      "leaf": "shunt"
+     },
+     {
+      "leaf": "bus"
+     },
+     {
+      "leaf": "current"
+     },
+     {
+      "leaf": "power"
+     },
+     {
+      "leaf": "load"
+     }
+    ]
+   },
+   "lcd": {
+    "name": "LCD",
+    "topics": [
+     {
+      "leaf": "message"
+     }
+    ]
+   },
+   "ledbuiltin": {
+    "name": "LED",
+    "slot": "ledbuiltin",
+    "insidefrugaliot": true,
+    "topics": [
+     {
+      "leaf": "on"
+     },
+     {
+      "leaf": "color"
+     },
+     {
+      "leaf": "brightness"
+     }
+    ]
+   },
+   "loadcell": {
+    "name": "Load Cell",
+    "topics": [
+     {
+      "leaf": "loadcell"
+     }
+    ]
+   },
+   "lux": {
+    "name": "Light meter",
+    "topics": [
+     {
+      "leaf": "lux"
+     }
+    ]
+   },
+   "ms5803": {
+    "name": "MS5803",
+    "topics": [
+     {
+      "leaf": "pressure"
+     },
+     {
+      "leaf": "temperature"
+     }
+    ]
+   },
+   "ota": {
+    "name": "OTA",
+    "insidefrugaliot": true,
+    "topics": [
+     {
+      "leaf": "key"
+     }
+    ]
+   },
+   "rain": {
+    "name": "Rain",
+    "topics": [
+     {
+      "leaf": "rain"
+     },
+     {
+      "leaf": "mm"
+     }
+    ]
+   },
+   "relay": {
+    "name": "Relay",
+    "topics": [
+     {
+      "leaf": "on"
+     }
+    ]
+   },
+   "sht": {
+    "name": "SHT",
+    "topics": [
+     {
+      "leaf": "temperature"
+     },
+     {
+      "leaf": "humidity"
+     }
+    ]
+   },
+   "soil": {
+    "name": "Soil",
+    "topics": [
+     {
+      "leaf": "soil"
+     }
+    ]
+   },
+   "ultrasonic": {
+    "name": "Ultrasonic Distance",
+    "topics": [
+     {
+      "leaf": "ultrasonic"
+     }
+    ]
+   }
+  },
+  "topics": {
+   "altitude": {
+    "leaf": "altitude",
+    "name": "Altitude",
+    "type": "float",
+    "display": "text",
+    "min": -500,
+    "max": 9000,
+    "color": "black",
+    "log": true,
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 1
+    },
+    "rw": "r",
+    "graphable": true
+   },
+   "analog": {
+    "leaf": "analog",
+    "type": "int",
+    "display": "bar",
+    "rw": "r",
+    "graphable": true,
+    "log": true,
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 10
+    }
+   },
+   "aqi": {
+    "leaf": "aqi",
+    "name": "AQI",
+    "type": "int",
+    "display": "bar",
+    "min": 0,
+    "max": 5,
+    "color": "purple",
+    "rw": "r",
+    "graphable": true,
+    "log": true,
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 1
+    }
+   },
+   "aqi500": {
+    "leaf": "aqi500",
+    "name": "AQI500",
+    "type": "int",
+    "display": "bar",
+    "min": 0,
+    "max": 500,
+    "color": "brown",
+    "rw": "r",
+    "graphable": true,
+    "log": true,
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 10
+    }
+   },
+   "battery": {
+    "leaf": "battery",
+    "name": "Voltage",
+    "type": "int",
+    "display": "text",
+    "min": 3000,
+    "max": 5000,
+    "color": "green",
+    "rw": "r",
+    "graphable": true,
+    "log": true,
+    "units": "mV",
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 50
+    }
+   },
+   "brightness": {
+    "leaf": "brightness",
+    "name": "Brightness",
+    "type": "int",
+    "log": false,
+    "max": 255,
+    "min": 0,
+    "display": "slider",
+    "rw": "w"
+   },
+   "bus": {
+    "leaf": "bus",
+    "name": "Bus Voltage",
+    "type": "float",
+    "display": "text",
+    "min": 0,
+    "max": 32,
+    "color": "green",
+    "rw": "r",
+    "log": true,
+    "units": "V",
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 0.1
+    },
+    "graphable": true
+   },
+   "button": {
+    "leaf": "button",
+    "name": "Button",
+    "type": "bool",
+    "log": true,
+    "display": "toggle",
+    "color": "black",
+    "rw": "r",
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 1
+    }
+   },
+   "color": {
+    "leaf": "color",
+    "name": "Color",
+    "type": "color",
+    "log": false,
+    "display": "color",
+    "rw": "w"
+   },
+   "controlfloat": {
+    "min": 0,
+    "max": 100,
+    "type": "float",
+    "log": false,
+    "display": "text",
+    "color": "black",
+    "wireable": true,
+    "rw": "w",
+    "retain": true
+   },
+   "controlint": {
+    "min": 0,
+    "max": 65535,
+    "type": "int",
+    "log": false,
+    "display": "text",
+    "color": "black",
+    "wireable": true,
+    "rw": "w",
+    "retain": true
+   },
+   "controltext": {
+    "min": 0,
+    "max": 100,
+    "type": "text",
+    "log": false,
+    "display": "text",
+    "color": "black",
+    "wireable": true,
+    "rw": "w",
+    "retain": true
+   },
+   "controlintoggle": {
+    "type": "bool",
+    "log": false,
+    "display": "toggle",
+    "color": "black",
+    "rw": "w",
+    "wireable": false
+   },
+   "controlouttoggle": {
+    "type": "bool",
+    "log": true,
+    "display": "toggle",
+    "color": "black",
+    "rw": "r",
+    "wireable": true,
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 1
+    }
+   },
+   "course": {
+    "leaf": "course",
+    "name": "Course",
+    "type": "float",
+    "display": "text",
+    "min": 0,
+    "max": 360,
+    "color": "black",
+    "log": true,
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 1
+    },
+    "rw": "r",
+    "graphable": true,
+    "units": "deg"
+   },
+   "current": {
+    "leaf": "current",
+    "name": "Current",
+    "type": "float",
+    "display": "text",
+    "min": -3200,
+    "max": 3200,
+    "color": "red",
+    "rw": "r",
+    "log": true,
+    "units": "mA",
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 1
+    },
+    "graphable": true
+   },
+   "description": {
+    "leaf": "description",
+    "slot": "description",
+    "name": "Description",
+    "type": "text",
+    "log": false,
+    "display": "text",
+    "rw": "w",
+    "retain": true
+   },
+   "do": {
+    "leaf": "do",
+    "name": "Dissolved Oxygen",
+    "type": "float",
+    "display": "bar",
+    "min": 0,
+    "max": 20,
+    "color": "blue",
+    "rw": "r",
+    "log": true,
+    "units": "mg/L",
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 0.1
+    },
+    "graphable": true
+   },
+   "eco2": {
+    "leaf": "eco2",
+    "name": "eCO2",
+    "type": "int",
+    "display": "bar",
+    "min": 300,
+    "max": 900,
+    "color": "brown",
+    "log": true,
+    "units": "ppm",
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 5
+    },
+    "rw": "r",
+    "graphable": true
+   },
+   "gas": {
+    "leaf": "gas",
+    "name": "Gas Resistance",
+    "type": "float",
+    "display": "text",
+    "min": 0,
+    "max": 500,
+    "color": "green",
+    "rw": "r",
+    "log": true,
+    "units": "kOhm",
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 1
+    },
+    "graphable": true
+   },
+   "hdop": {
+    "leaf": "hdop",
+    "name": "HDOP",
+    "type": "float",
+    "display": "text",
+    "min": 0,
+    "max": 50,
+    "color": "black",
+    "log": false,
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 0.1
+    },
+    "rw": "r",
+    "graphable": false
+   },
+   "humidity": {
+    "leaf": "humidity",
+    "name": "Humidity",
+    "type": "float",
+    "display": "bar",
+    "min": 0,
+    "max": 100,
+    "color": "blue",
+    "log": true,
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 1
+    },
+    "rw": "r",
+    "graphable": true,
+    "units": "%RH"
+   },
+   "id": {
+    "leaf": "id",
+    "slot": "id",
+    "name": "Node ID",
+    "type": "text",
+    "log": false,
+    "display": "text",
+    "rw": "r"
+   },
+   "key": {
+    "leaf": "key",
+    "name": "Key",
+    "type": "text",
+    "log": false,
+    "display": "text",
+    "rw": "r"
+   },
+   "language_code": {
+    "leaf": "language_code",
+    "name": "Language",
+    "type": "text",
+    "log": false,
+    "display": "text",
+    "color": "black",
+    "rw": "r"
+   },
+   "lastseen": {
+    "leaf": "lastseen",
+    "slot": "lastseen",
+    "name": "Last Seen",
+    "type": "text",
+    "log": false,
+    "display": "text",
+    "rw": "r"
+   },
+   "latitude": {
+    "leaf": "latitude",
+    "name": "Latitude",
+    "type": "float",
+    "display": "text",
+    "min": -90,
+    "max": 90,
+    "color": "black",
+    "log": true,
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 0.0001
+    },
+    "rw": "r",
+    "graphable": true,
+    "units": "lat"
+   },
+   "load": {
+    "leaf": "load",
+    "name": "Load Voltage",
+    "type": "float",
+    "display": "text",
+    "min": 0,
+    "max": 32,
+    "color": "green",
+    "rw": "r",
+    "log": true,
+    "units": "V",
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 0.1
+    },
+    "graphable": true
+   },
+   "loadcell": {
+    "leaf": "loadcell",
+    "name": "Load Cell",
+    "type": "float",
+    "display": "text",
+    "min": 0,
+    "max": 65000,
+    "color": "yellow",
+    "log": true,
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 100
+    },
+    "rw": "r",
+    "calibrate": true,
+    "graphable": true
+   },
+   "longitude": {
+    "leaf": "longitude",
+    "name": "Longitude",
+    "type": "float",
+    "display": "text",
+    "min": -180,
+    "max": 180,
+    "color": "black",
+    "log": true,
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 0.0001
+    },
+    "rw": "r",
+    "graphable": true,
+    "units": "lon"
+   },
+   "lux": {
+    "leaf": "lux",
+    "name": "Lux",
+    "type": "exponential",
+    "display": "bar",
+    "min": 0,
+    "max": 65000,
+    "color": "yellow",
+    "log": true,
+    "rw": "r",
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": "5%"
+    },
+    "graphable": true,
+    "units": "lx"
+   },
+   "manual": {
+    "leaf": "manual",
+    "name": "Manual",
+    "type": "bool",
+    "display": "toggle",
+    "color": "black",
+    "rw": "r",
+    "log": true,
+    "graphable": true,
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 1
+    },
+    "wireable": true
+   },
+   "message": {
+    "leaf": "message",
+    "name": "Message",
+    "min": 0,
+    "max": 100,
+    "type": "text",
+    "log": false,
+    "display": "text",
+    "color": "black",
+    "wireable": true,
+    "rw": "w",
+    "retain": true
+   },
+   "mm": {
+    "leaf": "mm",
+    "name": "Accumulated Rain",
+    "type": "float",
+    "display": "text",
+    "min": 0,
+    "max": 500,
+    "color": "blue",
+    "rw": "r",
+    "log": true,
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 1
+    },
+    "graphable": true,
+    "units": "mm"
+   },
+   "name": {
+    "leaf": "name",
+    "slot": "name",
+    "name": "Node Name",
+    "type": "text",
+    "log": false,
+    "display": "text",
+    "rw": "w",
+    "retain": true
+   },
+   "on": {
+    "leaf": "on",
+    "name": "On",
+    "type": "bool",
+    "display": "toggle",
+    "color": "black",
+    "rw": "w",
+    "log": true,
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 1
+    },
+    "graphable": true
+   },
+   "out": {
+    "leaf": "out",
+    "name": "Out",
+    "type": "bool",
+    "display": "toggle",
+    "color": "black",
+    "rw": "r",
+    "log": true,
+    "wireable": true,
+    "graphable": true,
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 1
+    }
+   },
+   "position": {
+    "leaf": "position",
+    "name": "Position",
+    "type": "text",
+    "log": false,
+    "display": "text",
+    "color": "black",
+    "rw": "r"
+   },
+   "power": {
+    "leaf": "power",
+    "name": "Power",
+    "type": "float",
+    "display": "text",
+    "min": 0,
+    "max": 100000,
+    "color": "orange",
+    "rw": "r",
+    "log": true,
+    "units": "mW",
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 10
+    },
+    "graphable": true
+   },
+   "pressure": {
+    "leaf": "pressure",
+    "name": "Pressure",
+    "type": "float",
+    "display": "bar",
+    "min": 0,
+    "max": 99,
+    "color": "blue",
+    "rw": "r",
+    "log": true,
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 1
+    },
+    "graphable": true
+   },
+   "rain": {
+    "leaf": "rain",
+    "name": "Rain",
+    "type": "float",
+    "display": "text",
+    "min": 0,
+    "max": 500,
+    "color": "blue",
+    "rw": "r",
+    "log": true,
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 1
+    },
+    "graphable": true,
+    "units": "mm/hr"
+   },
+   "satellites": {
+    "leaf": "satellites",
+    "name": "Satellites",
+    "type": "float",
+    "display": "text",
+    "min": 0,
+    "max": 32,
+    "color": "black",
+    "log": false,
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 1
+    },
+    "rw": "r",
+    "graphable": false,
+    "units": "m/s"
+   },
+   "select": {
+    "leaf": "select",
+    "name": "Select",
+    "type": "int",
+    "log": false,
+    "min": 0,
+    "display": "text",
+    "color": "black",
+    "wireable": false,
+    "rw": "w",
+    "retain": true
+   },
+   "shunt": {
+    "leaf": "shunt",
+    "name": "Shunt Voltage",
+    "type": "float",
+    "display": "text",
+    "min": -320,
+    "max": 320,
+    "color": "blue",
+    "rw": "r",
+    "log": true,
+    "units": "mV",
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 1
+    },
+    "graphable": true
+   },
+   "speed": {
+    "leaf": "speed",
+    "name": "Speed",
+    "type": "float",
+    "display": "text",
+    "min": 0,
+    "max": 999,
+    "color": "black",
+    "log": true,
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 1
+    },
+    "rw": "r",
+    "graphable": true,
+    "units": "m/s"
+   },
+   "soil": {
+    "leaf": "soil",
+    "name": "Soil Moisture",
+    "type": "int",
+    "display": "bar",
+    "min": 0,
+    "max": 100,
+    "color": "brown",
+    "rw": "r",
+    "log": true,
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 1
+    },
+    "graphable": true,
+    "calibrate": true,
+    "units": "%RH"
+   },
+   "temperature": {
+    "leaf": "temperature",
+    "name": "Temperature",
+    "type": "float",
+    "display": "bar",
+    "rw": "r",
+    "min": 0,
+    "max": 50,
+    "color": "red",
+    "wireable": false,
+    "log": true,
+    "units": "Cel",
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 0.1
+    },
+    "graphable": true
+   },
+   "timeoff": {
+    "leaf": "timeoff",
+    "name": "Time Off (s)",
+    "min": 0,
+    "max": 3600,
+    "type": "float",
+    "log": false,
+    "display": "text",
+    "color": "black",
+    "rw": "w",
+    "wireable": true,
+    "units": "s"
+   },
+   "timeon": {
+    "leaf": "timeon",
+    "name": "Time On (s)",
+    "min": 0,
+    "max": 3600,
+    "type": "float",
+    "log": false,
+    "display": "text",
+    "color": "black",
+    "rw": "w",
+    "wireable": true,
+    "units": "s"
+   },
+   "tvoc": {
+    "leaf": "tvoc",
+    "name": "TVOC",
+    "type": "int",
+    "display": "bar",
+    "min": 0,
+    "max": 99,
+    "color": "green",
+    "rw": "r",
+    "log": true,
+    "units": "ppb",
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 1
+    },
+    "graphable": true
+   },
+   "ultrasonic": {
+    "leaf": "ultrasonic",
+    "name": "Distance",
+    "type": "float",
+    "display": "bar",
+    "min": 0,
+    "max": 7500,
+    "color": "blue",
+    "rw": "r",
+    "log": true,
+    "units": "mm",
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 5
+    },
+    "graphable": true,
+    "calibrate": true
+   },
+   "utc_time": {
+    "leaf": "utc_time",
+    "name": "UTC Time",
+    "type": "text",
+    "log": false,
+    "display": "text",
+    "color": "black",
+    "rw": "r"
+   },
+   "wifibars": {
+    "leaf": "wifibars",
+    "name": "WiFi",
+    "type": "int",
+    "log": true,
+    "display": "text",
+    "min": 0,
+    "max": 4,
+    "color": "blue",
+    "rw": "r",
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 1
+    }
+   },
+   "wifissid": {
+    "leaf": "wifissid",
+    "name": "SSID",
+    "type": "text",
+    "log": false,
+    "display": "text",
+    "color": "blue",
+    "rw": "r"
+   }
+  }
+ },
+ "organizations": {
+  "dev": {
+   "name": "Development",
+   "mqtt_password": "public",
+   "projects": {
+    "lotus": {
+     "name": "Lotus Ponds",
+     "nodes": {}
+    }
+   }
+  }
+ },
+ "user": {
+  "id": 2,
+  "name": "test",
+  "permissions": [
+   {
+    "org": "dev",
+    "capability": "READ"
+   }
+  ]
+ }
+}

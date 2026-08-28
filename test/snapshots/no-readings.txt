@@ -1,0 +1,54 @@
+<mqtt-project name="Lotus Ponds">
+  #shadow
+    <div class="outer mqtt-project">
+      <div class="title">
+        <span class="projectname">
+          "dev/lotus"
+        <span class="name">
+          "Lotus Ponds"
+      <div class="nodes">
+        <slot>
+  <mqtt-node topic="dev/lotus/esp8266-newborn" name="">
+    #shadow
+      <div class="outer mqtt-node offline">
+        <mqtt-groupfrugaliot group="frugal_iot" name="XXX" class="group frugal_iot">
+          #shadow
+            <details>
+              <summary>
+                <slot name="name" class="name">
+                <img class="batteryimg">
+              <slot name="description" class="description">
+              <slot name="lastseen" class="lastseen">
+              <slot name="id" class="id">
+              <div class="health">
+                <slot name="ledbuiltin">
+                <slot name="battery">
+              <slot name="ota" class="ota">
+              <slot>
+          <mqtt-text class="id" slot="id">
+            #shadow
+              <div class="mqtt-text frugal_iot_id outer">
+                <label>
+                  "Node ID"
+                <span class="val">
+                  "esp8266-newborn"
+          <mqtt-text class="name" slot="name">
+            #shadow
+              <div class="mqtt-text frugal_iot_name outer">
+                <label>
+                  "Node Name"
+                <input name="dev/lotus/esp8266-newborn/frugal_iot/name" class="val" type="text">
+          <mqtt-text class="description" slot="description">
+            #shadow
+              <div class="mqtt-text frugal_iot_description outer">
+                <label>
+                  "Description"
+                <input name="dev/lotus/esp8266-newborn/frugal_iot/description" class="val" type="text">
+          <mqtt-text class="lastseen" slot="lastseen">
+            #shadow
+              <div class="mqtt-text frugal_iot_lastseen outer">
+                <label>
+                  "Last Seen"
+                <span class="val">
+        <div class="topics">
+          <slot>
