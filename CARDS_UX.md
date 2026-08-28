@@ -216,14 +216,16 @@ Why not a format string:
 
 **Default when nothing is declared**: use each module's existing `summaryText()`. The machinery is
 already built — `MqttGroupSht` returns `30.1°C 85%RH`, `MqttGroupRelay` returns `✓`,
-`MqttGroupControlHysteresis` returns the whole control line. A module opts into the summary with
+`MqttGroupControlHysteresis` returns the whole control line.
 
-```yaml
-sht:
-  summary: true       # module-level: contribute my summaryText() to the device summary
-```
+**A module opts *out*, not in** — `summary: false`. **D-37** An earlier draft had `summary: true` as
+the opt-in; writing it revealed that 23 of the 33 modules would carry the flag, which is a flag doing
+no work. Inverted, five modules carry it: `button` (transient), `captive`, `carousel` and `lcd` (not
+readings), and `frugal_iot` (the card identity, not a module on it). `insidefrugaliot` modules are excluded structurally and need no flag. (`gps` was in that list on
+first pass and taken out — a position does belong on a summary.)
 
-so the common case needs no per-device config at all, and `summary:` on a device is the override.
+The polarity also fails in the right direction: a newly added sensor module shows up in summaries by
+default, rather than being invisible until someone remembers a flag.
 
 **This is explicitly an interim step.** Only a handful of modules have a hand-coded `summaryText()`
 (`sht`, `dht`, `ht`, `soil`, `ds18b20`, `battery`, `relay`, `ledbuiltin`, `ota`,
@@ -375,7 +377,8 @@ Three sources, first match wins: **D-36**
 1. the device entry's `summary:` list;
 2. otherwise the **first two entries of its `front:` list** — so the common device declares `front:`
    only and gets a sensible summary for free;
-3. otherwise every module with `summary: true`, contributing its summary (§4.1).
+3. otherwise every contributing module (§4.1), **capped at two** — the same two as rule (2), so a
+   device with six sensors still gets a one-line summary rather than a paragraph.
 
 `summary:` is kept as a separate key rather than always derived, because the one-line view genuinely
 differs from the full one often enough to matter — a soil sensor whose summary is the moisture but
@@ -714,6 +717,7 @@ Reopening one means revisiting this document, not deciding it in code.
 | D-34 | `devices.yaml` key matching | device id, then exact OTA key, then longest prefix of the OTA key |
 | D-35 | Which topics need `width`? | `float` and `exponential` only — 25 topics; ints derive their field width from `min`/`max` |
 | D-36 | Is a device `summary:` list required? | No — defaults to the first two entries of `front:` |
+| D-37 | Module summary flag polarity | `summary: false` to opt out — opt-in would have flagged 23 of 33 modules |
 
 ---
 

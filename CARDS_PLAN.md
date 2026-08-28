@@ -26,7 +26,7 @@ Phases are ordered by what they unblock. Sizes are relative, not hours.
 |---|---|---|---|---|
 | 0 | Test infrastructure and mock harness | M | everything | **DONE** |
 | 1 | `html-element-extended`: light-DOM rendering | S | 5 | **DONE** |
-| 2 | Schema: `devices.yaml`, `width`, `units`, capabilities | M | 4, 8 | yes |
+| 2 | Schema: `devices.yaml`, `width`, `units`, capabilities | M | 4, 8 | **DONE** |
 | 3 | Split `webcomponents.js` | M | — (but easier before 4+) | yes |
 | 4 | Data tree: move roll-up down, add derived getters | M | 5, 6 | yes |
 | 5 | The card element — summary / front / back | L | 6, 7 | no (needs a page) |
@@ -251,10 +251,43 @@ Master is `frugal-iot-server/config.d/schema/`; propagate to the three
    `config.<dir>.<file>`, so dropping the file in makes it `config.schema.devices` and it reaches the
    client in `/config.json` for free. Confirmed while building phase 0's fixture, which mirrors that
    mapping.
-5. **`scripts/check-schema.js`** (logger): warn on a `float`/`exponential` topic with no `width`, or
-   a displayable topic with no `units`; warn on a `devices.yaml` entry naming a twig or module that
-   does not exist; and report which `devices.yaml` key each known OTA key resolves to, since prefix
-   matching is the one part of this that is not obvious by reading the file.
+5. **`frugal-iot-server/scripts/check-schema.js`** — extended, not written. It already existed, in
+   the server beside the master schema; I looked only in the logger's `scripts/` and wrongly
+   concluded it was missing, then wrote a second one there. The duplicate is deleted and its checks
+   merged into the original, which already had several the new one lacked — a module topic
+   overriding a field its base topic does not define, a `duplicates` rule that sets neither
+   threshold, a topic that is not a set of settings, and per-type reasoning about what `log:` would
+   default to. Added to it: `width` missing / present on a type with no decimals / too small for its
+   own range; `units` missing on a numeric topic; `devices.yaml` entries naming a module or leaf that
+   does not exist (an **error**, since it silently loses a row); prefix shadowing between device
+   keys; `summary: true` being a no-op; and `--resolve <otakey>`. Its "warnings never block" contract
+   is kept — errors exit 1, and both call sites already guard with `|| true`.
+6. **`frugal-iot-server/scripts/copy-schema-to-examples.zsh`** — likewise already existed, and had
+   just been left behind: it copied a hard-coded `topics.yaml modules.yaml` and so never copied the
+   new `devices.yaml`. Changed to glob every `*.yaml` in the schema directory, so the next file added
+   is not silently missed too. My duplicate `propagate-schema.js` is deleted.
+
+**Outcome.** `width` on all 25 float/exponential topics, derived so decimals stay steady as a value
+moves; `summary: false` on six modules (D-37); `devices.yaml` with 11 application entries; the
+checker and propagator; `check-schema.js` reports OK. `defaults.h` is unaffected — the generator
+extracts only `color`/`min`/`max`.
+
+**Judgement calls, resolved:**
+
+- `pressure` had `min: 0, max: 99` — a placeholder that all three bmx280 modules overrode. The base
+  is now `300..1100` with `units: hPa`, and those three overrides are deleted as redundant. Note
+  `ms5803` never overrode it and so now inherits the atmospheric range, which suits it as a
+  barometer but not as a depth sensor.
+- `soil` now uses `units: "%"`. SenML has only `%RH`, which is relative humidity and not this; the
+  registry is restrictive and unmaintained, so we do not follow it here.
+- `gps` contributes to summaries after all — its `summary: false` is removed.
+- `satellites` had `units: m/s`, copied from `speed`; corrected to `count`. **Its type is still
+  `float` for what is a count** — changing that touches logging and firmware, so it is flagged, not
+  changed.
+- `altitude` gained `units: m`. `latitude`/`longitude` keep `lat`/`lon`, which are real SenML units
+  despite looking like field names.
+- Still no units, and each needs a human: `loadcell` (depends on the cell), `hdop` (dimensionless),
+  `controlfloat` (a generic template).
 
 Deliberately **not** here: `control: true` (deferred L-4 — with `climate` deleted the name-prefix
 test is correct for every module that exists).

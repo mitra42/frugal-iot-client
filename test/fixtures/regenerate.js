@@ -14,7 +14,7 @@ const schemaDir = `${serverDir}/config.d/schema`;
 // The server's readConfigFromDir maps config.d/<dir>/<file>.yaml onto config.<dir>.<file>,
 // so schema/modules.yaml is config.schema.modules - mirror that here rather than inventing a shape.
 const schema = {};
-for (const name of ['modules', 'topics']) {
+for (const name of ['modules', 'topics', 'devices']) {
   schema[name] = yaml.load(readFileSync(`${schemaDir}/${name}.yaml`, 'utf8'));
 }
 
@@ -33,4 +33,4 @@ const config = {
 
 const out = resolve(here, 'config.json');
 writeFileSync(out, JSON.stringify(config, null, 1));
-console.log(`wrote ${out}: ${Object.keys(schema.modules).length} modules, ${Object.keys(schema.topics).length} topics`);
+console.log(`wrote ${out}: ${Object.keys(schema.modules).length} modules, ${Object.keys(schema.topics).length} topics, ${Object.keys(schema.devices).length} device entries`);

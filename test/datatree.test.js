@@ -66,6 +66,51 @@ describe('routing', () => {
   });
 });
 
+describe('schema fields the cards will need', () => {
+  test('width reaches the topic, and implies the decimals the card will show', () => {
+    const { projectMt } = mock.runScenario('one-device');
+    const mt = projectMt.nodes['esp8266-fb94bb'].groups.sht.topics.temperature;
+    assert.equal(mt.width, 4);
+    // decimals = width - intWidth - 1, intWidth from min/max so it does not move with the value
+    const intWidth = Math.max(String(Math.trunc(mt.min)).length, String(Math.trunc(mt.max)).length);
+    assert.equal(Math.max(0, mt.width - intWidth - 1), 1); // 30.142857 -> "30.1"
+  });
+
+  test('every float and exponential topic in the schema declares a width', () => {
+    const missing = Object.entries(config.schema.topics)
+      .filter(([, t]) => ['float', 'exponential'].includes(t.type) && t.width === undefined)
+      .map(([k]) => k);
+    assert.deepEqual(missing, []);
+  });
+
+  test('no width can be too small for its own range', () => {
+    const bad = Object.entries(config.schema.topics)
+      .filter(([, t]) => t.width !== undefined)
+      .filter(([, t]) => t.width < Math.max(String(Math.trunc(t.min ?? 0)).length, String(Math.trunc(t.max ?? 0)).length))
+      .map(([k]) => k);
+    assert.deepEqual(bad, []);
+  });
+
+  test('devices.yaml entries only name modules and leaves that exist', () => {
+    const bad = [];
+    for (const [key, d] of Object.entries(config.schema.devices)) {
+      for (const entry of [...(d.front || []), ...(d.summary || [])]) {
+        const [mod, leaf] = entry.split('/');
+        const m = config.schema.modules[mod];
+        if (!m) bad.push(`${key}: no module ${mod}`);
+        else if (leaf && !(m.topics || []).some((t) => t.leaf === leaf)) bad.push(`${key}: ${mod} has no ${leaf}`);
+      }
+    }
+    assert.deepEqual(bad, []);
+  });
+
+  test('units are present on the topics whose values are dimensioned', () => {
+    const mt = mock.runScenario('one-device').projectMt
+      .nodes['esp8266-fb94bb'].groups.sht.topics.temperature;
+    assert.equal(mt.units, 'Cel'); // a SenML code - the card maps it to °C, see CARDS_UX.md 4.5
+  });
+});
+
 describe('naming', () => {
   test('usableName prefers the published name over the node id', () => {
     const { projectMt } = mock.runScenario('one-device');
