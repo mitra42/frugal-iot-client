@@ -25,7 +25,7 @@ Phases are ordered by what they unblock. Sizes are relative, not hours.
 | # | Phase | Size | Gates | Ships alone? |
 |---|---|---|---|---|
 | 0 | Test infrastructure and mock harness | M | everything | **DONE** |
-| 1 | `html-element-extended`: light-DOM rendering | S | 5 | yes |
+| 1 | `html-element-extended`: light-DOM rendering | S | 5 | **DONE** |
 | 2 | Schema: `devices.yaml`, `width`, `units`, capabilities | M | 4, 8 | yes |
 | 3 | Split `webcomponents.js` | M | — (but easier before 4+) | yes |
 | 4 | Data tree: move roll-up down, add derived getters | M | 5, 6 | yes |
@@ -67,6 +67,10 @@ ones a large new surface tends to erode; the second is specific to cards.
 - **Light DOM for card and grid, shadow DOM for widgets.** `mqtt-devicecard` and `mqtt-devicegrid`
   extend `HTMLElementExtendedMinimum`; `mqtt-bar` and friends are untouched. Card CSS classes are
   prefixed `fi-` since there is no shadow boundary to protect them.
+- **No `<slot>` in a light-DOM element, and nothing it did not render may live inside it.**
+  `renderAndReplace()` clears its render root, which for these elements is the element itself. The
+  grid renders once via `render0()` and mutates in place as devices arrive; anything reaching for a
+  slot has picked the wrong base class.
 - **Cross-boundary styling is CSS custom properties, never `:host-context`.** Define the palette,
   spacing and type scale as `--fi-*` properties on `:root`; widgets read them. Custom properties
   pierce shadow boundaries, which is the whole reason to use them here.
@@ -188,20 +192,38 @@ with that phase, driven by an injectable clock rather than real timers.
 In `~/git/github_mitra42/html-element-extended` — **a repo outside the frugal-iot tree; I will call
 out the edit when I make it.**
 
-Change the three `this.shadowRoot` references inside `renderAndReplace()` (lines 295, 297, 301) to
-`(this.shadowRoot || this)`. Nothing else. `HTMLElementExtendedMinimum` already exists and is already
-exported; this is what makes it usable.
+Done as a `renderRoot` getter returning `this.shadowRoot || this`, with `renderAndReplace()` using
+it in all three places. A named getter rather than an inline `||` so a subclass can see where its
+output goes, and so the constraint below has somewhere to be documented.
 
 Backwards compatible by construction: every existing consumer extends `HTMLElementExtended`, so
 `shadowRoot` is truthy and behaviour is byte-identical. Nothing in `webcomponents.js` references
-`shadowRoot`.
+`shadowRoot`. Confirmed by the phase 0 snapshots passing unchanged against the linked library.
 
-Then `npm link` it into the client — as agreed, since further changes may surface. Bump the version
-and publish only when the card work settles; note the client currently pins `^0.1.6` and the local
-repo and `node_modules` copy are identical today.
+**Constraint this creates, and it matters for phases 5–6.** A light-DOM element renders into itself,
+so `<slot>` means nothing to it and `renderAndReplace()` **destroys any children it did not render**.
+The existing UI leans on slots heavily; cards cannot. Two consequences:
 
-Verify with a trivial light-DOM element in `test/`, plus the phase 0 snapshots proving the shadow
-path is unchanged.
+- `mqtt-devicecard` builds all its own children from the data tree — no slots, no author children.
+- `mqtt-devicegrid` appends cards as devices are discovered, so a later full re-render would wipe
+  them. Use `render0()` — which the library already supports, rendering once — and mutate in place
+  afterwards, rather than re-rendering the grid.
+
+**`npm link` needed a workaround.** The global npm prefix is `/usr/local/lib/node_modules`, owned by
+root, so `npm link` fails without sudo. `npm run link:hee` does the local half directly:
+
+```
+ln -sfn ../../html-element-extended node_modules/html-element-extended
+```
+
+`package.json` is untouched (still `^0.1.6`), and the published copy is kept alongside as
+`html-element-extended.published-0.1.6`. **`npm install` replaces the symlink**, so re-run
+`npm run link:hee` after one; `npm run unlink:hee` goes back to the published package. The library
+change is `0.1.7 (unreleased)` in its CHANGELOG — publish once the card work settles.
+
+Verified by `test/lightdom.test.js`: a Minimum subclass renders into itself with no shadow root and
+re-renders replace rather than append; an HTMLElementExtended subclass still renders into its shadow
+root with nothing leaking into its light DOM.
 
 ### Phase 2 — Schema
 

@@ -32,8 +32,10 @@
   "repository": "https://github.com/mitra42/frugal-iot-client",
   "scripts": {
     "fixtures": "node test/fixtures/regenerate.js",
+    "link:hee": "ln -sfn ../../html-element-extended node_modules/html-element-extended && ls -ld node_modules/html-element-extended",
     "test": "node --test test/*.test.js",
-    "test:update": "UPDATE_SNAPSHOTS=1 node --test test/*.test.js"
+    "test:update": "UPDATE_SNAPSHOTS=1 node --test test/*.test.js",
+    "unlink:hee": "rm -f node_modules/html-element-extended && npm install html-element-extended"
   },
   "type": "module",
   "version": "1.3.13"
