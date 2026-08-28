@@ -7,7 +7,7 @@
  */
 
 import {HTMLElementExtended} from '/node_modules/html-element-extended/htmlelementextended.js';
-import { CssUrl, ImagesUrl, RECEIVER_ATTRIBUTES, XXX, el, leafAttribute, nextUniqueId } from './core.js';
+import { CssUrl, ImagesUrl, RECEIVER_ATTRIBUTES, XXX, el, leafAttribute, nextUniqueId, nowMs } from './core.js';
 
 class MqttElement extends HTMLElementExtended {
   // TODO - maybe move this to HTMElementExtended
@@ -118,7 +118,7 @@ class MqttReceiver extends MqttElement {
     if ([this.mt.topicPath, this.mt.topicSetPath, this.mt.wired].includes(topicPath)) {
       // Its trying to set our value
       let value = this.mt.valueFromText(message);
-      let now = Date.now();
+      let now = nowMs(); // Not Date.now: a replayed history would otherwise land on one instant
       // Update the data tree before anything is told to re-render. The group roll-up below triggers
       // reSummarize, and a summary built from the data tree would otherwise be a message behind -
       // or empty, for a topic that has only reported once.

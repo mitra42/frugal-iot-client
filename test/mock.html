@@ -28,6 +28,10 @@
         #stage { padding: 12px; }
     #stage.cards { max-width: 1100px; }
         #note { padding: 0 12px 12px; color: #666; font-size: 0.9em; }
+    #messages { padding: 0 12px 12px; font-size: 0.85em; }
+    #messages summary { cursor: pointer; color: #666; }
+    #messages pre { background: #fff; border: 1px solid #e3e3e3; border-radius: 4px;
+                    padding: 8px; overflow-x: auto; margin: 6px 0 0; }
     </style>
 </head>
 <body>
@@ -43,11 +47,14 @@
     <button id="forget" title="Clear the remembered card order and open/closed state">Forget layout</button>
 </div>
 <div id="note"></div>
+<!-- What the scenario actually sent. When a card looks wrong the first question is always what it
+     was told, so it is one click away rather than in the source. -->
+<details id="messages"><summary>Messages in this scenario</summary><pre></pre></details>
 <div id="stage"></div>
 <pre id="tree" style="display:none;padding:12px;font-size:0.85em"></pre>
 
 <script type="module">
-  import { scenarios, loadConfig, runScenario } from './mock.js';
+  import { scenarios, loadConfig, runScenario, messagesOf } from './mock.js';
   import { snapshot } from './serialize.js';
   import '../cards.js';
   import { el } from '../webcomponents.js';
@@ -67,8 +74,11 @@
     const tree = document.getElementById('tree');
     stage.replaceChildren();
     stage.className = view;
+    const messages = messagesOf(name);
     document.getElementById('note').textContent =
-      `${scenarios[name].messages.length} messages replayed with no broker.`;
+      `${messages.length} messages replayed with no broker.`;
+    document.querySelector('#messages pre').textContent =
+      messages.map(([topic, payload]) => `${topic} = ${payload}`).join('\n');
 
     // The cards read the data tree, so they need no elements of their own built for them
     const { projectMt, projectEl } = runScenario(name, { headless: view !== 'nodeview', container: stage });

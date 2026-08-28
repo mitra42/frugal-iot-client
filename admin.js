@@ -194,7 +194,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       activeTabTitle: 'Dashboard', tabsNeedingLoad: new Set()};
     this.state.elements = {};
   }
-  static get observedAttributes() { return ['register','message','url','lang','org']; }
+  static get observedAttributes() { return ['register','message','url','lang','org','section']; }
   static get boolAttributes() { return ['register']; }
 
   message(msg, i8n=true) {
@@ -221,6 +221,12 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     // TODO-22 security this will be replaced by a subset of config.yaml,
     //  that is public, but in the same format, so safe to build on this for now
     // This should always succeed because index.html would have redirected to login.html if not logged in
+    if (server_config) { // Already fetched, by the page or by another admin element beside this one
+      this.loadAttributesFromURL();
+      this.renderAndReplace();
+      this.setDefaultOrganization();
+      return;
+    }
     GET("/config.json", {}, (err, json) => {
       if (err) {
         //if (err.message.includes("401")) { // This can happen if accessing from service worker which has /dashboard cached
@@ -1194,7 +1200,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
          this.state.elements.ota_files = this.otaFilesList(),
        ]), // section ota
        el('section', {}, [
-         this.state.elements.flash = el('mqtt-flash', {}),
+         this.state.section ? null : (this.state.elements.flash = el('mqtt-flash', {})), // its own card on the project back
        ]), // section flash
      ]);
    }
@@ -1282,7 +1288,32 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
        ]),
      ]);
    }
+   // The admin functions, described once. The tabbed view below shows them all; the project back
+   // (CARDS_UX.md 11) puts each in its own card, by setting section="ota" and so on.
+   adminSections() {
+     return [
+       { key: 'ota',   title: "OTA",   orgs: 'otaOrgs',   dropdown: 'otaorgsdropdown',   rest: 'ota_rest',   content: this.otaRestContent },
+       { key: 'admin', title: "Admin", orgs: 'adminOrgs', dropdown: 'adminorgsdropdown', rest: 'admin_rest', content: this.adminRestContent },
+       { key: 'nodes', title: "Nodes", orgs: 'adminOrgs', dropdown: 'nodesorgsdropdown', rest: 'nodes_rest', content: this.nodesRestContent },
+       { key: 'api',   title: "API",   orgs: 'adminOrgs', dropdown: 'apiorgsdropdown',   rest: 'api_rest',   content: this.apiRestContent },
+     ];
+   }
+   // Just one section, with no tab strip around it - what an admin card holds
+   renderSection(key) {
+     if (key === 'flash') return el('div', {class: 'mqtt-admin'}, [el('mqtt-flash', {})]);
+     const section = this.adminSections().find((s) => s.key === key);
+     if (!section) { XXX(["No such admin section", key]); return null; }
+     if (!this[section.orgs].length) return null; // no permission for it
+     return el('div', {class: 'mqtt-admin'}, [
+       this.state.elements[section.dropdown] = el('span', {textContent: "Waiting"}),
+       this.state.elements[section.rest] = this.gatedContent(section.content),
+     ]);
+   }
+
    render() { //TODO-89 needs styles
+     if (this.state.section) {
+       return [el('link', {rel: 'stylesheet', href: CssUrl}), this.renderSection(this.state.section)];
+     }
      const tabbedDisplay = el('tabbed-display', {tab: 0}, [
            el('section', {title: "Dashboard"}, [
              this.state.elements.mqttWrapper = el('mqtt-wrapper'),

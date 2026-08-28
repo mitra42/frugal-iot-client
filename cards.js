@@ -14,7 +14,7 @@
  * the logic has been put in the wrong place.
  */
 import { HTMLElementExtendedMinimum } from '/node_modules/html-element-extended/htmlelementextended.js';
-import { el, getString, ImagesUrl, relativeTime, XXX } from './core.js';
+import { el, getString, ImagesUrl, relativeTime, server_config, XXX } from './core.js';
 
 // Shape as well as colour, so status survives sunlight and colour blindness
 const STATUS_MARK = { live: '●', stale: '◌', offline: '○', never: '·' };
@@ -370,6 +370,16 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
       }));
   }
 
+  // Anything the device publishes that modules.yaml does not describe. Shown, not swallowed:
+  // developers add modules, and until the schema catches up this is the only place the readings
+  // appear at all.
+  renderUnrecognisedSection() {
+    const unknown = this.nodeMt.unrecognisedTopics;
+    if (!unknown.length) return null;
+    return this.section(getString('Not in the schema'),
+      unknown.map((u) => this.field(u.twig, String(u.value))));
+  }
+
   // The one thing still collapsed: paths and internals, for debugging rather than for the field
   renderAdvanced() {
     const nodeMt = this.nodeMt;
@@ -398,6 +408,7 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
         this.renderDeviceSection(),
         ...groups.filter(([id]) => id.startsWith('control')).map(([id, g]) => this.renderControlSection(id, g)),
         ...groups.filter(([id]) => !id.startsWith('control')).map(([id, g]) => this.renderReadingSection(id, g)),
+        this.renderUnrecognisedSection(),
         this.renderAdvanced(),
       ].filter(Boolean)),
     ];
@@ -634,4 +645,177 @@ class MqttDeviceGrid extends HTMLElementExtendedMinimum {
 }
 customElements.define('mqtt-devicegrid', MqttDeviceGrid);
 
-export { MqttDeviceGrid, layoutLoad, layoutSave, layoutKey, LAYOUT_VERSION };
+
+
+/* ===========================================================================
+ * The project: a grid of device cards on the front, the administration on the back.
+ *
+ * The card metaphor one level up (CARDS_UX.md 11). What used to be <mqtt-admin>'s tabs are cards
+ * here, each shown only if the user's capabilities allow it - and the gear is omitted entirely when
+ * that leaves nothing, rather than opening an empty back (D-29).
+ * ======================================================================== */
+
+// Which admin card needs which capability. Deliberately the same gating the tabs already had:
+// widening who can see an organization's inventory is not something a card redesign should do.
+const ADMIN_CARDS = [
+  { section: 'ota',   title: 'OTA',             capability: 'OTAUPDATE' },
+  { section: 'flash', title: 'Flash over USB',  capability: 'OTAFLASH' },
+  { section: 'admin', title: 'Permissions',     capability: 'ADMIN' },
+  { section: 'nodes', title: 'Nodes',           capability: 'ADMIN' },
+  { section: 'api',   title: 'API',             capability: 'ADMIN' },
+];
+
+// The user's capabilities for an organization, from the permissions the server sent
+function hasCapability(org, capability) {
+  const perms = (server_config && server_config.user && server_config.user.permissions) || [];
+  return perms.some((p) => (p.capability === capability) && (p.org === org));
+}
+function adminCardsFor(org) {
+  return ADMIN_CARDS.filter((c) => hasCapability(org, c.capability));
+}
+
+class MqttProjectBack extends HTMLElementExtendedMinimum {
+  static get observedAttributes() { return ['organization']; }
+
+  constructor() {
+    super();
+    this.state.elements = {};
+    this.state.open = {};
+  }
+
+  // An admin card has a summary and a back, and nothing that makes sense as a front: it is its name
+  // until you open it. Seven expanded at once is a wall of forms.
+  // The content is built on first open and then kept, so switching between cards does not discard a
+  // half-filled form - and an unopened card costs nothing.
+  toggle(section) {
+    const open = !this.state.open[section];
+    this.state.open[section] = open;
+    const card = this.state.elements[section];
+    if (open && !card.querySelector('mqtt-admin')) {
+      // The existing admin element renders the section - none of it is redesigned (D-30)
+      card.append(el('mqtt-admin', { section, org: this.state.organization }));
+    }
+    card.classList.toggle('fi-admincard--open', open);
+  }
+
+  render() {
+    const cards = adminCardsFor(this.state.organization);
+    if (!cards.length) return null; // The gear should not have been offered at all
+    return el('div', { class: 'fi-adminwrap' }, cards.map((c) =>
+      this.state.elements[c.section] = el('section', { class: 'fi-card fi-admincard' }, [
+        el('button', { class: 'fi-admincard__head', type: 'button', textContent: c.title,
+          onclick: () => this.toggle(c.section) }),
+      ])));
+  }
+}
+customElements.define('mqtt-projectback', MqttProjectBack);
+
+export { MqttDeviceCard, MqttDeviceGrid, MqttProjectBack, MqttDashboard,
+  adminCardsFor, hasCapability, layoutLoad, layoutSave, layoutKey, LAYOUT_VERSION };
+
+/* ===========================================================================
+ * The page.
+ *
+ * A thin shell: the wrapper supplies the organization and project selectors, the broker connection
+ * and the data tree; this decides what fills the space below them - the grid of device cards, the
+ * administration on the back, or one of the states where there is nothing to show yet (8.1).
+ * ======================================================================== */
+class MqttDashboard extends HTMLElementExtendedMinimum {
+  static get observedAttributes() { return ['organization', 'project', 'mode']; }
+
+  constructor() {
+    super();
+    this.state.elements = {};
+    this.state.mode = 'front';
+    this.onProjectChanged = this.onProjectChanged.bind(this);
+    this.onOrganizationChanged = this.onOrganizationChanged.bind(this);
+  }
+  connectedCallback() {
+    super.connectedCallback();
+    document.addEventListener('frugaliot:projectchanged', this.onProjectChanged);
+    document.addEventListener('frugaliot:topicschanged', this.onProjectChanged);
+    document.addEventListener('frugaliot:organizationchanged', this.onOrganizationChanged);
+    // CSS cannot set an attribute, and the language name has to actually leave the DOM rather than
+    // be hidden, or the select stays as wide as its longest option
+    if (window.matchMedia) {
+      this.state.narrow = window.matchMedia('(max-width: 700px)');
+      this.onNarrow = () => this.state.elements.language
+        && this.state.elements.language.toggleAttribute('compact', this.state.narrow.matches);
+      this.state.narrow.addEventListener('change', this.onNarrow);
+      this.onNarrow();
+    }
+  }
+  disconnectedCallback() {
+    document.removeEventListener('frugaliot:projectchanged', this.onProjectChanged);
+    document.removeEventListener('frugaliot:topicschanged', this.onProjectChanged);
+    document.removeEventListener('frugaliot:organizationchanged', this.onOrganizationChanged);
+    if (this.state.narrow) this.state.narrow.removeEventListener('change', this.onNarrow);
+  }
+  // A different organization means different capabilities, and the previous project is gone
+  onOrganizationChanged(e) {
+    this.state.organization = e.detail.organization;
+    this.state.projectMt = null;
+    this.state.mode = 'front';
+    this.refreshBody();
+  }
+  onProjectChanged(e) {
+    if (e.detail && e.detail.projectMt) this.state.projectMt = e.detail.projectMt;
+    if (e.detail && e.detail.organization) this.state.organization = e.detail.organization;
+    this.refreshBody();
+  }
+
+  get projectMt() { return this.state.projectMt; }
+  get canAdminister() { return adminCardsFor(this.state.organization).length > 0; }
+
+  // Rendered once: the wrapper below owns the broker connection, and rebuilding it would drop it
+  render0() {
+    return [
+      el('header', { class: 'fi-header' }, [
+        el('span', { class: 'fi-header__title', textContent: 'Frugal IoT', i8n: false }),
+        // Supplies the organization and project selectors, the connection status, and the data tree
+        this.state.elements.wrapper = el('mqtt-wrapper', {
+          headless: true,
+          organization: this.getAttribute('organization') || undefined,
+          project: this.getAttribute('project') || undefined,
+        }),
+        this.state.elements.language = el('language-picker'),
+        this.state.elements.gear = el('span', { class: 'fi-header__gear' }),
+        // Forces the organization and project selectors onto a second row when the header is
+        // narrow - see .fi-header__break. Nothing to look at, so it is hidden from assistive tech.
+        el('span', { class: 'fi-header__break', 'aria-hidden': 'true' }),
+      ]),
+      this.state.elements.body = el('div', { class: 'fi-body' }, [this.renderBody()]),
+    ];
+  }
+
+  refreshBody() {
+    const e = this.state.elements;
+    if (!e.body) return;
+    e.body.replaceChildren(this.renderBody());
+    // The gear only appears if turning the project over would show something (D-29)
+    e.gear.replaceChildren(...(this.canAdminister ? [el('button', {
+      class: 'fi-btn', title: getString('Settings'), i8n: false,
+      textContent: (this.state.mode === 'back') ? '✕' : '⚙',
+      onclick: () => { this.state.mode = (this.state.mode === 'back') ? 'front' : 'back'; this.refreshBody(); },
+    })] : []));
+  }
+
+  renderBody() {
+    if (this.state.mode === 'back') {
+      return el('mqtt-projectback', { organization: this.state.organization });
+    }
+    if (!this.projectMt) {
+      return this.emptyState(getString('Choose a project to see its devices'));
+    }
+    if (!Object.keys(this.projectMt.nodes).length) {
+      return this.emptyState(getString('Waiting for devices'));
+    }
+    const grid = el('mqtt-devicegrid', {});
+    grid.mt = this.projectMt;
+    return grid;
+  }
+  emptyState(text) {
+    return el('div', { class: 'fi-empty' }, [el('p', { textContent: text })]);
+  }
+}
+customElements.define('mqtt-dashboard', MqttDashboard);

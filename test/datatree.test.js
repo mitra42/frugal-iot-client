@@ -26,9 +26,10 @@ describe('discovery', () => {
     assert.deepEqual(Object.keys(nodeMt.groups), []);
   });
 
-  test('twelve devices all arrive', () => {
-    const { projectMt } = mock.runScenario('twelve-devices');
-    assert.equal(Object.keys(projectMt.nodes).length, 12);
+  test('one device arrives for every entry in devices.yaml', () => {
+    const { projectMt } = mock.runScenario('every-device');
+    assert.equal(Object.keys(projectMt.nodes).length,
+      Object.keys(config.schema.devices).length, 'a configured layout with no device to show it');
   });
 });
 

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#007bff">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Frugal IoT">
+    <!--suppress HtmlUnknownTarget -->
+    <link rel="apple-touch-icon" href="/images/icon-192x192.png">
+    <!--suppress HtmlUnknownTarget -->
+    <link rel="manifest" href="/manifest.json">
+    <title>Frugal IoT</title>
+    <link href="./frugaliot.css" rel="stylesheet" type="text/css">
+    <script type="importmap">
+        {
+        "imports": {
+            "@kurkle/color": "/node_modules/@kurkle/color/dist/color.esm.js",
+            "chart.js": "/node_modules/chart.js/dist/Chart.js",
+            "dial-gauge": "/node_modules/dial-gauge/dial-gauge.js",
+            "luxon": "/node_modules/luxon/src/luxon.js",
+            "chartjs-adapter-luxon": "/node_modules/chartjs-adapter-luxon/dist/chartjs-adapter-luxon.esm.js",
+            "csv-parse": "/node_modules/csv-parse/dist/esm/index.js",
+            "esptool-js": "/node_modules/esptool-js/bundle.js"
+            }
+        }
+    </script>
+    <!-- The card UI. index.html keeps the node/group UI until this covers everything it does -
+         the admin functions especially - see CARDS_UX.md O-3. -->
+    <script src="./webcomponents.js" type="module"></script>
+    <script src="./cards.js" type="module"></script>
+</head>
+<body>
+<mqtt-dashboard></mqtt-dashboard>
+</body>
+</html>

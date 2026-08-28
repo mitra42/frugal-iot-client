@@ -56,6 +56,20 @@ describe('formatting a value', () => {
 });
 
 describe('which devices.yaml entry applies', () => {
+  test('a device id beats the OTA key, so one device can differ from its build', () => {
+    // Nothing in the shipped devices.yaml uses a device id - it would be odd to name a particular
+    // device in a schema everyone gets - so this checks the mechanism with its own config
+    const { projectMt } = mock.runScenario('one-device');
+    const nodeMt = projectMt.nodes['esp8266-fb94bb'];
+    const byKey = nodeMt.deviceConfig;
+    mock.loadConfig({ ...config, schema: { ...config.schema, devices: {
+      ...config.schema.devices, 'esp8266-fb94bb': { front: ['sht/humidity'] },
+    } } });
+    assert.deepEqual(nodeMt.deviceConfig.front, ['sht/humidity'], 'the device id should win');
+    assert.notDeepEqual(nodeMt.deviceConfig.front, byKey.front);
+    mock.loadConfig(config);
+  });
+
   test('an OTA key matches by prefix, so one entry covers every board', () => {
     const { projectMt } = mock.runScenario('one-device');
     const nodeMt = projectMt.nodes['esp8266-fb94bb'];

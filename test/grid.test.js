@@ -65,8 +65,8 @@ describe('storage that is not there', () => {
     const throwing = { getItem() { throw new Error('denied'); }, setItem() { throw new Error('denied'); } };
     Object.defineProperty(globalThis, 'localStorage', { value: throwing, configurable: true, writable: true });
     try {
-      const { grid } = gridFor('twelve-devices');
-      assert.equal(idsOf(grid).length, 12, 'the grid should still build');
+      const { grid } = gridFor('every-device');
+      assert.ok(idsOf(grid).length > 2, 'the grid should still build');
       const first = idsOf(grid)[0];
       grid.moveBy(first, 1);
       assert.equal(idsOf(grid)[1], first, 'and still reorder, it just will not be remembered');
@@ -79,8 +79,9 @@ describe('storage that is not there', () => {
 
 describe('the grid', () => {
   test('one card per device', () => {
-    const { grid, projectMt } = gridFor('twelve-devices');
+    const { grid, projectMt } = gridFor('every-device');
     assert.equal(idsOf(grid).length, Object.keys(projectMt.nodes).length);
+    assert.ok(idsOf(grid).length > 2, 'needs enough devices to be a grid at all');
     grid.remove();
   });
 
@@ -88,7 +89,7 @@ describe('the grid', () => {
     const one = gridFor('one-device');
     assert.equal(one.grid.querySelector('mqtt-devicecard').getAttribute('mode'), 'front');
     one.grid.remove();
-    const many = gridFor('twelve-devices');
+    const many = gridFor('every-device');
     assert.equal(many.grid.querySelector('mqtt-devicecard').getAttribute('mode'), 'summary');
     many.grid.remove();
   });
@@ -103,7 +104,7 @@ describe('the grid', () => {
   });
 
   test('a device the layout has never seen goes to the end, disturbing nothing', () => {
-    const { grid } = gridFor('twelve-devices');
+    const { grid } = gridFor('every-device');
     const before = idsOf(grid);
     mock.deliver('dev/lotus', 'esp8266-newcomer');
     assert.deepEqual(idsOf(grid).slice(0, before.length), before);
@@ -122,7 +123,7 @@ describe('the grid', () => {
 
 describe('reordering', () => {
   test('moving down and back up returns to where it started', () => {
-    const { grid } = gridFor('twelve-devices');
+    const { grid } = gridFor('every-device');
     const before = idsOf(grid);
     grid.moveBy(before[0], 1);
     assert.notDeepEqual(idsOf(grid), before);
@@ -132,7 +133,7 @@ describe('reordering', () => {
   });
 
   test('moving past either end stays put rather than wrapping', () => {
-    const { grid } = gridFor('twelve-devices');
+    const { grid } = gridFor('every-device');
     const before = idsOf(grid);
     grid.moveBy(before[0], -1);
     assert.deepEqual(idsOf(grid), before, 'the first card cannot go up');
@@ -142,7 +143,7 @@ describe('reordering', () => {
   });
 
   test('moveOver puts one card where another is - what a drag amounts to', () => {
-    const { grid } = gridFor('twelve-devices');
+    const { grid } = gridFor('every-device');
     const ids = idsOf(grid);
     grid.moveOver(ids[5], ids[1]);
     assert.deepEqual(idsOf(grid).slice(0, 3), [ids[0], ids[5], ids[1]]);
@@ -152,7 +153,7 @@ describe('reordering', () => {
   test('a drag downwards moves the card, which it did not', () => {
     // Reading the target's index after removing the dragged card made this a no-op: taking A out of
     // [A,B,C] leaves B at 0, and putting A back at 0 changes nothing at all
-    const { grid } = gridFor('twelve-devices');
+    const { grid } = gridFor('every-device');
     const ids = idsOf(grid);
     grid.moveOver(ids[0], ids[1]);
     assert.deepEqual(idsOf(grid).slice(0, 2), [ids[1], ids[0]]);
@@ -160,7 +161,7 @@ describe('reordering', () => {
   });
 
   test('a drag upwards moves it too, so the two directions agree', () => {
-    const { grid } = gridFor('twelve-devices');
+    const { grid } = gridFor('every-device');
     const ids = idsOf(grid);
     grid.moveOver(ids[3], ids[0]);
     assert.deepEqual(idsOf(grid).slice(0, 2), [ids[3], ids[0]]);
@@ -168,7 +169,7 @@ describe('reordering', () => {
   });
 
   test('the order survives being rebuilt from storage', () => {
-    const { grid, projectMt } = gridFor('twelve-devices');
+    const { grid, projectMt } = gridFor('every-device');
     const moved = grid.moveBy(idsOf(grid)[0], 3);
     grid.remove();
     const again = document.createElement('mqtt-devicegrid');
@@ -179,7 +180,7 @@ describe('reordering', () => {
   });
 
   test('the buttons and the keyboard go through the same model', () => {
-    const { grid } = gridFor('twelve-devices');
+    const { grid } = gridFor('every-device');
     const first = idsOf(grid)[0];
     grid.querySelector('mqtt-devicecard').querySelector('.fi-btn--move:last-of-type')
       || grid.querySelector('.fi-btn--move');
@@ -197,7 +198,7 @@ describe('reordering', () => {
   });
 
   test('arrows do nothing until the card is picked up', () => {
-    const { grid } = gridFor('twelve-devices');
+    const { grid } = gridFor('every-device');
     const before = idsOf(grid);
     const card = grid.querySelector('mqtt-devicecard');
     card.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
@@ -208,7 +209,7 @@ describe('reordering', () => {
   test('a pointer drag reorders, hit-testing past the card being dragged', () => {
     // jsdom has no layout, so elementFromPoint is stubbed to behave as a browser does: the dragged
     // card is under the pointer, and is only seen past once it takes itself out of hit-testing.
-    const { grid } = gridFor('twelve-devices');
+    const { grid } = gridFor('every-device');
     const ids = idsOf(grid);
     const [dragged, target] = [...grid.querySelectorAll('mqtt-devicecard')];
     const realEFP = document.elementFromPoint;
@@ -235,7 +236,7 @@ describe('reordering', () => {
   });
 
   test('a touch that turns into a scroll does not drag', () => {
-    const { grid } = gridFor('twelve-devices');
+    const { grid } = gridFor('every-device');
     const before = idsOf(grid);
     const card = grid.querySelector('mqtt-devicecard');
     // pointerType only exists on a real PointerEvent, which jsdom does not implement, so the touch
@@ -248,7 +249,7 @@ describe('reordering', () => {
   });
 
   test('opening a card is remembered', () => {
-    const { grid, projectMt } = gridFor('twelve-devices');
+    const { grid, projectMt } = gridFor('every-device');
     const card = grid.querySelector('mqtt-devicecard');
     card.setAttribute('mode', 'front');
     assert.equal(cards.layoutLoad(projectMt).mode[card.mt.nodeId], 'front');

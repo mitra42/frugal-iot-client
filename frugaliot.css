@@ -52,18 +52,18 @@ div.mqtt-text {
         }
     }
     .language-picker, language-picker, .language-picker select {
-        float: right;
+        float: var(--fi-chrome-float, right);
         text-align: right;
         border: 0px;
         @media screen and (max-width: 1001px ) {
-            font-size: x-large;
+            font-size: var(--fi-chrome-font, x-large);
         }
     }
     /* In MqttClient */
     details.mqtt-client {
-        margin-left: 1em; margin-right: 1em; float: right;
+        margin-left: 1em; margin-right: 1em; float: var(--fi-chrome-float, right);
         @media screen and (max-width: 1001px ) {
-            font-size: xx-large;
+            font-size: var(--fi-chrome-font, xx-large);
         }
     }
     /* In MqttProject */
@@ -177,7 +177,7 @@ div.mqtt-text {
         }
         select { margin-left: 2em; }
         @media screen and (max-width: 1001px ) {
-            .dropdown { font-size: xxx-large; }
+            .dropdown { font-size: var(--fi-chrome-font, xxx-large); }
             .dropdown select { font-size: inherit; }
             .dropdownsadmin {
                 display: flex;
@@ -188,7 +188,7 @@ div.mqtt-text {
                 flex: 0 0 auto;
                 margin-left: 0;
             }
-            select { font-size: xx-large; }
+            select { font-size: var(--fi-chrome-font, xx-large); }
         }
     }
 
@@ -478,3 +478,93 @@ mqtt-devicecard:focus-visible { outline: 2px solid var(--fi-live); outline-offse
 mqtt-devicecard[movable] .fi-card__head { touch-action: pan-y; }
 /* Lifted out of the flow while dragging, so it is obvious which card is moving */
 .fi-dragging { opacity: 0.6; transform: scale(0.99); }
+
+/* The card page (dashboard.html) */
+body:has(mqtt-dashboard) { background: #f5f5f5; margin: 0; }
+mqtt-dashboard { display: block; }
+.fi-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: var(--fi-gap);
+    flex-wrap: wrap;
+    padding: 8px 12px;
+    background: var(--fi-card-bg);
+    border-bottom: 1px solid var(--fi-border);
+}
+.fi-header__title { font-weight: bold; }
+.fi-body { padding: var(--fi-gap); }
+.fi-empty { text-align: center; padding: 48px 20px; color: var(--fi-muted); }
+/* The project turned over: one card per admin function the user has the capability for */
+.fi-adminwrap { display: flex; flex-direction: column; gap: var(--fi-gap); }
+.fi-admincard__title {
+    margin: 0 0 8px;
+    font-size: 0.8em;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--fi-muted);
+}
+.fi-admincard { cursor: default; }
+
+/* The card page sets its own typography - the page had none, so it fell back to the browser's
+   serif default at whatever size, and the phone-width bumps above made the chrome enormous. */
+body:has(mqtt-dashboard) {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 16px;
+    color: var(--fi-text);
+}
+.fi-header {
+    /* Read by the rules above, inside the shadow roots of language-picker and mqtt-client */
+    --fi-chrome-font: 1rem;
+    --fi-chrome-float: none;
+    font-size: 1rem;
+}
+.fi-header select, .fi-header label, .fi-header .dropdown { font-size: 1rem; }
+/* Headless, the wrapper is chrome rather than content. display:contents dissolves both it and its
+   inner box, so the things it holds - the connection status and the two selectors - become items of
+   the header itself. Without that they are one flex item and cannot be split across two rows. */
+:host([headless]) .outer.mqtt-wrapper { display: contents; }
+.fi-header mqtt-wrapper { display: contents; }
+
+/* Row one: name, connection, language, gear. Row two: the selectors. */
+.fi-header__title { order: 0; }
+.fi-header mqtt-client { order: 1; }
+.fi-header language-picker { order: 2; margin-left: auto; }
+/* The gear sits in a span, and it is the span that is the flex item - ordering the button inside it
+   left the span at the default 0, next to the title */
+.fi-header__gear { order: 3; display: inline-flex; }
+.fi-header__break { order: 4; display: none; }
+.fi-header .dropdown { order: 5; display: inline-flex; align-items: baseline; gap: 4px; margin-bottom: 0; }
+
+/* Narrow: force the break, so the selectors get a row to themselves rather than wrapping raggedly */
+@media (max-width: 700px) {
+    .fi-header__break { display: block; flex-basis: 100%; height: 0; }
+    .fi-header .dropdown { flex: 1 1 auto; min-width: 0; }
+    .fi-header .dropdown select { min-width: 0; }
+}
+
+/* An admin card has a summary and a back, and no meaningful front: collapsed to its name until
+   opened. Seven of them expanded at once is a wall of forms. */
+.fi-admincard {
+    --fi-chrome-font: 1rem;      /* the legacy phone-width bumps are far too big inside a card */
+    padding: 0;
+}
+.fi-admincard__head {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: 0;
+    padding: 12px 14px;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--fi-text);
+}
+.fi-admincard__head::before { content: "▸ "; color: var(--fi-muted); }
+.fi-admincard--open > .fi-admincard__head::before { content: "▾ "; }
+.fi-admincard:not(.fi-admincard--open) mqtt-admin { display: none; }
+.fi-admincard mqtt-admin { display: block; padding: 0 14px 14px; }
+.fi-admincard select, .fi-admincard input { max-width: 100%; }

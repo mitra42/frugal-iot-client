@@ -1277,12 +1277,39 @@
      "controlblinken"
     ]
    },
+   "commonground": {
+    "front": [
+     "bme280/temperature",
+     "bme280/humidity",
+     "do/do",
+     "ultrasonic/ultrasonic",
+     "ds18b20/ds18b20",
+     "controlhysteresis"
+    ]
+   },
+   "datalogger": {
+    "front": [
+     "sht/temperature",
+     "sht/humidity"
+    ]
+   },
    "ensaht": {
     "front": [
      "aht21/temperature",
      "aht21/humidity",
      "ens160/aqi",
      "controlhysteresis"
+    ]
+   },
+   "gps": {
+    "front": [
+     "gps/satellites",
+     "gps/latitude",
+     "gps/longitude",
+     "gps/altitude"
+    ],
+    "summary": [
+     "gps/satellites"
     ]
    },
    "lilygohigrow": {
@@ -1301,10 +1328,30 @@
      "loadcell/loadcell"
     ]
    },
+   "loramesher": {
+    "front": [
+     "sht/temperature",
+     "sht/humidity"
+    ]
+   },
    "ms5803": {
     "front": [
      "ms5803/pressure",
      "ms5803/temperature"
+    ]
+   },
+   "power": {
+    "front": [
+     "sht/temperature",
+     "sht/humidity",
+     "controlblinken"
+    ]
+   },
+   "remotedisplay": {
+    "front": [
+     "sht/temperature",
+     "sht/humidity",
+     "controlhysteresis"
     ]
    },
    "sht30": {

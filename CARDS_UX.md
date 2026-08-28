@@ -672,6 +672,12 @@ For a user with none of these, the project back holds only whatever project-leve
 control, which today is nothing — so **omit the project gear entirely when no card would appear**,
 rather than opening an empty back. **D-29**
 
+**An admin card has a summary and a back, and no front.** There is nothing to watch at a glance in
+an OTA uploader, so the two-stage open of a device card makes no sense here: the card is its name
+until you open it, and opening it shows the whole function. Seven expanded at once is a wall of
+forms. The content is built on first open and then kept, so moving between cards does not discard a
+half-filled one. **D-41**
+
 **API stays as it is.** It is a lightweight surface whose only purpose is developers poking at their
 own API while testing. Wrap the existing markup in a card and change nothing else — no restyle, no
 i18n pass, no responsive work. Spending design effort there is spending it in the wrong place. **D-30**
@@ -736,6 +742,7 @@ Reopening one means revisiting this document, not deciding it in code.
 | D-38 | A control on the summary line | A chip (`Relay ✓`) via `summaryShort()`, not its whole rule |
 | D-39 | Battery on the summary line | The level icon alone; the percentage lives on its title and on the front |
 | D-40 | An unwired control on the summary | Omitted — it is doing nothing. Still shown on the front |
+| D-41 | Do admin cards have a front? | No — summary and back only; collapsed to a name until opened |
 
 ---
 

@@ -31,7 +31,7 @@ Phases are ordered by what they unblock. Sizes are relative, not hours.
 | 4 | Data tree: move roll-up down, add derived getters | M | 5, 6 | **DONE** |
 | 5 | The card element — summary / front / back | L | 6, 7 | **DONE** |
 | 6 | The grid — layout, drag, `localStorage` | M | 7 | **DONE** |
-| 7 | The new page, project front/back, admin cards | L | — | yes |
+| 7 | The new page, project front/back, admin cards | L | — | **DONE** |
 | 8 | Permissions: `WRITE`, `OTAFLASH` | S | — | yes |
 | 9 | Polish: sheets, motion, i18n sweep, visual pass | M | — | yes |
 
@@ -590,8 +590,93 @@ A new page beside `index.html` (O-3) — nothing in `index.html` or `nodeview.js
   is a relocation of `mqtt-flash`, not just a new condition.
 - The eight §8.1 empty and error states are part of this phase, not afterthoughts.
 
-**P-2 — what is the new page called?** `cards.html` describes the implementation; `dashboard.html`
-describes the job and is what it will become when `index.html` retires. Recommend `dashboard.html`.
+**P-2 resolved: `dashboard.html`** — it names the job rather than the implementation, and is what it
+becomes when `index.html` retires. Nothing in `index.html` or `nodeview.js` was touched.
+
+**The page is thin, because the wrapper already does most of it.** `<mqtt-wrapper headless>` supplies
+the organization and project selectors, the broker connection and its status, and the data tree;
+`mqtt-dashboard` only decides what fills the space beneath — the grid, the project's back, or one of
+the states where there is nothing to show yet. It renders once (`render0`), since rebuilding it would
+drop the connection the wrapper holds.
+
+**The admin cards reuse `MqttAdmin` rather than reimplementing it** (D-30). Its tab contents were
+already separate methods, so the change was small: one description of the sections, a `section`
+attribute that renders just one of them without the tab strip, and a guard so several admin elements
+on a page do not each fetch `/config.json`. Flash gets its own card, and `otaRestContent` omits its
+copy when rendering as a section so it does not appear twice.
+
+Capability gating is **exactly what the tabs already had** — OTA on `OTAUPDATE`, Permissions, Nodes
+and API on `ADMIN` — plus Flash on the new `OTAFLASH`. Widening who can see an organization's
+inventory is not something a card redesign should do quietly. The gear is omitted entirely when that
+would leave nothing (D-29).
+
+**A new event, `frugaliot:projectchanged`**, fired by `MqttWrapper.addProject`. `topicschanged` only
+fires once a node arrives, which is too late for a project that has none yet — and "project chosen,
+waiting for devices" is one of the states §8.1 asks for.
+
+**Two rounds of review on the page itself**, both about styling the new page inheriting the old
+one's assumptions:
+
+- **The header rendered in the browser's serif default at the phone-width sizes.** The page had no
+  typography of its own, and `frugaliot.css`'s `@media (max-width: 1001px)` bumps — `xxx-large` on a
+  dropdown, `xx-large` on a select, `x-large` on the language picker — all applied. Those rules live
+  inside shadow roots, so they now read `var(--fi-chrome-font, …)` and keep their old values
+  everywhere else; `.fi-header` and `.fi-admincard` set it to `1rem`. Same for `float: right`, which
+  was fighting the flex header.
+- **The header wrapped onto two lines** because the wrapper was `flex: 1 1 auto` and took the whole
+  row. It is content-sized now, with the language picker pushed right by `margin-left: auto`.
+- **An admin card has a summary and a back, and no front** (D-41), which is the shape the review
+  asked for: nothing in an OTA uploader is worth watching at a glance. Collapsed to its name until
+  opened, content built on first open and then kept, so moving between cards does not discard a
+  half-filled form — and an unopened card costs nothing.
+
+**A round of review on the harness and the schema, after phase 7:**
+
+- **The harness now shows a scenario's messages**, behind a disclosure under the controls. When a
+  card looks wrong the first question is always what it was told, and that was previously only
+  answerable by reading `mock.js`.
+- **A module the schema does not know now reaches the back of the card.** It was being logged and
+  dropped, so a developer adding a module saw nothing at all. `MqttTopicNode` keeps unrecognised
+  twigs and the back lists them under "Not in the schema" — the readings appear before
+  `modules.yaml` catches up, which is exactly when they are most needed.
+- **Two scenarios added**, plus one rewritten: a module whose group exists but whose reading never
+  arrives (a row with no value — distinct from a device that has said nothing at all), and every
+  module in the schema at once, alphabetically, for scanning every sensor and control in one pass.
+  The latter is built when it runs rather than declared, since it needs the schema to exist, so
+  `runScenario` now accepts a function for `messages`.
+- **`devices.yaml` grew from 11 entries to 16.** The eight applications missing were not all
+  deliberate: `commonground`, `datalogger`, `gps`, `loramesher` and `power` now have entries. Three
+  remain absent on purpose and the file says why — `all` is every sensor at once with no order worth
+  declaring, `gsheets` carries only a logging control, and `lcd_sht` shows another node's readings
+  rather than its own. And `remotedisplay` was never missing: it is built with
+  `SYSTEM_OTA_PREFIX=sht30`, so two applications share one key and one card layout, which the file
+  now notes.
+
+**A second review round on the harness turned up a real labelling bug**, which is what the
+every-module scenario was for:
+
+- **A module with two readings labelled both of them with the module name.** An AHT20 showed
+  "AHT20" twice, with nothing to say which was the temperature. D-8's rule — use the module's name
+  when two readings collide — only works when the module contributes *one* reading, where
+  "Soil Temperature" describes what is measured. With more than one it now reads
+  "AHT20 Temperature" / "AHT20 Humidity", and a single-reading module still uses its own name.
+- **Timestamps now come from the injectable clock**, not `Date.now()`, in both the element and
+  headless paths. A replayed history piled every reading onto one instant, so a graph had nothing to
+  draw. A scenario message may now carry the moment it arrived, and `graph-history` uses that for
+  144 readings across a day.
+- **`twelve-devices` became `every-device`** — one device per `devices.yaml` entry, announcing that
+  entry's OTA key, so every configured layout can be seen at once instead of twelve copies of the
+  same one. The grid tests no longer assume a count.
+- **`remotedisplay` had its own bug**, in the node repo rather than here: it was built with
+  `SYSTEM_OTA_PREFIX=sht30`, which is why it looked absent. Fixed there, and it now has an entry —
+  17 in all. The note about two applications sharing a key is gone with it.
+- The device-id override example was lost from `devices.yaml` in an earlier edit and is not being
+  put back: naming a particular device in a schema everyone receives is odd. The mechanism is
+  documented in the file header and covered by a test that supplies its own config.
+
+**Not done here:** the disconnected banner, which needs `MqttClient` to say when its status changes;
+and Publish Message, still superuser-gated inside the Admin section — moving it to `ADMIN` is D-32,
+which belongs with the rest of the permissions work in phase 8.
 
 ### Phase 8 — Permissions
 
@@ -639,6 +724,6 @@ The snapshot records the fix: `Relay = SHT:Temperature > 32 +/- 3 ✓`.
 ## 6. Open plan questions
 
 - **P-1** Playwright for tier 2 browser snapshots, or tier 0+1 only?
-- **P-2** New page name: `dashboard.html` (recommended) or `cards.html`?
+- ~~**P-2** New page name~~ — resolved: `dashboard.html`.
 
 Neither blocks starting phase 0.

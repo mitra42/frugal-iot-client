@@ -263,6 +263,7 @@ EN:
   Brightness: Brightness
   Built in LED: Built in LED
   buttons: buttons
+  Choose a project to see its devices: Choose a project to see its devices
   Click to change project: Click to change project
   Click to sort: Click to sort
   Climate: Climate
@@ -347,6 +348,7 @@ EN:
   Nodes: Nodes
   Nodes in Farm: Nodes in Farm
   Nodes in Organization: Nodes in Organization
+  Not in the schema: Not in the schema
   Not selected: Not selected
   Note this is your organization - not the organizations whose devices you want to access.: Note this is your organization - not the organizations whose devices you want to access.
   Now: Now
@@ -442,6 +444,7 @@ EN:
   Value *: Value *
   Voltage: Voltage
   Waiting: Waiting
+  Waiting for devices: Waiting for devices
   When: When
   WiFi: WiFi
 FR:
@@ -464,6 +467,7 @@ FR:
   Brightness: Luminosité  
   Built in LED: LED intégrée
   buttons: boutons
+  Choose a project to see its devices: Choisissez un projet pour voir ses appareils
   Click to change project: Cliquez pour changer de projet
   Click to sort: Cliquez pour trier
   Climate: Climat
@@ -550,6 +554,7 @@ FR:
   Nodes: Nœuds
   Nodes in Farm: Nœuds dans la ferme
   Nodes in Organization: Nœuds dans l'organisation
+  Not in the schema: Absent du schéma
   Not selected: Non sélectionné
   Note this is your organization - not the organizations whose devices you want to access.: Ceci est votre organisation - pas les organisations dont vous voulez accéder aux appareils.
   Now: Maintenant
@@ -645,6 +650,7 @@ FR:
   Value *: Valeur *
   Voltage: Tension
   Waiting: En attente
+  Waiting for devices: En attente des appareils
   When: Quand
   WiFi: WiFi
 HI:
@@ -667,6 +673,7 @@ HI:
   Brightness: चमक  
   Built in LED: बिल्ट-इन एलईडी
   buttons: बटन
+  Choose a project to see its devices: उपकरण देखने के लिए प्रोजेक्ट चुनें
   Click to change project: प्रोजेक्ट बदलने के लिए क्लिक करें
   Click to sort: क्रमबद्ध करने के लिए क्लिक करें
   Climate: जलवायु
@@ -753,6 +760,7 @@ HI:
   Nodes: नोड्स
   Nodes in Farm: फार्म में नोड्स
   Nodes in Organization: संगठन में नोड्स
+  Not in the schema: स्कीमा में नहीं
   Not selected: चयनित नहीं
   Note this is your organization - not the organizations whose devices you want to access.: ध्यान दें यह आपका संगठन है - वे संगठन नहीं जिनके उपकरणों तक आप पहुंचना चाहते हैं।
   Now: अभी
@@ -848,6 +856,7 @@ HI:
   Value *: मान *
   Voltage: वोल्टेज
   Waiting: प्रतीक्षा में
+  Waiting for devices: उपकरणों की प्रतीक्षा
   When: कब
   WiFi: वाई-फ़ाई
 ID:
@@ -870,6 +879,7 @@ ID:
   Brightness: Kecerahan  
   Built in LED: LED bawaan
   buttons: tombol
+  Choose a project to see its devices: Pilih proyek untuk melihat perangkatnya
   Click to change project: Klik untuk mengubah proyek
   Click to sort: Klik untuk mengurutkan
   Climate: Iklim
@@ -956,6 +966,7 @@ ID:
   Nodes: Node
   Nodes in Farm: Node dalam Farm
   Nodes in Organization: Node dalam Organisasi
+  Not in the schema: Tidak ada di skema
   Not selected: Tidak dipilih
   Note this is your organization - not the organizations whose devices you want to access.: Ini adalah organisasi Anda - bukan organisasi yang perangkatnya ingin Anda akses.
   Now: Sekarang
@@ -1051,6 +1062,7 @@ ID:
   Value *: Nilai *
   Voltage: Tegangan
   Waiting: Menunggu
+  Waiting for devices: Menunggu perangkat
   When: Ketika
   WiFi: WiFi
 `);
@@ -1184,17 +1196,26 @@ class LanguagePicker extends HTMLElementExtended {
     super();
     this.state={};
   }
+  // compact: show just the flag. The name is nice to have, but on a narrow header it is the first
+  // thing that can go - a flag still says which language is selected.
+  static get observedAttributes() { return ['compact']; }
+  static get boolAttributes() { return ['compact']; }
+
   // TODO-34 (maybe) pull language files from server
   onchange(ev) {
     preferedLanguageSet(ev.target.value);
     locationParameterChange("lang", preferedLanguages.join(','));
+  }
+  // "English 🇬🇧" -> "🇬🇧". Every _nameAndFlag ends with its flag, so the last word is it.
+  labelFor(nameAndFlag) {
+    return this.state.compact ? nameAndFlag.split(' ').pop() : nameAndFlag;
   }
   render() {
     return [
       el('link', {rel: 'stylesheet', href: CssUrl}),
       el('select', {class: "language-picker", onchange: this.onchange.bind(this)},
         languageNamesAndFlags().map(([k,v]) =>
-          EL('option', {value: k, textContent: v, selected: k === preferedLanguages[0]}))
+          EL('option', {value: k, textContent: this.labelFor(v), selected: k === preferedLanguages[0]}))
       ),
     ];
   }
@@ -1548,7 +1569,7 @@ class MqttTopic {
       } else {
         // Value arriving on this topic's own path, its set-path, or its wired source.
         const value = this.valueFromText(message);
-        this.data.push({value, time: Date.now()});
+        this.data.push({value, time: nowMs()});
         this.state.value = value; // Keep state.value current so usableName, wiredTopic, etc. work headlessly
       }
       // Mirror to the data-tree group and notify dashboard listeners, matching what the element path does.
@@ -2006,9 +2027,11 @@ class MqttTopicNode extends MqttTopic {
         }
         if (!this.sendMessageToMatchingTopics(topicPath, twig, message)) {
           XXX(["Even after adding topic from template, no destination for", twig]);
+          this.noteUnrecognised(twig, message);
         }
       } else {
         XXX(["Unrecognized twig at ", topicPath]);
+        this.noteUnrecognised(twig, message);
       }
     }
   }
@@ -2050,6 +2073,17 @@ class MqttTopicNode extends MqttTopic {
     return { mt, percent, level };
   }
 
+  // Twigs this device publishes that the schema knows nothing about. Kept rather than dropped:
+  // someone adding a module needs to see what their device is actually sending before modules.yaml
+  // has caught up, and a silently discarded reading is the hardest kind to debug.
+  noteUnrecognised(twig, message) {
+    this.unrecognised = this.unrecognised || {};
+    this.unrecognised[twig] = message;
+  }
+  get unrecognisedTopics() {
+    return Object.entries(this.unrecognised || {}).map(([twig, value]) => ({ twig, value }));
+  }
+
   get otaKey() {
     const ota = this.groups.ota;
     return ota && ota.topics.key && ota.topics.key.state.value;
@@ -2083,7 +2117,12 @@ class MqttTopicNode extends MqttTopic {
   // "Temperature (DS18B20)". See CARDS_UX.md 4.3.
   labelFor(mt, allMts) {
     const clash = allMts.some((other) => (other !== mt) && (other.name === mt.name));
-    return clash ? (mt.groupName || mt.name) : mt.name;
+    if (!clash) return mt.name;
+    // The module name on its own is enough when the module contributes a single reading - "Soil
+    // Temperature" says what is being measured. With more than one it is not: an AHT20 reporting
+    // temperature and humidity would end up labelling both of them "AHT20".
+    const siblings = allMts.filter((other) => other.group === mt.group).length;
+    return (siblings > 1) ? `${mt.groupName} ${mt.name}` : (mt.groupName || mt.name);
   }
 
   // One entry of a front/summary list: "sht/temperature", or a bare control module id
@@ -2357,6 +2396,11 @@ class MqttWrapper extends HTMLElementExtended {
     this.state.organization = e.target.value;
     this.setAttribute('organization', this.state.organization);
     this.setClientCredentials(); // Different organization means different broker credentials
+    // Capabilities are per organization, so a page offering administration needs to know before a
+    // project has been picked - and needs to know the old project has gone.
+    document.dispatchEvent(new CustomEvent('frugaliot:organizationchanged', {
+      detail: { organization: this.state.organization },
+    }));
     this.state.project = null;
     if (this.state.projectEl) {
       this.removeChild(this.state.projectEl);
@@ -2415,6 +2459,11 @@ class MqttWrapper extends HTMLElementExtended {
     }
     mt.subscribe();
     this.state.elements["project"] = mt; // Store MqttTopicProject directly
+    // So a page built around the wrapper knows a project now exists. topicschanged only fires once
+    // a node arrives, which is too late for a project that has no devices yet.
+    document.dispatchEvent(new CustomEvent('frugaliot:projectchanged', {
+      detail: { projectMt: mt, organization: this.state.organization, project: this.state.project },
+    }));
     return mt;
   }
 

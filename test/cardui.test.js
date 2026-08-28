@@ -115,6 +115,18 @@ describe('front mode', () => {
     card.remove();
   });
 
+  test('a module with two readings does not label both of them with the module name', () => {
+    // Every module at once made this obvious: "AHT20" appeared twice, with nothing to say which was
+    // the temperature. The module name alone only works when it contributes a single reading.
+    const { card } = cardFor('every-module', 'esp8266-everything', { mode: 'front', at: T0 });
+    const labels = [...card.querySelectorAll('mqtt-bar, mqtt-text, mqtt-toggle, mqtt-gauge')]
+      .map((w) => w.getAttribute('label')).filter(Boolean);
+    assert.ok(labels.includes('AHT20 Temperature'), `got ${labels.slice(0, 8)}`);
+    assert.ok(labels.includes('AHT20 Humidity'));
+    assert.ok(labels.includes('Soil Temperature'), 'a single-reading module keeps its own name');
+    card.remove();
+  });
+
   test('an actuator is a live control the user can tap', () => {
     // default-front takes the default ordering, which puts actuators after the readings
     const { card } = cardFor('default-front', 'esp8266-two-temps', { mode: 'front', at: T0 });
@@ -356,6 +368,23 @@ describe('back mode', () => {
     const { card } = cardFor('control-wired', 'esp8266-fb94bb', { mode: 'back', at: T0 });
     const titles = [...card.querySelectorAll('.fi-section__title')].map((h) => h.textContent);
     assert.ok(titles.includes('Relay'), `relay missing from ${titles}`);
+    card.remove();
+  });
+
+  test('a module the schema does not know still reaches the back', () => {
+    // Developers add modules; a reading that is silently dropped is the hardest kind to chase
+    const { card } = cardFor('unknown-module', 'esp8266-odd', { mode: 'back', at: T0 });
+    const titles = [...card.querySelectorAll('.fi-section__title')].map((h) => h.textContent);
+    assert.ok(titles.includes('Not in the schema'), `missing from ${titles}`);
+    const text = card.textContent;
+    assert.match(text, /quantumflux\/spin/);
+    assert.match(text, /42/);
+    card.remove();
+  });
+
+  test('a reading that never arrives has a row and no value, not a missing row', () => {
+    const { card } = cardFor('module-no-data', 'esp8266-halfsht', { mode: 'back', at: T0 });
+    assert.ok(card.querySelector('[topic$="sht/humidity"]'), 'the row should still be there');
     card.remove();
   });
 
