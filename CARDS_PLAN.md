@@ -27,7 +27,7 @@ Phases are ordered by what they unblock. Sizes are relative, not hours.
 | 0 | Test infrastructure and mock harness | M | everything | **DONE** |
 | 1 | `html-element-extended`: light-DOM rendering | S | 5 | **DONE** |
 | 2 | Schema: `devices.yaml`, `width`, `units`, capabilities | M | 4, 8 | **DONE** |
-| 3 | Split `webcomponents.js` | M | — (but easier before 4+) | yes |
+| 3 | Split `webcomponents.js` | M | — (but easier before 4+) | **DONE** |
 | 4 | Data tree: move roll-up down, add derived getters | M | 5, 6 | yes |
 | 5 | The card element — summary / front / back | L | 6, 7 | no (needs a page) |
 | 6 | The grid — layout, drag, `localStorage` | M | 7 | no |
@@ -130,6 +130,12 @@ existing UX rather than a hand-check at the end. Descend into shadow roots, reco
 attributes and text, and normalise timestamps.
 
 Assert on rendered output, not internals; internals are what phases 3 and 4 deliberately change.
+
+**Deferred: bare specifiers.** Converting `/node_modules/…` imports was listed here, and is not
+done. Each package resolves differently in node and in the browser (`mqtt` in particular has separate
+node and browser builds), so it is its own change with its own verification, and mixing it into a
+refactor whose contract is "byte-identical output" would have undermined that. The test resolve hook
+stays until then.
 
 **A second obstacle worth recording**: the client's imports are server-root-relative
 (`/node_modules/html-element-extended/…`), which node cannot resolve at all — only a web server can.
@@ -297,22 +303,46 @@ test is correct for every module that exists).
 5,723 lines in one file. Mechanical, no behaviour change, verified by running the phase 0 snapshots
 before and after and requiring identical output.
 
-| File | Contents | Notes |
-|---|---|---|
-| `core.js` | mqtt plumbing, `mqtt_deliver`, topic helpers, `MqttTopic*` data tree, `Watchdog`, i18n + `languages` + `el`, `server_config`, `MqttClient`, `MqttWrapper`, `LanguagePicker` | everything a headless consumer needs |
-| `widgets.js` | `MqttElement`, `MqttReceiver`, `MqttTransmitter`, `MqttText`, `MqttColor`, `MqttToggle`, `MqttBar`, `MqttGauge`, `MqttSlider`, `MqttChooseTopic` | shadow DOM, unchanged |
-| `graph.js` | `MqttGraph`, `MqttGraphDataset` | pulls chart.js — **dynamic `import()`** on first graph |
-| `cards.js` | `MqttDeviceCard`, `MqttDeviceGrid`, `MqttProjectBack`, layout store | new, phases 5–7 |
-| `nodeview.js` | `MqttProject`, `MqttNode`, `MqttGroup` + subclasses | **retires with `index.html`** — say so in a header comment so its deletion is obvious |
-| `admin.js` | `MqttAdmin`, `MqttLogin`, `TabbedDisplay` | |
-| `flash.js` | `MqttFlash`, partition helpers | pulls esptool-js — **dynamic `import()`** |
-| `index.js` | old page entry: core + widgets + graph + nodeview + admin | |
-| `cards-entry.js` | new page entry: core + widgets + graph + cards | |
+| File | Lines | Imports | Contents |
+|---|---|---|---|
+| `core.js` | 2214 | **none** | mqtt plumbing, `mqtt_deliver`, topic helpers, the `MqttTopic*` data tree, `Watchdog`, i18n + `languages` + `el`, `server_config`, `MqttClient`, `MqttWrapper`, `LanguagePicker` |
+| `widgets.js` | 717 | core | `MqttElement`…`MqttChooseTopic` — the leaf display and control elements |
+| `graph.js` | 475 | core, widgets | `MqttGraph`, `MqttGraphDataset`, the inlined Luxon adapter — pulls Chart.js |
+| `nodeview.js` | 457 | core, widgets | `MqttProject`, `MqttNode`, `MqttGroup` + subclasses — **retires with `index.html`**, said so in its header |
+| `flash.js` | 609 | core | `MqttFlash` and the partition helpers — pulls esptool-js |
+| `admin.js` | 1331 | core | `MqttAdmin`, `MqttLogin`, `TabbedDisplay` |
+| `webcomponents.js` | 19 | all | the entry every page already loads: `export * from './core.js'` plus side-effect imports |
 
-Two things this split buys beyond tidiness: `index-embedded.html` keeps working on `core.js` +
-`widgets.js` alone (O-9), and the card page stops paying for chart.js and esptool-js at load.
+`cards.js` and its entry point arrive with phases 5–7; there was nothing to put in them yet.
 
-Keep `webcomponents.js` as a re-exporting shim for one release so nothing outside this repo breaks.
+**No HTML changed.** Every page already loads `webcomponents.js` as its entry, and
+`dashboard_example.html` imports four helpers from it, so keeping it as the shim left all five pages
+untouched — a better outcome than the planned separate `index.js`.
+
+**Verification: the five old-UI snapshots are byte-identical**, which is what "mechanical, no
+behaviour change" was supposed to mean. `test/modules.test.js` now also pins the shape: core imports
+nothing, widgets needs only core, graph and nodeview need only core and widgets, and importing
+`core.js` alone registers no display widgets — so `index-embedded.html`'s core+widgets case (O-9)
+cannot silently regress.
+
+**Four behaviour-preserving edits were needed first**, because the module graph was not a DAG:
+
+- `MqttTopic.graph` called `MqttGraph.graph` directly — a core→graph cycle. It now goes by tag name,
+  `customElements.get('mqtt-graph')`, the same way `createElement` reaches the widgets. This is the
+  rule in §3.2 and it is now what keeps core standalone.
+- `MqttWrapper` borrowed `MqttReceiver.observedAttributes`, a core→widgets reference evaluated at
+  `customElements.define` time. Both now share a `RECEIVER_ATTRIBUTES` constant in core.
+- `MqttChooseTopic` did `++unique_id` on a core variable — an imported binding cannot be assigned to.
+  It calls `nextUniqueId()`, and the label and select now share one captured id instead of reading
+  the counter twice.
+- Two locals shadowed module-level names — `let el` inside `elementsForEach` and `let graph` inside
+  `createGraph` — which hid a real import behind a false negative. Renamed to `elx` and `graphEl`.
+
+**Two things the generator nearly lost, worth recording** because both would have failed only at
+runtime: `Chart.register(...registerables)` lived in the file preamble, outside every declaration
+block; and `import { DateTime } from 'luxon'` sits *mid-file* at line 53, inside the copied
+chartjs-adapter-luxon block, so it was swept into a core-owned block instead of following the adapter
+into `graph.js`.
 
 ### Phase 4 — Data tree
 
