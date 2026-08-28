@@ -325,6 +325,8 @@ EN:
   Manual: Manual
   Monitor: Monitor
   Monitor speed: Monitor speed
+  Move down: Move down
+  Move up: Move up
   Name: Name
   never: Never seen
   Never seen: Never seen
@@ -526,6 +528,8 @@ FR:
   Manual: Manuel
   Monitor: Moniteur
   Monitor speed: Vitesse du moniteur
+  Move down: Descendre
+  Move up: Monter
   Name: Nom 
   never: Jamais vu
   Never seen: Jamais vu
@@ -727,6 +731,8 @@ HI:
   Manual: मैनुअल
   Monitor: मॉनिटर
   Monitor speed: मॉनिटर गति
+  Move down: नीचे ले जाएँ
+  Move up: ऊपर ले जाएँ
   Name: नाम
   never: कभी नहीं देखा
   Never seen: कभी नहीं देखा
@@ -928,6 +934,8 @@ ID:
   Manual: Manual
   Monitor: Monitor
   Monitor speed: Kecepatan monitor
+  Move down: Turunkan
+  Move up: Naikkan
   Name: Nama
   never: Belum pernah terlihat
   Never seen: Belum pernah terlihat

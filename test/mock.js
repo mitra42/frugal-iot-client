@@ -156,4 +156,9 @@ export function runScenario(name, { headless = true, container = null, at = null
   return { projectMt, projectEl };
 }
 
+// Deliver one extra message into a scenario already running - a device arriving late, say
+export function deliver(topic, payload) {
+  mqtt_deliver(topic, payload);
+}
+
 export { ORG, PROJECT };

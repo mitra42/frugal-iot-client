@@ -20,13 +20,18 @@ import { el, getString, ImagesUrl, relativeTime, XXX } from './core.js';
 const STATUS_MARK = { live: '●', stale: '◌', offline: '○', never: '·' };
 
 class MqttDeviceCard extends HTMLElementExtendedMinimum {
-  static get observedAttributes() { return ['mode']; }
+  static get observedAttributes() { return ['mode', 'movable']; }
+  static get boolAttributes() { return ['movable']; }
 
   constructor() {
     super();
     this.state.elements = {};
     this.state.mode = 'summary';
     this.onGroupChanged = this.onGroupChanged.bind(this);
+    this.onKeyDown = this.onKeyDown.bind(this);
+    this.onPointerDown = this.onPointerDown.bind(this);
+    this.onPointerMove = this.onPointerMove.bind(this);
+    this.onPointerUp = this.onPointerUp.bind(this);
   }
 
   connectedCallback() {
@@ -34,9 +39,29 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
     // Every message fires this, in both the element and the headless paths, so it is the one signal
     // a card needs. Filtered to this device below.
     document.addEventListener('frugaliot:groupchanged', this.onGroupChanged);
+    this.addEventListener('keydown', this.onKeyDown);
+    // Not via el(): EL only assigns onclick, onchange and onsubmit as properties - any other
+    // function it is handed goes into el.state and is never wired up at all.
+    this.addEventListener('pointerdown', this.onPointerDown);
   }
   disconnectedCallback() {
     document.removeEventListener('frugaliot:groupchanged', this.onGroupChanged);
+    this.removeEventListener('keydown', this.onKeyDown);
+    this.removeEventListener('pointerdown', this.onPointerDown);
+    // Deliberately not endDrag(): reordering re-appends the cards, so the one being dragged is
+    // disconnected and reconnected on its very first move. Ending the drag there killed it after a
+    // single step, which looked from the outside like dragging not working at all. The drag lives
+    // on document listeners so it survives being re-parented, and pointerup is what ends it.
+  }
+  changeAttribute(name, valueString) {
+    const rerender = super.changeAttribute(name, valueString);
+    // Tell whoever is arranging these that this one opened or closed, so it can be remembered
+    if ((name === 'mode') && this.mt) {
+      this.dispatchEvent(new CustomEvent('frugaliot:cardmode', {
+        bubbles: true, detail: { nodeId: this.mt.nodeId, mode: valueString },
+      }));
+    }
+    return rerender;
   }
   onGroupChanged(e) {
     if (e.detail && (e.detail.nodeMt === this.mt)) this.refresh();
@@ -96,6 +121,103 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
       this.renderBattery(),
       (this.nodeMt.status === 'live') ? null : el('span', { class: 'fi-age', i8n: false, textContent: this.ageText }),
     ].filter(Boolean);
+  }
+
+  // ===== being moved =====
+  //
+  // Three ways to reorder, all ending in the same event so the grid decides what it means:
+  // the ▲▼ buttons, the keyboard, and dragging. The buttons are not a fallback nobody uses - on a
+  // low-end phone they are more reliable than a long-press (D-13).
+
+  requestMove(delta) {
+    this.dispatchEvent(new CustomEvent('frugaliot:cardmove', {
+      bubbles: true, detail: { nodeId: this.mt.nodeId, delta },
+    }));
+  }
+  requestMoveOver(targetNodeId) {
+    if (targetNodeId === this.mt.nodeId) return;
+    this.dispatchEvent(new CustomEvent('frugaliot:cardmoveover', {
+      bubbles: true, detail: { nodeId: this.mt.nodeId, targetNodeId },
+    }));
+  }
+
+  renderMoveButtons() {
+    if (!this.state.movable) return [];
+    return [
+      el('button', { class: 'fi-btn fi-btn--move', title: getString('Move up'), i8n: false, textContent: '▲',
+        onclick: (e) => { e.stopPropagation(); this.requestMove(-1); } }),
+      el('button', { class: 'fi-btn fi-btn--move', title: getString('Move down'), i8n: false, textContent: '▼',
+        onclick: (e) => { e.stopPropagation(); this.requestMove(1); } }),
+    ];
+  }
+
+  // Space to pick up, arrows to move, Space or Escape to put down - the same shape as a drag, for
+  // someone who cannot make one.
+  onKeyDown(e) {
+    if (!this.state.movable) return;
+    if (e.key === ' ') {
+      e.preventDefault();
+      this.setGrabbed(!this.state.grabbed);
+      return;
+    }
+    if (!this.state.grabbed) return;
+    if (e.key === 'Escape') { this.setGrabbed(false); return; }
+    const delta = { ArrowUp: -1, ArrowLeft: -1, ArrowDown: 1, ArrowRight: 1 }[e.key];
+    if (delta === undefined) return;
+    e.preventDefault();
+    this.requestMove(delta);
+  }
+  setGrabbed(on) {
+    this.state.grabbed = on;
+    this.classList.toggle('fi-grabbed', on);
+  }
+
+  // Pointer Events rather than HTML5 drag-and-drop, which is unreliable on Android - the platform
+  // this has to work on. Touch needs a hold first, or the page cannot be scrolled.
+  onPointerDown(e) {
+    if (!this.state.movable || (e.button !== undefined && e.button !== 0)) return;
+    this.state.drag = { x: e.clientX, y: e.clientY, id: e.pointerId, active: false };
+    if (e.pointerType === 'touch') {
+      this.state.drag.timer = setTimeout(() => this.beginDrag(e), 400); // hold to lift
+    }
+    // On document, not on the card: a reorder re-parents the card mid-drag, and listeners on it
+    // would go with it
+    document.addEventListener('pointermove', this.onPointerMove);
+    document.addEventListener('pointerup', this.onPointerUp);
+    document.addEventListener('pointercancel', this.onPointerUp);
+  }
+  beginDrag(e) {
+    if (!this.state.drag) return;
+    this.state.drag.active = true;
+    this.classList.add('fi-dragging');
+    // No setPointerCapture: capture is lost the moment the card is re-parented by a reorder, and
+    // the document listeners below do the same job without that problem.
+  }
+  onPointerMove(e) {
+    const drag = this.state.drag;
+    if (!drag) return;
+    if (!drag.active) {
+      const moved = Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y);
+      if (e.pointerType === 'touch') { if (moved > 10) this.endDrag(); return; } // a scroll, not a drag
+      if (moved < 6) return;                                                     // not yet a drag
+      this.beginDrag(e);
+    }
+    // Hit-testing while the dragged card is under the pointer finds the dragged card, so take it
+    // out of the way for the one call
+    this.style.pointerEvents = 'none';
+    const under = document.elementFromPoint(e.clientX, e.clientY);
+    this.style.pointerEvents = '';
+    const other = under && under.closest && under.closest('mqtt-devicecard');
+    if (other && (other !== this) && other.mt) this.requestMoveOver(other.mt.nodeId);
+  }
+  onPointerUp() { this.endDrag(); }
+  endDrag() {
+    if (this.state.drag) clearTimeout(this.state.drag.timer);
+    this.state.drag = null;
+    this.classList.remove('fi-dragging');
+    document.removeEventListener('pointermove', this.onPointerMove);
+    document.removeEventListener('pointerup', this.onPointerUp);
+    document.removeEventListener('pointercancel', this.onPointerUp);
   }
 
   // ===== front =====
@@ -305,6 +427,7 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
       }),
       this.state.elements.name = el('span', { class: 'fi-card__name', i8n: false, textContent: nodeMt.usableName }),
       this.state.elements.meta = el('span', { class: 'fi-card__meta' }, this.renderMeta()),
+      ...this.renderMoveButtons(),
       ...((this.mode === 'summary') ? [] : [
         // No gear on the back - that is where the gear goes, so it would do nothing
         (this.mode === 'front') ? el('button', {
@@ -337,6 +460,7 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
     const body = (this.mode === 'summary') ? this.renderSummary()
       : (this.mode === 'back') ? this.renderBack()
       : this.renderFront();
+    if (this.state.movable && !this.hasAttribute('tabindex')) this.setAttribute('tabindex', '0');
     return this.state.elements.card = el('div', {
       class: `fi-card fi-card--${this.mode} fi-status-${this.nodeMt.status}`,
       onclick: () => { if (this.mode === 'summary') this.mode = 'front'; }, // only the summary is one target
@@ -345,4 +469,169 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
 }
 customElements.define('mqtt-devicecard', MqttDeviceCard);
 
-export { MqttDeviceCard };
+
+/* ===========================================================================
+ * Layout store
+ *
+ * Which cards are in what order, and which are open. Local presentation, not a change to anything
+ * in the system, so it stays in this browser and needs no WRITE capability (CARDS_UX.md 10.2).
+ *
+ * Every access is wrapped: localStorage throws outright in some private-browsing modes, and a
+ * storage failure must degrade to "no remembered layout", never to a broken grid.
+ * ======================================================================== */
+const LAYOUT_VERSION = 1;
+const layoutDefault = () => ({ v: LAYOUT_VERSION, order: [], mode: {} });
+
+function layoutKey(projectMt) {
+  return `frugaliot:layout:v${LAYOUT_VERSION}:${projectMt.twig}`;
+}
+function layoutLoad(projectMt) {
+  try {
+    const raw = localStorage.getItem(layoutKey(projectMt));
+    if (!raw) return layoutDefault();
+    const parsed = JSON.parse(raw);
+    // A layout written by a future version, or by something else entirely, is not ours to read
+    if (!parsed || (parsed.v !== LAYOUT_VERSION)) return layoutDefault();
+    return { v: LAYOUT_VERSION, order: Array.isArray(parsed.order) ? parsed.order : [],
+             mode: (parsed.mode && typeof parsed.mode === 'object') ? parsed.mode : {} };
+  } catch (e) {
+    return layoutDefault();
+  }
+}
+function layoutSave(projectMt, layout) {
+  try {
+    localStorage.setItem(layoutKey(projectMt), JSON.stringify(layout));
+    return true;
+  } catch (e) {
+    return false; // Out of quota, or storage blocked - the grid still works, it just forgets
+  }
+}
+
+/* ===========================================================================
+ * The grid
+ *
+ * Renders once (render0) and mutates in place afterwards, because a light-DOM element's
+ * renderAndReplace clears its own children - which here are the cards. See CARDS_PLAN.md phase 1.
+ * ======================================================================== */
+class MqttDeviceGrid extends HTMLElementExtendedMinimum {
+  constructor() {
+    super();
+    this.state.cards = new Map();  // nodeId -> mqtt-devicecard
+    this.onTopicsChanged = this.onTopicsChanged.bind(this);
+    this.onCardMove = this.onCardMove.bind(this);
+    this.onCardMoveOver = this.onCardMoveOver.bind(this);
+    this.onModeChanged = this.onModeChanged.bind(this);
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    // Nodes arrive over time, so the order has to be applied per arrival rather than once (O-10)
+    document.addEventListener('frugaliot:topicschanged', this.onTopicsChanged);
+    this.addEventListener('frugaliot:cardmove', this.onCardMove);
+    this.addEventListener('frugaliot:cardmoveover', this.onCardMoveOver);
+    this.addEventListener('frugaliot:cardmode', this.onModeChanged);
+    this.sync();
+  }
+  disconnectedCallback() {
+    document.removeEventListener('frugaliot:topicschanged', this.onTopicsChanged);
+  }
+  onTopicsChanged() { this.sync(); }
+
+  get projectMt() { return this.mt; }
+  get layout() { return this.state.layout || (this.state.layout = layoutLoad(this.projectMt)); }
+  save() { layoutSave(this.projectMt, this.layout); }
+
+  render0() {
+    return el('div', { class: 'fi-grid__hint', hidden: true }); // Cards are appended, not rendered
+  }
+
+  // The order cards should appear in: remembered ones first, in the remembered order, then any the
+  // layout has not seen. A device retired since the layout was saved simply is not there any more.
+  orderedNodeIds() {
+    if (!this.projectMt) return [];
+    const known = Object.keys(this.projectMt.nodes);
+    const remembered = this.layout.order.filter((id) => known.includes(id));
+    return remembered.concat(known.filter((id) => !remembered.includes(id)));
+  }
+
+  // Add cards for devices that have appeared, and put every card in its place. Called on each
+  // arrival, so a device discovered late lands where the layout says rather than at the end.
+  sync() {
+    if (!this.projectMt) return;
+    const order = this.orderedNodeIds();
+    order.forEach((nodeId) => {
+      if (!this.state.cards.has(nodeId)) this.state.cards.set(nodeId, this.makeCard(nodeId));
+    });
+    // Drop cards for devices that are gone, so nothing stale keeps listening
+    [...this.state.cards.keys()].filter((id) => !order.includes(id)).forEach((id) => {
+      this.state.cards.get(id).remove();
+      this.state.cards.delete(id);
+    });
+    order.forEach((nodeId) => this.append(this.state.cards.get(nodeId))); // append moves in place
+  }
+
+  makeCard(nodeId) {
+    const nodeMt = this.projectMt.nodes[nodeId];
+    const card = el('mqtt-devicecard', { mode: this.initialMode(nodeId), movable: true });
+    card.mt = nodeMt;
+    return card;
+  }
+  // A remembered mode, else the front for a project small enough that a grid of summaries would be
+  // a wasted screen (D-15). Only decided when the card is made - cards collapsing as siblings
+  // arrive would be worse than a stale choice.
+  initialMode(nodeId) {
+    const remembered = this.layout.mode[nodeId];
+    if (remembered) return remembered;
+    return (Object.keys(this.projectMt.nodes).length <= 2) ? 'front' : 'summary';
+  }
+
+  onModeChanged(e) {
+    this.layout.mode[e.detail.nodeId] = e.detail.mode;
+    this.save();
+  }
+
+  // ===== reordering =====
+  //
+  // One model, three ways in: the buttons, the keyboard and the pointer drag all end up here, so
+  // what happens is testable without needing layout or a pointer.
+
+  get currentOrder() { return this.orderedNodeIds(); }
+
+  moveTo(nodeId, index) {
+    const order = this.currentOrder.filter((id) => id !== nodeId);
+    const at = Math.max(0, Math.min(order.length, index));
+    order.splice(at, 0, nodeId);
+    this.layout.order = order;
+    this.save();
+    this.sync();
+    return order;
+  }
+  moveBy(nodeId, delta) {
+    const order = this.currentOrder;
+    const from = order.indexOf(nodeId);
+    if (from === -1) return order;
+    return this.moveTo(nodeId, from + delta);
+  }
+  // Put one card where another currently is. The target's index has to be read BEFORE the dragged
+  // card is taken out of the list, or dragging downwards never gets anywhere: removing A from
+  // [A,B,C] leaves B at index 0, and inserting A at 0 puts it straight back.
+  moveOver(nodeId, targetNodeId) {
+    const at = this.currentOrder.indexOf(targetNodeId);
+    return (at === -1) ? this.currentOrder : this.moveTo(nodeId, at);
+  }
+
+  onCardMoveOver(e) {
+    e.stopPropagation();
+    this.moveOver(e.detail.nodeId, e.detail.targetNodeId);
+  }
+  onCardMove(e) {
+    e.stopPropagation();
+    this.moveBy(e.detail.nodeId, e.detail.delta);
+    // Keep the focus on the card that moved, or a run of presses walks away from it
+    const card = this.state.cards.get(e.detail.nodeId);
+    if (card) card.focus();
+  }
+}
+customElements.define('mqtt-devicegrid', MqttDeviceGrid);
+
+export { MqttDeviceGrid, layoutLoad, layoutSave, layoutKey, LAYOUT_VERSION };

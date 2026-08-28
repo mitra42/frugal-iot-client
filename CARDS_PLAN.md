@@ -30,7 +30,7 @@ Phases are ordered by what they unblock. Sizes are relative, not hours.
 | 3 | Split `webcomponents.js` | M | — (but easier before 4+) | **DONE** |
 | 4 | Data tree: move roll-up down, add derived getters | M | 5, 6 | **DONE** |
 | 5 | The card element — summary / front / back | L | 6, 7 | **DONE** |
-| 6 | The grid — layout, drag, `localStorage` | M | 7 | no |
+| 6 | The grid — layout, drag, `localStorage` | M | 7 | **DONE** |
 | 7 | The new page, project front/back, admin cards | L | — | yes |
 | 8 | Permissions: `WRITE`, `OTAFLASH` | S | — | yes |
 | 9 | Polish: sheets, motion, i18n sweep, visual pass | M | — | yes |
@@ -518,6 +518,63 @@ the graph panel.
   wrapping rule.
 - Apply the stored order **per card arrival**, not once at load (O-10) — cards appear as discovery
   messages land. Append unknown devices; re-sort only on an explicit drag.
+
+### Phase 6 — done
+
+`mqtt-devicegrid`, light DOM, rendering once via `render0()` and mutating in place — which phase 1
+said it would have to, since `renderAndReplace` on a light-DOM element clears its own children, and
+here those are the cards.
+
+**Reordering is a model, not three implementations.** `moveBy`, `moveTo` and `moveBefore` on the
+grid are what the ▲▼ buttons, the keyboard and the pointer drag all end up calling, through neutral
+`frugaliot:cardmove` / `cardmovebefore` events — a card says "the user asked to move me" and the grid
+decides what that means. That also makes the behaviour testable: jsdom has neither layout nor
+pointers, so a drag cannot be exercised, but everything a drag *does* can be.
+
+- **Pointer Events, not HTML5 drag-and-drop** (unreliable on Android). Mouse drags after 6px; touch
+  needs a 400ms hold and abandons the drag if the finger moves first, so the page still scrolls.
+- **Keyboard**: Space to pick up, arrows to move, Space or Escape to put down.
+- **The order is applied per arrival**, so a device discovered late lands where the layout says
+  rather than at the end (O-10). A remembered device that no longer exists is skipped, not left as a
+  hole; one the layout has never seen goes to the end, disturbing nothing.
+- **Storage is wrapped and versioned.** A layout written by another version is ignored rather than
+  half-read, rubbish in the key does not throw, and a `localStorage` that throws outright — private
+  browsing does — loses the remembered layout and nothing else. There is a test that builds and
+  reorders a grid with storage replaced by something that throws on every call.
+- jsdom only provides `localStorage` with `--localstorage-file`, so `test/setup.js` installs an
+  in-memory one.
+
+The harness grew a "Forget layout" button, since a remembered order otherwise outlives the scenario
+you are trying to look at.
+
+**Dragging needed four fixes before it worked at all.** The fourth is the one worth remembering:
+
+- **`el({onpointerdown: …})` never wired anything up.** `EL` assigns only `textContent`, `style`,
+  `innerHTML`, `action`, `onsubmit`, `onclick` and `onchange` as properties; **any other function it
+  is handed is put into `el.state` instead**, silently. The handler was correct and simply never
+  connected. It is bound with `addEventListener` on the host now, which also survives re-renders.
+  Worth knowing generally: `onclick` and `onchange` work, and nothing else does — a grep says those
+  are the only two the client uses, so nothing else is affected today.
+
+The other three would not have shown up in a test that only exercised the model:
+
+- **The hit test found the card being dragged.** It is under the pointer, so `elementFromPoint`
+  returned it rather than the card beneath. It now takes itself out of hit-testing for the one call.
+- **Dragging downwards was a no-op.** The target's index was read *after* the dragged card had been
+  taken out of the list: remove A from `[A,B,C]` and B is at index 0, so inserting A at 0 puts it
+  straight back. The index is read first now — `moveBefore` became `moveOver`, since for a downward
+  drag "where B is" means after B, not before it.
+- **The first successful move killed the drag.** Reordering re-appends the cards, so the dragged one
+  is disconnected and reconnected, and `disconnectedCallback` was calling `endDrag()`. The drag now
+  lives on `document` listeners so it survives being re-parented, `disconnectedCallback` leaves it
+  alone, and `setPointerCapture` is gone — capture is lost on re-parent anyway, and the document
+  listeners do the same job.
+
+The pointer test now **dispatches real events rather than calling the handlers**, which is what
+makes the unwired-handler bug catchable — the previous version called `card.onPointerDown(...)`
+directly and so passed against code that was never connected to the DOM at all. `elementFromPoint`
+is stubbed to behave as a browser does, returning the dragged card until it removes itself from
+hit-testing. Verified by reverting each fix in turn and watching the test fail.
 
 ### Phase 7 — The page, project front/back, admin cards
 

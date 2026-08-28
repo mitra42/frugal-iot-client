@@ -455,3 +455,26 @@ div.outer.mqtt-bar > div.ends {
     display: block;
     max-width: 100%;
 }
+
+/* The grid. One mechanism on every screen: an ordered list, reflowing into as many columns as fit,
+   so the same drag works on a phone and a desktop (CARDS_UX.md D-12). */
+mqtt-devicegrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--fi-gap);
+    align-items: start;
+}
+/* An open card earns more width where there is any to spare; on one column this clamps to 1 */
+mqtt-devicecard[mode="front"], mqtt-devicecard[mode="back"] { grid-column: span 2; }
+@media (max-width: 660px) {
+    mqtt-devicecard[mode="front"], mqtt-devicecard[mode="back"] { grid-column: span 1; }
+}
+mqtt-devicecard { display: block; min-width: 0; }
+mqtt-devicecard:focus-visible { outline: 2px solid var(--fi-live); outline-offset: 2px; }
+.fi-dragging { opacity: 0.6; }
+.fi-grabbed .fi-card, mqtt-devicecard.fi-grabbed { outline: 2px dashed var(--fi-stale); }
+.fi-btn--move { font-size: 0.8em; padding: 4px 2px; }
+/* Nothing is dragged by accident: a press that turns into a scroll must scroll */
+mqtt-devicecard[movable] .fi-card__head { touch-action: pan-y; }
+/* Lifted out of the flow while dragging, so it is obvious which card is moving */
+.fi-dragging { opacity: 0.6; transform: scale(0.99); }

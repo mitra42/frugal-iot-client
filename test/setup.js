@@ -31,4 +31,24 @@ for (const k of ['Event', 'CustomEvent', 'EventTarget', 'MessageEvent']) {
   globalThis[k] = dom.window[k];
 }
 
-export { dom };
+// jsdom only provides localStorage when started with --localstorage-file, and the cards keep their
+// layout there. An in-memory one keeps the tests deterministic and lets a test take it away.
+function memoryStorage() {
+  const map = new Map();
+  return {
+    get length() { return map.size; },
+    key: (i) => [...map.keys()][i] ?? null,
+    getItem: (k) => (map.has(String(k)) ? map.get(String(k)) : null),
+    setItem: (k, v) => { map.set(String(k), String(v)); },
+    removeItem: (k) => { map.delete(String(k)); },
+    clear: () => map.clear(),
+  };
+}
+try {
+  globalThis.localStorage.setItem('__probe', '1');
+  globalThis.localStorage.removeItem('__probe');
+} catch (e) {
+  Object.defineProperty(globalThis, 'localStorage', { value: memoryStorage(), configurable: true, writable: true });
+}
+
+export { dom, memoryStorage };

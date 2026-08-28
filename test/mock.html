@@ -26,8 +26,7 @@
         #bar label { display: flex; gap: 4px; align-items: center; }
         #title { font-weight: bold; margin-right: auto; }
         #stage { padding: 12px; }
-    /* A plain flow for now - the grid, with drag and ordering, is phase 6 */
-    #stage.cards { display: flex; flex-direction: column; gap: 10px; max-width: 460px; }
+    #stage.cards { max-width: 1100px; }
         #note { padding: 0 12px 12px; color: #666; font-size: 0.9em; }
     </style>
 </head>
@@ -41,6 +40,7 @@
         <option value="headless">headless (data tree only)</option>
     </select></label>
     <button id="rerun">Re-run</button>
+    <button id="forget" title="Clear the remembered card order and open/closed state">Forget layout</button>
 </div>
 <div id="note"></div>
 <div id="stage"></div>
@@ -74,12 +74,10 @@
     const { projectMt, projectEl } = runScenario(name, { headless: view !== 'nodeview', container: stage });
 
     if (view === 'cards') {
-      Object.values(projectMt.nodes).forEach((nodeMt) => {
-        const card = el('mqtt-devicecard', { mode: 'summary' });
-        card.mt = nodeMt;   // Deliberately not nodeMt.element - that is for an MqttNode, and
-                            // MqttTopicNode.topicValueSet would call DOM methods a card does not have
-        stage.append(card);
-      });
+      // The grid makes its own cards, in the order it remembers, and adds more as devices arrive
+      const grid = el('mqtt-devicegrid');
+      grid.mt = projectMt;   // Deliberately not projectMt.element - that is for an MqttProject
+      stage.append(grid);
     }
     tree.style.display = (view === 'headless') ? '' : 'none';
     if (view === 'headless') {
@@ -95,6 +93,10 @@
   picker.addEventListener('change', run);
   document.getElementById('view').addEventListener('change', run);
   document.getElementById('rerun').addEventListener('click', run);
+  document.getElementById('forget').addEventListener('click', () => {
+    try { Object.keys(localStorage).filter((k) => k.startsWith('frugaliot:layout:')).forEach((k) => localStorage.removeItem(k)); } catch (e) { /* no storage */ }
+    run();
+  });
   run();
 </script>
 </body>
