@@ -57,7 +57,7 @@ const SUMMARY_CHIP_LIMIT = 4;
 function nextUniqueId() { return ++unique_id; }
 // Shared so MqttWrapper can extend the list without importing MqttReceiver - it does not subclass it,
 // it only wants the same attributes observed.
-const RECEIVER_ATTRIBUTES = ['value','color','type','label','topic','graphable','wired'];
+const RECEIVER_ATTRIBUTES = ['value','color','type','label','topic','graphable','wired','wiring'];
 let server_config;  // { user, organizations, logger, mqtt, server } - note loaded by MqttWrapper OR MqttAdmin
 
 // This structure defines each of the common Input/Output types included within a sensor or acctuator
@@ -251,6 +251,7 @@ EN:
   Action *: Action *
   Add: Add
   Admin: Admin
+  Advanced: Advanced
   All: All
   API: API
   AQI: AQI
@@ -277,6 +278,7 @@ EN:
   Dashboard: Dashboard
   Data: Data
   Description: Description
+  Device: Device
   ds18b20: ds18b20
   e.g. LiteFarm: e.g. LiteFarm
   eCO2: eCO2
@@ -310,8 +312,10 @@ EN:
   Hysterisis: Hysteresis
   id: id
   If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.'
+  Input: Input
   Key: Key
   Last Seen: Last Seen
+  Last seen: Last seen
   LED: LED
   Limit: Limit
   live: Live
@@ -356,6 +360,7 @@ EN:
   OTA Key or Device ID: OTA Key or Device ID
   Out: Out
   out: out
+  Output: Output
   Password: Password
   Permissions: Permissions
   Phone or Whatsapp: Phone or Whatsapp
@@ -382,6 +387,7 @@ EN:
   Register Platform: Register Platform
   Registered Platforms: Registered Platforms
   Relay: Relay
+  Reporting every: Reporting every
   Retain: Retain
   Schema: Schema
   Select: Select
@@ -423,6 +429,7 @@ EN:
   Unable to find project: Unable to find project
   Unauthorized: Unauthorized
   undefined: undefined
+  Unknown: Unknown
   Unsupported board: Unsupported board
   Unused: Unused
   Updating the app only: Updating the app only
@@ -433,6 +440,7 @@ EN:
   Value *: Value *
   Voltage: Voltage
   Waiting: Waiting
+  When: When
   WiFi: WiFi
 FR:
   _nameAndFlag: Français 🇫🇷
@@ -442,6 +450,7 @@ FR:
   Action *: Action *
   Add: Ajouter
   Admin: Admin
+  Advanced: Avancé
   All: Tous
   API: API
   AQI: IQA  
@@ -468,6 +477,7 @@ FR:
   Dashboard: Tableau de bord
   Data: Données
   Description: Description
+  Device: Appareil
   ds18b20: ds18b20
   e.g. LiteFarm: par ex. LiteFarm
   eCO2: eCO2
@@ -503,8 +513,10 @@ FR:
   hysterisis: hystérésis
   id: id
   If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': Si ce répertoire est invisible dans le sélecteur de fichiers, copiez le fichier ailleurs OU créez un alias vers le répertoire .pio sans point au début.
+  Input: Entrée
   Key: Clé
   Last Seen: Dernière activité
+  Last seen: Vu pour la dernière fois
   LED: LED
   Limit: Limite
   live: En ligne
@@ -549,6 +561,7 @@ FR:
   OTA Key or Device ID: Clé OTA ou ID de l’appareil
   Out: Sortie
   out: sortie
+  Output: Sortie
   Password: Mot de passe
   Permissions: Autorisations
   Phone or Whatsapp: Téléphone ou Whatsapp
@@ -575,6 +588,7 @@ FR:
   Register Platform: Enregistrer la plateforme
   Registered Platforms: Plateformes enregistrées
   Relay: Relais
+  Reporting every: Transmet toutes les
   Retain: Conserver
   Schema: Schéma
   Select: Sélectionner
@@ -616,6 +630,7 @@ FR:
   Unable to find project: Impossible de trouver le projet
   Unauthorized: Non autorisé
   undefined: indéfini
+  Unknown: Inconnu
   Unsupported board: Carte non prise en charge
   Unused: Inutilisé
   Updating the app only: Mise à jour de l'application uniquement
@@ -626,6 +641,7 @@ FR:
   Value *: Valeur *
   Voltage: Tension
   Waiting: En attente
+  When: Quand
   WiFi: WiFi
 HI:
   _nameAndFlag: हिंदी 🇮🇳
@@ -635,6 +651,7 @@ HI:
   Action *: क्रिया *
   Add: जोड़ें
   Admin: एडमिन
+  Advanced: उन्नत
   All: सभी
   API: एपीआई
   AQI: वायु गुणवत्ता सूचकांक  
@@ -661,6 +678,7 @@ HI:
   Dashboard: डैशबोर्ड
   Data: डेटा
   Description: विवरण
+  Device: उपकरण
   ds18b20: ds18b20
   e.g. LiteFarm: उदाहरण के लिए LiteFarm
   eCO2: ईसीओ2
@@ -696,8 +714,10 @@ HI:
   hysterisis: हिस्टेरेसिस
   id: आईडी
   If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': यदि यह निर्देशिका फ़ाइल चयनकर्ता में दिखाई नहीं देती है, तो फ़ाइल को किसी अन्य स्थान पर कॉपी करें या बिना अग्रणी बिंदु के .pio निर्देशिका के लिए एक उपनाम बनाएं।
+  Input: इनपुट
   Key: कुंजी
   Last Seen: अंतिम बार देखा गया
+  Last seen: अंतिम बार देखा
   LED: एलईडी
   Limit: सीमा
   live: चालू
@@ -742,6 +762,7 @@ HI:
   OTA Key or Device ID: OTA कुंजी या डिवाइस आईडी
   Out: आउट
   out: आउट
+  Output: आउटपुट
   Password: पासवर्ड
   Permissions: अनुमतियाँ
   Phone or Whatsapp: फ़ोन या व्हाट्सएप
@@ -768,6 +789,7 @@ HI:
   Register Platform: प्लेटफ़ॉर्म पंजीकृत करें
   Registered Platforms: पंजीकृत प्लेटफ़ॉर्म
   Relay: रिले
+  Reporting every: हर बार रिपोर्ट
   Retain: बनाए रखें
   Schema: स्कीमा
   Select: चुनें
@@ -809,6 +831,7 @@ HI:
   Unable to find project: प्रोजेक्ट नहीं मिल सका
   Unauthorized: अनधिकृत
   undefined: अपरिभाषित
+  Unknown: अज्ञात
   Unsupported board: असमर्थित बोर्ड
   Unused: अप्रयुक्त
   Updating the app only: केवल ऐप अपडेट हो रहा है
@@ -819,6 +842,7 @@ HI:
   Value *: मान *
   Voltage: वोल्टेज
   Waiting: प्रतीक्षा में
+  When: कब
   WiFi: वाई-फ़ाई
 ID:
   _nameAndFlag: Bahasa Indonesia 🇮🇩
@@ -828,6 +852,7 @@ ID:
   Action *: Aksi *
   Add: Tambah
   Admin: Admin
+  Advanced: Lanjutan
   All: Semua
   API: API
   AQI: Indeks Kualitas Udara  
@@ -854,6 +879,7 @@ ID:
   Dashboard: Dasbor
   Data: Data
   Description: Deskripsi
+  Device: Perangkat
   ds18b20: ds18b20
   e.g. LiteFarm: misalnya LiteFarm
   eCO2: eCO2  
@@ -889,8 +915,10 @@ ID:
   hysterisis: histeresis
   id: id
   If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': Jika direktori ini tidak terlihat di pemilih berkas, salin berkas ke tempat lain ATAU buat alias ke direktori .pio tanpa titik di awal.
+  Input: Masukan
   Key: Kunci
   Last Seen: Terakhir Dilihat
+  Last seen: Terakhir terlihat
   LED: LED
   Limit: Batas
   live: Aktif
@@ -935,6 +963,7 @@ ID:
   OTA Key or Device ID: Kunci OTA atau ID Perangkat
   Out: Keluar
   out: keluar
+  Output: Keluaran
   Password: Kata Sandi
   Permissions: Izin
   Phone or Whatsapp: Telepon atau Whatsapp
@@ -961,6 +990,7 @@ ID:
   Register Platform: Daftarkan Platform
   Registered Platforms: Platform Terdaftar
   Relay: Relay
+  Reporting every: Melapor setiap
   Retain: Simpan
   Schema: Skema
   Select: Pilih
@@ -1002,6 +1032,7 @@ ID:
   Unable to find project: Tidak dapat menemukan proyek
   Unauthorized: Tidak sah
   undefined: tidak ditentukan
+  Unknown: Tidak diketahui
   Unsupported board: Papan tidak didukung
   Unused: Tidak digunakan
   Updating the app only: Hanya memperbarui aplikasi
@@ -1012,6 +1043,7 @@ ID:
   Value *: Nilai *
   Voltage: Tegangan
   Waiting: Menunggu
+  When: Ketika
   WiFi: WiFi
 `);
 
@@ -1224,6 +1256,13 @@ class MqttTopic {
   get groupName() {
     const gmt = this.groupMt;
     return (gmt && gmt.state.name) || this.group;
+  }
+  // usableName qualified by which device it is on, e.g. "Greenhouse North:SHT:Temperature".
+  // Goes through nodeMt, not node - the latter is the MqttNode element, which does not exist on a
+  // headless page such as the cards.
+  get fullName() {
+    const owner = this.nodeMt;
+    return owner ? `${owner.usableName}:${this.usableName}` : this.usableName;
   }
   // Suitable name to refer to this, e,g. on a graph etc. for groups with a single value (e.g. relay) this is the name of the group, rather than the name of the leaf
   get usableName() {
@@ -2020,6 +2059,11 @@ class MqttTopicNode extends MqttTopic {
     return devices[prefixes.sort((a, b) => b.length - a.length)[0]];
   }
 
+  // battery, health, ota and the like feed the header and footer rather than getting a section
+  isStatusStripGroup(groupId) {
+    const m = moduleTemplate(groupId);
+    return !!m && !!m.insidefrugaliot;
+  }
   // Group ids in the order modules.yaml declares them, not the order messages happened to arrive,
   // so a card looks the same on every load
   get orderedGroupIds() {

@@ -157,7 +157,8 @@ class MqttReceiver extends MqttElement {
   }
   // What to call this on screen: whatever the caller asked for, else the topic's own name
   get displayLabel() {
-    return this.state.label || (this.mt && this.mt.name);
+    // label="" means the caller labels it itself, which is not the same as no label at all
+    return (typeof this.state.label === 'string') ? this.state.label : (this.mt && this.mt.name);
   }
   //TODO maybe able to just setAttribute("value", val) - which would also do type conversion string to number
   valueSet(val) {
@@ -209,30 +210,42 @@ class MqttReceiver extends MqttElement {
   renderLabel() {
     // noinspection JSUnresolvedVariable
     return [
-      el('label', {for: this.mt.topicPath, textContent: this.displayLabel}),
+      this.displayLabel ? el('label', {for: this.mt.topicPath, textContent: this.displayLabel}) : null,
       !this.state.graphable ? null
       : el('img', {class: "icon", src: `${ImagesUrl}icon_graph.svg`, onclick: this.opengraph.bind(this)})
     ];
   }
-  renderWiredInput() {
+  // showWiredName: only when there is no chooser alongside. The chooser names the source already,
+  // and it updates the moment you pick something where this text waits for the broker to echo -
+  // so the two disagreed until the round trip finished.
+  renderWiredInput(showWiredName) {
     let wiredTopicValue = (this.wiredTopic && this.wiredTopic.state.value != null && this.wiredTopic.state.value.toString()) || this.state.value;
     this.state.elements.textValue = undefined; // Will be defined below if renderValue creates it
     this.state.elements.inputValue = undefined; // Will be defined below if renderInput creates it
     return this.mt.wired
       ? el('span', {class: 'wiredinput'}, [
           this.renderValue(wiredTopicValue), // Value is changed because this call sets elements.textValue, and changeAttribute changes it
-          this.renderWiredName()
+          showWiredName ? this.renderWiredName() : null,
         ])
       : this.renderInput()
   }
 
   renderWiredName() {
-    let wiredTopicName = this.wiredTopic ? `${this.wiredTopic.node.usableName}:${this.wiredTopic.usableName}` : undefined;
+    // fullName, not node.usableName - "node" is the MqttNode element, and there is not one on a
+    // headless page, so this threw and left the widget rendering nothing at all
+    let wiredTopicName = this.wiredTopic ? this.wiredTopic.fullName : undefined;
     return el('span', {class: 'wired', textContent: wiredTopicName})
   }
   renderDropdown() {
     // noinspection JSUnresolvedVariable
-    return el('mqtt-choosetopic', {name: this.mt.name, type: this.mt.type, value: this.getAttribute('wired'), rw: (this.mt.rw === 'r' ? 'w' : 'r'), projectMt: this.mt.projectMt, onchange: this.onwiredchange.bind(this)});
+    // mt.wired is the source of truth. The "wired" attribute is only set on the element path, so on
+    // a headless page the chooser showed "Unused" for a topic that was plainly wired.
+    // name comes from displayLabel so that a caller which labels the row itself (label="") does not
+    // get the topic's name repeated inside the chooser.
+    return el('mqtt-choosetopic', {name: this.displayLabel, type: this.mt.type,
+      value: this.getAttribute('wired') || this.mt.wired,
+      rw: (this.mt.rw === 'r' ? 'w' : 'r'), projectMt: this.mt.projectMt,
+      onchange: this.onwiredchange.bind(this)});
   }
   // Handle cases ....
   // r/!wireable - text value
@@ -253,6 +266,12 @@ class MqttReceiver extends MqttElement {
     // noinspection JSUnresolvedVariable
 
     let wiredTopicValue = this.wiredTopic ? (this.wiredTopic.state.value ?? this.state.value) : this.state.value;
+    // wiring="none" hides the chooser entirely (a compact row labels and lays out its own fields);
+    // wiring="open" shows it already expanded, for a row whose whole purpose is to wire something.
+    const wireable = this.mt.wireable && (this.state.wiring !== 'none');
+    const openIfAsked = (this.state.wiring === 'open') ? {open: true} : {};
+    // With a chooser present the source is already named, and named more accurately
+    const showWiredName = this.mt.wired && !wireable;
     // noinspection JSUnresolvedReference
       return [
       el('link', {rel: 'stylesheet', href: CssUrl}),
@@ -261,13 +280,13 @@ class MqttReceiver extends MqttElement {
         this.mt.rw === 'r'
           ? [
             // noinspection JSUnresolvedVariable
-            this.mt.wireable
+            wireable
               ? // rw==r && wireable  (e.g. manual or out
-              el('details', {} , [
+              el('details', openIfAsked, [
                 el('summary', {}, [
                   this.renderLabel(),
                   this.renderValue(this.state.value),
-                  !this.mt.wired ? null : this.renderWiredName() //TODO-64 may want to look more like the wiredInput version below
+                  showWiredName ? this.renderWiredName() : null,
                 ]),
                 this.state.elements.chooseTopic = this.renderDropdown(),
               ])
@@ -276,18 +295,18 @@ class MqttReceiver extends MqttElement {
                 this.renderValue(this.state.value),
               ]
           ] : [ // rw==='w'
-            this.mt.wireable
+            wireable
               ? // rw==w && wireable   e.g. now or limit
-              el('details', {} , [
+              el('details', openIfAsked, [
                 el('summary', {}, [
                   this.renderLabel(),
-                  this.state.elements.wiredInput = this.renderWiredInput(),
+                  this.state.elements.wiredInput = this.renderWiredInput(showWiredName),
                 ]),
                 this.state.elements.chooseTopic = this.renderDropdown(),
               ])
-              : [ // rw==w !wireable
+              : [ // rw==w !wireable, or a caller that asked for no chooser
                 this.renderLabel(),
-                this.renderInput(),
+                this.renderWiredInput(showWiredName),
               ]
           ])
     ]
@@ -372,13 +391,14 @@ class MqttColor extends MqttTransmitter {
 customElements.define('mqtt-color', MqttColor);
 class MqttToggle extends MqttTransmitter {
   // When the labels attribute is absent, renders a checkbox.
-  // When labels="false-label,true-label" is set, renders a two-option select dropdown instead.
+  // When labels="false-label,true-label" is set, renders a button showing the current label that
+  // flips when clicked - one tap, and it reads as a state rather than as a menu of choices.
   valueSet(val) {
     super.valueSet(val);
     this.state.indeterminate = false; // Checkbox should default to indeterminate till get a message
     if (this.state.elements.inputValue) {
       if (this.hasLabels) {
-        this.state.elements.inputValue.value = val ? '1' : '0';
+        this.state.elements.inputValue.textContent = this.textValue;
       } else {
         this.state.elements.inputValue.checked = !!this.state.value;
         this.state.elements.inputValue.indeterminate = typeof(this.state.value) == "undefined";
@@ -416,8 +436,12 @@ class MqttToggle extends MqttTransmitter {
 
   // TODO - make sure this doesn't get triggered by a message from server.
   onChange(e) {
-    // Select option values are '0'/'1'; checkbox uses .checked
-    this.state.value = this.hasLabels ? (e.target.value === '1') : e.target.checked;
+    this.state.value = e.target.checked;
+    this.publish();
+  }
+  onToggleClick(e) {
+    this.state.value = !this.state.value;
+    e.target.textContent = this.textValue;
     this.publish();
   }
   get textValue() {
@@ -441,11 +465,10 @@ class MqttToggle extends MqttTransmitter {
 
   renderInput() {
     if (this.hasLabels) {
-      // Two-option select where option values are '0' (false) and '1' (true)
-      return this.state.elements.inputValue = el('select', {class: 'val', onchange: this.onChange.bind(this)}, [
-        el('option', {value: '0', textContent: this.state.falseLabel, selected: !this.state.value}),
-        el('option', {value: '1', textContent: this.state.trueLabel,  selected: !!this.state.value}),
-      ]);
+      return this.state.elements.inputValue = el('button', {
+        class: 'val toggle', type: 'button', i8n: false, textContent: this.textValue,
+        onclick: this.onToggleClick.bind(this),
+      });
     }
     return this.state.elements.inputValue = el('input', {class: 'val', type: 'checkbox', id: this.mt.topicPath,
       checked: !!this.state.value, indeterminate: typeof(this.state.value) == "undefined",
@@ -514,7 +537,7 @@ class MqttBar extends MqttReceiver {
       el('div', {class: "outer mqtt-bar"}, [
 
         el('div', {class: "name"}, [
-          el('label', {for: this.mt.topicPath, textContent: this.displayLabel}),
+          this.displayLabel ? el('label', {for: this.mt.topicPath, textContent: this.displayLabel}) : null,
           !this.state.graphable ? null
           : el('img', {class: "icon", src: `${ImagesUrl}icon_graph.svg`, onclick: this.opengraph.bind(this)}),
         ]),

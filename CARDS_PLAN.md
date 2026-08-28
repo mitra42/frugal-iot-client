@@ -29,7 +29,7 @@ Phases are ordered by what they unblock. Sizes are relative, not hours.
 | 2 | Schema: `devices.yaml`, `width`, `units`, capabilities | M | 4, 8 | **DONE** |
 | 3 | Split `webcomponents.js` | M | — (but easier before 4+) | **DONE** |
 | 4 | Data tree: move roll-up down, add derived getters | M | 5, 6 | **DONE** |
-| 5 | The card element — summary / front / back | L | 6, 7 | no (needs a page) |
+| 5 | The card element — summary / front / back | L | 6, 7 | **DONE** |
 | 6 | The grid — layout, drag, `localStorage` | M | 7 | no |
 | 7 | The new page, project front/back, admin cards | L | — | yes |
 | 8 | Permissions: `WRITE`, `OTAFLASH` | S | — | yes |
@@ -428,6 +428,53 @@ already has, plus the header buttons (⌄ collapse, ⚙ back) and the battery / 
   `mqtt-text` now display `mt.formatted`, and the bar gained the min/max end labels §9 asked for.
   Both improvements land on the old UI too: `3940` → `3940 mV`, `30.142857` → `30.1°C`, and every
   bar now says what its range is.
+
+**Back mode is done**, so phase 5 is complete. Flat sections in fixed order — Device, Controls,
+readings by module, Advanced — with `<details>` used exactly once, for Advanced. The control section
+is the compact `[>] [ 32.0 ] ± [ 3.0 ]` row lifted from `dashboard_example.html` (D-19), with the
+input and output as the topics' own widgets so their wiring dropdowns come for free. Every module
+gets a section, including ones the front leaves out — which is how a device's relay stays reachable
+when its `devices.yaml` entry does not list it.
+
+Editing is **not** gated yet: `WRITE` arrives in phase 8, and until then the back is as editable as
+the existing UI is.
+
+Reviewing the back turned up six more, and one of them was a genuine headless crash:
+
+- **`renderWiredName` reached `wiredTopic.node`** — the `MqttNode` *element*, which a headless page
+  does not have. It threw inside `connectedCallback`, so the widget rendered nothing at all and the
+  wiring chooser simply appeared to be missing. A `mt.fullName` getter now goes through `nodeMt`.
+  There is a test for the failure *mode* as well as the bug: no widget on a card may render empty.
+- **`labels="<,>"` rendered a two-option `<select>`.** D-19 says a comparison should flip in one tap,
+  and I had described the existing behaviour wrongly when writing it. It is a button showing the
+  current symbol, and clicking it flips.
+- **A wireable field inside the compact row wrapped itself in a `<details>`**, so a stray disclosure
+  sat above the limit and revealed a second copy of the label and value when opened. There is now a
+  `wiring` attribute: `none` for a row that lays out and labels its own fields, `open` for one whose
+  purpose is to wire something.
+- **The output's chooser was there but collapsed**, which is the same thing as absent when the row
+  exists to be wired. `wiring="open"` on input and output.
+- **Every chooser claimed "Unused".** `renderDropdown` read the `wired` *attribute*, which is only
+  ever set on the element path, so on a headless card it saw null — each chooser was misreporting
+  its own state. It reads `mt.wired` now.
+- **The wired source was named twice**, once by the chooser and once as text beside the value, and
+  the text then sat stale until the broker echoed a change back, so the two disagreed. The chooser
+  names it; the text only appears where `wiring="none"` means there is no chooser to do so.
+- **My first attempt at the overflow was wrong in a way the design criteria already warned about.**
+  I wrote `.fi-when input { max-width }` from the page stylesheet, but those inputs are inside the
+  widgets' shadow roots, so it never applied. It is a custom property now — which §3.2 says is the
+  only way to style across that boundary.
+- **The gear on the back did nothing** — the back *is* where the gear goes. It is gone, and `✕`
+  returns to the front rather than all the way to the summary.
+- **Out-of-range readings were only red on the front**, and the hysteresis field overflowed the card.
+
+Two more pre-existing defects surfaced while building it:
+
+- **`label=""` was indistinguishable from no label.** `displayLabel` used `||`, so an explicitly
+  empty label fell back to the topic name and the back read "Name  Node Name  [input]". It now
+  treats any string, including empty, as the caller labelling it themselves.
+- **`min`/`max` were stringified unconditionally**, so a text topic got `min="undefined"` in the
+  attribute and `min="NaN"` on the input it rendered.
 
 Reviewing the front turned up four more, three of them in code that predates the cards:
 

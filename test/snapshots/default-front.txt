@@ -85,6 +85,27 @@
                   <img class="icon">
                   <span class="val">
                     "3940 mV"
+          <mqtt-group group="health" name="System" class="group health">
+            #shadow
+              <details class="mqtt-group health">
+                <summary>
+                  <span>
+                    "System"
+                <slot>
+            <mqtt-text min="0" max="4" color="blue">
+              #shadow
+                <div class="mqtt-text health_wifibars outer">
+                  <label>
+                    "WiFi"
+                  <span class="val">
+                    "3"
+            <mqtt-text color="blue">
+              #shadow
+                <div class="mqtt-text health_wifissid outer">
+                  <label>
+                    "SSID"
+                  <span class="val">
+                    "shed-ap"
         <div class="topics">
           <slot>
     <mqtt-groupsht group="sht" name="SHT" class="group sht">

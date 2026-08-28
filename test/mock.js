@@ -11,12 +11,14 @@ const PROJECT = 'lotus';
 
 // One device's worth of messages. `id` is the node id; `groups` maps twig -> payload.
 // Values are strings because that is what arrives off the wire.
-function device(id, name, twigs, { ota = 'sht30_c3_pico', battery = '3940' } = {}) {
+function device(id, name, twigs, { ota = 'sht30_c3_pico', battery = '3940', wifi = 'shed-ap' } = {}) {
   const msgs = [[`${ORG}/${PROJECT}`, id]]; // Discovery: node id published on the project topic
   const base = `${ORG}/${PROJECT}/${id}`;
   msgs.push([`${base}/frugal_iot/name`, name]);
+  msgs.push([`${base}/frugal_iot/description`, `${name} - test scenario`]);
   if (ota) msgs.push([`${base}/ota/key`, ota]);
   if (battery) msgs.push([`${base}/battery/battery`, battery]);
+  if (wifi) { msgs.push([`${base}/health/wifibars`, '3']); msgs.push([`${base}/health/wifissid`, wifi]); }
   Object.entries(twigs).forEach(([twig, val]) => msgs.push([`${base}/${twig}`, val]));
   return msgs;
 }

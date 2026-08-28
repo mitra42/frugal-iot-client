@@ -178,6 +178,195 @@ describe('front mode', () => {
   });
 });
 
+describe('back mode', () => {
+  test('sections in a fixed order: device, controls, readings, advanced', () => {
+    const { card } = cardFor('control-wired', 'esp8266-fb94bb', { mode: 'back', at: T0 });
+    const titles = [...card.querySelectorAll('.fi-section__title')].map((h) => h.textContent);
+    assert.equal(titles[0], 'Device');
+    assert.ok(titles.includes('Control'), `no control section in ${titles}`);
+    assert.ok(titles.indexOf('SHT') > titles.indexOf('Control'), 'readings come after controls');
+    assert.ok(card.querySelector('details.fi-advanced'), 'Advanced is the only collapsed part');
+    card.remove();
+  });
+
+  test('a widget told to have no label does not fall back to the topic name', () => {
+    // The field row supplies the label; the widget repeating it read as "Name  Node Name  [input]"
+    const { card } = cardFor('one-device', 'esp8266-fb94bb', { mode: 'back', at: T0 });
+    const nameWidget = card.querySelector('mqtt-text[topic$="frugal_iot/name"]');
+    assert.equal(nameWidget.shadowRoot.querySelector('label'), null);
+    card.remove();
+  });
+
+  test('a text topic gets no min or max attributes', () => {
+    const { card } = cardFor('one-device', 'esp8266-fb94bb', { mode: 'back', at: T0 });
+    const nameWidget = card.querySelector('mqtt-text[topic$="frugal_iot/name"]');
+    assert.equal(nameWidget.getAttribute('min'), null, 'String(undefined) put "undefined" here');
+    assert.equal(nameWidget.getAttribute('max'), null);
+    card.remove();
+  });
+
+  test('nothing but Advanced is collapsed', () => {
+    const { card } = cardFor('control-wired', 'esp8266-fb94bb', { mode: 'back', at: T0 });
+    assert.equal(card.querySelectorAll('details').length, 1);
+    card.remove();
+  });
+
+  test('the device section carries what you need to diagnose a quiet device', () => {
+    const { card } = cardFor('one-device', 'esp8266-fb94bb', { mode: 'back', at: T0 });
+    const text = card.querySelector('.fi-section').textContent;
+    for (const wanted of ['esp8266-fb94bb', '3940 mV', 'sht30_c3_pico']) {
+      assert.ok(text.includes(wanted), `device section missing ${wanted}: ${text}`);
+    }
+    card.remove();
+  });
+
+  test('name and description are editable, the id is not', () => {
+    const { card } = cardFor('one-device', 'esp8266-fb94bb', { mode: 'back', at: T0 });
+    const device = card.querySelector('.fi-section');
+    assert.equal(device.querySelectorAll('mqtt-text').length, 2, 'name and description');
+    card.remove();
+  });
+
+  test('the control is the compact form, not a labelled row per setting', () => {
+    const { card } = cardFor('control-wired', 'esp8266-fb94bb', { mode: 'back', at: T0 });
+    const when = card.querySelector('.fi-when');
+    assert.ok(when, 'no inline when row');
+    assert.ok(when.querySelector('mqtt-toggle'), 'the comparison is a two-state control');
+    assert.equal(when.querySelectorAll('mqtt-text').length, 2, 'limit and hysteresis');
+    assert.match(when.textContent, /±/, 'the symbol, not the word Hysteresis');
+    card.remove();
+  });
+
+  test('the control input and output show their wiring chooser, already open', () => {
+    const { card } = cardFor('control-wired', 'esp8266-fb94bb', { mode: 'back', at: T0 });
+    const labels = [...card.querySelectorAll('.fi-field__label')].map((l) => l.textContent);
+    assert.ok(labels.includes('Input'));
+    assert.ok(labels.includes('Output'));
+    for (const leaf of ['now', 'out']) {
+      const w = card.querySelector(`[topic$="controlhysteresis/${leaf}"]`);
+      const details = w.shadowRoot.querySelector('details');
+      assert.ok(details, `${leaf} should offer wiring`);
+      assert.ok(details.hasAttribute('open'), `${leaf}'s chooser was hidden behind a disclosure`);
+      assert.ok(details.querySelector('mqtt-choosetopic'), `${leaf} has no chooser`);
+    }
+    card.remove();
+  });
+
+  test('the chooser shows what the topic is wired to, not "Unused"', () => {
+    // The "wired" attribute is only ever set on the element path, so a headless card read null and
+    // every chooser claimed to be unwired
+    const { card, nodeMt } = cardFor('control-wired', 'esp8266-fb94bb', { mode: 'back', at: T0 });
+    const now = card.querySelector('[topic$="controlhysteresis/now"]');
+    const chooser = now.shadowRoot.querySelector('mqtt-choosetopic');
+    assert.equal(chooser.getAttribute('value'), nodeMt.groups.controlhysteresis.topics.now.wired);
+    const selected = [...chooser.shadowRoot.querySelectorAll('option')].find((o) => o.selected);
+    assert.ok(selected, 'no option selected at all');
+    assert.equal(selected.textContent, 'Greenhouse North:SHT:Temperature');
+    card.remove();
+  });
+
+  test('the wired source is named once, by the chooser, not twice', () => {
+    // The summary also printed the source name, which then sat stale until the broker echoed the
+    // change back - so the text and the chooser disagreed about what was wired
+    const { card } = cardFor('control-wired', 'esp8266-fb94bb', { mode: 'back', at: T0 });
+    const now = card.querySelector('[topic$="controlhysteresis/now"]');
+    assert.equal(now.shadowRoot.querySelector('.wired'), null, 'named twice');
+    assert.ok(now.shadowRoot.querySelector('mqtt-choosetopic'), 'and the chooser is what names it');
+    card.remove();
+  });
+
+  test('with no chooser, the source is still named', () => {
+    // wiring="none" suppresses the chooser, so the text is the only thing saying where the value
+    // comes from and has to stay
+    const { card, nodeMt } = cardFor('control-wired', 'esp8266-fb94bb', { mode: 'back', at: T0 });
+    const limit = nodeMt.groups.controlhysteresis.topics.limit;
+    limit.setWired('dev/lotus/esp8266-fb94bb/sht/humidity');
+    card.renderAndReplace();
+    const w = card.querySelector('[topic$="controlhysteresis/limit"]');
+    assert.equal(w.shadowRoot.querySelector('mqtt-choosetopic'), null, 'compact row has no chooser');
+    assert.ok(w.shadowRoot.querySelector('.wired'), 'so it must say where the value comes from');
+    card.remove();
+  });
+
+  test('the chooser does not repeat a label the row already carries', () => {
+    const { card } = cardFor('control-wired', 'esp8266-fb94bb', { mode: 'back', at: T0 });
+    const chooser = card.querySelector('[topic$="controlhysteresis/now"]')
+      .shadowRoot.querySelector('mqtt-choosetopic');
+    assert.equal(chooser.shadowRoot.querySelector('label').textContent, '',
+      'the field row already says "Input"');
+    card.remove();
+  });
+
+  test('the compact row carries no wiring chooser of its own', () => {
+    // limit is wireable, so mqtt-text wrapped it in a <details> - a stray disclosure above the
+    // field that revealed a second copy of the label and value when opened
+    const { card } = cardFor('control-wired', 'esp8266-fb94bb', { mode: 'back', at: T0 });
+    const limit = card.querySelector('[topic$="controlhysteresis/limit"]');
+    assert.equal(limit.shadowRoot.querySelector('details'), null);
+    assert.ok(limit.shadowRoot.querySelector('input'), 'but it is still editable');
+    card.remove();
+  });
+
+  test('the comparison flips on one tap instead of being a menu', () => {
+    const { card } = cardFor('control-wired', 'esp8266-fb94bb', { mode: 'back', at: T0 });
+    const greater = card.querySelector('[topic$="controlhysteresis/greater"]');
+    const button = greater.shadowRoot.querySelector('button.toggle');
+    assert.ok(button, 'labels= used to render a two-option select');
+    assert.equal(button.textContent, '>');
+    button.click();
+    assert.equal(button.textContent, '<');
+    card.remove();
+  });
+
+  test('every widget actually renders - a throw in render leaves one silently empty', () => {
+    // renderWiredName reached wiredTopic.node, the MqttNode element, which a headless page has
+    // none of. It threw inside connectedCallback, so the widget just came out blank.
+    for (const mode of ['front', 'back']) {
+      const { card } = cardFor('control-wired', 'esp8266-fb94bb', { mode, at: T0 });
+      const empty = [...card.querySelectorAll('mqtt-text, mqtt-toggle, mqtt-bar, mqtt-choosetopic')]
+        .filter((w) => !w.shadowRoot || (w.shadowRoot.childNodes.length === 0))
+        .map((w) => `${w.localName}[${w.getAttribute('topic')}]`);
+      assert.deepEqual(empty, [], `${mode}: these rendered nothing`);
+      card.remove();
+    }
+  });
+
+  test('a bad reading is red on the back too, not only on the front', () => {
+    const { card } = cardFor('out-of-range', 'esp8266-broken', { mode: 'back', at: T0 });
+    assert.equal(card.querySelectorAll('.fi-row--outofrange').length, 2);
+    card.remove();
+  });
+
+  test('wifi appears when the device reports it', () => {
+    const { card } = cardFor('one-device', 'esp8266-fb94bb', { mode: 'back', at: T0 });
+    assert.match(card.querySelector('.fi-section').textContent, /shed-ap/);
+    card.remove();
+  });
+
+  test('the close mark returns to the front, not all the way to the summary', () => {
+    const { card } = cardFor('one-device', 'esp8266-fb94bb', { mode: 'back', at: T0 });
+    assert.equal(card.querySelectorAll('.fi-btn:not(.fi-btn--close)').length, 0, 'no gear on the back');
+    card.querySelector('.fi-btn--close').click();
+    assert.equal(card.getAttribute('mode'), 'front');
+    card.remove();
+  });
+
+  test('every module gets a section, including ones the front leaves out', () => {
+    // control-wired's device has a relay the sht30 front entry does not list - the back shows it
+    const { card } = cardFor('control-wired', 'esp8266-fb94bb', { mode: 'back', at: T0 });
+    const titles = [...card.querySelectorAll('.fi-section__title')].map((h) => h.textContent);
+    assert.ok(titles.includes('Relay'), `relay missing from ${titles}`);
+    card.remove();
+  });
+
+  test('the status strip modules do not get sections of their own', () => {
+    const { card } = cardFor('one-device', 'esp8266-fb94bb', { mode: 'back', at: T0 });
+    const titles = [...card.querySelectorAll('.fi-section__title')].map((h) => h.textContent);
+    for (const inside of ['Battery', 'OTA', 'System']) assert.ok(!titles.includes(inside), inside);
+    card.remove();
+  });
+});
+
 describe('it updates in place as messages arrive', () => {
   test('a new value changes the chip without rebuilding the card', () => {
     const { card, nodeMt, projectMt } = cardFor('one-device', 'esp8266-fb94bb', { at: T0 });
@@ -200,6 +389,7 @@ describe('rendered output', () => {
     ['one-device', 'esp8266-fb94bb', 'summary'],
     ['mixed-sensors', 'esp8266-agri', 'summary'],
     ['control-wired', 'esp8266-fb94bb', 'front'],
+    ['control-wired', 'esp8266-fb94bb', 'back'],
   ]) {
     test(`${scenario} ${mode} card`, () => {
       const { card } = cardFor(scenario, nodeId, { at: T0, mode });

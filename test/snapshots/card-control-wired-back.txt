@@ -1,0 +1,196 @@
+<mqtt-devicecard mode="back">
+  <div class="fi-card fi-card--back fi-status-live">
+    <div class="fi-card__head">
+      <span class="fi-status">
+        "●"
+      <span class="fi-card__name">
+        "Greenhouse North"
+      <span class="fi-card__meta">
+        <img class="fi-battery">
+      <button class="fi-btn fi-btn--close">
+        "✕"
+    <div class="fi-card__sections">
+      <section class="fi-section">
+        <h4 class="fi-section__title">
+          "Device"
+        <div class="fi-field">
+          <span class="fi-field__label">
+            "Name"
+          <span class="fi-field__value">
+            <mqtt-text topic="dev/lotus/esp8266-fb94bb/frugal_iot/name" value="Greenhouse North" label="" type="text">
+              #shadow
+                <div class="mqtt-text frugal_iot_name outer">
+                  <input name="dev/lotus/esp8266-fb94bb/frugal_iot/name" value="Greenhouse North" class="val" type="text">
+        <div class="fi-field">
+          <span class="fi-field__label">
+            "Description"
+          <span class="fi-field__value">
+            <mqtt-text topic="dev/lotus/esp8266-fb94bb/frugal_iot/description" value="Greenhouse North - test scenario" label="" type="text">
+              #shadow
+                <div class="mqtt-text frugal_iot_description outer">
+                  <input name="dev/lotus/esp8266-fb94bb/frugal_iot/description" value="Greenhouse North - test scenario" class="val" type="text">
+        <div class="fi-field">
+          <span class="fi-field__label">
+            "Node ID"
+          <span class="fi-field__value">
+            "esp8266-fb94bb"
+        <div class="fi-field">
+          <span class="fi-field__label">
+            "Last seen"
+          <span class="fi-field__value">
+            "now"
+        <div class="fi-field">
+          <span class="fi-field__label">
+            "Battery"
+          <span class="fi-field__value">
+            "3940 mV (47%)"
+        <div class="fi-field">
+          <span class="fi-field__label">
+            "WiFi"
+          <span class="fi-field__value">
+            "3 shed-ap"
+        <div class="fi-field">
+          <span class="fi-field__label">
+            "OTA Key"
+          <span class="fi-field__value">
+            "sht30_c3_pico"
+      <section class="fi-section">
+        <h4 class="fi-section__title">
+          "Control"
+        <div class="fi-field">
+          <span class="fi-field__label">
+            "Input"
+          <span class="fi-field__value">
+            <mqtt-text topic="dev/lotus/esp8266-fb94bb/controlhysteresis/now" value="30.1" label="" type="float" min="0" max="100" color="black">
+              #shadow
+                <div class="mqtt-text controlhysteresis_now outer">
+                  <details open="">
+                    <summary>
+                      <span class="wiredinput">
+                        <span class="val">
+                          "30.1"
+                    <mqtt-choosetopic name="" value="dev/lotus/esp8266-fb94bb/sht/temperature" type="float">
+                      #shadow
+                        <div class="outer mqtt-choosetopic">
+                          <label>
+                          <select>
+                            <option value="">
+                              "Unused"
+                            <option value="dev/lotus/esp8266-fb94bb/battery/battery">
+                              "Greenhouse North:Battery:Voltage"
+                            <option value="dev/lotus/esp8266-fb94bb/health/wifibars">
+                              "Greenhouse North:System:WiFi"
+                            <option value="dev/lotus/esp8266-fb94bb/sht/temperature">
+                              "Greenhouse North:SHT:Temperature"
+                            <option value="dev/lotus/esp8266-fb94bb/sht/humidity">
+                              "Greenhouse North:SHT:Humidity"
+        <div class="fi-field">
+          <span class="fi-field__label">
+            "When"
+          <span class="fi-field__value">
+            <div class="fi-when">
+              <mqtt-toggle topic="dev/lotus/esp8266-fb94bb/controlhysteresis/greater" value="true" label="" type="bool">
+                #shadow
+                  <div class="mqtt-toggle outer">
+                    <button class="val toggle" type="button">
+                      ">"
+              <mqtt-text topic="dev/lotus/esp8266-fb94bb/controlhysteresis/limit" value="32" label="" type="float">
+                #shadow
+                  <div class="mqtt-text controlhysteresis_limit outer">
+                    <input name="dev/lotus/esp8266-fb94bb/controlhysteresis/limit" value="32" class="val" type="number">
+              <span class="fi-when__pm">
+                "±"
+              <mqtt-text topic="dev/lotus/esp8266-fb94bb/controlhysteresis/hysteresis" value="3" label="" type="float">
+                #shadow
+                  <div class="mqtt-text controlhysteresis_hysteresis outer">
+                    <input name="dev/lotus/esp8266-fb94bb/controlhysteresis/hysteresis" value="3" class="val" type="number">
+        <div class="fi-field">
+          <span class="fi-field__label">
+            "Output"
+          <span class="fi-field__value">
+            <mqtt-toggle topic="dev/lotus/esp8266-fb94bb/controlhysteresis/out" value="true" label="" type="bool" color="black">
+              #shadow
+                <div class="mqtt-toggle outer">
+                  <details open="">
+                    <summary>
+                      <span class="val">
+                        "✓"
+                    <mqtt-choosetopic name="" value="dev/lotus/esp8266-fb94bb/set/relay/on" type="bool">
+                      #shadow
+                        <div class="outer mqtt-choosetopic">
+                          <label>
+                          <select>
+                            <option value="">
+                              "Unused"
+                            <option value="dev/lotus/esp8266-fb94bb/set/relay/on">
+                              "Greenhouse North:Relay"
+                            <option value="dev/lotus/esp8266-fb94bb/set/controlhysteresis/greater">
+                              "Greenhouse North:Control:Greater Than"
+      <section class="fi-section">
+        <h4 class="fi-section__title">
+          "Relay"
+        <div class="fi-field fi-field--reading">
+          <mqtt-toggle topic="dev/lotus/esp8266-fb94bb/relay/on" value="true" label="On" type="bool" color="black">
+            #shadow
+              <div class="mqtt-toggle outer">
+                <label>
+                  "On"
+                <img class="icon">
+                <input class="val" type="checkbox">
+      <section class="fi-section">
+        <h4 class="fi-section__title">
+          "SHT"
+        <div class="fi-field fi-field--reading">
+          <mqtt-bar topic="dev/lotus/esp8266-fb94bb/sht/temperature" value="30.142857" label="Temperature" type="float" min="0" max="50" color="red">
+            #shadow
+              <div class="outer mqtt-bar">
+                <div class="name">
+                  <label>
+                    "Temperature"
+                  <img class="icon">
+                <div class="bar">
+                  <span class="left">
+                    <span class="val">
+                      "30.1°C"
+                <div class="ends">
+                  <span class="min">
+                    "0"
+                  <span class="max">
+                    "50"
+                <slot>
+        <div class="fi-field fi-field--reading">
+          <mqtt-bar topic="dev/lotus/esp8266-fb94bb/sht/humidity" value="85.1" label="Humidity" type="float" min="0" max="100" color="blue">
+            #shadow
+              <div class="outer mqtt-bar">
+                <div class="name">
+                  <label>
+                    "Humidity"
+                  <img class="icon">
+                <div class="bar">
+                  <span class="left">
+                    <span class="val">
+                      "85.1%RH"
+                <div class="ends">
+                  <span class="min">
+                    "0"
+                  <span class="max">
+                    "100"
+                <slot>
+      <details class="fi-advanced">
+        <summary>
+          "Advanced"
+        <div class="fi-field">
+          <span class="fi-field__label">
+            "Topic"
+          <span class="fi-field__value">
+            "dev/lotus/esp8266-fb94bb"
+        <div class="fi-field">
+          <span class="fi-field__label">
+            "OTA Key"
+          <span class="fi-field__value">
+            "sht30_c3_pico"
+        <div class="fi-field">
+          <span class="fi-field__label">
+            "Reporting every"
+          <span class="fi-field__value">
+            "Unknown"

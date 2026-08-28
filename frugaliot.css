@@ -420,3 +420,38 @@ div.outer.mqtt-bar > div.ends {
     font-size: 0.75em;
     font-variant-numeric: tabular-nums;
 }
+
+/* Back of a card: flat sections, no drop-downs except Advanced (CARDS_UX.md D-4) */
+.fi-card__sections { display: flex; flex-direction: column; gap: 14px; margin-top: 8px; }
+.fi-section__title {
+    margin: 0 0 4px;
+    font-size: 0.75em;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--fi-muted);
+    border-bottom: 1px solid var(--fi-border);
+    padding-bottom: 2px;
+}
+.fi-field { display: flex; gap: 10px; align-items: baseline; padding: 2px 0; }
+.fi-field__label { color: var(--fi-muted); flex: 0 0 8em; font-size: 0.9em; }
+.fi-field__value { flex: 1; min-width: 0; font-variant-numeric: tabular-nums; }
+.fi-field--reading { display: block; }
+.fi-when { display: flex; align-items: baseline; gap: 6px; }
+.fi-when__pm { color: var(--fi-muted); }
+.fi-advanced summary { color: var(--fi-muted); font-size: 0.85em; cursor: pointer; }
+/* Keep the inline control row inside the card.
+   The inputs live in the widgets' shadow roots, so a page-level ".fi-when input" cannot reach them -
+   that is what the first attempt got wrong. Custom properties DO cross the boundary, so the widget's
+   own stylesheet (this file, loaded into each shadow root) reads one that the light DOM sets. */
+.mqtt-text input.val, .mqtt-text span.val { max-width: var(--fi-val-max, none); box-sizing: border-box; }
+.mqtt-choosetopic select { max-width: 100%; box-sizing: border-box; }
+.fi-when { --fi-val-max: 5em; }
+.fi-when mqtt-text, .fi-when mqtt-toggle { flex: 0 1 auto; min-width: 0; }
+.fi-when button.toggle { min-width: 2.2em; padding: 2px 6px; cursor: pointer; }
+/* Nothing inside a card may make it wider than the grid cell it sits in */
+.fi-card, .fi-field, .fi-field__value, .fi-when { min-width: 0; }
+.fi-field__value { overflow-wrap: anywhere; }
+.fi-field__value mqtt-text, .fi-field__value mqtt-toggle, .fi-field__value mqtt-choosetopic {
+    display: block;
+    max-width: 100%;
+}
