@@ -414,7 +414,7 @@ ID:
     // ── Read current on/off state from the data tree ──
     // Changes are delivered via frugaliot:groupchanged (see listener below); no MutationObserver needed.
     const groupMt = nodeMt.groups[groupId];
-    if (groupMt) updateOnOff(groupMt.state.on);
+    if (groupMt) updateOnOff(groupMt.state.out);
   }
 
   /* ── React to control groups appearing via the topic data tree ──
@@ -437,7 +437,7 @@ ID:
       wireUpDashboard(currentEntry);
       syncWiringChoosers();
     } else if (changed.includes('on')) {
-      updateOnOff(groupMt.state.on);
+      updateOnOff(groupMt.state.out);
     }
   });
 

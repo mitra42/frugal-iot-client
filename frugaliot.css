@@ -48,22 +48,22 @@ div.mqtt-text {
     .icon { /* mqtt-toggle , mqtt-bar (graph) */
         height:1em;width:1em;float:right;
         @media (max-width:1001px){
-            height:1.5em;width:1.5em;
+            height:var(--fi-icon-size, 1.5em);width:var(--fi-icon-size, 1.5em);
         }
     }
     .language-picker, language-picker, .language-picker select {
-        float: right;
+        float: var(--fi-chrome-float, right);
         text-align: right;
         border: 0px;
         @media screen and (max-width: 1001px ) {
-            font-size: x-large;
+            font-size: var(--fi-chrome-font, x-large);
         }
     }
     /* In MqttClient */
     details.mqtt-client {
-        margin-left: 1em; margin-right: 1em; float: right;
+        margin-left: 1em; margin-right: 1em; float: var(--fi-chrome-float, right);
         @media screen and (max-width: 1001px ) {
-            font-size: xx-large;
+            font-size: var(--fi-chrome-font, xx-large);
         }
     }
     /* In MqttProject */
@@ -110,9 +110,9 @@ div.mqtt-text {
         .right {background-color:white; display:inline-block;}
         .val {margin:5px;}
         @media (max-width:1001px){
-            .left, .right {height: 2em;}
-            .val {font-size: xx-large;}
-            label {font-size: x-large;}
+            .left, .right {height: var(--fi-chrome-line, 2em);}
+            .val {font-size: var(--fi-chrome-font, xx-large);}
+            label {font-size: var(--fi-chrome-font, x-large);}
         }
     }
 
@@ -120,9 +120,9 @@ div.mqtt-text {
     .mqtt-choosetopic {
         .outer { border: 0px,black,solid;  margin: 0.2em; }
         @media (max-width:1001px){
-            .dropdown {font-size: x-large;}
-            select { font-size: x-large;}
-            label {font-size: x-large;}
+            .dropdown {font-size: var(--fi-chrome-font, x-large);}
+            select { font-size: var(--fi-chrome-font, x-large);}
+            label {font-size: var(--fi-chrome-font, x-large);}
         }
     }
 
@@ -177,7 +177,7 @@ div.mqtt-text {
         }
         select { margin-left: 2em; }
         @media screen and (max-width: 1001px ) {
-            .dropdown { font-size: xxx-large; }
+            .dropdown { font-size: var(--fi-chrome-font, xxx-large); }
             .dropdown select { font-size: inherit; }
             .dropdownsadmin {
                 display: flex;
@@ -188,7 +188,7 @@ div.mqtt-text {
                 flex: 0 0 auto;
                 margin-left: 0;
             }
-            select { font-size: xx-large; }
+            select { font-size: var(--fi-chrome-font, xx-large); }
         }
     }
 
@@ -260,7 +260,6 @@ div.mqtt-text {
             button { font-size: x-large; padding: 10px; border-radius: 10px; }
         }
     }
-}
 /* Claude suggested this not to impact the Login page - not sure if it does */
 /* Fix: was width:50% shared with the 2-tab login view, breaking the 5-tab dashboard bar */
 
@@ -290,3 +289,332 @@ div.mqtt-text {
     button { margin-right: 0.5em; }
 }
 
+
+/* ============================================================================
+ * Device cards - see CARDS_UX.md
+ *
+ * These render in the light DOM, not a shadow root, so ordinary selectors reach them and the
+ * fi- prefix is what keeps them from colliding with anything else on the page.
+ *
+ * Colours and spacing are custom properties because those DO cross a shadow boundary, so the
+ * widgets inside a card (mqtt-bar and friends) can be themed from here without :host-context.
+ * ========================================================================= */
+:root {
+    /* The project's greens, from frugaliot.naturalinnovation.org: #2ecc71 leaf, #27ae60 deeper.
+       The main site puts white text over them; these screens are read outdoors in sunlight and in
+       dim sheds at night, so the green is a tint behind near-black text rather than a fill under
+       white. #1a1a1a on #f3faf6 is about 16:1, which survives both. */
+    --fi-leaf:     #2ecc71;
+    --fi-leaf-deep:#27ae60;
+    --fi-card-bg:  #f3faf6;   /* pale green, so a card reads as a card against the page */
+    --fi-page-bg:  #e8f1eb;
+    --fi-border:   #cfe3d6;
+    --fi-text:     #1a1a1a;
+    --fi-muted:    #5d6b63;
+    --fi-radius:   8px;
+    --fi-gap:      12px;
+    /* Status: paired with a different shape in the markup, never colour alone */
+    --fi-live:     var(--fi-leaf-deep);
+    --fi-stale:    #d98a0b;
+    --fi-offline:  #9a9a9a;
+}
+
+.fi-card {
+    background: var(--fi-card-bg);
+    border: 1px solid var(--fi-border);
+    border-radius: var(--fi-radius);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .06);
+    padding: 10px 12px;
+    min-height: 44px;          /* A touch target, on a phone held at arm's length */
+    cursor: pointer;
+    color: var(--fi-text);
+}
+.fi-card__head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+.fi-card__name {
+    font-weight: 600;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.fi-card__meta {
+    color: var(--fi-muted);
+    font-size: 0.85em;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+.fi-card__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 4px;
+}
+/* The value is the loudest thing on the card - these get read outdoors, on a phone, in sunlight */
+.fi-chip {
+    font-size: 1.2em;
+    font-variant-numeric: tabular-nums;   /* so digits do not jitter as values update */
+}
+.fi-status { font-size: 0.85em; line-height: 1; }
+.fi-status-live    .fi-status { color: var(--fi-live); }
+.fi-status-stale   .fi-status { color: var(--fi-stale); }
+.fi-status-offline .fi-status,
+.fi-status-never   .fi-status { color: var(--fi-offline); }
+/* A stale reading is still information, so it stays legible rather than being hidden */
+.fi-status-stale   .fi-card__chips,
+.fi-status-offline .fi-card__chips { opacity: 0.55; }
+.fi-status-never   .fi-card__chips { display: none; }
+
+@media (max-width: 1001px) {
+    .fi-card { font-size: 1.3em; padding: 14px; }
+}
+.fi-card__meta { display: flex; align-items: center; gap: 8px; }
+.fi-battery { height: 1em; width: auto; vertical-align: middle; }
+
+/* Front of a card: a flat ordered list of rows, no module grouping (CARDS_UX.md D-17) */
+.fi-card--front .fi-card__rows { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; }
+.fi-row { padding: 2px 0; }
+.fi-row--control {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    border-top: 1px solid var(--fi-border);
+    padding-top: 6px;
+    margin-top: 4px;
+}
+.fi-row__label { color: var(--fi-muted); font-size: 0.9em; }
+.fi-row__rule  { font-variant-numeric: tabular-nums; }
+/* A reading past its declared range is a broken sensor, or a range that needs revisiting */
+.fi-row--outofrange { color: #c0392b; }
+.fi-card__foot {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px solid var(--fi-border);
+    color: var(--fi-muted);
+    font-size: 0.85em;
+    font-variant-numeric: tabular-nums;
+}
+.fi-btn {
+    background: none;
+    border: 0;
+    font-size: 1.1em;
+    line-height: 1;
+    padding: 4px 6px;
+    min-width: 32px;
+    min-height: 32px;
+    cursor: pointer;
+    color: var(--fi-muted);
+}
+.fi-btn:hover { color: var(--fi-text); }
+.fi-card--front, .fi-card--back { cursor: default; }
+/* The host is display:inline by default, so its shadow content shrink-wraps and the range ends
+   land next to each other. Making the host a block gives them the bar's full width to sit across. */
+mqtt-bar { display: block; }
+/* Range ends under a bar, so a fill level means something without knowing the sensor.
+   Selector is heavier than it looks because it has to beat ":host-context(details[open]) div"
+   near the top of this file, which forces display:block on every div in a shadow root inside an
+   open <details> - that is every bar in the node/group UI, and it flattened these onto one line. */
+div.outer.mqtt-bar > div.ends {
+    display: flex;
+    justify-content: space-between;
+    color: var(--fi-muted, #6b6b6b);
+    font-size: 0.75em;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Back of a card: flat sections, no drop-downs except Advanced (CARDS_UX.md D-4) */
+.fi-card__sections { display: flex; flex-direction: column; gap: 14px; margin-top: 8px; }
+.fi-section__title {
+    margin: 0 0 4px;
+    /* accented, not filled: text stays near-black */
+    border-left: 3px solid var(--fi-leaf);
+    padding-left: 6px;
+    font-size: 0.75em;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--fi-muted);
+    border-bottom: 1px solid var(--fi-border);
+    padding-bottom: 2px;
+}
+.fi-field { display: flex; gap: 10px; align-items: baseline; padding: 2px 0; }
+.fi-field__label { color: var(--fi-muted); flex: 0 0 8em; font-size: 0.9em; }
+.fi-field__value { flex: 1; min-width: 0; font-variant-numeric: tabular-nums; }
+.fi-field--reading { display: block; }
+.fi-when { display: flex; align-items: baseline; gap: 6px; }
+.fi-when__pm { color: var(--fi-muted); }
+.fi-when__hyst { display: inline-flex; align-items: baseline; gap: 4px; flex: 0 0 auto; }
+.fi-advanced summary { color: var(--fi-muted); font-size: 0.85em; cursor: pointer; }
+/* Keep the inline control row inside the card.
+   The inputs live in the widgets' shadow roots, so a page-level ".fi-when input" cannot reach them -
+   that is what the first attempt got wrong. Custom properties DO cross the boundary, so the widget's
+   own stylesheet (this file, loaded into each shadow root) reads one that the light DOM sets. */
+.mqtt-text input.val, .mqtt-text span.val { max-width: var(--fi-val-max, none); box-sizing: border-box; }
+.mqtt-choosetopic select { max-width: 100%; box-sizing: border-box; }
+.fi-when { --fi-val-max: 5em; }
+.fi-when mqtt-text, .fi-when mqtt-toggle { flex: 0 1 auto; min-width: 0; }
+.fi-when button.toggle { min-width: 2.2em; padding: 2px 6px; cursor: pointer; }
+/* Nothing inside a card may make it wider than the grid cell it sits in */
+.fi-card, .fi-field, .fi-field__value, .fi-when { min-width: 0; }
+.fi-field__value { overflow-wrap: anywhere; }
+.fi-field__value mqtt-text, .fi-field__value mqtt-toggle, .fi-field__value mqtt-choosetopic {
+    display: block;
+    max-width: 100%;
+}
+
+/* The grid. One mechanism on every screen: an ordered list, reflowing into as many columns as fit,
+   so the same drag works on a phone and a desktop (CARDS_UX.md D-12). */
+mqtt-devicegrid {
+    display: grid;
+    /* min(100%, 300px), not 300px: on a phone narrower than that the column would be 300px wide and
+       the grid itself would overflow the screen */
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+    gap: var(--fi-gap);
+    align-items: start;
+}
+/* An open card earns more width where there is any to spare; on one column this clamps to 1 */
+mqtt-devicecard[mode="front"], mqtt-devicecard[mode="back"] { grid-column: span 2; }
+@media (max-width: 660px) {
+    mqtt-devicecard[mode="front"], mqtt-devicecard[mode="back"] { grid-column: span 1; }
+}
+mqtt-devicecard { display: block; min-width: 0; }
+mqtt-devicecard:focus-visible { outline: 2px solid var(--fi-live); outline-offset: 2px; }
+.fi-dragging { opacity: 0.6; }
+.fi-grabbed .fi-card, mqtt-devicecard.fi-grabbed { outline: 2px dashed var(--fi-stale); }
+.fi-btn--move { font-size: 0.8em; padding: 4px 2px; }
+/* Nothing is dragged by accident: a press that turns into a scroll must scroll */
+mqtt-devicecard[movable] .fi-card__head { touch-action: pan-y; }
+/* Lifted out of the flow while dragging, so it is obvious which card is moving */
+.fi-dragging { opacity: 0.6; transform: scale(0.99); }
+
+/* The card page (dashboard.html) */
+body:has(mqtt-dashboard) { margin: 0; }
+mqtt-dashboard { display: block; }
+.fi-header {
+    border-top: 3px solid var(--fi-leaf);   /* a thin band of the project's green */
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: var(--fi-gap);
+    flex-wrap: wrap;
+    padding: 8px 12px;
+    background: var(--fi-card-bg);
+    border-bottom: 1px solid var(--fi-border);
+}
+/* Back to the project's main site - the same icon it uses in its own header */
+.fi-brand { order: 0; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; color: inherit; }
+.fi-brand img { height: 28px; width: 28px; }
+.fi-header__title { font-weight: bold; }
+.fi-body { padding: var(--fi-gap); }
+.fi-empty { text-align: center; padding: 48px 20px; color: var(--fi-muted); }
+/* The project turned over: one card per admin function the user has the capability for */
+.fi-adminwrap { display: flex; flex-direction: column; gap: var(--fi-gap); }
+.fi-admincard__title {
+    margin: 0 0 8px;
+    font-size: 0.8em;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--fi-muted);
+}
+.fi-admincard { cursor: default; }
+
+/* The card page sets its own typography - the page had none, so it fell back to the browser's
+   serif default at whatever size, and the phone-width bumps above made the chrome enormous. */
+body:has(mqtt-dashboard) {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 16px;
+    color: var(--fi-text);
+    background: var(--fi-page-bg);
+}
+.fi-header {
+    /* Read by the rules above, inside the shadow roots of language-picker and mqtt-client */
+    --fi-chrome-font: 1rem;
+    --fi-chrome-float: none;
+    font-size: 1rem;
+}
+.fi-header select, .fi-header label, .fi-header .dropdown { font-size: 1rem; }
+/* Headless, the wrapper is chrome rather than content. display:contents dissolves both it and its
+   inner box, so the things it holds - the connection status and the two selectors - become items of
+   the header itself. Without that they are one flex item and cannot be split across two rows. */
+:host([headless]) .outer.mqtt-wrapper { display: contents; }
+.fi-header mqtt-wrapper { display: contents; }
+
+/* Wide, one row: name, connection, the selectors ... then language and gear pushed to the right. */
+.fi-header__title { order: 0; }
+.fi-header mqtt-client { order: 1; }
+.fi-header .dropdown { order: 2; display: inline-flex; align-items: baseline; gap: 4px; margin-bottom: 0; }
+.fi-header language-picker { order: 8; margin-left: auto; }
+/* The gear sits in a span, and it is the span that is the flex item - ordering the button inside it
+   left the span at the default 0, next to the title */
+.fi-header__gear { order: 9; display: inline-flex; }
+.fi-header__logout { order: 10; text-decoration: none; }
+.fi-header__break { order: 12; display: none; }
+
+/* Narrow, two rows: name, connection, language, gear - then the selectors on a row of their own,
+   rather than wrapping raggedly wherever they happen to fall */
+@media (max-width: 700px) {
+    .fi-header__break { display: block; flex-basis: 100%; height: 0; }
+    .fi-header .dropdown { order: 13; flex: 1 1 auto; min-width: 0; }
+    .fi-header .dropdown select { min-width: 0; }
+}
+
+/* An admin card has a summary and a back, and no meaningful front: collapsed to its name until
+   opened. Seven of them expanded at once is a wall of forms. */
+.fi-admincard {
+    --fi-chrome-font: 1rem;      /* the legacy phone-width bumps are far too big inside a card */
+    padding: 0;
+}
+.fi-admincard__head {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: 0;
+    padding: 12px 14px;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--fi-text);
+}
+.fi-admincard__head::before { content: "▸ "; color: var(--fi-muted); }
+.fi-admincard--open > .fi-admincard__head::before { content: "▾ "; }
+/* By position, not by element name: Info is not an mqtt-admin, so hiding by name left it open */
+.fi-admincard:not(.fi-admincard--open) > *:not(.fi-admincard__head) { display: none; }
+.fi-admincard mqtt-admin { display: block; padding: 0 14px 14px; }
+.fi-admincard select, .fi-admincard input { max-width: 100%; }
+
+/* The card page sizes its own text, so none of the phone-width bumps above apply inside it - they
+   were built for the node/group UI, where a whole node is one wide block. In a card they made every
+   input and select far wider than the card and the content ran off the screen. */
+body:has(mqtt-dashboard) {
+    --fi-chrome-font: 1rem;
+    --fi-chrome-line: 1.6em;
+    --fi-icon-size: 1.2em;
+}
+/* Nothing inside a card may be wider than the card */
+.fi-card, .fi-card * { max-width: 100%; box-sizing: border-box; }
+.fi-card { --fi-val-max: 100%; }
+.mqtt-text input.val, .mqtt-text span.val, .mqtt-choosetopic select { width: 100%; }
+
+/* Narrow: a label above its value, rather than a fixed column that cannot shrink */
+@media (max-width: 560px) {
+    .fi-field { display: block; }
+    .fi-field__label { display: block; flex: none; margin-bottom: 2px; }
+    .fi-when { flex-wrap: wrap; }
+    .fi-when { --fi-val-max: 6em; }
+}
+/* The shared graph panel, below the grid. Empty until something is added to it. */
+.fi-graphs:not(:empty) {
+    margin: var(--fi-gap);
+    padding: 8px;
+    background: var(--fi-card-bg);
+    border: 1px solid var(--fi-border);
+    border-radius: var(--fi-radius);
+}

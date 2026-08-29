@@ -1,0 +1,154 @@
+<mqtt-project name="Lotus Ponds">
+  #shadow
+    <div class="outer mqtt-project">
+      <div class="title">
+        <span class="projectname">
+          "dev/lotus"
+        <span class="name">
+          "Lotus Ponds"
+      <div class="nodes">
+        <slot>
+  <mqtt-node topic="dev/lotus/esp8266-fb94bb" name="">
+    #shadow
+      <div class="outer mqtt-node offline">
+        <mqtt-groupfrugaliot group="frugal_iot" name="Greenhouse North" class="group frugal_iot">
+          #shadow
+            <details>
+              <summary>
+                <slot name="name" class="name">
+                <img class="batteryimg">
+              <slot name="description" class="description">
+              <slot name="lastseen" class="lastseen">
+              <slot name="id" class="id">
+              <div class="health">
+                <slot name="ledbuiltin">
+                <slot name="battery">
+              <slot name="ota" class="ota">
+              <slot>
+          <mqtt-text class="id" slot="id">
+            #shadow
+              <div class="mqtt-text frugal_iot_id outer">
+                <label>
+                  "Node ID"
+                <span class="val">
+                  "esp8266-fb94bb"
+          <mqtt-text class="name" slot="name">
+            #shadow
+              <div class="mqtt-text frugal_iot_name outer">
+                <label>
+                  "Node Name"
+                <input name="dev/lotus/esp8266-fb94bb/frugal_iot/name" class="val" type="text">
+          <mqtt-text class="description" slot="description">
+            #shadow
+              <div class="mqtt-text frugal_iot_description outer">
+                <label>
+                  "Description"
+                <input name="dev/lotus/esp8266-fb94bb/frugal_iot/description" class="val" type="text">
+          <mqtt-text class="lastseen" slot="lastseen">
+            #shadow
+              <div class="mqtt-text frugal_iot_lastseen outer">
+                <label>
+                  "Last Seen"
+                <span class="val">
+          <mqtt-groupota group="ota" name="OTA" class="group ota">
+            #shadow
+              <details class="mqtt-group ota">
+                <summary>
+                  <span>
+                    "OTA"
+                  <div>
+                    <span>
+                      "sht30_c3_pico"
+                <slot>
+            <mqtt-text>
+              #shadow
+                <div class="mqtt-text ota_key outer">
+                  <label>
+                    "Key"
+                  <span class="val">
+                    "sht30_c3_pico"
+          <mqtt-groupbattery group="battery" name="Battery" class="group battery">
+            #shadow
+              <details class="mqtt-group battery">
+                <summary>
+                  <span>
+                    "Battery"
+                  <div>
+                    <span>
+                      "3940 mV"
+                <slot>
+            <mqtt-text min="3000" max="5000" color="green">
+              #shadow
+                <div class="mqtt-text battery_battery outer">
+                  <label>
+                    "Voltage"
+                  <img class="icon">
+                  <span class="val">
+                    "3940 mV"
+          <mqtt-group group="health" name="System" class="group health">
+            #shadow
+              <details class="mqtt-group health">
+                <summary>
+                  <span>
+                    "System"
+                <slot>
+            <mqtt-text min="0" max="4" color="blue">
+              #shadow
+                <div class="mqtt-text health_wifibars outer">
+                  <label>
+                    "WiFi"
+                  <span class="val">
+                    "3"
+            <mqtt-text color="blue">
+              #shadow
+                <div class="mqtt-text health_wifissid outer">
+                  <label>
+                    "SSID"
+                  <span class="val">
+                    "shed-ap"
+        <div class="topics">
+          <slot>
+    <mqtt-groupsht group="sht" name="SHT" class="group sht">
+      #shadow
+        <details class="mqtt-group sht">
+          <summary>
+            <span>
+              "SHT"
+            <div>
+              <span>
+                "30.1°C 85.1%RH"
+          <slot>
+      <mqtt-bar type="float" min="0" max="50" color="red">
+        #shadow
+          <div class="outer mqtt-bar">
+            <div class="name">
+              <label>
+                "Temperature"
+              <img class="icon">
+            <div class="bar">
+              <span class="left">
+                <span class="val">
+                  "30.1°C"
+            <div class="ends">
+              <span class="min">
+                "0"
+              <span class="max">
+                "50"
+            <slot>
+      <mqtt-bar type="float" min="0" max="100" color="blue">
+        #shadow
+          <div class="outer mqtt-bar">
+            <div class="name">
+              <label>
+                "Humidity"
+              <img class="icon">
+            <div class="bar">
+              <span class="left">
+                <span class="val">
+                  "85.1%RH"
+            <div class="ends">
+              <span class="min">
+                "0"
+              <span class="max">
+                "100"
+            <slot>

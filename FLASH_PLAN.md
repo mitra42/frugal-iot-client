@@ -722,7 +722,7 @@ LittleFS. We currently ship only the pioarduino one.
 Better than a warning comment on the page: **read the framework out of the app image.** Every ESP-IDF
 app carries an `esp_app_desc_t` at offset `0x20` (24-byte image header + 8-byte segment header), magic
 `0xABCD5432`, with `version`, `project_name`, `time`, `date` and `idf_ver` as fixed-width strings.
-Their `firmware.bin` reports:
+The current `firmware.bin` reports:
 
 ```
 idf_ver: v5.5.4    project_name: arduino-lib-builder    date: Jun 2 2026
