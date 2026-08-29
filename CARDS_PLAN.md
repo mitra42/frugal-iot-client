@@ -32,7 +32,7 @@ Phases are ordered by what they unblock. Sizes are relative, not hours.
 | 5 | The card element — summary / front / back | L | 6, 7 | **DONE** |
 | 6 | The grid — layout, drag, `localStorage` | M | 7 | **DONE** |
 | 7 | The new page, project front/back, admin cards | L | — | **DONE** |
-| 8 | Permissions: `WRITE`, `OTAFLASH` | S | — | yes |
+| 8 | Permissions: `WRITE`, `OTAFLASH` | S | — | **DONE** |
 | 9 | Polish: sheets, motion, i18n sweep, visual pass | M | — | yes |
 
 Phases 1 and 2 are independent of everything and of each other — start them whenever. Phase 0 comes
@@ -687,6 +687,52 @@ which belongs with the rest of the permissions work in phase 8.
   ADVANCED's actions are omitted.
 - Card order and open/closed state are local presentation and stay available without `WRITE`.
 - Nothing here is a security boundary and no code comment or UI text may imply it is (D-27, L-7).
+
+### Phase 8 — done
+
+**One gate, in one place.** `mt.canWrite` on the data tree asks `hasCapability(organization, 'WRITE')`,
+and `renderMaybeWired` — the single point where every widget decides between an input and a display —
+now asks it alongside `mt.rw`. That one change degrades every control on both UIs at once: an
+editable field becomes its value, an actuator stops being tappable, and the wiring chooser goes,
+because rewiring is a change like any other. Nothing was gated per widget, which is what §3.2 was
+guarding against.
+
+The back is still shown without `WRITE` (D-26): a reader needs last seen, battery and OTA key to
+diagnose a quiet device, and none of that is on the front. Card order and open/closed state are local
+presentation and stay available to everyone (§10.2), which has a test.
+
+**The dropdown now offers `READ`, `WRITE`, `OTAUPDATE`, `OTAFLASH`, `ADMIN`** — no server or database
+change, since capabilities are free text in `permissions(id, capability, org)`.
+
+**Publish Message moved to `ADMIN`** (D-32), from `user.id !== 1`. Worth seeing plainly: that is a
+widening, from superuser-only to any organization admin.
+
+**Nothing here is a security boundary**, and the comment on `hasCapability` says so at length: every
+user of an organization shares one set of broker credentials, which reach the browser in
+`/config.json`, so anyone without `WRITE` still holds working publish credentials. Real enforcement
+is L-7.
+
+**Two of my own tests were passing for the wrong reason** and are fixed: `card.querySelector('mqtt-choosetopic')`
+can never match, because the chooser is inside the widget's shadow root — so "the chooser goes"
+asserted null against something that was always null. Shadow content is not in `textContent` either.
+
+**Two more found by using the real page:**
+
+- **An admin card loaded no data at all** — the Permissions card said "Nobody added for this
+  organization yet" and made no request. `setOrganization` fetches only for `activeTabTitle`, which
+  is set by the tab strip's `tabchange` event; with a single section there is no tab strip, so it
+  stayed at its default of "Dashboard" and the section's own data was never asked for. Setting
+  `activeTabTitle` from the `section` attribute fixes it, and `setDefaultOrganization` no longer
+  guesses over an organization it was handed.
+- **A random `Cannot read properties of null (reading 'append')`** on load was not a race in the code:
+  `/node_modules` is served `immutable, max-age=86400`, so a browser holding the pre-`renderRoot`
+  copy of `html-element-extended` keeps it for a day, and whether a given load hits that cache is
+  what varied. A hard reload clears it. `cards.js` now checks for `renderRoot` at load and says so
+  plainly, since the null append names nothing useful. Worth knowing while the library is linked
+  rather than published: **`immutable` on a file that is being edited is a trap**.
+
+I also put the section handler in the wrong class first — `MqttLogin` and `MqttAdmin` both have a
+`changeAttribute` that handles `"lang"`, and the anchor matched the first.
 
 ### Phase 9 — Polish
 

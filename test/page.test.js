@@ -94,6 +94,30 @@ describe('the project back', () => {
     back.remove();
   });
 
+  test('an opened section knows which data to load', () => {
+    // Without a tab strip nothing fires tabchange, so activeTabTitle stayed at "Dashboard",
+    // setOrganization loaded that tab's data - none - and the section sat empty with no request made
+    withCapabilities('ADMIN');
+    const back = document.createElement('mqtt-projectback');
+    back.setAttribute('organization', 'dev');
+    document.body.append(back);
+    back.querySelector('.fi-admincard__head').click();
+    const admin = back.querySelector('mqtt-admin');
+    assert.equal(admin.getAttribute('section'), 'admin');
+    assert.equal(admin.state.activeTabTitle, 'Admin', 'it would have asked for the Dashboard tab');
+    back.remove();
+  });
+
+  test('the organization it is given is not guessed over', () => {
+    withCapabilities('ADMIN');
+    const back = document.createElement('mqtt-projectback');
+    back.setAttribute('organization', 'dev');
+    document.body.append(back);
+    back.querySelector('.fi-admincard__head').click();
+    assert.equal(back.querySelector('mqtt-admin').state.org, 'dev');
+    back.remove();
+  });
+
   test('each card holds the existing admin element, not a reimplementation', () => {
     withCapabilities('ADMIN');
     const back = document.createElement('mqtt-projectback');

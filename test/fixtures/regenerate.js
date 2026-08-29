@@ -27,8 +27,12 @@ const config = {
       projects: { lotus: { name: 'Lotus Ponds', nodes: {} } },
     },
   },
-  // Shape only - individual tests override permissions to exercise WRITE and the admin cards.
-  user: { id: 2, name: 'test', permissions: [{ org: 'dev', capability: 'READ' }] },
+  // An ordinary operator: can see the organization and change things in it, but administers nothing.
+  // Tests that need something else replace this - see withCapabilities in page.test.js.
+  user: { id: 2, name: 'test', permissions: [
+    { org: 'dev', capability: 'READ' },
+    { org: 'dev', capability: 'WRITE' },
+  ] },
 };
 
 const out = resolve(here, 'config.json');

@@ -268,8 +268,12 @@ class MqttReceiver extends MqttElement {
     let wiredTopicValue = this.wiredTopic ? (this.wiredTopic.state.value ?? this.state.value) : this.state.value;
     // wiring="none" hides the chooser entirely (a compact row labels and lays out its own fields);
     // wiring="open" shows it already expanded, for a row whose whole purpose is to wire something.
-    const wireable = this.mt.wireable && (this.state.wiring !== 'none');
+    // Without WRITE a writable topic is shown, not offered: the input becomes its value and the
+    // wiring chooser goes. One question here degrades every widget on both UIs at once.
+    const mayWrite = this.mt.canWrite;
+    const wireable = this.mt.wireable && (this.state.wiring !== 'none') && mayWrite;
     const openIfAsked = (this.state.wiring === 'open') ? {open: true} : {};
+    const readOnly = (this.mt.rw === 'r') || !mayWrite;
     // With a chooser present the source is already named, and named more accurately
     const showWiredName = this.mt.wired && !wireable;
     // noinspection JSUnresolvedReference
@@ -277,7 +281,7 @@ class MqttReceiver extends MqttElement {
       el('link', {rel: 'stylesheet', href: CssUrl}),
       el('div', {class: className + " outer"},
         // noinspection JSUnresolvedVariable
-        this.mt.rw === 'r'
+        readOnly
           ? [
             // noinspection JSUnresolvedVariable
             wireable

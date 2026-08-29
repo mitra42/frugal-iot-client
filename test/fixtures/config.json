@@ -1406,6 +1406,10 @@
    {
     "org": "dev",
     "capability": "READ"
+   },
+   {
+    "org": "dev",
+    "capability": "WRITE"
    }
   ]
  }

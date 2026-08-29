@@ -191,6 +191,19 @@ function relativeTime(ms) {
   return rtf.format(-Math.round(h / 24), 'day');
 }
 
+// What this user may do in an organization, from the permissions the server sent with the config.
+//
+// This is NOT a security boundary and nothing here should be described as one. Every user of an
+// organization connects to the broker with the same credentials, which reach the browser inside
+// /config.json, so anyone without WRITE still holds working publish credentials and can change
+// anything with any MQTT client. Hiding controls prevents accidents and stops offering people
+// actions that are not theirs; enforcing them needs per-user broker credentials or a server-side
+// publish proxy. See CARDS_UX.md 10.3 and L-7.
+function hasCapability(org, capability) {
+  const perms = (server_config && server_config.user && server_config.user.permissions) || [];
+  return perms.some((p) => (p.capability === capability) && (p.org === org));
+}
+
 function moduleTemplate(groupId) {
   return server_config && server_config.schema && server_config.schema.modules[groupId];
 }
@@ -1343,6 +1356,17 @@ class MqttTopic {
       }
     }
   }
+  // The organization this topic belongs to - the first segment of its path
+  get organization() {
+    const path = this.topicPath;
+    return path && path.split('/')[0];
+  }
+  // Whether this user may change this topic. One question, asked in one place, so a control cannot
+  // end up editable on one screen and not another - see CARDS_PLAN.md section 3.2.
+  get canWrite() {
+    return hasCapability(this.organization, 'WRITE');
+  }
+
   // How many decimals to show. Derived from width and the declared range rather than from the
   // current value, so the count does not change as the value moves across a power of ten.
   get decimals() {
@@ -2633,6 +2657,7 @@ export {
   nowMs,
   preferedLanguageSet,
   preferedLanguages,
+  hasCapability,
   redirectToLogin,
   relativeTime,
   SUMMARY_CHIP_LIMIT,

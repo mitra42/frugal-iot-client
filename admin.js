@@ -5,7 +5,7 @@
 
 import {EL, GET, HTMLElementExtended} from '/node_modules/html-element-extended/htmlelementextended.js';
 import mqtt from '/node_modules/mqtt/dist/mqtt.esm.js'; // https://www.npmjs.com/package/mqtt
-import { CssUrl, POST, XXX, configSet, el, getString, locationParameterChange, mqtt_client, preferedLanguageSet, preferedLanguages, redirectToLogin, server_config } from './core.js';
+import { CssUrl, POST, XXX, configSet, el, getString, hasCapability, locationParameterChange, mqtt_client, preferedLanguageSet, preferedLanguages, redirectToLogin, server_config } from './core.js';
 
 class MqttLogin extends HTMLElementExtended { // TODO-89 may depend on organization
   constructor(props) {
@@ -247,6 +247,13 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     //super.connectedCallback(); // Not doing as finishes with a re-render.
   }
   changeAttribute(name, value) {
+    // Rendering a single section means there is no tab strip and so no tabchange event ever fires.
+    // activeTabTitle would stay at its default of "Dashboard", setOrganization would load that
+    // tab's data (there is none), and the section would sit there empty with no request made.
+    if (name === "section") {
+      const section = this.adminSections().find((x) => x.key === value);
+      if (section) this.state.activeTabTitle = section.title;
+    }
     if (name === "lang") {
       if (value.includes(',')) {
         preferedLanguages = (value.split(',')).map(v => v.toUpperCase());
@@ -427,7 +434,9 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
         ]),
         el('select', {id: 'capability', name: 'capability'}, [
           el('option', {value: "", textContent: "Not selected", selected: !this.state.value}),
-          ["OTAUPDATE","ADMIN","READ"].map(x =>
+          // OTAFLASH is separate from OTAUPDATE and neither implies the other: flashing needs the
+          // device in your hand, where pushing an OTA binary reaches every device at once.
+          ["READ","WRITE","OTAUPDATE","OTAFLASH","ADMIN"].map(x =>
             el('option', {value: x, textContent: x, selected: false, i8n: false})
           )
         ]),
@@ -959,10 +968,14 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   }
   setDefaultOrganization() {
     let org = this.state.org;
-    if ((this.otaOrgs.length === 1) && (this.adminOrgs.length <= 1)) {
-      org = this.otaOrgs[0][0];
-    } else if ((this.adminOrgs.length === 1) && (this.otaOrgs.length <= 1)) {
-      org = this.adminOrgs[0][0];
+    // An organization given explicitly - a card on the project back passes the one being viewed -
+    // is not a default to be guessed over
+    if (!org) {
+      if ((this.otaOrgs.length === 1) && (this.adminOrgs.length <= 1)) {
+        org = this.otaOrgs[0][0];
+      } else if ((this.adminOrgs.length === 1) && (this.otaOrgs.length <= 1)) {
+        org = this.adminOrgs[0][0];
+      }
     }
     this.setOrganization(org);
   }
@@ -1223,7 +1236,9 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
        ]),
        // TODO-CSS cleanup - labels are too big
        // This should really use a superuser permission but for now its just the super admin can do this
-       server_config.user.id !== 1 ? null : // Only show publish message to super admin, as not really a feature, more for testing and debugging
+       // ADMIN, not WRITE: someone who can change things through the UI should not thereby get a
+       // raw publish box - the UI constrains them to topics and values that mean something (D-32)
+       !hasCapability(this.state.org, 'ADMIN') ? null :
          el('section', {}, [
            el('h3', {textContent: "Publish Message"}),
            el('form', {}, [

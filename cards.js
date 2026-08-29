@@ -14,7 +14,17 @@
  * the logic has been put in the wrong place.
  */
 import { HTMLElementExtendedMinimum } from '/node_modules/html-element-extended/htmlelementextended.js';
-import { el, getString, ImagesUrl, relativeTime, server_config, XXX } from './core.js';
+
+// The cards render into the light DOM, which needs html-element-extended 0.1.7 or later. An older
+// copy - or a stale cached one, since /node_modules is served immutable for a day - fails as
+// "Cannot read properties of null (reading 'append')" deep inside renderAndReplace, which says
+// nothing about the cause. Say it here instead.
+if (!('renderRoot' in HTMLElementExtendedMinimum.prototype)) {
+  console.error('html-element-extended is too old for the cards: no renderRoot, so light-DOM '
+    + 'elements cannot render. If it is linked, the browser is probably holding a cached copy - '
+    + 'reload ignoring the cache.');
+}
+import { el, getString, hasCapability, ImagesUrl, relativeTime, server_config, XXX } from './core.js';
 
 // Shape as well as colour, so status survives sunlight and colour blindness
 const STATUS_MARK = { live: '●', stale: '◌', offline: '○', never: '·' };
@@ -665,11 +675,6 @@ const ADMIN_CARDS = [
   { section: 'api',   title: 'API',             capability: 'ADMIN' },
 ];
 
-// The user's capabilities for an organization, from the permissions the server sent
-function hasCapability(org, capability) {
-  const perms = (server_config && server_config.user && server_config.user.permissions) || [];
-  return perms.some((p) => (p.capability === capability) && (p.org === org));
-}
 function adminCardsFor(org) {
   return ADMIN_CARDS.filter((c) => hasCapability(org, c.capability));
 }
