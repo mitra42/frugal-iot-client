@@ -823,6 +823,10 @@ class MqttDashboard extends HTMLElementExtendedMinimum {
         el('span', { class: 'fi-header__break', 'aria-hidden': 'true' }),
       ]),
       this.state.elements.body = el('div', { class: 'fi-body' }, [this.renderBody()]),
+      // Where a graph lands when someone taps the icon on a reading. MqttGraph looks for this id and
+      // falls back to the end of the document, which on this page would be below everything.
+      // Comparing across devices is the point of a graph, so it is one shared panel, not per card.
+      el('div', { id: 'graph-container', class: 'fi-graphs' }),
     ];
   }
 

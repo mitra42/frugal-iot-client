@@ -27,9 +27,9 @@
         }
     </script>
     <!-- The card UI. index.html keeps the node/group UI until this covers everything it does -
-         the admin functions especially - see CARDS_UX.md O-3. -->
-    <script src="./webcomponents.js" type="module"></script>
-    <script src="./cards.js" type="module"></script>
+         see CARDS_UX.md O-3. This loads the modules it needs rather than webcomponents.js, which
+         would also pull in nodeview.js - the old node/group UI this page replaces. -->
+    <script src="./dashboard.js" type="module"></script>
 </head>
 <body>
 <mqtt-dashboard></mqtt-dashboard>

@@ -167,6 +167,15 @@ describe('the page', () => {
     page.remove();
   });
 
+  test('a graph has somewhere to land', () => {
+    // MqttGraph looks for #graph-container and otherwise appends to the end of the document, which
+    // on this page is below everything
+    const page = document.createElement('mqtt-dashboard');
+    document.body.append(page);
+    assert.ok(page.querySelector('#graph-container'));
+    page.remove();
+  });
+
   test('the header links back to the project site', () => {
     const page = document.createElement('mqtt-dashboard');
     document.body.append(page);

@@ -192,6 +192,18 @@ describe('the summary line', () => {
 });
 
 describe('status', () => {
+  test('a device the server knows but which has not reported reads as offline, not never seen', () => {
+    // The old UI listed these from config with their last-seen time. Without seeding it, a device
+    // asleep since before the page loaded would claim never to have been heard from.
+    const { projectMt } = mock.runScenario('one-device', { at: T0 });
+    const nodeMt = projectMt.nodes['esp8266-fb94bb'];
+    const asleep = projectMt.addNode('esp8266-asleep');
+    asleep.lastMessageAt = T0 - (36 * 3600 * 1000);
+    assert.equal(asleep.status, 'offline');
+    assert.notEqual(asleep.status, 'never');
+    assert.equal(nodeMt.status, 'live', 'and one that did report is unaffected');
+  });
+
   test('a device that has said nothing is "never", not "offline"', () => {
     const { projectMt } = mock.runScenario('no-readings', { at: T0 });
     // The discovery message reaches the project, not the node, so the node has heard nothing itself

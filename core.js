@@ -2584,7 +2584,12 @@ class MqttWrapper extends HTMLElementExtended {
         const nodes = Object.entries(server_config.organizations[this.state.organization].projects[this.state.project].nodes || {});
         if (this.state.headless) {
           nodes.filter(([id, nc]) => id !== '+' && nc.lastseen)
-            .forEach(([id]) => { if (!mt.nodes[id]) mt.addNode(id); });
+            .forEach(([id, nc]) => {
+              const nodeMt = mt.nodes[id] || mt.addNode(id);
+              // Seed when the server last heard from it, so a device that has not reported since the
+              // page loaded reads as offline with a real age rather than as never seen at all
+              if (!nodeMt.lastMessageAt) nodeMt.lastMessageAt = nc.lastseen;
+            });
         } else {
           mt.element.nodesFromConfig(nodes);
         }

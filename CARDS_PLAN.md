@@ -754,6 +754,33 @@ screen.
 That block of media queries is now parameterised rather than replaced. Replacing it wholesale is
 still the right end state, and belongs with retiring `nodeview.js`.
 
+**Audit before deploying — what the old UI does that the new page does not.**
+
+Reachable on `dashboard.html`, checked element by element: the cards and grid, every leaf widget,
+the graph, `mqtt-admin`'s four sections, `mqtt-flash`, the language picker and the connection. Two
+gaps were found and closed:
+
+- **A graph had nowhere to land.** `MqttGraph` looks for `#graph-container` and otherwise appends to
+  the end of the document, which on this page is below everything. The page now provides one, below
+  the grid, which is where §6 says it belongs.
+- **A device known to the server but not currently reporting read as "never seen".** The old UI
+  listed those from `/config.json` with their last-seen time; the headless path added the node but
+  dropped the timestamp, so a device asleep since before the page loaded claimed never to have been
+  heard from. `lastMessageAt` is seeded from config now, so it reads as offline with a real age.
+
+`dashboard.html` also got its own entry, `dashboard.js`, importing everything except `nodeview.js` —
+the one module it genuinely replaces.
+
+**Still outstanding, and worth deciding before deploying:**
+
+| | |
+|---|---|
+| Which page is the default | `/dashboard/` serves `index.html`, and login redirects there, so the card page is reachable only by typing its URL. Nothing switches over until that changes |
+| No logout, anywhere | Pre-existing — there is no `/logout` route on the server and the old UI has no link either. It matters more now: ending a session on a permissions change means people re-login more often |
+| The disconnected banner (§8.1) | Not built. Needs `MqttClient` to announce status changes rather than only rendering them |
+| Removing a line from a graph | `removeFromGraph` exists with no UI, in both the old and the new page. Pre-existing |
+| `nodeview.js` retirement | The card page now covers every tab `index.html` has, plus Flash and Info. Retiring it is a decision, not more work |
+
 **Not a bug in our code:** the page intermittently failing to load was
 `frugal-iot-server/public/service-worker.js`, registered at scope `/` and cache-first with no
 revalidation, holding `/node_modules/html-element-extended/htmlelementextended.js` from before the

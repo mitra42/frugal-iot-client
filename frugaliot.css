@@ -546,20 +546,21 @@ body:has(mqtt-dashboard) {
 :host([headless]) .outer.mqtt-wrapper { display: contents; }
 .fi-header mqtt-wrapper { display: contents; }
 
-/* Row one: name, connection, language, gear. Row two: the selectors. */
+/* Wide, one row: name, connection, the selectors ... then language and gear pushed to the right. */
 .fi-header__title { order: 0; }
 .fi-header mqtt-client { order: 1; }
-.fi-header language-picker { order: 2; margin-left: auto; }
+.fi-header .dropdown { order: 2; display: inline-flex; align-items: baseline; gap: 4px; margin-bottom: 0; }
+.fi-header language-picker { order: 8; margin-left: auto; }
 /* The gear sits in a span, and it is the span that is the flex item - ordering the button inside it
    left the span at the default 0, next to the title */
-.fi-header__gear { order: 3; display: inline-flex; }
-.fi-header__break { order: 4; display: none; }
-.fi-header .dropdown { order: 5; display: inline-flex; align-items: baseline; gap: 4px; margin-bottom: 0; }
+.fi-header__gear { order: 9; display: inline-flex; }
+.fi-header__break { order: 10; display: none; }
 
-/* Narrow: force the break, so the selectors get a row to themselves rather than wrapping raggedly */
+/* Narrow, two rows: name, connection, language, gear - then the selectors on a row of their own,
+   rather than wrapping raggedly wherever they happen to fall */
 @media (max-width: 700px) {
     .fi-header__break { display: block; flex-basis: 100%; height: 0; }
-    .fi-header .dropdown { flex: 1 1 auto; min-width: 0; }
+    .fi-header .dropdown { order: 11; flex: 1 1 auto; min-width: 0; }
     .fi-header .dropdown select { min-width: 0; }
 }
 
@@ -606,4 +607,12 @@ body:has(mqtt-dashboard) {
     .fi-field__label { display: block; flex: none; margin-bottom: 2px; }
     .fi-when { flex-wrap: wrap; }
     .fi-when { --fi-val-max: 6em; }
+}
+/* The shared graph panel, below the grid. Empty until something is added to it. */
+.fi-graphs:not(:empty) {
+    margin: var(--fi-gap);
+    padding: 8px;
+    background: var(--fi-card-bg);
+    border: 1px solid var(--fi-border);
+    border-radius: var(--fi-radius);
 }
