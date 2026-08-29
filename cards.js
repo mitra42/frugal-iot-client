@@ -347,8 +347,12 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
     const when = [t.greater, t.limit, hyst].some(Boolean) ? el('div', { class: 'fi-when' }, [
       t.greater ? this.compact(t.greater, { labels: '<,>' }) : null,
       t.limit ? this.compact(t.limit, {}) : null,
-      hyst ? el('span', { class: 'fi-when__pm', i8n: false, textContent: '±' }) : null,
-      hyst ? this.compact(hyst, {}) : null,
+      // The ± and its value are one item, so a wrap cannot leave the symbol stranded on the line
+      // above the number it belongs to
+      hyst ? el('span', { class: 'fi-when__hyst' }, [
+        el('span', { class: 'fi-when__pm', i8n: false, textContent: '±' }),
+        this.compact(hyst, {}),
+      ]) : null,
     ].filter(Boolean)) : null;
     return this.section(groupMt.state.name || groupId, [
       t.now ? this.field(getString('Input'), this.widgetForTopic(t.now, '', { wiring: 'open' })) : null,
@@ -668,6 +672,10 @@ customElements.define('mqtt-devicegrid', MqttDeviceGrid);
 // Which admin card needs which capability. Deliberately the same gating the tabs already had:
 // widening who can see an organization's inventory is not something a card redesign should do.
 const ADMIN_CARDS = [
+  // No capability: connection and organization details are reference information, useful to anyone
+  // looking at the project, and the natural home for more of the same later - bridge status and so
+  // on. It also means the project's back is never empty, so the gear is always offered.
+  { section: 'info',  title: 'Info',            capability: null, own: true },
   { section: 'ota',   title: 'OTA',             capability: 'OTAUPDATE' },
   { section: 'flash', title: 'Flash over USB',  capability: 'OTAFLASH' },
   { section: 'admin', title: 'Permissions',     capability: 'ADMIN' },
@@ -676,7 +684,7 @@ const ADMIN_CARDS = [
 ];
 
 function adminCardsFor(org) {
-  return ADMIN_CARDS.filter((c) => hasCapability(org, c.capability));
+  return ADMIN_CARDS.filter((c) => !c.capability || hasCapability(org, c.capability));
 }
 
 class MqttProjectBack extends HTMLElementExtendedMinimum {
@@ -696,11 +704,31 @@ class MqttProjectBack extends HTMLElementExtendedMinimum {
     const open = !this.state.open[section];
     this.state.open[section] = open;
     const card = this.state.elements[section];
-    if (open && !card.querySelector('mqtt-admin')) {
-      // The existing admin element renders the section - none of it is redesigned (D-30)
-      card.append(el('mqtt-admin', { section, org: this.state.organization }));
+    const spec = ADMIN_CARDS.find((c) => c.section === section);
+    if (open && !card.querySelector('mqtt-admin, .fi-infocard')) {
+      // Info is ours; everything else is a section of the existing admin element, not redesigned (D-30)
+      card.append(spec.own ? this.renderInfo() : el('mqtt-admin', { section, org: this.state.organization }));
     }
     card.classList.toggle('fi-admincard--open', open);
+  }
+
+  // Where the connection details went when they left the header: wanted once, not in the corner of
+  // every screen. Room here for more of the same - bridge status and the like.
+  renderInfo() {
+    const mqttConfig = (server_config && server_config.mqtt) || {};
+    const client = document.querySelector('mqtt-client');
+    return el('div', { class: 'fi-infocard' }, [
+      this.infoField(getString('Broker'), mqttConfig.broker),
+      this.infoField(getString('Organization'), this.state.organization),
+      this.infoField(getString('Status'), client && client.state && client.state.status),
+    ].filter(Boolean));
+  }
+  infoField(label, value) {
+    if (!value) return null;
+    return el('div', { class: 'fi-field' }, [
+      el('span', { class: 'fi-field__label', textContent: label }),
+      el('span', { class: 'fi-field__value', i8n: false, textContent: String(value) }),
+    ]);
   }
 
   render() {
@@ -776,10 +804,15 @@ class MqttDashboard extends HTMLElementExtendedMinimum {
   render0() {
     return [
       el('header', { class: 'fi-header' }, [
-        el('span', { class: 'fi-header__title', textContent: 'Frugal IoT', i8n: false }),
+        // Back to the project's main site, using the icon its own header uses
+        el('a', { class: 'fi-brand', href: '/', title: getString('Frugal IoT project') }, [
+          el('img', { src: '/images/icon-192x192.png', alt: 'Frugal IoT', i8n: false }),
+          el('span', { class: 'fi-header__title', textContent: 'Frugal IoT', i8n: false }),
+        ]),
         // Supplies the organization and project selectors, the connection status, and the data tree
         this.state.elements.wrapper = el('mqtt-wrapper', {
           headless: true,
+          clientdisplay: 'status',   // which broker, and as whom, live on the Info card
           organization: this.getAttribute('organization') || undefined,
           project: this.getAttribute('project') || undefined,
         }),

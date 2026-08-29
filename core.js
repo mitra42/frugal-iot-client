@@ -274,6 +274,7 @@ EN:
   Battery: Battery
   Board: Board
   Brightness: Brightness
+  Broker: Broker
   Built in LED: Built in LED
   buttons: buttons
   Choose a project to see its devices: Choose a project to see its devices
@@ -314,6 +315,7 @@ EN:
   Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer: Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer
   for node: for node
   From: From
+  Frugal IoT project: Frugal IoT project
   Frugal-IoT Username *: Frugal-IoT Username *
   Full provision - all configuration on the board will be erased: Full provision - all configuration on the board will be erased
   Greater Than: Greater Than
@@ -326,6 +328,7 @@ EN:
   Hysterisis: Hysteresis
   id: id
   If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.'
+  Info: Info
   Input: Input
   Key: Key
   Last Seen: Last Seen
@@ -430,6 +433,7 @@ EN:
   Speed: Speed
   SSID: SSID
   stale: Not reported recently
+  Status: Status
   Stop monitor: Stop monitor
   Submit: Submit
   System: System
@@ -478,6 +482,7 @@ FR:
   Battery: Batterie
   Board: Carte
   Brightness: Luminosité  
+  Broker: Courtier
   Built in LED: LED intégrée
   buttons: boutons
   Choose a project to see its devices: Choisissez un projet pour voir ses appareils
@@ -518,6 +523,7 @@ FR:
   Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer: Le flashage nécessite l'API Web Serial - utilisez Chrome, Edge ou Opera sur un ordinateur de bureau
   for node: pour le nœud
   From: De
+  Frugal IoT project: Projet Frugal IoT
   Frugal-IoT Username *: Nom d'utilisateur Frugal-IoT *
   Full provision - all configuration on the board will be erased: Provisionnement complet - toute la configuration de la carte sera effacée
   Greater Than: Supérieur à
@@ -532,6 +538,7 @@ FR:
   hysterisis: hystérésis
   id: id
   If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': Si ce répertoire est invisible dans le sélecteur de fichiers, copiez le fichier ailleurs OU créez un alias vers le répertoire .pio sans point au début.
+  Info: Infos
   Input: Entrée
   Key: Clé
   Last Seen: Dernière activité
@@ -636,6 +643,7 @@ FR:
   Speed: Vitesse
   SSID: SSID
   stale: Pas de nouvelles récentes
+  Status: État
   Stop monitor: Arrêter moniteur
   Submit: Soumettre
   System: Système
@@ -684,6 +692,7 @@ HI:
   Battery: बैटरी
   Board: बोर्ड
   Brightness: चमक  
+  Broker: ब्रोकर
   Built in LED: बिल्ट-इन एलईडी
   buttons: बटन
   Choose a project to see its devices: उपकरण देखने के लिए प्रोजेक्ट चुनें
@@ -724,6 +733,7 @@ HI:
   Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer: फ्लैश करने के लिए Web Serial API आवश्यक है - डेस्कटॉप कंप्यूटर पर Chrome, Edge या Opera का उपयोग करें
   for node: नोड के लिए
   From: से
+  Frugal IoT project: फ़्रूगल IoT परियोजना
   Frugal-IoT Username *: Frugal-IoT उपयोगकर्ता नाम *
   Full provision - all configuration on the board will be erased: पूर्ण प्रोविजनिंग - बोर्ड की सारी कॉन्फ़िगरेशन मिट जाएगी
   Greater Than: इससे बड़ा
@@ -738,6 +748,7 @@ HI:
   hysterisis: हिस्टेरेसिस
   id: आईडी
   If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': यदि यह निर्देशिका फ़ाइल चयनकर्ता में दिखाई नहीं देती है, तो फ़ाइल को किसी अन्य स्थान पर कॉपी करें या बिना अग्रणी बिंदु के .pio निर्देशिका के लिए एक उपनाम बनाएं।
+  Info: जानकारी
   Input: इनपुट
   Key: कुंजी
   Last Seen: अंतिम बार देखा गया
@@ -842,6 +853,7 @@ HI:
   Speed: गति
   SSID: SSID
   stale: हाल में रिपोर्ट नहीं
+  Status: स्थिति
   Stop monitor: मॉनिटर बंद करें
   Submit: जमा करें
   System: सिस्टम
@@ -890,6 +902,7 @@ ID:
   Battery: Baterai
   Board: Papan
   Brightness: Kecerahan  
+  Broker: Broker
   Built in LED: LED bawaan
   buttons: tombol
   Choose a project to see its devices: Pilih proyek untuk melihat perangkatnya
@@ -930,6 +943,7 @@ ID:
   Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer: Flashing memerlukan Web Serial API - gunakan Chrome, Edge atau Opera di komputer desktop
   for node: untuk node
   From: Dari
+  Frugal IoT project: Proyek Frugal IoT
   Frugal-IoT Username *: Nama Pengguna Frugal-IoT *
   Full provision - all configuration on the board will be erased: Provisioning penuh - semua konfigurasi pada papan akan dihapus
   Greater Than: Lebih dari
@@ -944,6 +958,7 @@ ID:
   hysterisis: histeresis
   id: id
   If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': Jika direktori ini tidak terlihat di pemilih berkas, salin berkas ke tempat lain ATAU buat alias ke direktori .pio tanpa titik di awal.
+  Info: Info
   Input: Masukan
   Key: Kunci
   Last Seen: Terakhir Dilihat
@@ -1048,6 +1063,7 @@ ID:
   Speed: Kecepatan
   SSID: SSID
   stale: Belum melapor baru-baru ini
+  Status: Status
   Stop monitor: Hentikan monitor
   Submit: Kirim
   System: Sistem
@@ -2292,7 +2308,7 @@ class MqttTopicNode extends MqttTopic {
 */
 class MqttClient extends HTMLElementExtended {
   // This appears to be reconnecting properly, but if not see mqtt (library I think)'s README
-  static get observedAttributes() { return ['server', 'username', 'password']; }
+  static get observedAttributes() { return ['server', 'username', 'password', 'display']; }
 
   setStatus(text) {
     this.state.status = text;
@@ -2369,21 +2385,30 @@ class MqttClient extends HTMLElementExtended {
     }
   }
   // TODO-86 display some more about the client and its status, but probably under an "i"nfo button on Org
+  // display="status" shows only whether it is connected, with no disclosure to open. Which broker
+  // and which organization are reference information, wanted once - they belong somewhere findable
+  // rather than in the corner of every screen.
+  renderDetail() {
+    return [
+      el('span',{textContent: "server", i8n: false}),
+      el('span',{textContent: ": "}),
+      el('span',{textContent: this.state.server, i8n: false}),
+      el('br'),
+      el('span',{textContent: "organization", i8n: false}),
+      el('span',{textContent: ": "}),
+      el('span',{textContent: this.state.username, i8n: false}), // Username on the broker is the organization id
+    ];
+  }
   render() {
+    const status = el('span', {class: 'status', textContent: this.state.status});
     return [
       el('link', {rel: 'stylesheet', href: CssUrl}),
-      el('details', {class: 'mqtt-client'},[
-        el('summary', {}, [
-          el('span', {class: 'status', textContent: this.state.status}),
-            ]),
-        el('span',{textContent: "server", i8n: false}),
-        el('span',{textContent: ": "}),
-        el('span',{textContent: this.state.server, i8n: false}),
-        el('br'),
-        el('span',{textContent: "organization", i8n: false}),
-        el('span',{textContent: ": "}),
-        el('span',{textContent: this.state.username, i8n: false}), // Username on the broker is the organization id
-      ]),
+      (this.state.display === 'status')
+        ? el('span', {class: 'mqtt-client mqtt-client--status'}, [status])
+        : el('details', {class: 'mqtt-client'},[
+            el('summary', {}, [status]),
+            ...this.renderDetail(),
+          ]),
     ];
   }
 }
@@ -2405,7 +2430,7 @@ class MqttWrapper extends HTMLElementExtended {
     super();
     this.state.elements = {}; // Pointer to specific child elements for targeted updates
   }
-  static get observedAttributes() { return RECEIVER_ATTRIBUTES.concat(['organization','project','node','lang','headless']); }
+  static get observedAttributes() { return RECEIVER_ATTRIBUTES.concat(['organization','project','node','lang','headless','clientdisplay']); }
   static get boolAttributes() { return ['headless']; }
   // Maybe add 'discover' but think thru interactions
 
@@ -2445,7 +2470,10 @@ class MqttWrapper extends HTMLElementExtended {
     // The client does not connect until setClientCredentials tells it which organization to connect as,
     // so append it whether or not an organization has been chosen yet - it also shows connection status.
     // noinspection JSUnresolvedReference
-    this.state.elements.client = el('mqtt-client', {slot: 'client', server: server_config.mqtt.broker}); // typically "wss://frugaliot.naturalinnovation.org/wss"
+    // display comes from the page: the card UI shows only whether it is connected, and puts which
+    // broker and which organization on an Info card instead
+    this.state.elements.client = el('mqtt-client', {slot: 'client', server: server_config.mqtt.broker,
+      display: this.getAttribute('clientdisplay') || undefined}); // typically "wss://frugaliot.naturalinnovation.org/wss"
     this.append(this.state.elements.client);
     this.setClientCredentials(); // In case the organization was already known, e.g. from the URL or a markup attribute
   }

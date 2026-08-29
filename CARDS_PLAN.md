@@ -736,6 +736,32 @@ I also put the section handler in the wrong class first — `MqttLogin` and `Mqt
 
 ### Phase 9 — Polish
 
+**Branding first** (D-42). The greens come from `frugaliot.naturalinnovation.org`'s own stylesheet —
+`#2ecc71` leaf, `#27ae60` deeper — but used as a pale tint behind near-black text rather than a fill
+under white the way the main site's hero panels do. These screens are read in direct sun and in dim
+sheds; `#1a1a1a` on `#f3faf6` is about 16:1 and survives both. The logo is the icon the main site
+uses in its own header, top left, linking back to it.
+
+**The phone-width bumps, for the fourth time.** `@media (max-width: 1001px)` rules across
+`frugaliot.css` inflate fonts and icons for the node/group UI, where a node is one wide block. Inside
+a card they made every input and select far wider than the card, and on a phone the back's content
+ran off the screen entirely. Every one of them now reads `var(--fi-chrome-font, …)` and the card page
+sets it once. Two more fixes went with it: a field row stacks its label above its value below 560px
+rather than keeping a fixed column that cannot shrink, and the grid uses
+`minmax(min(100%, 300px), 1fr)` so a phone narrower than 300px does not get a column wider than the
+screen.
+
+That block of media queries is now parameterised rather than replaced. Replacing it wholesale is
+still the right end state, and belongs with retiring `nodeview.js`.
+
+**Not a bug in our code:** the page intermittently failing to load was
+`frugal-iot-server/public/service-worker.js`, registered at scope `/` and cache-first with no
+revalidation, holding `/node_modules/html-element-extended/htmlelementextended.js` from before the
+`renderRoot` change. Devtools "disable cache" and force-reload bypass the HTTP cache but not a
+service worker answering from Cache Storage. `CACHE_NAME` gets bumped at release, which is the
+designed mechanism; during development, unregister the worker.
+
+
 Bottom sheets for the card back and the mobile graph (O-8); 150–200ms transitions honouring
 `prefers-reduced-motion`; `Intl.RelativeTimeFormat` for "2h ago" (O-7); the four-language sweep for
 every new string; the §9 visual pass including `--fi-*` tokens and fixing the invalid

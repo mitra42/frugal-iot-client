@@ -48,7 +48,7 @@ div.mqtt-text {
     .icon { /* mqtt-toggle , mqtt-bar (graph) */
         height:1em;width:1em;float:right;
         @media (max-width:1001px){
-            height:1.5em;width:1.5em;
+            height:var(--fi-icon-size, 1.5em);width:var(--fi-icon-size, 1.5em);
         }
     }
     .language-picker, language-picker, .language-picker select {
@@ -110,9 +110,9 @@ div.mqtt-text {
         .right {background-color:white; display:inline-block;}
         .val {margin:5px;}
         @media (max-width:1001px){
-            .left, .right {height: 2em;}
-            .val {font-size: xx-large;}
-            label {font-size: x-large;}
+            .left, .right {height: var(--fi-chrome-line, 2em);}
+            .val {font-size: var(--fi-chrome-font, xx-large);}
+            label {font-size: var(--fi-chrome-font, x-large);}
         }
     }
 
@@ -120,9 +120,9 @@ div.mqtt-text {
     .mqtt-choosetopic {
         .outer { border: 0px,black,solid;  margin: 0.2em; }
         @media (max-width:1001px){
-            .dropdown {font-size: x-large;}
-            select { font-size: x-large;}
-            label {font-size: x-large;}
+            .dropdown {font-size: var(--fi-chrome-font, x-large);}
+            select { font-size: var(--fi-chrome-font, x-large);}
+            label {font-size: var(--fi-chrome-font, x-large);}
         }
     }
 
@@ -300,14 +300,21 @@ div.mqtt-text {
  * widgets inside a card (mqtt-bar and friends) can be themed from here without :host-context.
  * ========================================================================= */
 :root {
-    --fi-card-bg:  #ffffff;
-    --fi-border:   #e3e3e3;
+    /* The project's greens, from frugaliot.naturalinnovation.org: #2ecc71 leaf, #27ae60 deeper.
+       The main site puts white text over them; these screens are read outdoors in sunlight and in
+       dim sheds at night, so the green is a tint behind near-black text rather than a fill under
+       white. #1a1a1a on #f3faf6 is about 16:1, which survives both. */
+    --fi-leaf:     #2ecc71;
+    --fi-leaf-deep:#27ae60;
+    --fi-card-bg:  #f3faf6;   /* pale green, so a card reads as a card against the page */
+    --fi-page-bg:  #e8f1eb;
+    --fi-border:   #cfe3d6;
     --fi-text:     #1a1a1a;
-    --fi-muted:    #6b6b6b;
+    --fi-muted:    #5d6b63;
     --fi-radius:   8px;
     --fi-gap:      12px;
     /* Status: paired with a different shape in the markup, never colour alone */
-    --fi-live:     #2e9e4f;
+    --fi-live:     var(--fi-leaf-deep);
     --fi-stale:    #d98a0b;
     --fi-offline:  #9a9a9a;
 }
@@ -425,6 +432,9 @@ div.outer.mqtt-bar > div.ends {
 .fi-card__sections { display: flex; flex-direction: column; gap: 14px; margin-top: 8px; }
 .fi-section__title {
     margin: 0 0 4px;
+    /* accented, not filled: text stays near-black */
+    border-left: 3px solid var(--fi-leaf);
+    padding-left: 6px;
     font-size: 0.75em;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -438,6 +448,7 @@ div.outer.mqtt-bar > div.ends {
 .fi-field--reading { display: block; }
 .fi-when { display: flex; align-items: baseline; gap: 6px; }
 .fi-when__pm { color: var(--fi-muted); }
+.fi-when__hyst { display: inline-flex; align-items: baseline; gap: 4px; flex: 0 0 auto; }
 .fi-advanced summary { color: var(--fi-muted); font-size: 0.85em; cursor: pointer; }
 /* Keep the inline control row inside the card.
    The inputs live in the widgets' shadow roots, so a page-level ".fi-when input" cannot reach them -
@@ -460,7 +471,9 @@ div.outer.mqtt-bar > div.ends {
    so the same drag works on a phone and a desktop (CARDS_UX.md D-12). */
 mqtt-devicegrid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    /* min(100%, 300px), not 300px: on a phone narrower than that the column would be 300px wide and
+       the grid itself would overflow the screen */
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
     gap: var(--fi-gap);
     align-items: start;
 }
@@ -480,9 +493,10 @@ mqtt-devicecard[movable] .fi-card__head { touch-action: pan-y; }
 .fi-dragging { opacity: 0.6; transform: scale(0.99); }
 
 /* The card page (dashboard.html) */
-body:has(mqtt-dashboard) { background: #f5f5f5; margin: 0; }
+body:has(mqtt-dashboard) { margin: 0; }
 mqtt-dashboard { display: block; }
 .fi-header {
+    border-top: 3px solid var(--fi-leaf);   /* a thin band of the project's green */
     position: sticky;
     top: 0;
     z-index: 100;
@@ -494,6 +508,9 @@ mqtt-dashboard { display: block; }
     background: var(--fi-card-bg);
     border-bottom: 1px solid var(--fi-border);
 }
+/* Back to the project's main site - the same icon it uses in its own header */
+.fi-brand { order: 0; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; color: inherit; }
+.fi-brand img { height: 28px; width: 28px; }
 .fi-header__title { font-weight: bold; }
 .fi-body { padding: var(--fi-gap); }
 .fi-empty { text-align: center; padding: 48px 20px; color: var(--fi-muted); }
@@ -514,6 +531,7 @@ body:has(mqtt-dashboard) {
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     font-size: 16px;
     color: var(--fi-text);
+    background: var(--fi-page-bg);
 }
 .fi-header {
     /* Read by the rules above, inside the shadow roots of language-picker and mqtt-client */
@@ -568,3 +586,24 @@ body:has(mqtt-dashboard) {
 .fi-admincard:not(.fi-admincard--open) mqtt-admin { display: none; }
 .fi-admincard mqtt-admin { display: block; padding: 0 14px 14px; }
 .fi-admincard select, .fi-admincard input { max-width: 100%; }
+
+/* The card page sizes its own text, so none of the phone-width bumps above apply inside it - they
+   were built for the node/group UI, where a whole node is one wide block. In a card they made every
+   input and select far wider than the card and the content ran off the screen. */
+body:has(mqtt-dashboard) {
+    --fi-chrome-font: 1rem;
+    --fi-chrome-line: 1.6em;
+    --fi-icon-size: 1.2em;
+}
+/* Nothing inside a card may be wider than the card */
+.fi-card, .fi-card * { max-width: 100%; box-sizing: border-box; }
+.fi-card { --fi-val-max: 100%; }
+.mqtt-text input.val, .mqtt-text span.val, .mqtt-choosetopic select { width: 100%; }
+
+/* Narrow: a label above its value, rather than a fixed column that cannot shrink */
+@media (max-width: 560px) {
+    .fi-field { display: block; }
+    .fi-field__label { display: block; flex: none; margin-bottom: 2px; }
+    .fi-when { flex-wrap: wrap; }
+    .fi-when { --fi-val-max: 6em; }
+}

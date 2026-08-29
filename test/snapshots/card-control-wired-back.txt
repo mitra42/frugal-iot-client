@@ -98,12 +98,13 @@
                 #shadow
                   <div class="mqtt-text controlhysteresis_limit outer">
                     <input name="dev/lotus/esp8266-fb94bb/controlhysteresis/limit" value="32" class="val" type="number">
-              <span class="fi-when__pm">
-                "±"
-              <mqtt-text topic="dev/lotus/esp8266-fb94bb/controlhysteresis/hysteresis" value="3" label="" type="float">
-                #shadow
-                  <div class="mqtt-text controlhysteresis_hysteresis outer">
-                    <input name="dev/lotus/esp8266-fb94bb/controlhysteresis/hysteresis" value="3" class="val" type="number">
+              <span class="fi-when__hyst">
+                <span class="fi-when__pm">
+                  "±"
+                <mqtt-text topic="dev/lotus/esp8266-fb94bb/controlhysteresis/hysteresis" value="3" label="" type="float">
+                  #shadow
+                    <div class="mqtt-text controlhysteresis_hysteresis outer">
+                      <input name="dev/lotus/esp8266-fb94bb/controlhysteresis/hysteresis" value="3" class="val" type="number">
         <div class="fi-field">
           <span class="fi-field__label">
             "Output"

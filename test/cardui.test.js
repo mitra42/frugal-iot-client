@@ -246,6 +246,9 @@ describe('back mode', () => {
     assert.ok(when.querySelector('mqtt-toggle'), 'the comparison is a two-state control');
     assert.equal(when.querySelectorAll('mqtt-text').length, 2, 'limit and hysteresis');
     assert.match(when.textContent, /±/, 'the symbol, not the word Hysteresis');
+    // One item, so wrapping cannot leave the symbol on the line above its own value
+    const pm = when.querySelector('.fi-when__pm');
+    assert.ok(pm.parentElement.querySelector('mqtt-text'), 'the ± is not grouped with its value');
     card.remove();
   });
 

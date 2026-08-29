@@ -21,41 +21,68 @@ before(async () => {
 beforeEach(() => { withCapabilities('READ'); try { localStorage.clear(); } catch (e) { /* none */ } });
 
 describe('which admin cards a user gets', () => {
-  test('a reader gets none at all', () => {
-    assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section), []);
+  test('a reader gets Info and nothing else', () => {
+    // Info needs no capability: connection details are reference information, and having one card
+    // that everyone gets is also what stops the project's back ever opening onto nothing
+    assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section), ['info']);
   });
 
   test('each capability brings its own card, and no others', () => {
     withCapabilities('READ', 'OTAUPDATE');
-    assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section), ['ota']);
+    assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section), ['info', 'ota']);
     withCapabilities('READ', 'OTAFLASH');
-    assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section), ['flash']);
+    assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section), ['info', 'flash']);
     withCapabilities('READ', 'ADMIN');
-    assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section), ['admin', 'nodes', 'api']);
+    assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section), ['info', 'admin', 'nodes', 'api']);
   });
 
   test('flashing and pushing an OTA binary are separate capabilities', () => {
     // Neither implies the other - more people will have OTAFLASH, because it needs the device in
     // your hand, where an OTA push reaches every device at once
     withCapabilities('OTAFLASH');
-    assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section), ['flash']);
+    assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section), ['info', 'flash']);
     withCapabilities('OTAUPDATE');
-    assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section), ['ota']);
+    assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section), ['info', 'ota']);
   });
 
   test('a capability on another organization does not count', () => {
     mock.loadConfig({ ...base, user: { id: 2, permissions: [{ org: 'other', capability: 'ADMIN' }] } });
-    assert.deepEqual(cards.adminCardsFor('dev'), []);
+    assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section), ['info'], 'only the ungated one');
   });
 });
 
 describe('the project back', () => {
-  test('renders one card per permitted function', () => {
+  test('renders one card per permitted function, plus Info', () => {
     withCapabilities('READ', 'ADMIN');
     const back = document.createElement('mqtt-projectback');
     back.setAttribute('organization', 'dev');
     document.body.append(back);
-    assert.equal(back.querySelectorAll('.fi-admincard').length, 3);
+    assert.equal(back.querySelectorAll('.fi-admincard').length, 4);
+    back.remove();
+  });
+
+  test('Info closes again when clicked - it is not an mqtt-admin, and was hidden by name', () => {
+    const back = document.createElement('mqtt-projectback');
+    back.setAttribute('organization', 'dev');
+    document.body.append(back);
+    const head = back.state.elements.info.querySelector('.fi-admincard__head');
+    head.click();
+    assert.ok(back.state.elements.info.classList.contains('fi-admincard--open'));
+    head.click();
+    assert.ok(!back.state.elements.info.classList.contains('fi-admincard--open'), 'it stayed open');
+    back.remove();
+  });
+
+  test('Info holds what the header used to expand to show', () => {
+    // The connection details are wanted once, not in the corner of every screen
+    const back = document.createElement('mqtt-projectback');
+    back.setAttribute('organization', 'dev');
+    document.body.append(back);
+    back.querySelector('.fi-admincard__head').click();
+    const info = back.querySelector('.fi-infocard');
+    assert.ok(info, 'no Info content');
+    assert.match(info.textContent, /dev/, 'the organization');
+    assert.equal(back.querySelector('mqtt-admin'), null, 'Info is not an admin section');
     back.remove();
   });
 
@@ -65,7 +92,7 @@ describe('the project back', () => {
     back.setAttribute('organization', 'dev');
     document.body.append(back);
     assert.equal(back.querySelectorAll('mqtt-admin').length, 0, 'nothing should be built yet');
-    back.querySelector('.fi-admincard__head').click();
+    back.state.elements.admin.querySelector('.fi-admincard__head').click();
     assert.equal(back.querySelectorAll('mqtt-admin').length, 1, 'opening should build one');
     assert.ok(back.querySelector('.fi-admincard--open'));
     back.remove();
@@ -76,7 +103,7 @@ describe('the project back', () => {
     const back = document.createElement('mqtt-projectback');
     back.setAttribute('organization', 'dev');
     document.body.append(back);
-    const head = back.querySelector('.fi-admincard__head');
+    const head = back.state.elements.admin.querySelector('.fi-admincard__head');
     head.click();
     const built = back.querySelector('mqtt-admin');
     head.click();
@@ -86,11 +113,12 @@ describe('the project back', () => {
     back.remove();
   });
 
-  test('renders nothing for someone with no admin capability', () => {
+  test('a reader gets Info and no admin cards', () => {
     const back = document.createElement('mqtt-projectback');
     back.setAttribute('organization', 'dev');
     document.body.append(back);
-    assert.equal(back.querySelectorAll('.fi-admincard').length, 0);
+    const titles = [...back.querySelectorAll('.fi-admincard__head')].map((h) => h.textContent);
+    assert.deepEqual(titles, ['Info']);
     back.remove();
   });
 
@@ -101,7 +129,7 @@ describe('the project back', () => {
     const back = document.createElement('mqtt-projectback');
     back.setAttribute('organization', 'dev');
     document.body.append(back);
-    back.querySelector('.fi-admincard__head').click();
+    back.state.elements.admin.querySelector('.fi-admincard__head').click();
     const admin = back.querySelector('mqtt-admin');
     assert.equal(admin.getAttribute('section'), 'admin');
     assert.equal(admin.state.activeTabTitle, 'Admin', 'it would have asked for the Dashboard tab');
@@ -113,7 +141,7 @@ describe('the project back', () => {
     const back = document.createElement('mqtt-projectback');
     back.setAttribute('organization', 'dev');
     document.body.append(back);
-    back.querySelector('.fi-admincard__head').click();
+    back.state.elements.admin.querySelector('.fi-admincard__head').click();
     assert.equal(back.querySelector('mqtt-admin').state.org, 'dev');
     back.remove();
   });
@@ -136,6 +164,16 @@ describe('the page', () => {
     document.body.append(page);
     assert.ok(page.querySelector('.fi-empty'), 'no empty state');
     assert.equal(page.querySelector('mqtt-devicegrid'), null);
+    page.remove();
+  });
+
+  test('the header links back to the project site', () => {
+    const page = document.createElement('mqtt-dashboard');
+    document.body.append(page);
+    const brand = page.querySelector('.fi-brand');
+    assert.ok(brand, 'no way back to the main site');
+    assert.equal(brand.getAttribute('href'), '/');
+    assert.ok(brand.querySelector('img'), 'the icon the main site uses in its own header');
     page.remove();
   });
 
@@ -170,12 +208,21 @@ describe('the page', () => {
     page.remove();
   });
 
-  test('no gear when turning the project over would show nothing (D-29)', () => {
+  test('a reader gets the gear too, because Info is always behind it', () => {
+    // D-29 said omit the gear when the back would be empty. Info is ungated, so the back is never
+    // empty and the gear is always offered - the guard stays, it simply no longer triggers.
     const page = document.createElement('mqtt-dashboard');
     document.body.append(page);
     document.dispatchEvent(new CustomEvent('frugaliot:projectchanged',
       { detail: { projectMt: mock.runScenario('one-device').projectMt, organization: 'dev' } }));
-    assert.equal(page.querySelector('.fi-header .fi-btn'), null, 'a reader has nothing to administer');
+    assert.ok(page.querySelector('.fi-header .fi-btn'), 'even a reader has Info to look at');
+    page.remove();
+  });
+
+  test('with no organization chosen there is still no gear', () => {
+    const page = document.createElement('mqtt-dashboard');
+    document.body.append(page);
+    assert.equal(page.querySelector('.fi-header .fi-btn'), null);
     page.remove();
   });
 

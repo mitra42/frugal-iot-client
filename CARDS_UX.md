@@ -540,7 +540,14 @@ Offered because the brief asks for them; all cheap to change later if they are w
   is already in the icon's shape, so the number is clutter. The percentage stays on the icon's title
   and appears as text on the front. A bare "47%" beside a device name was the worst of both: it does
   not say what is 47%, and it reads as a humidity or a soil moisture.
-- **Card**: white, 8px radius, 1px hairline border (`#e3e3e3`) plus a 1px soft shadow. Not the
+- **Branding**: the project's greens from `frugaliot.naturalinnovation.org` — `#2ecc71` leaf,
+  `#27ae60` deeper — used as a **pale tint behind near-black text**, not as a fill under white text
+  the way the main site's hero panels do. These screens get read in direct sun and in dim sheds;
+  `#1a1a1a` on `#f3faf6` is about 16:1 and survives both, where white on green does not. The green
+  appears as the card tint, a thin band under the header, the section rules, and the live status
+  dot. **D-42**
+- **Logo**: the icon the main site uses in its own header, top left, linking back to it.
+- **Card**: pale green (`#f3faf6`), 8px radius, 1px hairline border, plus a 1px soft shadow. Not the
   heavy black border of today. (Note: the current CSS writes `border: 1px,black,solid` in several
   places, which is invalid CSS and silently does nothing — worth fixing while here.)
 - **Hierarchy**: the *value* is the loudest thing on the card. Label small, uppercase-ish, gray
@@ -649,6 +656,7 @@ Each card is shown only if the user's capabilities allow it:
 
 | Card | Capability | Note |
 |---|---|---|
+| Info | none | broker, organization, connection — reference information anyone may want |
 | OTA upload and manage | `OTAUPDATE` | existing OTA tab, unchanged |
 | Flash | `OTAFLASH` | **new capability**; today `mqtt-flash` sits inside the OTA tab and so is gated on `OTAUPDATE` — it moves out |
 | Permissions | `ADMIN` | existing Admin tab, unchanged |
@@ -668,9 +676,13 @@ worth seeing plainly. **D-32**
 and a table — so `READ` would be defensible. But a UI redesign is the wrong vehicle for widening who
 can see an organization's device inventory; if that is wanted it should be its own decision. **D-33**
 
-For a user with none of these, the project back holds only whatever project-level fields they can
-control, which today is nothing — so **omit the project gear entirely when no card would appear**,
-rather than opening an empty back. **D-29**
+The **Info card is ungated**, and is where the connection details went when they left the header:
+which broker, as which organization, and whether it is connected. Wanted once, not in the corner of
+every screen — and the natural place for more of the same later, bridge status and so on. **D-43**
+
+Because Info is always there the back is never empty, so the gear is offered as soon as an
+organization is chosen. D-29's rule — omit the gear rather than open onto nothing — still stands and
+is still implemented; it simply no longer triggers. **D-29**
 
 **An admin card has a summary and a back, and no front.** There is nothing to watch at a glance in
 an OTA uploader, so the two-stage open of a device card makes no sense here: the card is its name
@@ -743,6 +755,8 @@ Reopening one means revisiting this document, not deciding it in code.
 | D-39 | Battery on the summary line | The level icon alone; the percentage lives on its title and on the front |
 | D-40 | An unwired control on the summary | Omitted — it is doing nothing. Still shown on the front |
 | D-41 | Do admin cards have a front? | No — summary and back only; collapsed to a name until opened |
+| D-42 | How the brand greens are used | A pale tint behind near-black text, never a fill under white — sunlight and dim sheds |
+| D-43 | Where the connection details live | An ungated Info card on the project's back, not an expandable in the header |
 
 ---
 
