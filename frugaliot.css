@@ -554,13 +554,14 @@ body:has(mqtt-dashboard) {
 /* The gear sits in a span, and it is the span that is the flex item - ordering the button inside it
    left the span at the default 0, next to the title */
 .fi-header__gear { order: 9; display: inline-flex; }
-.fi-header__break { order: 10; display: none; }
+.fi-header__logout { order: 10; text-decoration: none; }
+.fi-header__break { order: 12; display: none; }
 
 /* Narrow, two rows: name, connection, language, gear - then the selectors on a row of their own,
    rather than wrapping raggedly wherever they happen to fall */
 @media (max-width: 700px) {
     .fi-header__break { display: block; flex-basis: 100%; height: 0; }
-    .fi-header .dropdown { order: 11; flex: 1 1 auto; min-width: 0; }
+    .fi-header .dropdown { order: 13; flex: 1 1 auto; min-width: 0; }
     .fi-header .dropdown select { min-width: 0; }
 }
 
@@ -584,7 +585,8 @@ body:has(mqtt-dashboard) {
 }
 .fi-admincard__head::before { content: "▸ "; color: var(--fi-muted); }
 .fi-admincard--open > .fi-admincard__head::before { content: "▾ "; }
-.fi-admincard:not(.fi-admincard--open) mqtt-admin { display: none; }
+/* By position, not by element name: Info is not an mqtt-admin, so hiding by name left it open */
+.fi-admincard:not(.fi-admincard--open) > *:not(.fi-admincard__head) { display: none; }
 .fi-admincard mqtt-admin { display: block; padding: 0 14px 14px; }
 .fi-admincard select, .fi-admincard input { max-width: 100%; }
 

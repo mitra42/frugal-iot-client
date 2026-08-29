@@ -818,6 +818,10 @@ class MqttDashboard extends HTMLElementExtendedMinimum {
         }),
         this.state.elements.language = el('language-picker'),
         this.state.elements.gear = el('span', { class: 'fi-header__gear' }),
+        // There was no way to log out at all before. It matters more now that a permissions change
+        // ends the session, so people come back to the login page and need to be able to get there.
+        el('a', { class: 'fi-btn fi-header__logout', href: '/logout', title: getString('Log out'),
+          i8n: false, textContent: '⏻' }),
         // Forces the organization and project selectors onto a second row when the header is
         // narrow - see .fi-header__break. Nothing to look at, so it is hidden from assistive tech.
         el('span', { class: 'fi-header__break', 'aria-hidden': 'true' }),

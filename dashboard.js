@@ -1,5 +1,5 @@
 /*
- * Entry point for dashboard.html - the card UI.
+ * Entry point for index.html - the card UI.
  *
  * Everything except nodeview.js, which is the node/group UI this page replaces. webcomponents.js
  * would pull that in too; it is the entry for index.html, which still needs it.

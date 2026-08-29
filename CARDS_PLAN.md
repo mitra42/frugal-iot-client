@@ -771,15 +771,28 @@ gaps were found and closed:
 `dashboard.html` also got its own entry, `dashboard.js`, importing everything except `nodeview.js` —
 the one module it genuinely replaces.
 
+**Deployment shape settled.** The card page is now `index.html`, so `/dashboard/` serves it and
+login lands there; the node/group UI moved to `index-old.html` and the project's home page has a
+"Previous dashboard" card pointing at it. Nobody has to know a URL to get the new one, and nobody
+loses the old one.
+
+**A logout, at last.** There was no `/logout` route and no link in either UI. There is now a route on
+the server and a button in the header — it matters more since a permissions change ends the session.
+
+**Two things needed no work at all**, which is worth recording so nobody builds them:
+
+- *The disconnected banner.* `MqttClient.setStatus` already re-renders, so the header switches
+  between "connected" and "disconnected" by itself. MQTT in the field drops and returns constantly,
+  and a banner for each would be worse than the word changing quietly.
+- *Removing a line from a graph.* Chart.js's legend does this natively — click a label to hide its
+  dataset — and the legend is already enabled.
+
 **Still outstanding, and worth deciding before deploying:**
 
 | | |
 |---|---|
-| Which page is the default | `/dashboard/` serves `index.html`, and login redirects there, so the card page is reachable only by typing its URL. Nothing switches over until that changes |
-| No logout, anywhere | Pre-existing — there is no `/logout` route on the server and the old UI has no link either. It matters more now: ending a session on a permissions change means people re-login more often |
-| The disconnected banner (§8.1) | Not built. Needs `MqttClient` to announce status changes rather than only rendering them |
-| Removing a line from a graph | `removeFromGraph` exists with no UI, in both the old and the new page. Pre-existing |
-| `nodeview.js` retirement | The card page now covers every tab `index.html` has, plus Flash and Info. Retiring it is a decision, not more work |
+| `nodeview.js` retirement | `index-old.html` is the only thing that still loads it. Retiring both is a decision, not more work |
+| Publishing `html-element-extended` 0.1.7 | It is linked, not published. Until it is, a deployment needs the linked copy, and the service worker's `CACHE_NAME` has to be bumped |
 
 **Not a bug in our code:** the page intermittently failing to load was
 `frugal-iot-server/public/service-worker.js`, registered at scope `/` and cache-first with no

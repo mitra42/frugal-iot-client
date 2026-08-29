@@ -167,6 +167,16 @@ describe('the page', () => {
     page.remove();
   });
 
+  test('there is a way to log out', () => {
+    // There was none at all before, and a permissions change now ends the session
+    const page = document.createElement('mqtt-dashboard');
+    document.body.append(page);
+    const out = page.querySelector('.fi-header__logout');
+    assert.ok(out, 'no way out');
+    assert.equal(out.getAttribute('href'), '/logout');
+    page.remove();
+  });
+
   test('a graph has somewhere to land', () => {
     // MqttGraph looks for #graph-container and otherwise appends to the end of the document, which
     // on this page is below everything
@@ -224,14 +234,14 @@ describe('the page', () => {
     document.body.append(page);
     document.dispatchEvent(new CustomEvent('frugaliot:projectchanged',
       { detail: { projectMt: mock.runScenario('one-device').projectMt, organization: 'dev' } }));
-    assert.ok(page.querySelector('.fi-header .fi-btn'), 'even a reader has Info to look at');
+    assert.ok(page.querySelector('.fi-header__gear .fi-btn'), 'even a reader has Info to look at');
     page.remove();
   });
 
   test('with no organization chosen there is still no gear', () => {
     const page = document.createElement('mqtt-dashboard');
     document.body.append(page);
-    assert.equal(page.querySelector('.fi-header .fi-btn'), null);
+    assert.equal(page.querySelector('.fi-header__gear .fi-btn'), null);
     page.remove();
   });
 
@@ -240,10 +250,10 @@ describe('the page', () => {
     withCapabilities('READ', 'ADMIN');
     const page = document.createElement('mqtt-dashboard');
     document.body.append(page);
-    assert.equal(page.querySelector('.fi-header .fi-btn'), null, 'nothing chosen yet');
+    assert.equal(page.querySelector('.fi-header__gear .fi-btn'), null, 'nothing chosen yet');
     document.dispatchEvent(new CustomEvent('frugaliot:organizationchanged',
       { detail: { organization: 'dev' } }));
-    assert.ok(page.querySelector('.fi-header .fi-btn'), 'an admin should get a gear');
+    assert.ok(page.querySelector('.fi-header__gear .fi-btn'), 'an admin should get a gear');
     page.remove();
   });
 
@@ -253,7 +263,7 @@ describe('the page', () => {
     document.body.append(page);
     document.dispatchEvent(new CustomEvent('frugaliot:projectchanged',
       { detail: { projectMt: mock.runScenario('one-device').projectMt, organization: 'dev' } }));
-    page.querySelector('.fi-header .fi-btn').click();
+    page.querySelector('.fi-header__gear .fi-btn').click();
     assert.ok(page.querySelector('mqtt-projectback'));
     document.dispatchEvent(new CustomEvent('frugaliot:organizationchanged',
       { detail: { organization: 'dev' } }));
@@ -268,14 +278,14 @@ describe('the page', () => {
     document.body.append(page);
     document.dispatchEvent(new CustomEvent('frugaliot:projectchanged',
       { detail: { projectMt: mock.runScenario('one-device').projectMt, organization: 'dev' } }));
-    const gear = page.querySelector('.fi-header .fi-btn');
+    const gear = page.querySelector('.fi-header__gear .fi-btn');
     assert.ok(gear, 'an admin should get a gear');
     // The span is the flex item, so it is the span that has to be ordered, not the button in it
     assert.ok(gear.closest('.fi-header__gear'), 'the gear is not in the box that gets ordered');
     gear.click();
     assert.ok(page.querySelector('mqtt-projectback'), 'the gear did not turn it over');
     assert.equal(page.querySelector('mqtt-devicegrid'), null, 'the grid should be gone');
-    page.querySelector('.fi-header .fi-btn').click();
+    page.querySelector('.fi-header__gear .fi-btn').click();
     assert.ok(page.querySelector('mqtt-devicegrid'), 'and back again');
     page.remove();
   });

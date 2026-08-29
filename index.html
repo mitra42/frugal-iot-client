@@ -11,7 +11,7 @@
     <link rel="apple-touch-icon" href="/images/icon-192x192.png">
     <!--suppress HtmlUnknownTarget -->
     <link rel="manifest" href="/manifest.json">
-    <title>Frugal IoT  Dashboard</title>
+    <title>Frugal IoT</title>
     <link href="./frugaliot.css" rel="stylesheet" type="text/css">
     <script type="importmap">
         {
@@ -26,12 +26,12 @@
             }
         }
     </script>
-    <script src="./webcomponents.js" type="module"></script>
+    <!-- The card UI. The node/group UI it replaces is still at index-old.html, linked from the
+         project's home page - see CARDS_UX.md O-3. This loads the modules it needs rather than
+         webcomponents.js, which would also pull in nodeview.js. -->
+    <script src="./dashboard.js" type="module"></script>
 </head>
 <body>
-<!-- TODO maybe add mqtt-organization discover to discover projects - but maybe better to go to server for it -->
-<!-- <mqtt-project topic="dev/lotus/" name="Lotus Ponds" discover></mqtt-project> -->
-<mqtt-admin></mqtt-admin>
-<!-- <mqtt-wrapper></mqtt-wrapper> -->
+<mqtt-dashboard></mqtt-dashboard>
 </body>
 </html>

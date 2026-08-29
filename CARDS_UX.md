@@ -227,6 +227,20 @@ first pass and taken out — a position does belong on a summary.)
 The polarity also fails in the right direction: a newly added sensor module shows up in summaries by
 default, rather than being invisible until someone remembers a flag.
 
+**Done, and without the YAML.** L-3 set out to replace the hand-written summaries with a
+`summary: [leaves]` list per module. What it actually needed was a sensible default:
+`MqttTopicGroup.summaryText()` now returns the module's own readings, formatted by the schema and
+capped at two. That is what §4.1 always said the fallback should be, and it gives **26 of the 33
+modules** a summary rather than the ten that had one written by hand — a device with no `devices.yaml`
+entry used to show a blank line if its modules happened to be among the other twenty.
+
+Four of the hand-written subclasses were deleted because the generic version produces exactly what
+they did. Three remain, and each earns it: `relay` wants its name beside the tick, `ota` shows a key
+rather than a reading, and a control shows a rule rather than a list of values. No `modules.yaml`
+change was needed at all. **D-44**
+
+The paragraphs below describe the interim state and are kept for the reasoning:
+
 **This is explicitly an interim step.** Only a handful of modules have a hand-coded `summaryText()`
 (`sht`, `dht`, `ht`, `soil`, `ds18b20`, `battery`, `relay`, `ledbuiltin`, `ota`,
 `controlhysteresis`) — every other module has no summary at all, and each one that does required a
@@ -757,6 +771,7 @@ Reopening one means revisiting this document, not deciding it in code.
 | D-41 | Do admin cards have a front? | No — summary and back only; collapsed to a name until opened |
 | D-42 | How the brand greens are used | A pale tint behind near-black text, never a fill under white — sunlight and dim sheds |
 | D-43 | Where the connection details live | An ungated Info card on the project's back, not an expandable in the header |
+| D-44 | How a module without a hand-written summary gets one | A generic default — its own readings, capped at two — not a list per module |
 
 ---
 
@@ -769,10 +784,9 @@ planned at all. This list is expected to grow as the plan and the implementation
 |---|---|---|
 | L-1 | **Overriding a control-driven actuator** — tapping a relay a control loop is driving | Has its own UX thinking in progress; depends on L-2. Interim behaviour: the loop overwrites the tap (D-18) |
 | L-2 | **Setting `manual` from the UI** | Node side exists (`Control_Sonoff`), UX side does not. Needs a reverse lookup `mt.drivenBy` — for an actuator, the control whose `out` is wired to it. Note `out.wired` holds a *set* path, so the comparison must normalise as `findTopic` does |
-| L-3 | **Replacing hand-coded `summaryText()` with `summary: [leaves]`** in `modules.yaml` (D-20) | The existing subclasses work; converting them is orthogonal to the card layout and safer once the cards are real |
-| L-4 | **`control: true` in `modules.yaml`** (D-16) | With `climate` deleted the prefix test is correct again, so this is robustness against a future module name, not a fix |
-| L-5 | **`TODO-213` — a module declaring dynamically-added outputs** | The reason `manual` sits in `topics.yaml` with no module declaring it. Wants doing with L-4 |
-| L-6 | **Per-user server-side layout sync** (§7.3) | `localStorage` covers the single-browser case, which is the common one; sync needs an account-scoped store |
+| ~~L-4~~ | ~~`control: true` in `modules.yaml`~~ | **Not doing.** Control modules start with "control"; if that ever stops being true, add the flag then |
+| ~~L-5~~ | ~~`TODO-213` — a module declaring dynamically-added outputs~~ | **Already supported.** What remains is merging `manual` into `controlhysteresis` — non-trivial, not urgent, and part of L-1/L-2 |
+| L-6 | **Per-user server-side layout sync** (§7.3) | **Unlikely.** It would mean server-side database changes to hold user preferences, which is not a direction worth taking for this; `localStorage` covers the common case |
 | L-7 | **Real enforcement of `WRITE`** (§10.3) | A known, separate project — per-user broker credentials or a server-side publish proxy. Until it lands, the UI gating is decluttering only and must be described that way |
 
 ---

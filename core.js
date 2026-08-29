@@ -52,6 +52,8 @@ const DEFAULT_REPORT_INTERVAL_MS = 300000;
 // How many chips a summary line falls back to when the device does not declare its own. Enough for
 // temperature + humidity + air quality + a control; a declared summary: list is not capped at all.
 const SUMMARY_CHIP_LIMIT = 4;
+// How many of a module's own readings its summary shows, when it has no better idea
+const SUMMARY_READINGS_PER_MODULE = 2;
 // A label for the next auto-generated element. A function because an imported binding cannot be
 // assigned to, and MqttChooseTopic lives in another module.
 function nextUniqueId() { return ++unique_id; }
@@ -338,6 +340,7 @@ EN:
   live: Live
   Load Cell: Load Cell
   Loading schema...: Loading schema...
+  Log out: Log out
   Lower-case letters and numbers only, no spaces or punctuation: Lower-case letters and numbers only, no spaces or punctuation
   Manual: Manual
   Monitor: Monitor
@@ -548,6 +551,7 @@ FR:
   live: En ligne
   Load Cell: Cellule de charge
   Loading schema...: Chargement du schéma...
+  Log out: Se déconnecter
   Lower-case letters and numbers only, no spaces or punctuation: Lettres minuscules et chiffres uniquement, sans espaces ni ponctuation
   Manual: Manuel
   Monitor: Moniteur
@@ -758,6 +762,7 @@ HI:
   live: चालू
   Load Cell: लोड सेल
   Loading schema...: स्कीमा लोड हो रहा है...
+  Log out: लॉग आउट
   Lower-case letters and numbers only, no spaces or punctuation: केवल छोटे अक्षर और अंक, कोई स्पेस या विरामचिह्न नहीं
   Manual: मैनुअल
   Monitor: मॉनिटर
@@ -968,6 +973,7 @@ ID:
   live: Aktif
   Load Cell: Sel Beban
   Loading schema...: Memuat skema...
+  Log out: Keluar
   Lower-case letters and numbers only, no spaces or punctuation: Hanya huruf kecil dan angka, tanpa spasi atau tanda baca
   Manual: Manual
   Monitor: Monitor
@@ -1396,6 +1402,9 @@ class MqttTopic {
   get formatted() {
     const v = this.state.value;
     if (v === undefined || v === null || v === '') return '';
+    // A bool is a state, not a word: "true" in a summary reads as a bug rather than as a relay
+    // being on, and ✓/✗ is what the rest of the UI already uses for one
+    if (typeof v === 'boolean') return v ? '✓' : '✗';
     if (typeof v !== 'number') return String(v);
     return v.toFixed(this.decimals) + unitSuffix(this.units);
   }
@@ -1848,8 +1857,16 @@ class MqttTopicGroup extends MqttTopic {
   // Values roll up here as they arrive - see the groupMt.state[leafAttr] assignments in
   // MqttTopic.message_received and MqttReceiver.topicValueSet - so a summary can be built with no
   // DOM at all. That is why this lives on the data tree and not on the group element.
+  // The module's own readings, formatted by the schema. This is what §4.1 always said the fallback
+  // should be, and it means every module has a summary rather than only the ten that had one written
+  // by hand - a device with no devices.yaml entry used to show a blank line if its modules happened
+  // to be among the other twenty. Overridden below only where a list of values is the wrong shape.
   summaryText() {
-    return null; // Most modules have no summary of their own
+    const shown = Object.values(this.topics)
+      .filter((mt) => mt.graphable && (mt.rw === 'r'))
+      .map((mt) => mt.formatted)
+      .filter(Boolean);
+    return shown.length ? shown.slice(0, SUMMARY_READINGS_PER_MODULE).join(' ') : null;
   }
   // The chip form, for the one-line summary. Same as summaryText for a sensor, but a control's
   // rule is a sentence and a summary wants "Relay ✓", not "Relay = SHT:Temperature > 32 +/- 3 ✓".
@@ -1866,29 +1883,9 @@ class MqttTopicGroupRelay extends MqttTopicGroup {
     return `${this.state.name} ${this.trueFalseSymbol(this.state.on)}`
   }
 }
-class MqttTopicGroupSoil extends MqttTopicGroup {
-  summaryText() {
-    return this.topics.soil.formatted;
-  }
-}
 class MqttTopicGroupOta extends MqttTopicGroup {
   summaryText() {
     return `${this.state.key}`
-  }
-}
-class MqttTopicGroupBattery extends MqttTopicGroup {
-  summaryText() {
-    return this.topics.battery.formatted;
-  }
-}
-class MqttTopicGroupDS18B20 extends MqttTopicGroup {
-  summaryText() {
-    return this.topics.ds18b20.formatted;
-  }
-}
-class MqttTopicGroupHt extends MqttTopicGroup {
-  summaryText() {
-    return `${this.topics.temperature.formatted} ${this.topics.humidity.formatted}`;
   }
 }
 class MqttTopicGroupControlHysteresis extends MqttTopicGroup {
@@ -1921,16 +1918,13 @@ class MqttTopicGroupControlHysteresis extends MqttTopicGroup {
 // `mqtt-group${groupId}` as a custom element. A module with no entry gets the plain MqttTopicGroup
 // and so has no summary. TODO-D20 these hand-written summaries are to be replaced by a
 // `summary: [leaves]` list in modules.yaml; the entries here go as each module gains one.
+// Only the modules whose summary is not simply a list of their readings. Everything else - and that
+// is most of the schema - gets the generic MqttTopicGroup.summaryText above. This is what L-3 set out
+// to achieve; it needed a sensible default rather than a list in every module.
 const topicGroupClasses = {
-  relay: MqttTopicGroupRelay,
-  soil: MqttTopicGroupSoil,
-  ota: MqttTopicGroupOta,
-  battery: MqttTopicGroupBattery,
-  ds18b20: MqttTopicGroupDS18B20,
-  ht: MqttTopicGroupHt,
-  sht: MqttTopicGroupHt,
-  dht: MqttTopicGroupHt,
-  controlhysteresis: MqttTopicGroupControlHysteresis,
+  relay: MqttTopicGroupRelay,                        // wants its name beside the tick
+  ota: MqttTopicGroupOta,                            // a key, not a reading
+  controlhysteresis: MqttTopicGroupControlHysteresis, // a rule, not a list of values
   controlhysterisis: MqttTopicGroupControlHysteresis, // TODO-legacy-hysterisis
 };
 
