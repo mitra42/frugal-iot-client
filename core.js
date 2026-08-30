@@ -127,6 +127,32 @@ function mqtt_subscribe(topic, cb) { // cb(message)
     console.log("Delaying till connected"); // It will resubscribe from "subscriptions"
   }
 }
+// A second, short-lived connection to the broker, with a clean session.
+//
+// Retained messages are delivered when a subscription is made, so collecting them needs a
+// subscription the page does not already hold - and making it on the page's own connection would
+// feed every retained value back through the data tree as though it had just arrived, adding
+// duplicate points to graphs. This is also the only place the retain flag on an incoming packet is
+// visible: mqtt_deliver below drops it, because nothing else needs it.
+//
+// The caller owns the returned client and must end() it.
+function mqttTempConnect(org) {
+  const orgConfig = server_config && server_config.organizations && server_config.organizations[org];
+  if (!orgConfig || !orgConfig.mqtt_password || !server_config.mqtt) return null;
+  return mqtt.connect(server_config.mqtt.broker, {
+    username: org, password: orgConfig.mqtt_password,
+    clean: true,          // a fresh session, so the broker replays what it holds
+    reconnectPeriod: 0,   // one attempt: this is a question, not a subscription to keep
+  });
+}
+
+// Everything an organization holds is under its own name, so a pattern is written relative to it -
+// "lotus/+/sht30" rather than "dev/lotus/+/sht30". Empty means everything.
+function retainedPattern(org, relative) {
+  const rest = (relative || '#').trim().replace(/^\/+/, '');
+  return `${org}/${rest || '#'}`;
+}
+
 // Route a received message to every matching subscription.
 // Separate from the client's on('message') so a test or mock can inject messages with no broker.
 function mqtt_deliver(topic, msg) {
@@ -2677,6 +2703,7 @@ export {
   leafAttribute,
   locationParameterChange,
   mqtt_client,
+  mqttTempConnect,
   mqtt_deliver,
   mqtt_subscribe,
   mqtt_unsubscribe_organization,
@@ -2687,6 +2714,7 @@ export {
   hasCapability,
   redirectToLogin,
   relativeTime,
+  retainedPattern,
   SUMMARY_CHIP_LIMIT,
   server_config,
   setClock,

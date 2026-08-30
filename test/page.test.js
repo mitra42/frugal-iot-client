@@ -33,7 +33,8 @@ describe('which admin cards a user gets', () => {
     withCapabilities('READ', 'OTAFLASH');
     assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section), ['info', 'flash']);
     withCapabilities('READ', 'ADMIN');
-    assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section), ['info', 'admin', 'nodes', 'api']);
+    assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section),
+      ['info', 'admin', 'projects', 'message', 'retained', 'nodes', 'api']);
   });
 
   test('flashing and pushing an OTA binary are separate capabilities', () => {
@@ -57,7 +58,7 @@ describe('the project back', () => {
     const back = document.createElement('mqtt-projectback');
     back.setAttribute('organization', 'dev');
     document.body.append(back);
-    assert.equal(back.querySelectorAll('.fi-admincard').length, 4);
+    assert.equal(back.querySelectorAll('.fi-admincard').length, 7);
     back.remove();
   });
 
@@ -122,6 +123,29 @@ describe('the project back', () => {
     back.remove();
   });
 
+  test('people, projects and raw publishing are three separate cards', () => {
+    // Three different jobs: who may do what, what the organization contains, and writing straight
+    // to the broker
+    withCapabilities('ADMIN');
+    const back = document.createElement('mqtt-projectback');
+    back.setAttribute('organization', 'dev');
+    document.body.append(back);
+    const titles = [...back.querySelectorAll('.fi-admincard__head')].map((h) => h.textContent);
+    assert.ok(titles.includes('Permissions'));
+    assert.ok(titles.includes('Publish Message'));
+    assert.ok(titles.includes('Projects'));
+    // Reach into the shadow root: the card's own textContent does not see the section's headings
+    const headings = (key) => {
+      back.state.elements[key].querySelector('.fi-admincard__head').click();
+      return [...back.state.elements[key].querySelector('mqtt-admin')
+        .shadowRoot.querySelectorAll('h3')].map((h) => h.textContent);
+    };
+    assert.deepEqual(headings('admin'), ['Permissions'], 'people only');
+    assert.deepEqual(headings('projects'), ['Projects']);
+    assert.deepEqual(headings('message'), ['Publish Message']);
+    back.remove();
+  });
+
   test('an opened section knows which data to load', () => {
     // Without a tab strip nothing fires tabchange, so activeTabTitle stayed at "Dashboard",
     // setOrganization loaded that tab's data - none - and the section sat empty with no request made
@@ -153,7 +177,7 @@ describe('the project back', () => {
     document.body.append(back);
     back.querySelectorAll('.fi-admincard__head').forEach((h) => h.click());
     const sections = [...back.querySelectorAll('mqtt-admin')].map((a) => a.getAttribute('section'));
-    assert.deepEqual(sections, ['admin', 'nodes', 'api']);
+    assert.deepEqual(sections, ['admin', 'projects', 'message', 'retained', 'nodes', 'api']);
     back.remove();
   });
 });

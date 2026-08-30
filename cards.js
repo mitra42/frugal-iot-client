@@ -678,8 +678,11 @@ const ADMIN_CARDS = [
   { section: 'info',  title: 'Info',            capability: null, own: true },
   { section: 'ota',   title: 'OTA',             capability: 'OTAUPDATE' },
   { section: 'flash', title: 'Flash over USB',  capability: 'OTAFLASH' },
-  { section: 'admin', title: 'Permissions',     capability: 'ADMIN' },
-  { section: 'nodes', title: 'Nodes',           capability: 'ADMIN' },
+  { section: 'admin',    title: 'Permissions',      capability: 'ADMIN' },  // people
+  { section: 'projects', title: 'Projects',         capability: 'ADMIN' },
+  { section: 'message',  title: 'Publish Message',  capability: 'ADMIN' },
+  { section: 'retained', title: 'Retained messages', capability: 'ADMIN' },
+  { section: 'nodes',   title: 'Nodes',            capability: 'ADMIN' },
   { section: 'api',   title: 'API',             capability: 'ADMIN' },
 ];
 

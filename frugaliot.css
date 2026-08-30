@@ -618,3 +618,15 @@ body:has(mqtt-dashboard) {
     border: 1px solid var(--fi-border);
     border-radius: var(--fi-radius);
 }
+
+/* Retained messages: a list to read before deleting anything, so it must not be cramped */
+.retained__help { color: var(--fi-muted); font-size: 0.85em; margin: 4px 0 8px; }
+.retained__list {
+    max-height: 40vh;
+    overflow-y: auto;
+    margin: 6px 0;
+    padding-left: 1.2em;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.85em;
+    overflow-wrap: anywhere;
+}

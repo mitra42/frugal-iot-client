@@ -5,7 +5,7 @@
 
 import {EL, GET, HTMLElementExtended} from '/node_modules/html-element-extended/htmlelementextended.js';
 import mqtt from '/node_modules/mqtt/dist/mqtt.esm.js'; // https://www.npmjs.com/package/mqtt
-import { CssUrl, POST, XXX, configSet, el, getString, hasCapability, locationParameterChange, mqtt_client, preferedLanguageSet, preferedLanguages, redirectToLogin, server_config } from './core.js';
+import { CssUrl, POST, XXX, configSet, el, getString, hasCapability, mqttTempConnect, retainedPattern, locationParameterChange, mqtt_client, preferedLanguageSet, preferedLanguages, redirectToLogin, server_config } from './core.js';
 
 class MqttLogin extends HTMLElementExtended { // TODO-89 may depend on organization
   constructor(props) {
@@ -945,22 +945,17 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     this.state.farm_nodes_list = [];
     // Rebuild the gated content of each tab first, since it re-creates the elements (e.g. ota_files,
     // people_perms_list, platforms_list_display) that loadTabData() below then asynchronously replaces.
-    this.replaceElement('ota_rest', this.gatedContent(this.otaRestContent));
-    this.replaceElement('admin_rest', this.gatedContent(this.adminRestContent));
-    this.replaceElement('nodes_rest', this.gatedContent(this.nodesRestContent));
-    this.replaceElement('api_rest', this.gatedContent(this.apiRestContent));
+    this.adminSections().forEach((section) => this.replaceElement(section.rest, this.gatedContent(section.content)));
     // Only OTA/Admin/API tabs do their own network fetch (Nodes reads server_config, already loaded,
     // and Dashboard is handled by mqtt-wrapper) - mark them all as needing a refetch for the new
     // organization, but only actually fetch whichever tab is currently active; the rest load lazily
     // if/when the user switches to them (see onTabChange), to avoid a server-side fetch per tab on
     // every organization change.
-    this.state.tabsNeedingLoad = new Set(['OTA', 'Admin', 'API']);
+    this.state.tabsNeedingLoad = new Set(['OTA', 'Admin', 'Projects', 'API']);
     this.loadTabIfNeeded(this.state.activeTabTitle);
     // Note both these dropdowns are fine if this.state.org is undefined
-    this.replaceElement("otaorgsdropdown", this.orgDropdown(this.state.org, this.otaOrgs,"otaorganizations"));
-    this.replaceElement("adminorgsdropdown", this.orgDropdown(this.state.org, this.adminOrgs,"adminorganizations"));
-    this.replaceElement("nodesorgsdropdown", this.orgDropdown(this.state.org, this.adminOrgs,"nodesorganizations"));
-    this.replaceElement("apiorgsdropdown", this.orgDropdown(this.state.org, this.adminOrgs,"apiorganizations"));
+    this.adminSections().forEach((section) =>
+      this.replaceElement(section.dropdown, this.orgDropdown(this.state.org, this[section.orgs], `${section.key}organizations`)));
     // Keep the Dashboard tab's own organization in sync with the shared dropdown above.
     if (this.state.elements.mqttWrapper) {
       this.state.elements.mqttWrapper.setOrganization(org);
@@ -999,6 +994,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       this.getOtaFiles();
     } else if (title === 'Admin') {
       this.getPeopleList();
+    } else if (title === 'Projects') {
       this.getProjectsList();
     } else if (title === 'API') {
       this.getPlatformsList();
@@ -1227,6 +1223,99 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
              // and form to add (dropdown of people and permissions)
              this.state.elements.people_list = this.peopleList(),
        ]),
+     ]);
+   }
+   // ---- Retained messages ----
+   //
+   // Nodes publish almost everything retained, so the broker keeps the last value of every topic and
+   // hands it to each new subscriber - which is how a card shows a reading straight away. The cost is
+   // that a topic published by mistake outlives the mistake: rename a module, misspell a field, test
+   // with the wrong node id, and it stays on the broker for ever, on every dashboard. Fixing the node
+   // does not clear it and neither does restarting the broker. The only way is to publish an empty
+   // message to that exact topic.
+   //
+   // Same mechanics as frugal-iot-server/scripts/clearretained.js, which is the version to reach for
+   // when there is no browser.
+   retainedRestContent() {
+     const r = this.state.retained || (this.state.retained = { status: null, topics: [], pattern: '#' });
+     return el('div', {class: 'retained'}, [
+       el('div', {class: 'formgroup'}, [
+         el('label', {for: 'retained_pattern', textContent: "Pattern"}),
+         el('span', {i8n: false, textContent: `${this.state.org}/`}),
+         this.state.elements.retained_pattern = el('input', {id: 'retained_pattern', type: 'text',
+           value: r.pattern, placeholder: 'lotus/+/sht30/#'}),
+         el('button', {class: 'submit', type: 'button', textContent: "List",
+           onclick: this.onRetainedList.bind(this)}),
+       ]),
+       el('p', {class: 'retained__help', textContent:
+         "+ matches one level, # matches the rest. Look before deleting."}),
+       this.state.elements.retained_result = this.retainedResult(),
+     ]);
+   }
+   retainedResult() {
+     const r = this.state.retained;
+     if (r.status) return el('p', {i8n: false, textContent: r.status});
+     if (!r.topics.length) return el('span', {});
+     return el('div', {}, [
+       el('p', {i8n: false, textContent: `${r.topics.length} retained topic(s)`}),
+       el('ul', {class: 'retained__list'}, r.topics.map((t) =>
+         el('li', {i8n: false, textContent: `${t.topic} = ${t.value}`}))),
+       // Two steps on purpose: this cannot be undone, and a wildcard is easy to get wrong
+       el('button', {class: 'submit', type: 'button',
+         textContent: r.confirming ? `Yes - delete ${r.topics.length}` : "Delete these",
+         onclick: this.onRetainedDelete.bind(this)}),
+     ]);
+   }
+   retainedShow(status, topics, confirming) {
+     this.state.retained = { pattern: this.state.retained.pattern, status, topics: topics || [], confirming };
+     this.replaceElement('retained_result', this.retainedResult());
+   }
+   onRetainedList() {
+     const pattern = retainedPattern(this.state.org, this.state.elements.retained_pattern.value);
+     this.state.retained.pattern = this.state.elements.retained_pattern.value;
+     const client = mqttTempConnect(this.state.org);
+     if (!client) { this.retainedShow("No broker credentials for this organization"); return; }
+     this.retainedShow(`Listening on ${pattern} ...`);
+     const found = new Map();
+     client.on('message', (topic, payload, packet) => {
+       // Only what the broker is holding. A live message arriving while we listen has the retain
+       // flag clear, and clearing that would remove something nobody asked us to.
+       if (packet.retain) found.set(topic, payload.toString());
+     });
+     client.on('error', (e) => { this.retainedShow(`Could not connect: ${e.message}`); client.end(true); });
+     client.on('connect', () => {
+       client.subscribe(pattern, {qos: 0}, (err) => {
+         if (err) { this.retainedShow(`Could not subscribe: ${err.message}`); client.end(true); return; }
+         // Retained messages all arrive at once on subscribe; this waits for them, not for news
+         setTimeout(() => {
+           client.end(true);
+           const topics = [...found].map(([topic, value]) => ({topic, value})).sort((a, b) => a.topic.localeCompare(b.topic));
+           this.retainedShow(topics.length ? null : "Nothing retained matches that pattern", topics);
+         }, 3000);
+       });
+     });
+   }
+   onRetainedDelete() {
+     const r = this.state.retained;
+     if (!r.confirming) { this.retainedShow(null, r.topics, true); return; }
+     const topics = r.topics;
+     const client = mqttTempConnect(this.state.org);
+     if (!client) { this.retainedShow("No broker credentials for this organization"); return; }
+     this.retainedShow(`Deleting ${topics.length} ...`);
+     client.on('connect', () => {
+       // An empty retained message is how MQTT spells "forget this topic"
+       let left = topics.length;
+       topics.forEach((t) => client.publish(t.topic, '', {retain: true, qos: 1}, () => {
+         if (--left === 0) {
+           client.end();
+           this.retainedShow(`Deleted ${topics.length}. If one comes back, a node is still publishing it.`);
+         }
+       }));
+     });
+     client.on('error', (e) => { this.retainedShow(`Could not connect: ${e.message}`); client.end(true); });
+   }
+   projectsRestContent() {
+     return el('div', {}, [
        el('section', {}, [
              el('h3', {textContent: "Projects"}),
              // List of existing projects for this organization,
@@ -1234,11 +1323,13 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
              // and, once expanded, a form to add a new project (id and name)
              this.state.elements.add_project = this.collapsibleArea('add_project', "Add Project", this.projectsAddForm),
        ]),
-       // TODO-CSS cleanup - labels are too big
-       // This should really use a superuser permission but for now its just the super admin can do this
-       // ADMIN, not WRITE: someone who can change things through the UI should not thereby get a
-       // raw publish box - the UI constrains them to topics and values that mean something (D-32)
-       !hasCapability(this.state.org, 'ADMIN') ? null :
+     ]);
+   }
+   // TODO-CSS cleanup - labels are too big
+   // ADMIN, not WRITE: someone who can change things through the UI should not thereby get a raw
+   // publish box - the UI constrains them to topics and values that mean something (D-32)
+   messageRestContent() {
+     return el('div', {}, [
          el('section', {}, [
            el('h3', {textContent: "Publish Message"}),
            el('form', {}, [
@@ -1308,7 +1399,10 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
    adminSections() {
      return [
        { key: 'ota',   title: "OTA",   orgs: 'otaOrgs',   dropdown: 'otaorgsdropdown',   rest: 'ota_rest',   content: this.otaRestContent },
-       { key: 'admin', title: "Admin", orgs: 'adminOrgs', dropdown: 'adminorgsdropdown', rest: 'admin_rest', content: this.adminRestContent },
+       { key: 'admin',   title: "Admin",   orgs: 'adminOrgs', dropdown: 'adminorgsdropdown',   rest: 'admin_rest',   content: this.adminRestContent },
+       { key: 'projects', title: "Projects", orgs: 'adminOrgs', dropdown: 'projectsorgsdropdown', rest: 'projects_rest', content: this.projectsRestContent },
+       { key: 'message', title: "Message", orgs: 'adminOrgs', dropdown: 'messageorgsdropdown', rest: 'message_rest', content: this.messageRestContent },
+       { key: 'retained', title: "Retained", orgs: 'adminOrgs', dropdown: 'retainedorgsdropdown', rest: 'retained_rest', content: this.retainedRestContent },
        { key: 'nodes', title: "Nodes", orgs: 'adminOrgs', dropdown: 'nodesorgsdropdown', rest: 'nodes_rest', content: this.nodesRestContent },
        { key: 'api',   title: "API",   orgs: 'adminOrgs', dropdown: 'apiorgsdropdown',   rest: 'api_rest',   content: this.apiRestContent },
      ];
@@ -1333,30 +1427,12 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
            el('section', {title: "Dashboard"}, [
              this.state.elements.mqttWrapper = el('mqtt-wrapper'),
            ]),
-           !this.otaOrgs.length ? null :
-             el('section', {title: "OTA"}, [
-                this.state.elements.otaorgsdropdown = el('span',{ textContent: "Waiting"}),
-                this.state.elements.ota_rest = this.gatedContent(this.otaRestContent),
-            ]
-          ), // OTA tab
-
-          !this.adminOrgs.length ? null :
-            el('section', {title: "Admin"}, [
-              this.state.elements.adminorgsdropdown = el('span',{ textContent: "Waiting"}),
-              this.state.elements.admin_rest = this.gatedContent(this.adminRestContent),
-             ]), // Admin tab
-
-           !this.adminOrgs.length ? null :
-             el('section', {title: "Nodes"}, [
-               this.state.elements.nodesorgsdropdown = el('span',{ textContent: "Waiting"}),
-               this.state.elements.nodes_rest = this.gatedContent(this.nodesRestContent),
-             ]), // Nodes tab
-
-           !this.adminOrgs.length ? null :
-             el('section', {title: "API"}, [
-               this.state.elements.apiorgsdropdown = el('span',{ textContent: "Waiting"}),
-               this.state.elements.api_rest = this.gatedContent(this.apiRestContent),
-             ]), // API tab
+           // From adminSections, so a section added for the cards gets a tab here too
+           ...this.adminSections().map((section) => (!this[section.orgs].length ? null :
+             el('section', {title: section.title}, [
+               this.state.elements[section.dropdown] = el('span', { textContent: "Waiting"}),
+               this.state.elements[section.rest] = this.gatedContent(section.content),
+             ]))),
      ]);
      // Lazily load a tab's data only once the user actually switches to it - see onTabChange.
      tabbedDisplay.addEventListener('tabchange', (e) => this.onTabChange(e.detail));

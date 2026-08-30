@@ -55,6 +55,29 @@ describe('formatting a value', () => {
   });
 });
 
+describe('retained message patterns', () => {
+  test('a pattern is written relative to the organization', () => {
+    // "lotus/+/sht30" on org dev means dev/lotus/+/sht30 - nobody should have to type the org
+    assert.equal(core.retainedPattern('dev', 'lotus/+/sht30'), 'dev/lotus/+/sht30');
+  });
+
+  test('an empty pattern means everything the organization holds', () => {
+    assert.equal(core.retainedPattern('dev', ''), 'dev/#');
+    assert.equal(core.retainedPattern('dev', '   '), 'dev/#');
+    assert.equal(core.retainedPattern('dev', undefined), 'dev/#');
+  });
+
+  test('a leading slash does not produce a double one', () => {
+    assert.equal(core.retainedPattern('dev', '/lotus/#'), 'dev/lotus/#');
+  });
+
+  test('it cannot reach outside its own organization', () => {
+    // Everything an organization holds is under its own name, and the broker credentials are
+    // per organization, so a pattern is always anchored there
+    assert.ok(core.retainedPattern('dev', 'other/#').startsWith('dev/'));
+  });
+});
+
 describe('which devices.yaml entry applies', () => {
   test('a device id beats the OTA key, so one device can differ from its build', () => {
     // Nothing in the shipped devices.yaml uses a device id - it would be odd to name a particular
