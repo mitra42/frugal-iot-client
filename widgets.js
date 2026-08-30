@@ -7,7 +7,7 @@
  */
 
 import {HTMLElementExtended} from '/node_modules/html-element-extended/htmlelementextended.js';
-import { CssUrl, ImagesUrl, RECEIVER_ATTRIBUTES, XXX, el, leafAttribute, nextUniqueId, nowMs } from './core.js';
+import { CssUrl, ImagesUrl, RECEIVER_ATTRIBUTES, XXX, el, leafAttribute, nextUniqueId, nowMs, standaloneTopic } from './core.js';
 
 class MqttElement extends HTMLElementExtended {
   // TODO - maybe move this to HTMElementExtended
@@ -78,6 +78,15 @@ class MqttReceiver extends MqttElement {
       this.mt = mt;
       mt.element = this; // Route wildcard subscription messages to this element
       mt.subscribe();    // No-op if already subscribed; sets up direct subscription otherwise
+    } else if (!wrapper) {
+      // Embedded page (index-embedded.html): there is no tree to look in, so build the one topic
+      // this widget needs. Leave rw unset - subscribing on the read path is what shows the device's
+      // own reports, while publish() still goes to the set path.
+      this.mt = standaloneTopic(this.state.topic, {
+        type: this.state.type, name: this.state.label, color: this.state.color,
+        min: this.state.min, max: this.state.max, element: this,
+      });
+      this.mt.subscribe();
     } else {
       XXX(["createTopic: topic not found in data tree", this.state.topic]);
     }

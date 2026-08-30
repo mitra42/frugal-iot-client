@@ -9,7 +9,7 @@ import async from '/node_modules/async/dist/async.mjs'; // https://caolan.github
 import { Chart, _adapters, registerables } from '/node_modules/chart.js/dist/chart.js'; // https://www.chartjs.org
 import { parse } from "csv-parse"; // https://csv.js.org/parse/distributions/browser_esm/
 import { DateTime } from 'luxon'; // for the chartjs-adapter-luxon copy below
-import { CssUrl, MqttTopic, el, mqtt_client } from './core.js';
+import { CssUrl, el, mqtt_client, standaloneTopic } from './core.js';
 import { MqttElement, MqttReceiver } from './widgets.js';
 
 Chart.register(...registerables); //TODO figure out how to only import that chart types needed
@@ -396,25 +396,18 @@ class MqttGraphDataset extends MqttElement {
   // Normally the MqttTopic creates the MqttGraphDataset,
   // However, in an embedded case, just the GraphDataset is created and has to create the topic.
   makeTopic() {
-    this.mt = new MqttTopic();
-    let tt = this.state.topic.split("/");
-    let org = tt.shift();
-    let projectId = tt.shift();
-    let nodeId = tt.shift();
-    this.mt.initialize({
-      twig: tt.join("/"),
-      //topic: this.state.topic,
+    this.mt = standaloneTopic(this.state.topic, {
       type: this.state.type,
       min: this.state.min,
       max: this.state.max,
+      color: this.state.color,
       graphdataset: this,
-      node: { mt: { topicPath: `${org}/${projectId}/${nodeId}`} }
     });
     // noinspection JSUnresolvedReference
     if (!this.mt.name) {
       this.mt.name = this.mt.leaf;
     }
-    this.mt.subscribe(); // TODO-155 check embedded, may have to create a node.
+    this.mt.subscribe();
   }
   shouldLoadWhenConnected() {
     return this.state.type && (this.state.topic || this.mt);

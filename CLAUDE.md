@@ -95,7 +95,7 @@ Helper functions: `topicTwig(path)` → twig, `topicLeaf(path)` → leaf, `twigA
 - `mt.twig` — stored twig string (e.g. `sht/temperature`)
 - `mt.leaf` — getter, last segment of twig
 - `mt.topicPath` — getter, full path including node prefix
-- `mt.topicSetPath` — getter, write path (`…/set/…`); **throws when `this.node` is null** — only call on topics that are known to be part of the node hierarchy (i.e. `this.node` is set). Project-level or standalone topics (e.g. those created by an embedded `mqtt-graphdataset`) have no real node and must not reach this getter.
+- `mt.topicSetPath` — getter, write path (`…/set/…`); **throws when `this.nodeMt` is null** — only call on topics that are part of the node hierarchy. Project-level topics have no node and must not reach this getter. Topics built by `standaloneTopic()` do have a `nodeMt` (a stub), so an embedded widget's set path resolves.
 - `mt.element` — back-reference to the DOM element currently bound to this topic (null in headless mode or before binding)
 - `el.mt` — forward-reference from a DOM element to its `MqttTopic`
 
@@ -236,6 +236,18 @@ Clear back-references when rebuilding so stale elements don't receive messages:
 if (prevBarMt) prevBarMt.element = null;
 prevBarMt = sensorMt;
 ```
+
+### Embedded widgets (no wrapper)
+
+`index-embedded.html` puts an `mqtt-bar`/`mqtt-toggle`/`mqtt-graphdataset` on a page with nothing
+else — no `mqtt-wrapper`, no discovery tree, no `/config.json`. `standaloneTopic(path, o)` in
+`core.js` builds the one topic such a widget needs, giving it a stub `nodeMt` so `topicPath`,
+`topicSetPath` and `groupMt` all resolve. It also sets `mt.standalone`, which is what makes
+`canWrite` true: there is no permission list to consult, and the broker enforces the credentials on
+the `mqtt-client` element instead. `test/embedded.test.js` guards this — it has broken twice
+unnoticed.
+
+Still not available on such a page: graph history (`addDataFrom` needs `server_config.logger.url`).
 
 ### Looking up topics
 

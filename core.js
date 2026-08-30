@@ -1509,6 +1509,9 @@ class MqttTopic {
   // Whether this user may change this topic. One question, asked in one place, so a control cannot
   // end up editable on one screen and not another - see CARDS_PLAN.md section 3.2.
   get canWrite() {
+    // An embedded widget has no server config and so no permission list - the MQTT credentials on
+    // the page are the only gate, and the broker is what enforces those.
+    if (this.standalone) return true;
     return hasCapability(this.organization, 'WRITE');
   }
 
@@ -1970,6 +1973,30 @@ class MqttTopic {
       this.data.splice(0, Infinity); // delete all
     }
   }
+}
+
+// Stands in for MqttTopicNode on a page with no discovery tree - index-embedded.html has no
+// mqtt-wrapper, so a widget given a full topic path has no real node to hang off. Everything
+// derived on MqttTopic reaches the node through nodeMt, so this is what makes topicPath work.
+class MqttNodeStandalone {
+  constructor(topicPath) {
+    this.topicPath = topicPath;
+    this.groups = {}; // groupMt indexes into this; an embedded page has no groups
+  }
+  get usableName() { return this.topicPath.split("/").pop(); }
+}
+
+// Build a lone MqttTopic from a full path, for an embedded widget with no tree behind it.
+function standaloneTopic(topicPath, o = {}) {
+  const parts = topicPath.split("/");
+  const nodePath = parts.splice(0, 3).join("/"); // org/project/node
+  const mt = new MqttTopic();
+  mt.initialize(o);
+  mt.nodeMt = new MqttNodeStandalone(nodePath);
+  mt.twig = parts.join("/");
+  mt.group = parts[0];
+  mt.standalone = true;
+  return mt;
 }
 
 // Group-level data node in the topic tree. Holds the leaf MqttTopics for one module group.
@@ -2845,6 +2872,7 @@ export {
   SUMMARY_CHIP_LIMIT,
   server_config,
   setClock,
+  standaloneTopic,
   topicMatches,
   unitSuffix,
   unitSymbol,
