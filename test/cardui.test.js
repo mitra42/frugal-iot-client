@@ -409,6 +409,17 @@ describe('it updates in place as messages arrive', () => {
     card.remove();
   });
 
+  test('a card notices a device going quiet, with nothing arriving to tell it', () => {
+    // Status is derived, not timed - but something has to prompt a re-render, and a silent device
+    // sends nothing. Without the tick the card sat at whatever it showed when the last message came.
+    const { card, nodeMt } = cardFor('one-device', 'esp8266-fb94bb', { at: T0 });
+    assert.match(card.querySelector('.fi-card').className, /fi-status-live/);
+    mock.setNow(T0 + (core.DEFAULT_REPORT_INTERVAL_MS * 10));
+    card.refresh();                       // what the interval does
+    assert.match(card.querySelector('.fi-card').className, /fi-status-offline/);
+    card.remove();
+  });
+
   test('it stops listening once removed', () => {
     const { card } = cardFor('one-device', 'esp8266-fb94bb', { at: T0 });
     card.remove();

@@ -275,6 +275,13 @@ Each of these cost real time. They are not obvious from reading the code.
   `<details>` — which is every widget in the old UI.
 - **Assets resolve against the module, not the document**: `CssUrl` and `ImagesUrl` use
   `import.meta.url`, or a page in a subdirectory 404s every stylesheet and icon.
+- **A node reports in a burst**, publishing its whole topic set at once, so gaps between messages
+  are milliseconds. `MqttTopicNode.noteMessage` ignores anything closer than `REPORT_BURST_MS` when
+  learning the reporting interval — without that the interval collapses and every device reads as
+  offline seconds after reporting. Status is also floored by `MIN_REPORT_INTERVAL_MS`.
+- **A device going quiet sends nothing**, so nothing prompts a re-render. `status` is derived rather
+  than timed, but a card still needs a slow interval to re-read it, or it shows whatever it showed
+  when the last message arrived.
 - **Timestamps go through `nowMs()`**, never `Date.now()`, or a replayed history collapses onto one
   instant and a graph has nothing to draw. `setClock()` is how tests decide what "now" is.
 - **Caching will lie to you.** `/node_modules` and the client directory are served

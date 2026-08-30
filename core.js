@@ -49,6 +49,10 @@ let mqtt_subscriptions = [];   // [{topic, cb(message)}]
 let unique_id = 1; // Just used as a label for auto-generated elements
 // What to assume a node's reporting interval is before it has sent a second message
 const DEFAULT_REPORT_INTERVAL_MS = 300000;
+// Messages closer together than this are one report arriving, not two reports
+const REPORT_BURST_MS = 2000;
+// However chatty a node is, do not call it stale for a gap shorter than this
+const MIN_REPORT_INTERVAL_MS = 60000;
 // How many chips a summary line falls back to when the device does not declare its own. Enough for
 // temperature + humidity + air quality + a control; a declared summary: list is not capped at all.
 const SUMMARY_CHIP_LIMIT = 4;
@@ -209,6 +213,7 @@ function unitSuffix(code) {
 // "3 min ago". Intl does the plurals and the wording, so none of this needs a languages entry -
 // which hand-rolling would, in four languages, for every unit.
 function relativeTime(ms) {
+  if (!Number.isFinite(ms)) return ''; // Intl throws rather than returning anything for NaN
   const rtf = new Intl.RelativeTimeFormat(preferedLanguages[0] || 'en', { numeric: 'auto', style: 'narrow' });
   const s = Math.round(ms / 1000);
   if (Math.abs(s) < 60) return rtf.format(-s, 'second');
@@ -2103,16 +2108,28 @@ class MqttTopicNode extends MqttTopic {
     const now = nowMs();
     if (this.lastMessageAt) {
       const delta = now - this.lastMessageAt;
-      this.expectedInterval = this.expectedInterval ? (this.expectedInterval * 2 / 3) + (delta / 3) : delta;
+      // A node publishes its whole set of topics at once, so most gaps between messages are
+      // milliseconds - that is one report arriving, not how often it reports. Learning from those
+      // collapsed the interval to nearly nothing, and every device then read as offline seconds
+      // after reporting. Only a gap longer than a burst says anything about the interval.
+      if (delta > REPORT_BURST_MS) {
+        this.expectedInterval = this.expectedInterval ? (this.expectedInterval * 2 / 3) + (delta / 3) : delta;
+      }
     }
     this.lastMessageAt = now;
   }
-  get age() { return this.lastMessageAt ? nowMs() - this.lastMessageAt : null; }
+  // null, or a number - never NaN. Anything that cannot be subtracted from means we do not know
+  // when this node was last heard from, which is what "never" already says.
+  get age() {
+    return Number.isFinite(this.lastMessageAt) ? nowMs() - this.lastMessageAt : null;
+  }
   // live | stale | offline | never. A device that has never said anything is not the same as one
   // that has gone quiet, and a card shows them differently.
   get status() {
-    if (!this.lastMessageAt) return 'never';
-    const expected = this.expectedInterval || DEFAULT_REPORT_INTERVAL_MS;
+    if (this.age === null) return 'never';
+    // Floored: a device that reports every few seconds should not be called stale for a gap that
+    // short, and one report is never enough to know the interval anyway
+    const expected = Math.max(this.expectedInterval || DEFAULT_REPORT_INTERVAL_MS, MIN_REPORT_INTERVAL_MS);
     const age = this.age;
     if (age <= expected * 1.5) return 'live';
     if (age <= expected * 4) return 'stale';
@@ -2607,8 +2624,11 @@ class MqttWrapper extends HTMLElementExtended {
             .forEach(([id, nc]) => {
               const nodeMt = mt.nodes[id] || mt.addNode(id);
               // Seed when the server last heard from it, so a device that has not reported since the
-              // page loaded reads as offline with a real age rather than as never seen at all
-              if (!nodeMt.lastMessageAt) nodeMt.lastMessageAt = nc.lastseen;
+              // page loaded reads as offline with a real age rather than as never seen at all.
+              // lastseen is a Date in the logger, so it arrives here as an ISO string through JSON -
+              // subtracting that from a number gives NaN, which reaches Intl as a RangeError.
+              const seen = Date.parse(nc.lastseen);
+              if (!nodeMt.lastMessageAt && Number.isFinite(seen)) nodeMt.lastMessageAt = seen;
             });
         } else {
           mt.element.nodesFromConfig(nodes);

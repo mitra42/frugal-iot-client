@@ -28,6 +28,9 @@ import { el, getString, hasCapability, ImagesUrl, relativeTime, server_config, X
 
 // Shape as well as colour, so status survives sunlight and colour blindness
 const STATUS_MARK = { live: '●', stale: '◌', offline: '○', never: '·' };
+// How often a card re-reads its own status and age. Nothing arrives to prompt it when a device
+// stops reporting, which is exactly when the card most needs to change.
+const STATUS_TICK_MS = 10000;
 
 class MqttDeviceCard extends HTMLElementExtendedMinimum {
   static get observedAttributes() { return ['mode', 'movable']; }
@@ -49,6 +52,10 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
     // Every message fires this, in both the element and the headless paths, so it is the one signal
     // a card needs. Filtered to this device below.
     document.addEventListener('frugaliot:groupchanged', this.onGroupChanged);
+    // A device going quiet sends nothing, so nothing would re-render to show it - status and "4s
+    // ago" would both sit at whatever they were when the last message arrived. This is the only
+    // clock the card needs; status itself is derived, not timed.
+    this.state.tick = setInterval(() => this.refresh(), STATUS_TICK_MS);
     this.addEventListener('keydown', this.onKeyDown);
     // Not via el(): EL only assigns onclick, onchange and onsubmit as properties - any other
     // function it is handed goes into el.state and is never wired up at all.
@@ -56,6 +63,7 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
   }
   disconnectedCallback() {
     document.removeEventListener('frugaliot:groupchanged', this.onGroupChanged);
+    clearInterval(this.state.tick);
     this.removeEventListener('keydown', this.onKeyDown);
     this.removeEventListener('pointerdown', this.onPointerDown);
     // Deliberately not endDrag(): reordering re-appends the cards, so the one being dragged is

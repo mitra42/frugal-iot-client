@@ -215,6 +215,26 @@ describe('the summary line', () => {
 });
 
 describe('status', () => {
+  test('last-seen from the server is an ISO string, and must survive being one', () => {
+    // The logger stores a Date, so /config.json carries "2026-08-30T09:12:34.567Z". Subtracting a
+    // string from a number gives NaN, which reached Intl.RelativeTimeFormat as a RangeError.
+    const { projectMt } = mock.runScenario('one-device', { at: T0 });
+    const nodeMt = projectMt.nodes['esp8266-fb94bb'];
+    nodeMt.lastMessageAt = new Date(T0 - 3600000).toISOString();
+    assert.equal(nodeMt.age, null, 'a string is not a time we can do arithmetic on');
+    assert.equal(nodeMt.status, 'never');
+    assert.equal(core.relativeTime(nodeMt.age), '', 'and formatting it must not throw');
+    nodeMt.lastMessageAt = Date.parse(new Date(T0 - 3600000).toISOString());
+    assert.equal(nodeMt.age, 3600000, 'parsed, it is an hour ago');
+    assert.equal(nodeMt.status, 'offline');
+  });
+
+  test('relativeTime never throws on a value it cannot format', () => {
+    for (const bad of [NaN, undefined, null, 'yesterday', Infinity]) {
+      assert.equal(core.relativeTime(bad), '');
+    }
+  });
+
   test('a device the server knows but which has not reported reads as offline, not never seen', () => {
     // The old UI listed these from config with their last-seen time. Without seeding it, a device
     // asleep since before the page loaded would claim never to have been heard from.
@@ -231,6 +251,26 @@ describe('status', () => {
     const { projectMt } = mock.runScenario('no-readings', { at: T0 });
     // The discovery message reaches the project, not the node, so the node has heard nothing itself
     assert.equal(projectMt.nodes['esp8266-newborn'].status, 'never');
+  });
+
+  test('a burst of messages is one report, not a reporting interval', () => {
+    // A node publishes its whole topic set at once. Learning an interval from those millisecond
+    // gaps collapsed it to nearly zero, and a device read as offline seconds after reporting.
+    const { projectMt } = mock.runScenario('one-device', { at: T0 });
+    const nodeMt = projectMt.nodes['esp8266-fb94bb'];
+    assert.equal(nodeMt.status, 'live');
+    mock.setNow(T0 + 4000);
+    assert.equal(nodeMt.status, 'live', 'four seconds after a report is not offline');
+    assert.ok(!nodeMt.expectedInterval || (nodeMt.expectedInterval > 1000),
+      `learned ${nodeMt.expectedInterval}ms from one burst`);
+  });
+
+  test('a chatty device is not called stale for a gap shorter than a minute', () => {
+    const { projectMt } = mock.runScenario('one-device', { at: T0 });
+    const nodeMt = projectMt.nodes['esp8266-fb94bb'];
+    nodeMt.expectedInterval = 3000;  // reports every three seconds
+    mock.setNow(T0 + 30000);
+    assert.equal(nodeMt.status, 'live', 'thirty seconds is within the floor');
   });
 
   test('live, then stale, then offline as time passes', () => {
