@@ -391,6 +391,22 @@ describe('back mode', () => {
     card.remove();
   });
 
+  test('the built-in LED shows in the status strip and can be changed on the back', () => {
+    // It is insidefrugaliot, which had it excluded from the front, the summary and the back at
+    // once: visible nowhere and changeable nowhere
+    const { card } = cardFor('one-device', 'esp8266-fb94bb', { at: T0 });
+    const led = card.querySelector('.fi-led');
+    assert.ok(led, 'no LED in the status strip');
+    assert.ok(led.classList.contains('fi-led--on'));
+    // Set as a style, which the DOM normalises to rgb() - so ask the DOM, not the attribute text
+    assert.equal(led.style.backgroundColor, 'rgb(34, 204, 68)', 'lit in the colour it is showing');
+    card.setAttribute('mode', 'back');
+    const titles = [...card.querySelectorAll('.fi-section__title')].map((h) => h.textContent);
+    assert.ok(titles.includes('LED'), `no way to change it: ${titles}`);
+    assert.ok(card.querySelector('[topic$="ledbuiltin/on"]'), 'and the toggle itself');
+    card.remove();
+  });
+
   test('the status strip modules do not get sections of their own', () => {
     const { card } = cardFor('one-device', 'esp8266-fb94bb', { mode: 'back', at: T0 });
     const titles = [...card.querySelectorAll('.fi-section__title')].map((h) => h.textContent);

@@ -2161,6 +2161,16 @@ class MqttTopicNode extends MqttTopic {
     return Object.entries(this.unrecognised || {}).map(([twig, value]) => ({ twig, value }));
   }
 
+  // The built-in LED, for the status strip: it says the same thing a lit board does, at a glance.
+  // Its controls live on the back, like anything else you can change.
+  get led() {
+    const g = this.groups.ledbuiltin;
+    const mt = g && g.topics.on;
+    if (!mt) return null;
+    const colorMt = g.topics.color;
+    return { mt, on: !!mt.state.value, color: (colorMt && colorMt.state.value) || '#ffdd00' };
+  }
+
   get otaKey() {
     const ota = this.groups.ota;
     return ota && ota.topics.key && ota.topics.key.state.value;
@@ -2178,10 +2188,15 @@ class MqttTopicNode extends MqttTopic {
     return devices[prefixes.sort((a, b) => b.length - a.length)[0]];
   }
 
-  // battery, health, ota and the like feed the header and footer rather than getting a section
+  // battery, health and ota feed the header and footer rather than getting a section of their own,
+  // because their values are already shown there. A module you can *change* always needs a section,
+  // or the card shows its state with nowhere to alter it - the built-in LED went missing that way.
   isStatusStripGroup(groupId) {
     const m = moduleTemplate(groupId);
-    return !!m && !!m.insidefrugaliot;
+    if (!m || !m.insidefrugaliot) return false;
+    const groupMt = this.groups[groupId];
+    const writable = groupMt && Object.values(groupMt.topics).some((mt) => mt.rw === 'w');
+    return !writable;
   }
   // Group ids in the order modules.yaml declares them, not the order messages happened to arrive,
   // so a card looks the same on every load

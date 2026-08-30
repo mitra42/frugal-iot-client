@@ -106,6 +106,39 @@
                     "SSID"
                   <span class="val">
                     "shed-ap"
+          <mqtt-groupledbuiltin group="ledbuiltin" name="LED" class="group ledbuiltin" slot="ledbuiltin" color="#22cc44">
+            #shadow
+              <details class="mqtt-group ledbuiltin">
+                <summary>
+                  <span>
+                    "LED"
+                  <div>
+                <slot>
+            <mqtt-toggle color="black">
+              #shadow
+                <div class="mqtt-toggle outer">
+                  <label>
+                    "On"
+                  <img class="icon">
+                  <input class="val" type="checkbox">
+            <mqtt-color>
+              #shadow
+                <div class="mqtt-text ledbuiltin_color outer">
+                  <label>
+                    "Color"
+                  <input name="dev/lotus/esp8266-fb94bb/ledbuiltin/color" value="#22cc44" class="val" type="color">
+            <mqtt-slider value="127.5" type="int" min="0" max="255">
+              #shadow
+                <div class="mqtt-slider outer">
+                  <div class="name">
+                    <span>
+                      "Brightness"
+                    <span class="val">
+                      "180"
+                  <div class="pointbar">
+                    <div class="setpoint">
+                      <span>
+                        "△"
         <div class="topics">
           <slot>
     <mqtt-groupsht group="sht" name="SHT" class="group sht">

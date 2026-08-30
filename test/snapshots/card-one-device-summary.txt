@@ -6,6 +6,7 @@
       <span class="fi-card__name">
         "Greenhouse North"
       <span class="fi-card__meta">
+        <span class="fi-led fi-led--on">
         <img class="fi-battery">
     <div class="fi-card__chips">
       <span class="fi-chip">

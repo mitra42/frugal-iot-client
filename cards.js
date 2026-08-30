@@ -56,6 +56,9 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
     // ago" would both sit at whatever they were when the last message arrived. This is the only
     // clock the card needs; status itself is derived, not timed.
     this.state.tick = setInterval(() => this.refresh(), STATUS_TICK_MS);
+    // A pending interval keeps node's event loop alive, so a card left attached by a test would
+    // hang the run. In a browser setInterval returns a number and this does nothing.
+    if (this.state.tick && (typeof this.state.tick.unref === 'function')) this.state.tick.unref();
     this.addEventListener('keydown', this.onKeyDown);
     // Not via el(): EL only assigns onclick, onchange and onsubmit as properties - any other
     // function it is handed goes into el.state and is never wired up at all.
@@ -134,8 +137,21 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
     if (e.rows && (e.widgets.length !== nodeMt.frontRows.filter((r) => r.mt).length)) this.renderAndReplace();
   }
 
+  // A dot the colour the LED is showing, or dark when it is off - the same thing the board itself
+  // tells you from across the room
+  renderLed() {
+    const led = this.nodeMt.led;
+    if (!led) return null;
+    return el('span', {
+      class: `fi-led${led.on ? ' fi-led--on' : ''}`,
+      style: led.on ? `background:${led.color};` : '',
+      title: `${getString('Built in LED')}: ${led.on ? getString('On') : getString('Off')}`,
+    });
+  }
+
   renderMeta() {
     return [
+      this.renderLed(),
       this.renderBattery(),
       (this.nodeMt.status === 'live') ? null : el('span', { class: 'fi-age', i8n: false, textContent: this.ageText }),
     ].filter(Boolean);

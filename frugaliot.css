@@ -630,3 +630,14 @@ body:has(mqtt-dashboard) {
     font-size: 0.85em;
     overflow-wrap: anywhere;
 }
+/* The built-in LED, in the status strip: lit in whatever colour it is showing, dark when off */
+.fi-led {
+    display: inline-block;
+    width: 0.7em;
+    height: 0.7em;
+    border-radius: 50%;
+    background: #444;
+    border: 1px solid rgba(0, 0, 0, .45);
+    vertical-align: middle;
+}
+.fi-led--on { box-shadow: 0 0 3px 1px rgba(255, 221, 0, .6); }

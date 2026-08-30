@@ -31,6 +31,7 @@ function wiring(id, groupId, wires) {
 }
 
 const SHT = { 'sht/temperature': '30.142857', 'sht/humidity': '85.1' };
+const LED = { 'ledbuiltin/on': 'true', 'ledbuiltin/color': '#22cc44', 'ledbuiltin/brightness': '180' };
 
 // A plausible reading for a topic, so the every-module scenario shows something in every widget
 function sampleValue(spec) {
@@ -49,8 +50,8 @@ function sampleValue(spec) {
 
 export const scenarios = {
   'one-device': {
-    title: 'One device, SHT readings only',
-    messages: device('esp8266-fb94bb', 'Greenhouse North', SHT),
+    title: 'One device, SHT readings and the built-in LED',
+    messages: device('esp8266-fb94bb', 'Greenhouse North', { ...SHT, ...LED }),
   },
 
   'no-readings': {
