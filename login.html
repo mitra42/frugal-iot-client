@@ -2,27 +2,24 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Frugal IoT  Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#27ae60">
+    <!--suppress HtmlUnknownTarget -->
+    <link rel="apple-touch-icon" href="/images/icon-192x192.png">
+    <title>Frugal IoT</title>
     <link href="./frugaliot.css" rel="stylesheet" type="text/css">
     <script type="importmap">
         {
         "imports": {
-            "@kurkle/color": "/node_modules/@kurkle/color/dist/color.esm.js",
-            "chart.js": "/node_modules/chart.js/dist/Chart.js",
-            "dial-gauge": "/node_modules/dial-gauge/dial-gauge.js",
-            "luxon": "/node_modules/luxon/src/luxon.js",
-            "chartjs-adapter-luxon": "/node_modules/chartjs-adapter-luxon/dist/chartjs-adapter-luxon.esm.js",
-            "csv-parse": "/node_modules/csv-parse/dist/esm/index.js",
-            "esptool-js": "/node_modules/esptool-js/bundle.js"
+            "csv-parse": "/node_modules/csv-parse/dist/esm/index.js"
             }
         }
     </script>
-    <script src="./webcomponents.js" type="module"></script>
+    <!-- login.js imports core.js, which is all this page needs: no Chart.js, no esptool-js, no
+         node/group UI. That is why mqtt-login lives in its own module rather than in admin.js. -->
+    <script src="./login.js" type="module"></script>
 </head>
 <body>
-<!-- TODO maybe add mqtt-organization discover to discover projects - but maybe better to go to server for it -->
-<!-- <mqtt-project topic="dev/lotus/" name="Lotus Ponds" discover></mqtt-project> -->
 <mqtt-login></mqtt-login>
-<!-- <mqtt-wrapper></mqtt-wrapper> -->
 </body>
 </html>

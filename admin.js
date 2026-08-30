@@ -1,122 +1,12 @@
 /*
- * Frugal IoT client - login, the tab strip, and the admin panel: OTA, permissions, projects, nodes
- * and the API tools.
+ * Frugal IoT client - the tab strip, and the admin panel: OTA, permissions, projects, nodes
+ * and the API tools. The login page moved to login.js, so that it does not have to load this.
  */
 
 import {EL, GET, HTMLElementExtended} from '/node_modules/html-element-extended/htmlelementextended.js';
 import mqtt from '/node_modules/mqtt/dist/mqtt.esm.js'; // https://www.npmjs.com/package/mqtt
 import { CssUrl, POST, XXX, configSet, el, getString, hasCapability, mqttTempConnect, retainedPattern, locationParameterChange, mqtt_client, preferedLanguageSet, preferedLanguages, redirectToLogin, server_config } from './core.js';
 
-class MqttLogin extends HTMLElementExtended { // TODO-89 may depend on organization
-  constructor(props) {
-    super(props);
-    this.state = {register: false};
-  }
-  static get observedAttributes() { return ['register','message','url','lang']; }
-  static get boolAttributes() { return ['register']; }
-
-  connectedCallback() {
-    this.loadAttributesFromURL();
-    super.connectedCallback();
-  }
-  changeAttribute(name, value) {
-    if (name === "lang") {
-      if (value.includes(',')) {
-        preferedLanguages = (value.split(',')).map(v => v.toUpperCase());
-      } else if (!value) {
-        preferedLanguageSet('EN');
-        locationParameterChange("lang", preferedLanguages.join(','));
-      } else {
-        preferedLanguageSet(value.toUpperCase());
-      }
-    }
-    super.changeAttribute(name, value);
-  }
-
-  tabRegister(register) {
-    this.changeAttribute('register', register);
-    this.renderAndReplace();
-  }
-  // this.state.url (the page to return to after login) may already have its own query string, so set
-  // "lang" via the URL API rather than naively concatenating "?lang=...", which would produce a second
-  // "?" if one is already present.
-  urlWithLang(urlStr) {
-    if (!urlStr) { return urlStr; }
-    try {
-      const u = new URL(urlStr, window.location.origin);
-      u.searchParams.set('lang', preferedLanguages.join(','));
-      return u.toString();
-    } catch (e) {
-      return urlStr;
-    }
-  }
-  render() { //TODO-89 needs styles
-    // TODO-89 organization should be dropdown
-    // TODO-89 merge login & register
-    if (preferedLanguages.length === 0) { XXX("Tracking down issue with lang"); }
-    return [
-      el('link', {rel: 'stylesheet', href: CssUrl}),
-      el('div', {class: 'mqtt-login'},[
-        // This is a top bar, holds message and language picker
-        el('div',{class: 'message'},[
-          el('span', {textContent: this.state.message}),
-          el('language-picker'),
-        ]),
-        el('tabbed-display', {tab: this.state.register ? 1 : 0 }, [
-          el('section', {title: "Sign In"}, [
-            el('form', {action:  '/login', method: "post"}, [
-              el('section', {}, [
-                el('label', {for: "username", textContent: 'Username'}),
-                el('input', {id: "username", name: "username", type: "text", autocomplete: "username", required: true, autofocus: true}),
-              ]),
-              el('section', {}, [
-                el('label', {for: "password", textContent: "Password"}),
-                el('input', {id: "password", name: "password", type: "password", autocomplete: "current-password", required: true}),
-              ]),
-              el('input', {id: "url", name: "url", type: "hidden", value: this.urlWithLang(this.state.url)}),
-              el('button', {class: "submit", type: "submit",
-                textContent: (this.state.register ? 'Submit' : 'Submit')}),
-            ]),
-          ]),
-          el('section', {title: "Register"}, [
-            el('form', {action: '/register', method: "post"}, [
-              el('section', {}, [
-                el('label', {for: "username", textContent: 'Username'}),
-                el('input', {id: "username", name: "username", type: "text", autocomplete: "username", required: true, autofocus: true}),
-              ]),
-              el('section', {}, [
-                el('label', {for: "password", textContent: "Password"}),
-                el('input', {id: "password", name: "password", type: "password", autocomplete: "current-password", required: true}),
-              ]),
-              // TODO-22 TODO-14 organization should be a drop-down
-              el('section', {}, [
-                el('label', {for: "organization", textContent: "Organization"}),
-                el('span', {textContent: "Note this is your organization - not the organizations whose devices you want to access." }),
-                el('br'),
-                el('input', {id: "organization", name: "organization", type: "text", autocomplete: "organization", required: false}),
-              ]),
-              el('section', {}, [
-                el('label', {for: "name", textContent: "Name"}),
-                el('input', {id: "name", name: "name", type: "text", autocomplete: "name", required: true}),
-              ]),
-              el('section', {}, [
-                el('label', {for: "email", textContent: "Email"}),
-                el('input', {id: "email", name: "email", type: "text", autocomplete: "email", required: true}),
-              ]),
-              el('section', {}, [
-                el('label', {for: "phone", textContent: "Phone or Whatsapp"}),
-                el('input', {id: "phone", name: "phone", type: "text", autocomplete: "phone", required: true}),
-              ]),
-              el('input', {id: "url", name: "url", type: "hidden", value: this.urlWithLang(this.state.url)}),
-              el('button', {class: "submit", type: "submit", textContent: 'Submit'}),
-            ]),
-          ]),
-        ]),
-      ]),
-    ];
-  }
-}
-customElements.define('mqtt-login', MqttLogin);
 class TabbedDisplay extends HTMLElementExtended {
   constructor() {
     super();

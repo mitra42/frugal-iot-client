@@ -16,4 +16,5 @@ import './widgets.js';       // mqtt-bar, mqtt-text, mqtt-toggle and the rest of
 import './graph.js';         // mqtt-graph, mqtt-graphdataset - pulls in Chart.js
 import './nodeview.js';      // mqtt-project, mqtt-node, mqtt-group* - retires with index.html
 import './flash.js';         // mqtt-flash - pulls in esptool-js
-import './admin.js';         // mqtt-admin, mqtt-login, tabbed-display
+import './admin.js';         // mqtt-admin, tabbed-display
+import './login.js';         // mqtt-login - its own module so login.html need not load all of this

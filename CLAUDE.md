@@ -16,11 +16,13 @@ it loadable on its own, and it is maintained by reaching the display elements **
 | `cards.js` | core | the card UI: `mqtt-devicecard`, `mqtt-devicegrid`, `mqtt-projectback`, `mqtt-dashboard`, the layout store |
 | `nodeview.js` | core, widgets | the old node/group UI — **retires with `index-old.html`**; nothing new belongs here |
 | `flash.js` | core | `mqtt-flash` — pulls esptool-js |
-| `admin.js` | core | `mqtt-admin`, `mqtt-login`, `tabbed-display` |
+| `admin.js` | core | `mqtt-admin`, `tabbed-display` |
+| `login.js` | core | `mqtt-login` — sign in, register, forgot/reset password; light DOM |
 
 Entry points: `index.html` → `dashboard.js` (the card UI, everything but `nodeview.js`);
 `index-old.html` → `webcomponents.js` (everything, and the only remaining user of it);
-`index-embedded.html` needs only `core.js` + `widgets.js` and must keep working.
+`login.html` → `login.js`, which imports only `core.js` — that is why `mqtt-login` is not in
+`admin.js`; `index-embedded.html` needs only `core.js` + `widgets.js` and must keep working.
 
 Dashboards (e.g. `dashboard_example.html`) are thin HTML pages importing selectively.
 
@@ -159,10 +161,12 @@ HTMLElementExtended          (from html-element-extended)
       MqttGroupFrugalIot     the frugal_iot system group (name, battery, OTA…)
   MqttClient                 MQTT connection UI element
   MqttWrapper                top-level entry point; fetches config, builds tree
-  MqttLogin                  login/register form
   MqttAdmin                  admin panel (OTA, permissions, node table)
   LanguagePicker             language selector
   TabbedDisplay              generic tab UI
+HTMLElementExtendedMinimum   (light DOM - no shadow root, so frugaliot.css reaches inside)
+  MqttLogin                  sign in / register / forgot / reset, one card and four modes
+  MqttDeviceCard, MqttDeviceGrid, MqttProjectBack, MqttDashboard   the card UI
 ```
 
 ### Adding a new display element
@@ -186,8 +190,8 @@ a control shows a rule. Then:
 
 ### The card UI
 
-- `mqtt-devicecard` and `mqtt-devicegrid` are **light DOM** (`HTMLElementExtendedMinimum`), so
-  `frugaliot.css` reaches them directly. That needs html-element-extended ≥ 0.1.7 (`renderRoot`).
+- `mqtt-devicecard`, `mqtt-devicegrid` and `mqtt-login` are **light DOM**
+  (`HTMLElementExtendedMinimum`), so `frugaliot.css` reaches them directly. That needs html-element-extended ≥ 0.1.7 (`renderRoot`).
 - A light-DOM element has no `<slot>`, and `renderAndReplace` **clears its own children** — so the
   grid renders once with `render0()` and mutates in place, and a card builds every child itself.
 - Widgets in a card are pre-bound (`el.mt = mt`) but deliberately **not** registered as `mt.element`:

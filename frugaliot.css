@@ -194,7 +194,7 @@ div.mqtt-text {
 
 
 /* Related to authentication */
-    .mqtt-login, .mqtt-admin, .tabbed-display, tabbed-display {
+    .mqtt-admin, .tabbed-display, tabbed-display {
         .pseudolink {
             color: blue;
             text-decoration: underline;
@@ -641,3 +641,124 @@ body:has(mqtt-dashboard) {
     vertical-align: middle;
 }
 .fi-led--on { box-shadow: 0 0 3px 1px rgba(255, 221, 0, .6); }
+
+/* ============================================================================
+ * The login page (login.html) - sign in, register, forgot/reset password.
+ *
+ * mqtt-login is light DOM, so these rules reach it directly and it can use the same --fi- tokens
+ * as the cards rather than restating the palette. The old page styled itself through
+ * .mqtt-login inside a shadow root; that class is gone.
+ * ========================================================================= */
+body:has(mqtt-login) {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 16px;
+    color: var(--fi-text);
+    background: var(--fi-page-bg);
+    /* The @media (max-width: 1001px) bumps further up this file were written for the node/group UI,
+       where a node is one wide block; unchecked they make the language picker enormous here too. */
+    --fi-chrome-font: 1rem;
+    --fi-chrome-line: 1.6em;
+}
+.fi-login {
+    max-width: 26rem;
+    margin: 0 auto;
+    padding: var(--fi-gap);
+}
+.fi-login__brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 2px;
+}
+.fi-login__brand .fi-brand { flex: 1; font-weight: bold; }
+.fi-login__brand language-picker { --fi-chrome-float: none; }
+.fi-login__card {
+    cursor: default;
+    padding: 20px;
+    border-top: 3px solid var(--fi-leaf);   /* the same band the dashboard header wears */
+}
+.fi-login__title {
+    margin: 0 0 14px;
+    font-size: 1.35em;
+    font-weight: 600;
+}
+.fi-login__hint {
+    margin: 0 0 14px;
+    color: var(--fi-muted);
+    font-size: 0.9em;
+}
+.fi-login__field { margin-bottom: 12px; }
+.fi-login__field label {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--fi-muted);
+    font-size: 0.85em;
+}
+.fi-login__field input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px;
+    min-height: 44px;              /* a touch target, as on a card */
+    font: inherit;
+    color: var(--fi-text);
+    background: #fff;
+    border: 1px solid var(--fi-border);
+    border-radius: var(--fi-radius);
+}
+.fi-login__field input:focus-visible {
+    outline: 2px solid var(--fi-leaf-deep);
+    outline-offset: 1px;
+    border-color: var(--fi-leaf-deep);
+}
+/* The one filled element on the page, so there is never a doubt which control submits the form */
+.fi-login__submit {
+    width: 100%;
+    margin-top: 6px;
+    padding: 12px;
+    min-height: 44px;
+    font: inherit;
+    font-weight: 600;
+    color: #fff;
+    background: var(--fi-leaf-deep);
+    border: 0;
+    border-radius: var(--fi-radius);
+    cursor: pointer;
+}
+.fi-login__submit:hover { background: var(--fi-leaf); }
+.fi-login__submit:focus-visible { outline: 2px solid var(--fi-text); outline-offset: 2px; }
+/* Mode switches are buttons, not links - nothing is navigated to, the card changes what it shows */
+.fi-login__links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--fi-border);
+    font-size: 0.9em;
+    color: var(--fi-muted);
+}
+/* el() builds children with no whitespace between them, so an inline label and its link would run
+   together - "New here?Create an account". Flex puts the gap back. */
+.fi-login__linkgroup { display: inline-flex; align-items: baseline; gap: 5px; }
+.fi-login__link {
+    background: none;
+    border: 0;
+    padding: 4px 0;
+    font: inherit;
+    color: var(--fi-leaf-deep);
+    text-decoration: underline;
+    cursor: pointer;
+}
+.fi-login__link:hover { color: var(--fi-text); }
+.fi-login__message {
+    margin: 0 0 14px;
+    padding: 10px 12px;
+    border-radius: var(--fi-radius);
+    border-left: 3px solid;
+    font-size: 0.95em;
+}
+/* Colour is never the only signal: an error also says so in words the server wrote */
+.fi-login__message--error { border-color: #c0392b; background: #fdeeec; color: #7c231a; }
+.fi-login__message--info  { border-color: var(--fi-leaf-deep); background: #eaf7ef; color: #1c5c37; }

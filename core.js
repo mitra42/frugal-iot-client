@@ -299,10 +299,12 @@ EN:
   Admin: Admin
   Advanced: Advanced
   All: All
+  Already have an account?: Already have an account?
   API: API
   AQI: AQI
   AQI500: AQI500
   Auth Token: Auth Token
+  Back to sign in: Back to sign in
   Base URL: Base URL
   Battery: Battery
   Board: Board
@@ -323,6 +325,7 @@ EN:
   Control: Control
   Cookie Name: Cookie Name
   Could not read the board - assuming it is already provisioned: Could not read the board - assuming it is already provisioned
+  Create an account: Create an account
   Dashboard: Dashboard
   Data: Data
   Description: Description
@@ -332,6 +335,7 @@ EN:
   eCO2: eCO2
   Email: Email
   ENS AHT: ENS AHT
+  Enter the code we emailed you, then choose a new password.: Enter the code we emailed you, then choose a new password.
   Enter topic: Enter topic
   Enter value: Enter value
   Existing OTA Files: Existing OTA Files
@@ -347,6 +351,7 @@ EN:
   Flash this over USB: Flash this over USB
   Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer: Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer
   for node: for node
+  Forgot password?: Forgot password?
   From: From
   Frugal IoT project: Frugal IoT project
   Frugal-IoT Username *: Frugal-IoT Username *
@@ -359,8 +364,11 @@ EN:
   Humidity control: Humidity control
   Hysteresis: Hysteresis
   Hysterisis: Hysteresis
+  I have a code: I have a code
   id: id
+  If that account exists we have emailed a reset code: If that account exists we have emailed a reset code
   If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.'
+  Incorrect username or password: Incorrect username or password
   Info: Info
   Input: Input
   Key: Key
@@ -381,6 +389,8 @@ EN:
   Name: Name
   never: Never seen
   Never seen: Never seen
+  New here?: New here?
+  New password: New password
   No board connected: No board connected
   No farms registered for this organization yet.: No farms registered for this organization yet.
   No nodes found for this farm's project(s).: No nodes found for this farm's project(s).
@@ -416,6 +426,8 @@ EN:
   out: out
   Output: Output
   Password: Password
+  Password reset - please sign in: Password reset - please sign in
+  Password reset is not available on this server: Password reset is not available on this server
   Permissions: Permissions
   Phone or Whatsapp: Phone or Whatsapp
   Platform *: Platform *
@@ -440,8 +452,12 @@ EN:
   Register Farm: Register Farm
   Register Platform: Register Platform
   Registered Platforms: Registered Platforms
+  Registration failed: Registration failed
+  Registration successful - please login: Registration successful - please login
   Relay: Relay
   Reporting every: Reporting every
+  Reset code: Reset code
+  Reset password: Reset password
   Retain: Retain
   Schema: Schema
   Select: Select
@@ -451,6 +467,8 @@ EN:
   Select an organization to continue.: Select an organization to continue.
   Send: Send
   SEND: SEND
+  Send another code: Send another code
+  Send reset code: Send reset code
   sent: sent
   server: server
   set: set
@@ -459,6 +477,7 @@ EN:
   SHT: SHT
   SHT30: SHT30
   Sign In: Sign In
+  Sign in: Sign in
   Soil: Soil
   Soil Moisture: Soil Moisture
   Soil Temperature: Soil Temperature
@@ -473,10 +492,12 @@ EN:
   System: System
   Temperature: Temperature
   temperature: temperature
+  That code is not valid or has expired: That code is not valid or has expired
   This field has no invocation URL (forms[0].href) in its schema: This field has no invocation URL (forms[0].href) in its schema
   This node has no actions in its schema.: This node has no actions in its schema.
   Time On (s): Time On (s)
   To: To
+  Too many attempts - please wait a few minutes: Too many attempts - please wait a few minutes
   Topic: Topic
   Topic and Value are required: Topic and Value are required
   TVOC: TVOC
@@ -491,11 +512,13 @@ EN:
   Updating the app only - the existing configuration will be preserved: Updating the app only - the existing configuration will be preserved
   Upload: Upload
   Username: Username
+  Username or email: Username or email
   Value: Value
   Value *: Value *
   Voltage: Voltage
   Waiting: Waiting
   Waiting for devices: Waiting for devices
+  We will email you a code and a link to choose a new password.: We will email you a code and a link to choose a new password.
   When: When
   WiFi: WiFi
 FR:
@@ -508,10 +531,12 @@ FR:
   Admin: Admin
   Advanced: Avancé
   All: Tous
+  Already have an account?: Vous avez déjà un compte ?
   API: API
   AQI: IQA  
   AQI500: IQA500  
   Auth Token: Jeton d'authentification
+  Back to sign in: Retour à la connexion
   Base URL: URL de base
   Battery: Batterie
   Board: Carte
@@ -532,6 +557,7 @@ FR:
   Control: Contrôle
   Cookie Name: Nom du cookie
   Could not read the board - assuming it is already provisioned: Impossible de lire la carte - on suppose qu'elle est déjà provisionnée
+  Create an account: Créer un compte
   Dashboard: Tableau de bord
   Data: Données
   Description: Description
@@ -541,6 +567,7 @@ FR:
   eCO2: eCO2
   Email: Email
   ENS AHT: ENS AHT  
+  Enter the code we emailed you, then choose a new password.: Saisissez le code que nous vous avons envoyé par e-mail, puis choisissez un nouveau mot de passe.
   Enter topic: Entrez le sujet
   Enter value: Entrez la valeur
   Existing OTA Files: Fichiers OTA existants
@@ -556,6 +583,7 @@ FR:
   Flash this over USB: Flasher ceci par USB
   Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer: Le flashage nécessite l'API Web Serial - utilisez Chrome, Edge ou Opera sur un ordinateur de bureau
   for node: pour le nœud
+  Forgot password?: Mot de passe oublié ?
   From: De
   Frugal IoT project: Projet Frugal IoT
   Frugal-IoT Username *: Nom d'utilisateur Frugal-IoT *
@@ -570,8 +598,11 @@ FR:
   hysteresis: hystérésis
   Hysterisis: Hystérésis
   hysterisis: hystérésis
+  I have a code: J'ai un code
   id: id
+  If that account exists we have emailed a reset code: Si ce compte existe, nous avons envoyé un code de réinitialisation par e-mail
   If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': Si ce répertoire est invisible dans le sélecteur de fichiers, copiez le fichier ailleurs OU créez un alias vers le répertoire .pio sans point au début.
+  Incorrect username or password: Nom d'utilisateur ou mot de passe incorrect
   Info: Infos
   Input: Entrée
   Key: Clé
@@ -592,6 +623,8 @@ FR:
   Name: Nom 
   never: Jamais vu
   Never seen: Jamais vu
+  New here?: Nouveau ici ?
+  New password: Nouveau mot de passe
   No board connected: Aucune carte connectée
   No farms registered for this organization yet.: Aucune ferme enregistrée pour cette organisation pour l'instant.
   No nodes found for this farm's project(s).: Aucun nœud trouvé pour le(s) projet(s) de cette ferme.
@@ -627,6 +660,8 @@ FR:
   out: sortie
   Output: Sortie
   Password: Mot de passe
+  Password reset - please sign in: Mot de passe réinitialisé - veuillez vous connecter
+  Password reset is not available on this server: La réinitialisation du mot de passe n'est pas disponible sur ce serveur
   Permissions: Autorisations
   Phone or Whatsapp: Téléphone ou Whatsapp
   Platform *: Plateforme *
@@ -651,8 +686,12 @@ FR:
   Register Farm: Enregistrer la ferme
   Register Platform: Enregistrer la plateforme
   Registered Platforms: Plateformes enregistrées
+  Registration failed: L'inscription a échoué
+  Registration successful - please login: Inscription réussie - veuillez vous connecter
   Relay: Relais
   Reporting every: Transmet toutes les
+  Reset code: Code de réinitialisation
+  Reset password: Réinitialiser le mot de passe
   Retain: Conserver
   Schema: Schéma
   Select: Sélectionner
@@ -662,6 +701,8 @@ FR:
   Select an organization to continue.: Sélectionnez une organisation pour continuer.
   Send: Envoyer
   SEND: ENVOYER
+  Send another code: Envoyer un autre code
+  Send reset code: Envoyer le code
   sent: envoyé
   server: serveur
   set: défini
@@ -670,6 +711,7 @@ FR:
   SHT: SHT
   SHT30: SHT30
   Sign In: Se connecter
+  Sign in: Se connecter
   Soil: Sol
   Soil Moisture: Humidité du sol
   Soil Temperature: Température du sol
@@ -684,10 +726,12 @@ FR:
   System: Système
   Temperature: Température
   temperature: température
+  That code is not valid or has expired: Ce code n'est pas valide ou a expiré
   This field has no invocation URL (forms[0].href) in its schema: Ce champ n'a pas d'URL d'invocation (forms[0].href) dans son schéma
   This node has no actions in its schema.: Ce nœud n'a aucune action dans son schéma.
   Time On (s): Durée active (s)
   To: À
+  Too many attempts - please wait a few minutes: Trop de tentatives - veuillez patienter quelques minutes
   Topic: Sujet
   Topic and Value are required: Le sujet et la valeur sont requis
   TVOC: COVT  
@@ -702,11 +746,13 @@ FR:
   Updating the app only - the existing configuration will be preserved: Mise à jour de l'application uniquement - la configuration existante sera conservée
   Upload: Téléverser
   Username: Nom de User
+  Username or email: Nom d'utilisateur ou e-mail
   Value: Valeur
   Value *: Valeur *
   Voltage: Tension
   Waiting: En attente
   Waiting for devices: En attente des appareils
+  We will email you a code and a link to choose a new password.: Nous vous enverrons par e-mail un code et un lien pour choisir un nouveau mot de passe.
   When: Quand
   WiFi: WiFi
 HI:
@@ -719,10 +765,12 @@ HI:
   Admin: एडमिन
   Advanced: उन्नत
   All: सभी
+  Already have an account?: पहले से खाता है?
   API: एपीआई
   AQI: वायु गुणवत्ता सूचकांक  
   AQI500: वायु गुणवत्ता सूचकांक 500  
   Auth Token: प्रमाणीकरण टोकन
+  Back to sign in: साइन इन पर वापस जाएँ
   Base URL: बेस यूआरएल
   Battery: बैटरी
   Board: बोर्ड
@@ -743,6 +791,7 @@ HI:
   Control: नियंत्रण
   Cookie Name: कुकी नाम
   Could not read the board - assuming it is already provisioned: बोर्ड पढ़ा नहीं जा सका - मान लिया गया कि यह पहले से प्रोविजन किया हुआ है
+  Create an account: खाता बनाएँ
   Dashboard: डैशबोर्ड
   Data: डेटा
   Description: विवरण
@@ -752,6 +801,7 @@ HI:
   eCO2: ईसीओ2
   Email: ईमेल
   ENS AHT: ईएनएस एएचटी  
+  Enter the code we emailed you, then choose a new password.: हमने आपको ईमेल किया कोड दर्ज करें, फिर नया पासवर्ड चुनें।
   Enter topic: टॉपिक दर्ज करें
   Enter value: मान दर्ज करें
   Existing OTA Files: मौजूदा OTA फ़ाइलें
@@ -767,6 +817,7 @@ HI:
   Flash this over USB: इसे USB से फ्लैश करें
   Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer: फ्लैश करने के लिए Web Serial API आवश्यक है - डेस्कटॉप कंप्यूटर पर Chrome, Edge या Opera का उपयोग करें
   for node: नोड के लिए
+  Forgot password?: पासवर्ड भूल गए?
   From: से
   Frugal IoT project: फ़्रूगल IoT परियोजना
   Frugal-IoT Username *: Frugal-IoT उपयोगकर्ता नाम *
@@ -781,8 +832,11 @@ HI:
   hysteresis: हिस्टेरेसिस
   Hysterisis: हिस्टेरिसिस
   hysterisis: हिस्टेरेसिस
+  I have a code: मेरे पास कोड है
   id: आईडी
+  If that account exists we have emailed a reset code: यदि वह खाता मौजूद है, तो हमने रीसेट कोड ईमेल कर दिया है
   If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': यदि यह निर्देशिका फ़ाइल चयनकर्ता में दिखाई नहीं देती है, तो फ़ाइल को किसी अन्य स्थान पर कॉपी करें या बिना अग्रणी बिंदु के .pio निर्देशिका के लिए एक उपनाम बनाएं।
+  Incorrect username or password: उपयोगकर्ता नाम या पासवर्ड गलत है
   Info: जानकारी
   Input: इनपुट
   Key: कुंजी
@@ -803,6 +857,8 @@ HI:
   Name: नाम
   never: कभी नहीं देखा
   Never seen: कभी नहीं देखा
+  New here?: यहाँ नए हैं?
+  New password: नया पासवर्ड
   No board connected: कोई बोर्ड कनेक्ट नहीं है
   No farms registered for this organization yet.: इस संगठन के लिए अभी तक कोई फार्म पंजीकृत नहीं है।
   No nodes found for this farm's project(s).: इस फार्म के प्रोजेक्ट (प्रोजेक्ट्स) के लिए कोई नोड नहीं मिला।
@@ -838,6 +894,8 @@ HI:
   out: आउट
   Output: आउटपुट
   Password: पासवर्ड
+  Password reset - please sign in: पासवर्ड रीसेट हो गया - कृपया साइन इन करें
+  Password reset is not available on this server: इस सर्वर पर पासवर्ड रीसेट उपलब्ध नहीं है
   Permissions: अनुमतियाँ
   Phone or Whatsapp: फ़ोन या व्हाट्सएप
   Platform *: प्लेटफ़ॉर्म *
@@ -862,8 +920,12 @@ HI:
   Register Farm: फार्म पंजीकृत करें
   Register Platform: प्लेटफ़ॉर्म पंजीकृत करें
   Registered Platforms: पंजीकृत प्लेटफ़ॉर्म
+  Registration failed: पंजीकरण विफल
+  Registration successful - please login: पंजीकरण सफल - कृपया लॉगिन करें
   Relay: रिले
   Reporting every: हर बार रिपोर्ट
+  Reset code: रीसेट कोड
+  Reset password: पासवर्ड रीसेट करें
   Retain: बनाए रखें
   Schema: स्कीमा
   Select: चुनें
@@ -873,6 +935,8 @@ HI:
   Select an organization to continue.: जारी रखने के लिए एक संगठन चुनें।
   Send: भेजें
   SEND: भेजें
+  Send another code: दूसरा कोड भेजें
+  Send reset code: रीसेट कोड भेजें
   sent: भेजा गया
   server: सर्वर
   set: सेट किया गया
@@ -881,6 +945,7 @@ HI:
   SHT: एसएचटी
   SHT30: एसएचटी30
   Sign In: साइन इन करें
+  Sign in: साइन इन करें
   Soil: मिट्टी
   Soil Moisture: मिट्टी की नमी
   Soil Temperature: मिट्टी का तापमान
@@ -895,10 +960,12 @@ HI:
   System: सिस्टम
   Temperature: तापमान
   temperature: तापमान
+  That code is not valid or has expired: यह कोड मान्य नहीं है या समाप्त हो गया है
   This field has no invocation URL (forms[0].href) in its schema: इस फ़ील्ड के स्कीमा में कोई इनवोकेशन यूआरएल (forms[0].href) नहीं है
   This node has no actions in its schema.: इस नोड के स्कीमा में कोई क्रिया नहीं है।
   Time On (s): चालू समय (से)
   To: तक
+  Too many attempts - please wait a few minutes: बहुत अधिक प्रयास - कृपया कुछ मिनट प्रतीक्षा करें
   Topic: टॉपिक
   Topic and Value are required: टॉपिक और मान आवश्यक हैं
   TVOC: टीवीओसी  
@@ -913,11 +980,13 @@ HI:
   Updating the app only - the existing configuration will be preserved: केवल ऐप अपडेट हो रहा है - मौजूदा कॉन्फ़िगरेशन सुरक्षित रहेगी
   Upload: अपलोड
   Username: उपयोगकर्ता नाम
+  Username or email: उपयोगकर्ता नाम या ईमेल
   Value: मान
   Value *: मान *
   Voltage: वोल्टेज
   Waiting: प्रतीक्षा में
   Waiting for devices: उपकरणों की प्रतीक्षा
+  We will email you a code and a link to choose a new password.: हम आपको नया पासवर्ड चुनने के लिए एक कोड और एक लिंक ईमेल करेंगे।
   When: कब
   WiFi: वाई-फ़ाई
 ID:
@@ -930,10 +999,12 @@ ID:
   Admin: Admin
   Advanced: Lanjutan
   All: Semua
+  Already have an account?: Sudah punya akun?
   API: API
   AQI: Indeks Kualitas Udara  
   AQI500: Indeks Kualitas Udara 500  
   Auth Token: Token Autentikasi
+  Back to sign in: Kembali ke masuk
   Base URL: URL Dasar
   Battery: Baterai
   Board: Papan
@@ -954,6 +1025,7 @@ ID:
   Control: Kontrol
   Cookie Name: Nama Cookie
   Could not read the board - assuming it is already provisioned: Tidak dapat membaca papan - dianggap sudah diprovisioning
+  Create an account: Buat akun
   Dashboard: Dasbor
   Data: Data
   Description: Deskripsi
@@ -963,6 +1035,7 @@ ID:
   eCO2: eCO2  
   Email: Email
   ENS AHT: ENS AHT  
+  Enter the code we emailed you, then choose a new password.: Masukkan kode yang kami kirim lewat email, lalu pilih kata sandi baru.
   Enter topic: Masukkan topik
   Enter value: Masukkan nilai
   Existing OTA Files: Berkas OTA yang Ada
@@ -978,6 +1051,7 @@ ID:
   Flash this over USB: Flash ini melalui USB
   Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer: Flashing memerlukan Web Serial API - gunakan Chrome, Edge atau Opera di komputer desktop
   for node: untuk node
+  Forgot password?: Lupa kata sandi?
   From: Dari
   Frugal IoT project: Proyek Frugal IoT
   Frugal-IoT Username *: Nama Pengguna Frugal-IoT *
@@ -992,8 +1066,11 @@ ID:
   hysteresis: histeresis
   Hysterisis: Histeresis
   hysterisis: histeresis
+  I have a code: Saya punya kode
   id: id
+  If that account exists we have emailed a reset code: Jika akun itu ada, kami telah mengirim kode reset lewat email
   If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': Jika direktori ini tidak terlihat di pemilih berkas, salin berkas ke tempat lain ATAU buat alias ke direktori .pio tanpa titik di awal.
+  Incorrect username or password: Nama pengguna atau kata sandi salah
   Info: Info
   Input: Masukan
   Key: Kunci
@@ -1014,6 +1091,8 @@ ID:
   Name: Nama
   never: Belum pernah terlihat
   Never seen: Belum pernah terlihat
+  New here?: Baru di sini?
+  New password: Kata sandi baru
   No board connected: Tidak ada papan terhubung
   No farms registered for this organization yet.: Belum ada farm yang terdaftar untuk organisasi ini.
   No nodes found for this farm's project(s).: Tidak ada node ditemukan untuk proyek farm ini.
@@ -1049,6 +1128,8 @@ ID:
   out: keluar
   Output: Keluaran
   Password: Kata Sandi
+  Password reset - please sign in: Kata sandi disetel ulang - silakan masuk
+  Password reset is not available on this server: Setel ulang kata sandi tidak tersedia di server ini
   Permissions: Izin
   Phone or Whatsapp: Telepon atau Whatsapp
   Platform *: Platform *
@@ -1073,8 +1154,12 @@ ID:
   Register Farm: Daftarkan Farm
   Register Platform: Daftarkan Platform
   Registered Platforms: Platform Terdaftar
+  Registration failed: Pendaftaran gagal
+  Registration successful - please login: Pendaftaran berhasil - silakan masuk
   Relay: Relay
   Reporting every: Melapor setiap
+  Reset code: Kode reset
+  Reset password: Setel ulang kata sandi
   Retain: Simpan
   Schema: Skema
   Select: Pilih
@@ -1084,6 +1169,8 @@ ID:
   Select an organization to continue.: Pilih organisasi untuk melanjutkan.
   Send: Kirim
   SEND: KIRIM
+  Send another code: Kirim kode lain
+  Send reset code: Kirim kode reset
   sent: terkirim
   server: server
   set: diatur
@@ -1092,6 +1179,7 @@ ID:
   SHT: SHT
   SHT30: SHT30
   Sign In: Masuk
+  Sign in: Masuk
   Soil: Tanah
   Soil Moisture: Kelembapan Tanah
   Soil Temperature: Suhu Tanah
@@ -1106,10 +1194,12 @@ ID:
   System: Sistem
   Temperature: Suhu
   temperature: suhu
+  That code is not valid or has expired: Kode itu tidak valid atau sudah kedaluwarsa
   This field has no invocation URL (forms[0].href) in its schema: Bidang ini tidak memiliki URL pemanggilan (forms[0].href) dalam skemanya
   This node has no actions in its schema.: Node ini tidak memiliki aksi dalam skemanya.
   Time On (s): Waktu Nyala (d)
   To: Sampai
+  Too many attempts - please wait a few minutes: Terlalu banyak percobaan - harap tunggu beberapa menit
   Topic: Topik
   Topic and Value are required: Topik dan Nilai wajib diisi
   TVOC: TVOC  
@@ -1124,11 +1214,13 @@ ID:
   Updating the app only - the existing configuration will be preserved: Hanya memperbarui aplikasi - konfigurasi yang ada akan dipertahankan
   Upload: Unggah
   Username: Nama Pengguna
+  Username or email: Nama pengguna atau email
   Value: Nilai
   Value *: Nilai *
   Voltage: Tegangan
   Waiting: Menunggu
   Waiting for devices: Menunggu perangkat
+  We will email you a code and a link to choose a new password.: Kami akan mengirim kode dan tautan lewat email untuk memilih kata sandi baru.
   When: Ketika
   WiFi: WiFi
 `);

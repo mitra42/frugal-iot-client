@@ -772,6 +772,11 @@ Reopening one means revisiting this document, not deciding it in code.
 | D-42 | How the brand greens are used | A pale tint behind near-black text, never a fill under white — sunlight and dim sheds |
 | D-43 | Where the connection details live | An ungated Info card on the project's back, not an expandable in the header |
 | D-44 | How a module without a hand-written summary gets one | A generic default — its own readings, capped at two — not a list per module |
+| D-45 | Login page: keep the Sign In / Register tab strip? | No — one card, four modes. Two tabs were chrome around one short form, and "forgot" and "reset" make four, which no longer reads as tabs |
+| D-46 | Log in by username or by email? | One field, labelled "Username or email". The server tries username first, then email, so a username containing "@" still works |
+| D-47 | How a forgotten password is reset | A stateless HMAC code — see §16. Nothing is stored, so there is no token table to expire, leak or clean up |
+| D-48 | Six digits to type, or a link to click? | Both, from the same digest — see §16 |
+| D-49 | Is `email` optional at registration? | No, required now. It was optional, and an account without one cannot use D-47 at all |
 
 ---
 
@@ -955,6 +960,49 @@ Cards arrive asynchronously as discovery messages land, so the stored order has 
 arrival, not once at load, and a device with no stored position and no name yet still needs a stable
 slot. Append in arrival order; re-sort only on an explicit drag. Unplanned, this is where the grid
 flickers.
+
+---
+
+---
+
+## 16. Forgotten passwords — a code that is stored nowhere
+
+The usual design writes a random token to a table with an expiry, and then needs the table cleaned
+up, the token invalidated on use, and the row protected. None of that is wanted on a Pi in a shed.
+
+Instead a code is **derived**, in `frugal-iot-server/lib/resetcode.js`:
+
+```
+HMAC(secret, user id + email + current hashed_password + five-minute slot)
+```
+
+- **`secret`** is 32 random bytes made at server start. A restart invalidates every outstanding
+  code, which is the right way round.
+- **the five-minute slot** is `floor(now / 5 min)`. Verification accepts the current slot and the
+  one before, so a code lasts between 5 and 10 minutes. Nothing expires it; the arithmetic moves on.
+- **`current hashed_password`** is what makes a code single-use, for free. Resetting the password
+  changes the hash, so every code derived from the old one stops matching the instant it is used.
+- **Nothing is written down**, so there is no token table, no cleanup, and nothing to leak.
+
+Two forms come out of one digest (D-48):
+
+| Form | What it is | Why |
+|---|---|---|
+| code | six digits | short enough to read off a phone and type into the form |
+| token | 32 hex characters | goes in the emailed link, where length costs nothing |
+
+Six digits is a million guesses, and a code is alive for up to ten minutes, so the six-digit form
+is only safe alongside the in-memory rate limiting in the same file — 3 sends and 10 verification
+attempts per identifier per 15 minutes. The link form does not depend on that.
+
+`POST /forgotpassword` answers identically whether or not the account exists, and identically when
+the mail fails to send, so the form cannot be used to find out who has an account here. A failed
+send is logged loudly instead, because a server with broken SMTP looks from the outside exactly
+like one that is working.
+
+Mail itself is configured in `config.d/email.yaml` and is **absent by default**. A server that
+cannot send mail says "Password reset is not available on this server" rather than accepting the
+request and quietly dropping it.
 
 ---
 
