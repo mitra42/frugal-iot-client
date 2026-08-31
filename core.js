@@ -330,6 +330,7 @@ EN:
   Data: Data
   Description: Description
   Device: Device
+  Display carousel: Display carousel
   ds18b20: ds18b20
   e.g. LiteFarm: e.g. LiteFarm
   eCO2: eCO2
@@ -381,6 +382,7 @@ EN:
   Loading schema...: Loading schema...
   Log out: Log out
   Lower-case letters and numbers only, no spaces or punctuation: Lower-case letters and numbers only, no spaces or punctuation
+  Lux: Lux
   Manual: Manual
   Monitor: Monitor
   Monitor speed: Monitor speed
@@ -413,6 +415,7 @@ EN:
   Note this is your organization - not the organizations whose devices you want to access.: Note this is your organization - not the organizations whose devices you want to access.
   Now: Now
   now: now
+  Off: Off
   offline: offline
   On: On
   "On ArduinoIDE the file is typically in ": "On ArduinoIDE the file is typically in "
@@ -562,6 +565,7 @@ FR:
   Data: Données
   Description: Description
   Device: Appareil
+  Display carousel: Carrousel d'affichage
   ds18b20: ds18b20
   e.g. LiteFarm: par ex. LiteFarm
   eCO2: eCO2
@@ -615,6 +619,7 @@ FR:
   Loading schema...: Chargement du schéma...
   Log out: Se déconnecter
   Lower-case letters and numbers only, no spaces or punctuation: Lettres minuscules et chiffres uniquement, sans espaces ni ponctuation
+  Lux: Lux
   Manual: Manuel
   Monitor: Moniteur
   Monitor speed: Vitesse du moniteur
@@ -647,6 +652,7 @@ FR:
   Note this is your organization - not the organizations whose devices you want to access.: Ceci est votre organisation - pas les organisations dont vous voulez accéder aux appareils.
   Now: Maintenant
   now: maintenant
+  Off: Éteint
   offline: hors ligne
   On: Allumé
   "On ArduinoIDE the file is typically in ": "Sur ArduinoIDE, le fichier se trouve généralement dans "
@@ -796,6 +802,7 @@ HI:
   Data: डेटा
   Description: विवरण
   Device: उपकरण
+  Display carousel: डिस्प्ले कैरोसेल
   ds18b20: ds18b20
   e.g. LiteFarm: उदाहरण के लिए LiteFarm
   eCO2: ईसीओ2
@@ -849,6 +856,7 @@ HI:
   Loading schema...: स्कीमा लोड हो रहा है...
   Log out: लॉग आउट
   Lower-case letters and numbers only, no spaces or punctuation: केवल छोटे अक्षर और अंक, कोई स्पेस या विरामचिह्न नहीं
+  Lux: लक्स
   Manual: मैनुअल
   Monitor: मॉनिटर
   Monitor speed: मॉनिटर गति
@@ -881,6 +889,7 @@ HI:
   Note this is your organization - not the organizations whose devices you want to access.: ध्यान दें यह आपका संगठन है - वे संगठन नहीं जिनके उपकरणों तक आप पहुंचना चाहते हैं।
   Now: अभी
   now: अभी
+  Off: बंद
   offline: ऑफ़लाइन
   On: चालू
   "On ArduinoIDE the file is typically in ": "ArduinoIDE पर फ़ाइल सामान्यतः यहाँ होती है "
@@ -1030,6 +1039,7 @@ ID:
   Data: Data
   Description: Deskripsi
   Device: Perangkat
+  Display carousel: Karosel tampilan
   ds18b20: ds18b20
   e.g. LiteFarm: misalnya LiteFarm
   eCO2: eCO2  
@@ -1083,6 +1093,7 @@ ID:
   Loading schema...: Memuat skema...
   Log out: Keluar
   Lower-case letters and numbers only, no spaces or punctuation: Hanya huruf kecil dan angka, tanpa spasi atau tanda baca
+  Lux: Lux
   Manual: Manual
   Monitor: Monitor
   Monitor speed: Kecepatan monitor
@@ -1115,6 +1126,7 @@ ID:
   Note this is your organization - not the organizations whose devices you want to access.: Ini adalah organisasi Anda - bukan organisasi yang perangkatnya ingin Anda akses.
   Now: Sekarang
   now: sekarang
+  Off: Mati
   offline: offline
   On: Hidup
   "On ArduinoIDE the file is typically in ": "Di ArduinoIDE berkas biasanya ada di "
@@ -2625,13 +2637,13 @@ class MqttWrapper extends HTMLElementExtended {
     if (this.state.projectEl) {
       this.removeChild(this.state.projectEl);
     }
-    if (this.state.organization) { // Will be false if set to "Not selected"
+    if (this.state.organization) { // Will be false if the placeholder option is re-chosen
       this.appender();
     }
   }
   onProject(e) {
     this.state.project = e.target.value;
-    if (this.state.project) { // Will be false if choose "Not selected"
+    if (this.state.project) { // Will be false if the placeholder option is re-chosen
       if (!this.querySelector(`mqtt-project[id="${this.state.project}"]`)) {
         this.appender();
       }
@@ -2717,9 +2729,11 @@ class MqttWrapper extends HTMLElementExtended {
           // noinspection JSUnresolvedReference
           this.append( // TODO-14 merge with organization dropdown in mqtt-admin and add to mqtt-login and mqtt-register
             el('div', {class: 'dropdown'}, [
-              el('label', {for: 'organizations', textContent: "Organization"}),
-              el('select', {id: 'organizations', onchange: this.onOrganization.bind(this)}, [
-                el('option', {value: "", textContent: "Not selected", selected: !this.state.value}),
+              // The name is the placeholder rather than a label: the header is short of space, and
+              // once something is chosen the word is redundant. aria-label/title keep it available.
+              el('select', {id: 'organizations', 'aria-label': getString("Organization"),
+                title: getString("Organization"), onchange: this.onOrganization.bind(this)}, [
+                el('option', {value: "", textContent: "Organization", selected: !this.state.value}),
                 Object.entries(server_config.organizations).map( ([oid, o]) =>
                   el('option', {value: oid, textContent: `${oid}: ${o.name}`, selected: false}),
                 ),
@@ -2729,9 +2743,9 @@ class MqttWrapper extends HTMLElementExtended {
           // noinspection JSUnresolvedReference
           this.append( this.state.projectEl =
             el('div', {class: 'dropdown'}, [
-              el('label', {for: 'projects', textContent: "Project"}),
-              el('select', {id: 'projects', onchange: this.onProject.bind(this)}, [
-                el('option', {value: "", textContent: "Not selected", selected: !this.state.value}),
+              el('select', {id: 'projects', 'aria-label': getString("Project"),
+                title: getString("Project"), onchange: this.onProject.bind(this)}, [
+                el('option', {value: "", textContent: "Project", selected: !this.state.value}),
                 Object.entries(server_config.organizations[this.state.organization].projects).map(([pid,p]) =>
                   el('option', {value: pid, textContent: (p.name ? `${pid}: ${p.name}` : pid), selected: false})
                 ),

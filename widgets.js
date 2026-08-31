@@ -620,7 +620,7 @@ class MqttSlider extends MqttTransmitter {
   // noinspection JSCheckFunctionSignatures
   valueSet(val) {
     super.valueSet(val);
-    this.thumb.style.left = this.leftOffset + "px";
+    if (this.thumb) { this.thumb.style.left = this.leftOffset + "px"; }
     return true; // Rerenders on moving based on any received value but not when dragged
     // TODO could get smarter about setting with rather than rerendering
   }
@@ -671,14 +671,18 @@ class MqttSlider extends MqttTransmitter {
     }
   }
   render() {
-    if ((!this.slider) && (this.children.length > 0)) {
-      // Build once as don't want re-rendered - but do not render till after children added (end of EL)
-      this.thumb = el('div', {class: "setpoint"}, this.children);
+    if (!this.isConnected) { return null; } // Children are appended by EL before connection, so they are all here
+    if (!this.slider) {
+      // Build once as don't want re-rendered.
+      // A card creates the slider with no children - supply the thumb it would otherwise be missing,
+      // or thumb stays undefined and every valueSet throws.
+      this.thumb = el('div', {class: "setpoint"},
+        this.children.length ? this.children : [el('span', {textContent: "△", i8n: false})]);
       this.slider = el('div', {class: "pointbar",},[this.thumb]);
       this.slider.onmousedown = this.onmousedown.bind(this);
     }
     // noinspection JSUnresolvedReference
-    return !this.isConnected ? null : [
+    return [
       el('link', {rel: 'stylesheet', href: CssUrl}),
       el('div', {class: "mqtt-slider outer"}, [
         el('div', {class: "name"}, [ //TODO maybe use a label
