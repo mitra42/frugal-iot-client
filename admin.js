@@ -1075,6 +1075,14 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
        el('form', {action: '/ota_update', method: "post", enctype: "multipart/form-data"}, [
          el('input', {id: "url2", name: "url", type: "hidden", value: `/dashboard/`}),
          el('input', {id: "lang", name: "lang", type: "hidden", value: preferedLanguages.join(',')}),
+         // The organization dropdown for this tab is a sibling of this form rather than inside it
+         // (see renderSection), so the browser does not submit it. The server needs it: it checks
+         // the OTAUPDATE permission against it and builds the upload directory from it, and
+         // without it every upload is refused as "Permission denied to OTAUPDATE".
+         // It must stay ahead of the file input. Multer fills req.body only from the parts that
+         // arrive before the file, and the permission check runs while the file is being stored,
+         // so a field placed after the file would not be there yet when it is read.
+         el('input', {id: "otaorganization", name: "organization", type: "hidden", value: this.state.org}),
          el('section', {}, [
            el('label', {for: 'projects', textContent: "Project"}),
            this.state.elements.projectdropdown = this.projectDropdown(this.state.org)
