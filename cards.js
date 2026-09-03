@@ -24,7 +24,7 @@ if (!('renderRoot' in HTMLElementExtendedMinimum.prototype)) {
     + 'elements cannot render. If it is linked, the browser is probably holding a cached copy - '
     + 'reload ignoring the cache.');
 }
-import { el, getString, hasCapability, ImagesUrl, relativeTime, server_config, XXX } from './core.js';
+import { el, getString, hasCapability, ImagesUrl, isEditableTarget, relativeTime, server_config, XXX } from './core.js';
 
 // Shape as well as colour, so status survives sunlight and colour blindness
 const STATUS_MARK = { live: '●', stale: '◌', offline: '○', never: '·' };
@@ -189,6 +189,9 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
   // someone who cannot make one.
   onKeyDown(e) {
     if (!this.state.movable) return;
+    // Space is a character in a text field before it is a pick-up gesture, and Escape/arrows belong
+    // to the input too
+    if (isEditableTarget(e)) return;
     if (e.key === ' ') {
       e.preventDefault();
       this.setGrabbed(!this.state.grabbed);
@@ -210,6 +213,8 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
   // this has to work on. Touch needs a hold first, or the page cannot be scrolled.
   onPointerDown(e) {
     if (!this.state.movable || (e.button !== undefined && e.button !== 0)) return;
+    // Dragging across a text field selects text; six pixels of that must not lift the card
+    if (isEditableTarget(e)) return;
     this.state.drag = { x: e.clientX, y: e.clientY, id: e.pointerId, active: false };
     if (e.pointerType === 'touch') {
       this.state.drag.timer = setTimeout(() => this.beginDrag(e), 400); // hold to lift

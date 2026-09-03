@@ -289,6 +289,12 @@ Each of these cost real time. They are not obvious from reading the code.
 - **`:host-context(details[open]) div { display: block }`** near the top of `frugaliot.css` has
   specificity (0,2,2) and overrides most rules for any div in a shadow root inside an open
   `<details>` — which is every widget in the old UI.
+- **A card's own gestures eat keystrokes and drags meant for a widget inside it.** `mqtt-devicecard`
+  listens for `keydown` (space picks it up) and `pointerdown` (drag to reorder) on itself, so a text
+  field on the back had every space `preventDefault`ed and a mouse selection of its text lifted the
+  card. Both handlers now bail on `isEditableTarget(e)` from `core.js`, which reads
+  `composedPath()[0]` — the target a card sees has been retargeted to the widget host, so
+  `e.target.tagName` is `MQTT-TEXT`, never `INPUT`.
 - **Assets resolve against the module, not the document**: `CssUrl` and `ImagesUrl` use
   `import.meta.url`, or a page in a subdirectory 404s every stylesheet and icon.
 - **A node reports in a burst**, publishing its whole topic set at once, so gaps between messages

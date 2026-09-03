@@ -206,6 +206,25 @@ describe('reordering', () => {
     grid.remove();
   });
 
+  test('typing in a text field is typing, not a card gesture', () => {
+    // Space picks a card up, and a card listens for it on itself - so a description field on the
+    // back had every space swallowed by preventDefault, and a mouse selection of its text lifted
+    // the card. The input is in a widget's shadow root, so the card only sees the retargeted event.
+    const { grid } = gridFor('every-device');
+    const card = grid.querySelector('mqtt-devicecard');
+    card.setAttribute('mode', 'back');
+    const widget = [...card.querySelectorAll('mqtt-text')]
+      .find((w) => w.getAttribute('topic').endsWith('/description'));
+    const input = widget.shadowRoot.querySelector('input');
+    const space = new KeyboardEvent('keydown', { key: ' ', bubbles: true, composed: true, cancelable: true });
+    input.dispatchEvent(space);
+    assert.ok(!space.defaultPrevented, 'the space never reached the field');
+    assert.ok(!card.classList.contains('fi-grabbed'), 'typing a space picked the card up');
+    input.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, composed: true, button: 0, clientX: 0, clientY: 0 }));
+    assert.ok(!card.state.drag, 'selecting text in the field started a drag');
+    grid.remove();
+  });
+
   test('a pointer drag reorders, hit-testing past the card being dragged', () => {
     // jsdom has no layout, so elementFromPoint is stubbed to behave as a browser does: the dragged
     // card is under the pointer, and is only seen past once it takes itself out of hit-testing.

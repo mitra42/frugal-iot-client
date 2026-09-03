@@ -285,6 +285,13 @@ function leafAttribute(topic) {
   // "/" is not a valid character in attributes of webcomponents
   return topicLeaf(topic).replace(/\//g, '_'); // temperature/max becomes temperature_max
 }
+// A widget's input lives in a shadow root, so the event a card sees has been retargeted to the
+// host - composedPath()[0] is the only way back to the real input.
+function isEditableTarget(e) {
+  const t = (e.composedPath && e.composedPath()[0]) || e.target;
+  if (!t || !t.tagName) return false;
+  return ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName) || t.isContentEditable;
+}
 // =============================== Languages and Internationalization ===============================
 // TODO-L8 move this to config on server
 const languages = yaml.load(`
@@ -2868,6 +2875,7 @@ export {
   el,
   getString,
   getStringFrom,
+  isEditableTarget,
   leafAttribute,
   locationParameterChange,
   mqtt_client,
