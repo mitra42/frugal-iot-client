@@ -1171,7 +1171,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
    onRetainedList() {
      const pattern = retainedPattern(this.state.org, this.state.elements.retained_pattern.value);
      this.state.retained.pattern = this.state.elements.retained_pattern.value;
-     const client = mqttTempConnect(this.state.org);
+     const client = mqttTempConnect();
      if (!client) { this.retainedShow("No broker credentials for this organization"); return; }
      this.retainedShow(`Listening on ${pattern} ...`);
      const found = new Map();
@@ -1197,7 +1197,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
      const r = this.state.retained;
      if (!r.confirming) { this.retainedShow(null, r.topics, true); return; }
      const topics = r.topics;
-     const client = mqttTempConnect(this.state.org);
+     const client = mqttTempConnect();
      if (!client) { this.retainedShow("No broker credentials for this organization"); return; }
      this.retainedShow(`Deleting ${topics.length} ...`);
      client.on('connect', () => {

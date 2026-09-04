@@ -1,9 +1,11 @@
 // The WRITE capability (CARDS_PLAN.md phase 8).
 //
-// This is decluttering, not a security boundary: every user of an organization shares one set of
-// broker credentials, which reach the browser in /config.json, so anyone without WRITE can still
-// publish with any MQTT client. Hiding controls prevents accidents and stops offering people
-// actions that are not theirs. See CARDS_UX.md 10.3 and L-7.
+// This used to be decluttering only, because every user of an organization shared one set of broker
+// credentials that reached the browser in /config.json - so anyone without WRITE could still publish
+// with any MQTT client. Each user now has their own broker account, in a group per capability, so
+// hiding a control here and the broker refusing the publish are two expressions of one permission.
+// This file still only tests the hiding; what the broker enforces is tested against a real broker
+// (frugal-iot-server SECURITY-REVIEW.md S3).
 import './setup.js';
 import { test, describe, before, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
@@ -15,7 +17,14 @@ let mock, core;
 
 function withCapabilities(...caps) {
   mock.loadConfig({ ...base, user: { id: 2, name: 'test',
+    mqtt_username: 'user/test', mqtt_password: 'derived-for-test',
     permissions: caps.map((capability) => ({ org: 'dev', capability })) } });
+}
+// A capability scoped to one project, to check a project-scoped row does not leak to another
+function withProjectCapability(capability, project) {
+  mock.loadConfig({ ...base, user: { id: 2, name: 'test',
+    mqtt_username: 'user/test', mqtt_password: 'derived-for-test',
+    permissions: [{ org: 'dev', capability, project }] } });
 }
 function cardFor(scenario, nodeId, mode) {
   const { projectMt } = mock.runScenario(scenario, { at: T0 });
@@ -42,6 +51,23 @@ describe('one gate, asked in one place', () => {
     withCapabilities('READ');
     assert.equal(mt.canWrite, false, 'READ alone must not allow changes');
     withCapabilities('WRITE');
+    assert.equal(mt.canWrite, true);
+  });
+
+  test('a project-scoped WRITE applies to that project and not another', () => {
+    const { projectMt } = mock.runScenario('one-device');
+    const mt = projectMt.nodes['esp8266-fb94bb'].groups.frugal_iot.topics.name;
+    assert.equal(mt.project, 'lotus', 'the fixture project, for the scoping to be about something');
+    withProjectCapability('WRITE', 'lotus');
+    assert.equal(mt.canWrite, true, 'WRITE on this project allows changes here');
+    withProjectCapability('WRITE', 'magi');
+    assert.equal(mt.canWrite, false, 'WRITE on another project must not carry over');
+  });
+
+  test('an organization-wide WRITE covers every project', () => {
+    const { projectMt } = mock.runScenario('one-device');
+    const mt = projectMt.nodes['esp8266-fb94bb'].groups.frugal_iot.topics.name;
+    withCapabilities('WRITE');   // no project - organization-wide
     assert.equal(mt.canWrite, true);
   });
 

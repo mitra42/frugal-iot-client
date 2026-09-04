@@ -140,11 +140,13 @@ function mqtt_subscribe(topic, cb) { // cb(message)
 // visible: mqtt_deliver below drops it, because nothing else needs it.
 //
 // The caller owns the returned client and must end() it.
-function mqttTempConnect(org) {
-  const orgConfig = server_config && server_config.organizations && server_config.organizations[org];
-  if (!orgConfig || !orgConfig.mqtt_password || !server_config.mqtt) return null;
+// Uses this user's own credential, the same one the page's main connection uses - the organization
+// is no longer part of authenticating, only of the topic pattern the caller asks for.
+function mqttTempConnect() {
+  const me = server_config && server_config.user;
+  if (!me || !me.mqtt_username || !me.mqtt_password || !server_config.mqtt) return null;
   return mqtt.connect(server_config.mqtt.broker, {
-    username: org, password: orgConfig.mqtt_password,
+    username: me.mqtt_username, password: me.mqtt_password,
     clean: true,          // a fresh session, so the broker replays what it holds
     reconnectPeriod: 0,   // one attempt: this is a question, not a subscription to keep
   });
@@ -224,17 +226,21 @@ function relativeTime(ms) {
   return rtf.format(-Math.round(h / 24), 'day');
 }
 
-// What this user may do in an organization, from the permissions the server sent with the config.
+// What this user may do in an organization, or in one project of it, from the permissions the server
+// sent with the config.
 //
-// This is NOT a security boundary and nothing here should be described as one. Every user of an
-// organization connects to the broker with the same credentials, which reach the browser inside
-// /config.json, so anyone without WRITE still holds working publish credentials and can change
-// anything with any MQTT client. Hiding controls prevents accidents and stops offering people
-// actions that are not theirs; enforcing them needs per-user broker credentials or a server-side
-// publish proxy. See CARDS_UX.md 10.3 and L-7.
-function hasCapability(org, capability) {
+// This USED to be no kind of boundary: every user of an organization connected to the broker with
+// the same credentials, so anyone without WRITE still held working publish credentials. It is now
+// backed by the broker - each user has their own account, in a group per capability - so hiding a
+// control here and the broker refusing the publish are two expressions of the same permission
+// rather than a hope and a fact. This is still the wrong place to rely on: the broker is what
+// enforces it, and this only decides what to show.
+//
+// A permission row with no project covers the whole organization, so it answers yes for any project.
+function hasCapability(org, capability, project) {
   const perms = (server_config && server_config.user && server_config.user.permissions) || [];
-  return perms.some((p) => (p.capability === capability) && (p.org === org));
+  return perms.some((p) => (p.capability === capability) && (p.org === org)
+    && (!project || !p.project || (p.project === project)));
 }
 
 function moduleTemplate(groupId) {
@@ -1525,13 +1531,19 @@ class MqttTopic {
     const path = this.topicPath;
     return path && path.split('/')[0];
   }
+  // The project this topic belongs to - the second segment of its path. Needed because a permission
+  // can be scoped to one project of an organization.
+  get project() {
+    const path = this.topicPath;
+    return path && path.split('/')[1];
+  }
   // Whether this user may change this topic. One question, asked in one place, so a control cannot
   // end up editable on one screen and not another - see CARDS_PLAN.md section 3.2.
   get canWrite() {
     // An embedded widget has no server config and so no permission list - the MQTT credentials on
     // the page are the only gate, and the broker is what enforces those.
     if (this.standalone) return true;
-    return hasCapability(this.organization, 'WRITE');
+    return hasCapability(this.organization, 'WRITE', this.project);
   }
 
   // How many decimals to show. Derived from width and the declared range rather than from the
@@ -2489,12 +2501,14 @@ class MqttTopicNode extends MqttTopic {
 }
 
 /* Manages a connection to a MQTT broker
-   The broker credentials are per-organization - username is the organization id and password its
-   mqtt_password, both from /config.json (or given as attributes, e.g. by an embedded page).
-   Nothing is connected until they are known, which for the dashboard means until an organization
-   has been chosen - see MqttWrapper.setClientCredentials.
-   TODO-security this gives anyone with READ on an organization its full broker credentials, i.e. the
-   ability to publish, so web-level read-only is not broker-level read-only.
+   The credentials are per USER - user.mqtt_username and user.mqtt_password from /config.json, or
+   given as attributes by an embedded page. Nothing is connected until they are known.
+
+   These used to be the organization's own shared account, which meant web-level read-only was not
+   broker-level read-only: anyone with READ held credentials that could publish anything. It now is,
+   and is enforced by the broker rather than by this file: the server puts each user's broker account
+   in a group per capability, so a reader cannot publish, a writer can send "set/" commands only, and
+   nobody can forge a reading. See SECURITY-REVIEW.md S3/S4.
 */
 class MqttClient extends HTMLElementExtended {
   // This appears to be reconnecting properly, but if not see mqtt (library I think)'s README
@@ -2667,23 +2681,32 @@ class MqttWrapper extends HTMLElementExtended {
     this.append(this.state.elements.client);
     this.setClientCredentials(); // In case the organization was already known, e.g. from the URL or a markup attribute
   }
-  // Give mqtt-client the broker credentials of the currently selected organization - each organization
-  // has its own account on the broker. Called whenever the organization is or becomes known; connecting
-  // (or reconnecting as another organization) is then up to MqttClient.loadContent.
+  // Give mqtt-client this USER's broker credentials, from /config.json's "user" block. One account
+  // per person, not one per organization: what it may reach is decided by the groups the server put
+  // it in, so a reader cannot publish and nobody can forge a reading.
+  //
+  // It used to be the organization's own mqtt_password, shared by every node and every user of that
+  // organization - which meant anybody with READ held working publish credentials for everything in
+  // it. See SEC-1.
+  //
+  // One thing falls out of this: the username no longer changes when the organization does, so
+  // switching organization no longer forces a reconnect, and a user who can see several keeps one
+  // connection.
   setClientCredentials() {
-    const org = this.state.organization;
     const clientEl = this.state.elements.client;
-    if (!clientEl || !org) { return; }
+    if (!clientEl) { return; }
     // noinspection JSUnresolvedReference
-    const orgConfig = server_config.organizations[org];
-    if (!orgConfig || !orgConfig.mqtt_password) {
-      this.message(`No broker password for organization ${org}`); // Cannot subscribe to anything without it
+    const me = server_config && server_config.user;
+    if (!me || !me.mqtt_username || !me.mqtt_password) {
+      // The server could not reach the broker to set up this account, or there is no plugin - it
+      // says so in its log. The dashboard still works for stored data; only live values are missing.
+      this.message('No broker credential for this login - live data is unavailable');
       return;
     }
-    // Password first: each setAttribute reconsiders connecting, and it is the change of username that
-    // triggers a reconnect, so the new password must already be in place when that happens.
-    clientEl.setAttribute('password', orgConfig.mqtt_password);
-    clientEl.setAttribute('username', org);
+    // Password first: each setAttribute reconsiders connecting, and it is the change of username
+    // that triggers a reconnect, so the new password must already be in place when that happens.
+    clientEl.setAttribute('password', me.mqtt_password);
+    clientEl.setAttribute('username', me.mqtt_username);
   }
   // Creates the MqttTopicProject and (unless headless) its paired MqttProject DOM element.
   // Always returns the MqttTopicProject. appender() accesses the element via mt.element when needed.
