@@ -247,6 +247,44 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       }
     });
   }
+  // Which nodes have enrolled, and forgetting one so it can enrol again.
+  getEnrolledNodes() {
+    if (!this.state.org) return;
+    GET(`/nodes_list/${this.state.org}`, {}, (err, json) => {
+      if (err) { this.message(err.message); return; }
+      this.state.enrolled_nodes = json; // [{ project, nodeid, lora, enrolled_at }]
+      this.replaceElement("enrolled_nodes", this.enrolledNodesList());
+    });
+  }
+  onNodeReset(project, nodeid) {
+    // Destructive and not obvious: forgetting a node that is running is safe (it notices its
+    // credential being refused and enrols again) but it does cost that node a few minutes offline.
+    // Worth asking, unlike the OTA deletes beside it where the file can simply be uploaded again.
+    if (!window.confirm(
+      `Forget ${project}/${nodeid}?\n\n` +
+      `It will be issued a new broker credential the next time it asks. A node that is running ` +
+      `will be offline for a minute or two while it notices; a node whose filesystem was erased ` +
+      `needs this before it can rejoin at all.`)) return;
+    POST(`/node_reset/${this.state.org}`, { project, nodeid }, (err, json) => {
+      this.message(err ? err.message : (json && json.message) || "Forgotten");
+      this.getEnrolledNodes();
+    });
+  }
+  enrolledNodesList() {
+    const nodes = this.state.enrolled_nodes;
+    if (!nodes || !nodes.length) {
+      return el('p', {textContent:
+        "No nodes have enrolled yet. A node enrols itself the first time it connects."});
+    }
+    return el('p', {}, nodes.map((n) => [
+      el('span', {class: 'pseudolink', textContent: ' 🗑 ',
+        onclick: this.onNodeReset.bind(this, n.project, n.nodeid)}),
+      el('span', {i8n: false, textContent:
+        `${n.project}/${n.nodeid}${n.lora ? ' (LoRa)' : ''}` +
+        (n.enrolled_at ? ` - enrolled ${new Date(n.enrolled_at).toISOString().slice(0, 10)}` : '')}),
+      el('br', {}),
+    ]));
+  }
   getPeopleList() {
     if (this.state.org) {
       this.getOrChangeAdminPeople(`/people_list/${this.state.org}`);
@@ -878,7 +916,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     this.state.tabsNeedingLoad.delete(title);
     this.loadTabData(title);
   }
-  // Only OTA/Admin/API have their own server round trip - Nodes and Dashboard need nothing here.
+  // OTA/Admin/Projects/Nodes/API each have their own server round trip; Dashboard needs nothing.
   loadTabData(title) {
     if (title === 'OTA') {
       this.getOtaFiles();
@@ -886,6 +924,8 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       this.getPeopleList();
     } else if (title === 'Projects') {
       this.getProjectsList();
+    } else if (title === 'Nodes') {
+      this.getEnrolledNodes();
     } else if (title === 'API') {
       this.getPlatformsList();
       this.getFarmsList();
@@ -1262,6 +1302,14 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
      return el('div', {}, [
        el('h3', {textContent: "Nodes in Organization"}),
        this.state.elements.nodes_table = this.nodesTable(),
+       el('section', {}, [
+         el('h3', {textContent: "Enrolled nodes"}),
+         el('p', {textContent:
+           "Each node has its own broker credential, which it collects from this server the first " +
+           "time it connects. Forget one to have it issued a new credential - needed if its " +
+           "filesystem has been erased, because it can then no longer prove which node it is."}),
+         this.state.elements.enrolled_nodes = this.enrolledNodesList(),
+       ]),
      ]);
    }
    // Content of the API tab below the organization dropdown - only rendered once an org is selected
