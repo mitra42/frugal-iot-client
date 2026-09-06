@@ -227,6 +227,10 @@ div.mqtt-text {
             font-weight: lighter;
         }
         .message {margin: 0.5em; font-weight: bold; font-size: x-large; }
+        /* The admin top bar: one organization dropdown for every tab, beside the message and the
+           language picker. A row that wraps, so a narrow phone stacks them instead of clipping. */
+        .mqtt-admin__topbar { display: flex; align-items: center; gap: 0.5em; flex-wrap: wrap; }
+        .mqtt-admin__topbar > span > section { display: flex; align-items: center; gap: 0.4em; margin: 0.5em; }
         .tabbed-section.inactive { display: none; }
         tabbed-display.solo .tabbed-section.active {
             padding: 0;

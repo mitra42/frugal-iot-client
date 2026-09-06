@@ -107,6 +107,22 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   get otaOrgs() {
     return this.orgsByPerm("OTAUPDATE");
   }
+  /*
+   * Every organization any admin tab could be about, for the ONE dropdown in the top bar.
+   *
+   * The tabs do not all cover the same organizations - OTA needs OTAUPDATE, the rest need ADMIN -
+   * so the shared dropdown offers the union and each tab says for itself whether the chosen one is
+   * one of its own (see gatedContent). Before this each tab carried its own copy of the dropdown,
+   * all of them writing to the same this.state.org, so the same choice was drawn several times.
+   */
+  get allAdminOrgs() {
+    const seen = new Set();
+    return [...this.otaOrgs, ...this.adminOrgs].filter(([oid]) => {
+      if (seen.has(oid)) return false;
+      seen.add(oid);
+      return true;
+    });
+  }
   connectedCallback() {
     // TODO-22 security this will be replaced by a subset of config.yaml,
     //  that is public, but in the same format, so safe to build on this for now
@@ -171,8 +187,17 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
 
   // Content behind an organization dropdown (OTA/Admin/Nodes/API tabs) should not show until an
   // organization is selected. contentFn is a MqttAdmin method, called with `this` bound.
-  gatedContent(contentFn) {
-    return this.state.org ? contentFn.call(this) : el('p', {textContent: "Select an organization to continue."});
+  // A tab's content, or why there is none: no organization chosen, or one this tab is not about -
+  // the OTA tab needs OTAUPDATE and the others ADMIN, and the shared dropdown offers both.
+  gatedContent(section) {
+    if (!this.state.org) return el('p', {textContent: "Select an organization to continue."});
+    if (!this[section.orgs].some(([oid]) => oid === this.state.org)) {
+      // A colon and the name, so the translated part is a whole sentence in every language rather
+      // than a fragment that only reads correctly with English word order.
+      return el('p', {i8n: false, textContent:
+        `${getString("You do not have permission for this organization")}: ${this.state.org}`});
+    }
+    return section.content.call(this);
   }
   // An "Add X" button that expands into buildForm() once clicked, and stays expanded - used for the
   // "Add Project", "Add Platform" and "Add Farm" forms so they don't clutter the tab until the admin wants to add one.
@@ -603,6 +628,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     const projectIds = this.selectedFarmProjectIds();
     if (!org || projectIds.length === 0) {
       this.state.farm_nodes_list = [];
+    this.state.enrolled_nodes = null;
       this.replaceElement("farm_nodes_table", this.farmNodesTable());
       return;
     }
@@ -873,15 +899,18 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     this.state.farm_nodes_list = [];
     // Rebuild the gated content of each tab first, since it re-creates the elements (e.g. ota_files,
     // people_perms_list, platforms_list_display) that loadTabData() below then asynchronously replaces.
-    this.adminSections().forEach((section) => this.replaceElement(section.rest, this.gatedContent(section.content)));
-    // Only OTA/Admin/API tabs do their own network fetch (Nodes reads server_config, already loaded,
-    // and Dashboard is handled by mqtt-wrapper) - mark them all as needing a refetch for the new
-    // organization, but only actually fetch whichever tab is currently active; the rest load lazily
-    // if/when the user switches to them (see onTabChange), to avoid a server-side fetch per tab on
-    // every organization change.
-    this.state.tabsNeedingLoad = new Set(['OTA', 'Admin', 'Projects', 'API']);
+    this.adminSections().forEach((section) => this.replaceElement(section.rest, this.gatedContent(section)));
+    // Which tabs do their own network fetch, and so need one again for a new organization. Only
+    // Dashboard does not (mqtt-wrapper handles it). "Nodes" is in the list because it now fetches
+    // the enrolled-node list as well as reading server_config - leaving it out was why that section
+    // always said "No nodes have enrolled yet": loadTabIfNeeded returns early for a tab that is not
+    // in this set, so the fetch never happened.
+    this.state.tabsNeedingLoad = new Set(['OTA', 'Admin', 'Projects', 'Nodes', 'API']);
     this.loadTabIfNeeded(this.state.activeTabTitle);
-    // Note both these dropdowns are fine if this.state.org is undefined
+    // The one in the top bar when this is the tabbed view, the card's own when it is a single card -
+    // replaceElement does nothing for an element this rendering never created, so both are safe to
+    // ask for. Fine too if this.state.org is undefined.
+    this.replaceElement('orgdropdown', this.orgDropdown(this.state.org, this.allAdminOrgs, 'organizations'));
     this.adminSections().forEach((section) =>
       this.replaceElement(section.dropdown, this.orgDropdown(this.state.org, this[section.orgs], `${section.key}organizations`)));
     // Keep the Dashboard tab's own organization in sync with the shared dropdown above.
@@ -1236,21 +1265,24 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
    onRetainedDelete() {
      const r = this.state.retained;
      if (!r.confirming) { this.retainedShow(null, r.topics, true); return; }
-     const topics = r.topics;
-     const client = mqttTempConnect();
-     if (!client) { this.retainedShow("No broker credentials for this organization"); return; }
+     const topics = r.topics.map((t) => t.topic);
      this.retainedShow(`Deleting ${topics.length} ...`);
-     client.on('connect', () => {
-       // An empty retained message is how MQTT spells "forget this topic"
-       let left = topics.length;
-       topics.forEach((t) => client.publish(t.topic, '', {retain: true, qos: 1}, () => {
-         if (--left === 0) {
-           client.end();
-           this.retainedShow(`Deleted ${topics.length}. If one comes back, a node is still publishing it.`);
-         }
-       }));
+     /*
+      * The server does the publishing, not this browser.
+      *
+      * A retained topic is removed by publishing an empty payload to it, and this used to do that
+      * directly. It cannot any more: a user's broker credential may publish to "set/" topics only,
+      * so that a dashboard cannot invent a reading. Worse, it failed with no sign of failing - the
+      * broker acknowledges a QoS 1 publish before deciding whether it is allowed - which is how
+      * "Deleted 23" came to be printed while all 23 were still there.
+      */
+     POST(`/retained_delete/${this.state.org}`, {topics}, (err, json) => {
+       if (err) { this.retainedShow(`Could not delete: ${err.message}`); return; }
+       const failed = (json && json.failed) || 0;
+       this.retainedShow(
+         `Deleted ${(json && json.deleted) || 0}${failed ? `, ${failed} failed` : ''}. ` +
+         `If one comes back, a node is still publishing it.`);
      });
-     client.on('error', (e) => { this.retainedShow(`Could not connect: ${e.message}`); client.end(true); });
    }
    projectsRestContent() {
      return el('div', {}, [
@@ -1361,7 +1393,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
      if (!this[section.orgs].length) return null; // no permission for it
      return el('div', {class: 'mqtt-admin'}, [
        this.state.elements[section.dropdown] = el('span', {textContent: "Waiting"}),
-       this.state.elements[section.rest] = this.gatedContent(section.content),
+       this.state.elements[section.rest] = this.gatedContent(section),
      ]);
    }
 
@@ -1376,8 +1408,8 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
            // From adminSections, so a section added for the cards gets a tab here too
            ...this.adminSections().map((section) => (!this[section.orgs].length ? null :
              el('section', {title: section.title}, [
-               this.state.elements[section.dropdown] = el('span', { textContent: "Waiting"}),
-               this.state.elements[section.rest] = this.gatedContent(section.content),
+               // No dropdown here: one in the top bar serves every tab
+               this.state.elements[section.rest] = this.gatedContent(section),
              ]))),
      ]);
      // Lazily load a tab's data only once the user actually switches to it - see onTabChange.
@@ -1385,10 +1417,19 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
      return [
        el('link', {rel: 'stylesheet', href: CssUrl}),
        el('div', {class: 'mqtt-admin'},[
-         // This is a top bar, holds message and language picker
-         el('div',{class: 'message'},[
-           this.state.elements.message = el('span', {textContent: this.state.message}),
-           el('language-picker'),
+         /*
+          * The top bar: the organization, then the message and the language picker.
+          *
+          * The organization belongs here rather than on each tab, because every tab is about the
+          * same one - they all read this.state.org. It sits OUTSIDE .message, which is bold and
+          * x-large for a message and would render a dropdown that way too.
+          */
+         el('div',{class: 'mqtt-admin__topbar'},[
+           this.state.elements.orgdropdown = el('span', {textContent: "Waiting"}),
+           el('div',{class: 'message'},[
+             this.state.elements.message = el('span', {textContent: this.state.message}),
+             el('language-picker'),
+           ]),
          ]),
          tabbedDisplay,
        ]),

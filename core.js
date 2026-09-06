@@ -303,6 +303,7 @@ function isEditableTarget(e) {
 const languages = yaml.load(`
 #Language configuration - will be read from files at some point
 EN:
+  "+ matches one level, # matches the rest. Look before deleting.": "+ matches one level, # matches the rest. Look before deleting."
   _nameAndFlag: English 🇬🇧
   _thisLanguage: English
   (Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): (Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin)
@@ -341,13 +342,16 @@ EN:
   Create an account: Create an account
   Dashboard: Dashboard
   Data: Data
+  Delete these: Delete these
   Description: Description
   Device: Device
   Display carousel: Display carousel
   ds18b20: ds18b20
   e.g. LiteFarm: e.g. LiteFarm
+  Each node has its own broker credential, which it collects from this server the first time it connects. Forget one to have it issued a new credential - needed if its filesystem has been erased, because it can then no longer prove which node it is.: Each node has its own broker credential, which it collects from this server the first time it connects. Forget one to have it issued a new credential - needed if its filesystem has been erased, because it can then no longer prove which node it is.
   eCO2: eCO2
   Email: Email
+  Enrolled nodes: Enrolled nodes
   ENS AHT: ENS AHT
   Enter the code we emailed you, then choose a new password.: Enter the code we emailed you, then choose a new password.
   Enter topic: Enter topic
@@ -390,6 +394,7 @@ EN:
   Last seen: Last seen
   LED: LED
   Limit: Limit
+  List: List
   live: Live
   Load Cell: Load Cell
   Loading schema...: Loading schema...
@@ -397,6 +402,7 @@ EN:
   Lower-case letters and numbers only, no spaces or punctuation: Lower-case letters and numbers only, no spaces or punctuation
   Lux: Lux
   Manual: Manual
+  Message: Message
   Monitor: Monitor
   Monitor speed: Monitor speed
   Move down: Move down
@@ -410,6 +416,7 @@ EN:
   No farms registered for this organization yet.: No farms registered for this organization yet.
   No nodes found for this farm's project(s).: No nodes found for this farm's project(s).
   No nodes found for this organization: No nodes found for this organization
+  No nodes have enrolled yet. A node enrols itself the first time it connects.: No nodes have enrolled yet. A node enrols itself the first time it connects.
   No organization: No organization
   No organization selected: No organization selected
   No OTA files uploaded yet.: No OTA files uploaded yet.
@@ -444,6 +451,7 @@ EN:
   Password: Password
   Password reset - please sign in: Password reset - please sign in
   Password reset is not available on this server: Password reset is not available on this server
+  Pattern: Pattern
   Permissions: Permissions
   Phone or Whatsapp: Phone or Whatsapp
   Platform *: Platform *
@@ -475,6 +483,8 @@ EN:
   Reset code: Reset code
   Reset password: Reset password
   Retain: Retain
+  Retained: Retained
+  Retained messages: Retained messages
   Schema: Schema
   Select: Select
   Select a farm above to see its nodes.: Select a farm above to see its nodes.
@@ -511,6 +521,7 @@ EN:
   That code is not valid or has expired: That code is not valid or has expired
   This field has no invocation URL (forms[0].href) in its schema: This field has no invocation URL (forms[0].href) in its schema
   This node has no actions in its schema.: This node has no actions in its schema.
+  This node has no actions or writable properties in its schema.: This node has no actions or writable properties in its schema.
   Time On (s): Time On (s)
   To: To
   Too many attempts - please wait a few minutes: Too many attempts - please wait a few minutes
@@ -537,7 +548,9 @@ EN:
   We will email you a code and a link to choose a new password.: We will email you a code and a link to choose a new password.
   When: When
   WiFi: WiFi
+  You do not have permission for this organization: You do not have permission for this organization
 FR:
+  "+ matches one level, # matches the rest. Look before deleting.": "+ correspond à un niveau, # au reste. Regardez avant de supprimer."
   _nameAndFlag: Français 🇫🇷
   _thisLanguage: Francaise
   (Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): (Max 4 Mo, .bin uniquement, généralement frugal-iot.ino.bin ou firmware.bin)
@@ -576,13 +589,16 @@ FR:
   Create an account: Créer un compte
   Dashboard: Tableau de bord
   Data: Données
+  Delete these: Supprimer ceux-ci
   Description: Description
   Device: Appareil
   Display carousel: Carrousel d'affichage
   ds18b20: ds18b20
   e.g. LiteFarm: par ex. LiteFarm
+  Each node has its own broker credential, which it collects from this server the first time it connects. Forget one to have it issued a new credential - needed if its filesystem has been erased, because it can then no longer prove which node it is.: Chaque nœud a son propre identifiant de broker, qu'il récupère sur ce serveur lors de sa première connexion. Oubliez-en un pour qu'un nouvel identifiant lui soit délivré - nécessaire si son système de fichiers a été effacé, car il ne peut alors plus prouver quel nœud il est.
   eCO2: eCO2
   Email: Email
+  Enrolled nodes: Nœuds enrôlés
   ENS AHT: ENS AHT  
   Enter the code we emailed you, then choose a new password.: Saisissez le code que nous vous avons envoyé par e-mail, puis choisissez un nouveau mot de passe.
   Enter topic: Entrez le sujet
@@ -627,6 +643,7 @@ FR:
   Last seen: Vu pour la dernière fois
   LED: LED
   Limit: Limite
+  List: Lister
   live: En ligne
   Load Cell: Cellule de charge
   Loading schema...: Chargement du schéma...
@@ -634,6 +651,7 @@ FR:
   Lower-case letters and numbers only, no spaces or punctuation: Lettres minuscules et chiffres uniquement, sans espaces ni ponctuation
   Lux: Lux
   Manual: Manuel
+  Message: Message
   Monitor: Moniteur
   Monitor speed: Vitesse du moniteur
   Move down: Descendre
@@ -647,6 +665,7 @@ FR:
   No farms registered for this organization yet.: Aucune ferme enregistrée pour cette organisation pour l'instant.
   No nodes found for this farm's project(s).: Aucun nœud trouvé pour le(s) projet(s) de cette ferme.
   No nodes found for this organization: Aucun nœud trouvé pour cette organisation
+  No nodes have enrolled yet. A node enrols itself the first time it connects.: Aucun nœud ne s'est encore enrôlé. Un nœud s'enrôle lui-même lors de sa première connexion.
   No organization: Aucune organisation
   No organization selected: Aucune organisation sélectionnée
   No OTA files uploaded yet.: Aucun fichier OTA téléversé pour l'instant.
@@ -681,6 +700,7 @@ FR:
   Password: Mot de passe
   Password reset - please sign in: Mot de passe réinitialisé - veuillez vous connecter
   Password reset is not available on this server: La réinitialisation du mot de passe n'est pas disponible sur ce serveur
+  Pattern: Motif
   Permissions: Autorisations
   Phone or Whatsapp: Téléphone ou Whatsapp
   Platform *: Plateforme *
@@ -712,6 +732,8 @@ FR:
   Reset code: Code de réinitialisation
   Reset password: Réinitialiser le mot de passe
   Retain: Conserver
+  Retained: Conservés
+  Retained messages: Messages conservés
   Schema: Schéma
   Select: Sélectionner
   Select a farm above to see its nodes.: Sélectionnez une ferme ci-dessus pour voir ses nœuds.
@@ -748,6 +770,7 @@ FR:
   That code is not valid or has expired: Ce code n'est pas valide ou a expiré
   This field has no invocation URL (forms[0].href) in its schema: Ce champ n'a pas d'URL d'invocation (forms[0].href) dans son schéma
   This node has no actions in its schema.: Ce nœud n'a aucune action dans son schéma.
+  This node has no actions or writable properties in its schema.: Ce nœud n'a aucune action ni propriété modifiable dans son schéma.
   Time On (s): Durée active (s)
   To: À
   Too many attempts - please wait a few minutes: Trop de tentatives - veuillez patienter quelques minutes
@@ -774,7 +797,9 @@ FR:
   We will email you a code and a link to choose a new password.: Nous vous enverrons par e-mail un code et un lien pour choisir un nouveau mot de passe.
   When: Quand
   WiFi: WiFi
+  You do not have permission for this organization: Vous n'avez pas la permission pour cette organisation
 HI:
+  "+ matches one level, # matches the rest. Look before deleting.": "+ एक स्तर से मेल खाता है, # बाकी सभी से। हटाने से पहले देख लें।"
   _nameAndFlag: हिंदी 🇮🇳
   _thisLanguage: हिंदी
   (Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): (अधिकतम 4MB, केवल .bin, सामान्यतः frugal-iot.ino.bin या firmware.bin)
@@ -813,13 +838,16 @@ HI:
   Create an account: खाता बनाएँ
   Dashboard: डैशबोर्ड
   Data: डेटा
+  Delete these: इन्हें हटाएँ
   Description: विवरण
   Device: उपकरण
   Display carousel: डिस्प्ले कैरोसेल
   ds18b20: ds18b20
   e.g. LiteFarm: उदाहरण के लिए LiteFarm
+  Each node has its own broker credential, which it collects from this server the first time it connects. Forget one to have it issued a new credential - needed if its filesystem has been erased, because it can then no longer prove which node it is.: हर नोड का अपना ब्रोकर क्रेडेंशियल होता है, जो वह पहली बार जुड़ते समय इस सर्वर से लेता है। किसी को भुला दें ताकि उसे नया क्रेडेंशियल मिले - यह ज़रूरी है यदि उसका फ़ाइल-सिस्टम मिटा दिया गया हो, क्योंकि तब वह यह सिद्ध नहीं कर सकता कि वह कौन सा नोड है।
   eCO2: ईसीओ2
   Email: ईमेल
+  Enrolled nodes: पंजीकृत नोड
   ENS AHT: ईएनएस एएचटी  
   Enter the code we emailed you, then choose a new password.: हमने आपको ईमेल किया कोड दर्ज करें, फिर नया पासवर्ड चुनें।
   Enter topic: टॉपिक दर्ज करें
@@ -864,6 +892,7 @@ HI:
   Last seen: अंतिम बार देखा
   LED: एलईडी
   Limit: सीमा
+  List: सूची
   live: चालू
   Load Cell: लोड सेल
   Loading schema...: स्कीमा लोड हो रहा है...
@@ -871,6 +900,7 @@ HI:
   Lower-case letters and numbers only, no spaces or punctuation: केवल छोटे अक्षर और अंक, कोई स्पेस या विरामचिह्न नहीं
   Lux: लक्स
   Manual: मैनुअल
+  Message: संदेश
   Monitor: मॉनिटर
   Monitor speed: मॉनिटर गति
   Move down: नीचे ले जाएँ
@@ -884,6 +914,7 @@ HI:
   No farms registered for this organization yet.: इस संगठन के लिए अभी तक कोई फार्म पंजीकृत नहीं है।
   No nodes found for this farm's project(s).: इस फार्म के प्रोजेक्ट (प्रोजेक्ट्स) के लिए कोई नोड नहीं मिला।
   No nodes found for this organization: इस संगठन के लिए कोई नोड नहीं मिला
+  No nodes have enrolled yet. A node enrols itself the first time it connects.: अभी तक कोई नोड पंजीकृत नहीं हुआ है। नोड पहली बार जुड़ते समय स्वयं पंजीकृत हो जाता है।
   No organization: कोई संगठन नहीं
   No organization selected: कोई संगठन चयनित नहीं
   No OTA files uploaded yet.: अभी तक कोई OTA फ़ाइल अपलोड नहीं की गई है।
@@ -918,6 +949,7 @@ HI:
   Password: पासवर्ड
   Password reset - please sign in: पासवर्ड रीसेट हो गया - कृपया साइन इन करें
   Password reset is not available on this server: इस सर्वर पर पासवर्ड रीसेट उपलब्ध नहीं है
+  Pattern: पैटर्न
   Permissions: अनुमतियाँ
   Phone or Whatsapp: फ़ोन या व्हाट्सएप
   Platform *: प्लेटफ़ॉर्म *
@@ -949,6 +981,8 @@ HI:
   Reset code: रीसेट कोड
   Reset password: पासवर्ड रीसेट करें
   Retain: बनाए रखें
+  Retained: संचित
+  Retained messages: संचित संदेश
   Schema: स्कीमा
   Select: चुनें
   Select a farm above to see its nodes.: इसके नोड्स देखने के लिए ऊपर एक फार्म चुनें।
@@ -985,6 +1019,7 @@ HI:
   That code is not valid or has expired: यह कोड मान्य नहीं है या समाप्त हो गया है
   This field has no invocation URL (forms[0].href) in its schema: इस फ़ील्ड के स्कीमा में कोई इनवोकेशन यूआरएल (forms[0].href) नहीं है
   This node has no actions in its schema.: इस नोड के स्कीमा में कोई क्रिया नहीं है।
+  This node has no actions or writable properties in its schema.: इस नोड के स्कीमा में कोई क्रिया या लिखने योग्य गुण नहीं है।
   Time On (s): चालू समय (से)
   To: तक
   Too many attempts - please wait a few minutes: बहुत अधिक प्रयास - कृपया कुछ मिनट प्रतीक्षा करें
@@ -1011,7 +1046,9 @@ HI:
   We will email you a code and a link to choose a new password.: हम आपको नया पासवर्ड चुनने के लिए एक कोड और एक लिंक ईमेल करेंगे।
   When: कब
   WiFi: वाई-फ़ाई
+  You do not have permission for this organization: इस संगठन के लिए आपके पास अनुमति नहीं है
 ID:
+  "+ matches one level, # matches the rest. Look before deleting.": "+ cocok dengan satu tingkat, # dengan sisanya. Lihat dulu sebelum menghapus."
   _nameAndFlag: Bahasa Indonesia 🇮🇩
   _thisLanguage: Bahasa Indonesia
   (Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): (Maks 4MB, hanya .bin, biasanya frugal-iot.ino.bin atau firmware.bin)
@@ -1050,13 +1087,16 @@ ID:
   Create an account: Buat akun
   Dashboard: Dasbor
   Data: Data
+  Delete these: Hapus ini
   Description: Deskripsi
   Device: Perangkat
   Display carousel: Karosel tampilan
   ds18b20: ds18b20
   e.g. LiteFarm: misalnya LiteFarm
+  Each node has its own broker credential, which it collects from this server the first time it connects. Forget one to have it issued a new credential - needed if its filesystem has been erased, because it can then no longer prove which node it is.: Setiap node memiliki kredensial broker sendiri, yang diambilnya dari server ini saat pertama kali tersambung. Lupakan salah satu agar diberi kredensial baru - diperlukan jika sistem berkasnya telah dihapus, karena node itu tidak lagi dapat membuktikan node yang mana dirinya.
   eCO2: eCO2  
   Email: Email
+  Enrolled nodes: Node terdaftar
   ENS AHT: ENS AHT  
   Enter the code we emailed you, then choose a new password.: Masukkan kode yang kami kirim lewat email, lalu pilih kata sandi baru.
   Enter topic: Masukkan topik
@@ -1101,6 +1141,7 @@ ID:
   Last seen: Terakhir terlihat
   LED: LED
   Limit: Batas
+  List: Daftar
   live: Aktif
   Load Cell: Sel Beban
   Loading schema...: Memuat skema...
@@ -1108,6 +1149,7 @@ ID:
   Lower-case letters and numbers only, no spaces or punctuation: Hanya huruf kecil dan angka, tanpa spasi atau tanda baca
   Lux: Lux
   Manual: Manual
+  Message: Pesan
   Monitor: Monitor
   Monitor speed: Kecepatan monitor
   Move down: Turunkan
@@ -1121,6 +1163,7 @@ ID:
   No farms registered for this organization yet.: Belum ada farm yang terdaftar untuk organisasi ini.
   No nodes found for this farm's project(s).: Tidak ada node ditemukan untuk proyek farm ini.
   No nodes found for this organization: Tidak ada node ditemukan untuk organisasi ini
+  No nodes have enrolled yet. A node enrols itself the first time it connects.: Belum ada node yang mendaftar. Sebuah node mendaftarkan dirinya sendiri saat pertama kali tersambung.
   No organization: Tidak ada organisasi
   No organization selected: Tidak ada organisasi yang dipilih
   No OTA files uploaded yet.: Belum ada berkas OTA yang diunggah.
@@ -1155,6 +1198,7 @@ ID:
   Password: Kata Sandi
   Password reset - please sign in: Kata sandi disetel ulang - silakan masuk
   Password reset is not available on this server: Setel ulang kata sandi tidak tersedia di server ini
+  Pattern: Pola
   Permissions: Izin
   Phone or Whatsapp: Telepon atau Whatsapp
   Platform *: Platform *
@@ -1186,6 +1230,8 @@ ID:
   Reset code: Kode reset
   Reset password: Setel ulang kata sandi
   Retain: Simpan
+  Retained: Tersimpan
+  Retained messages: Pesan tersimpan
   Schema: Skema
   Select: Pilih
   Select a farm above to see its nodes.: Pilih farm di atas untuk melihat node-nodenya.
@@ -1222,6 +1268,7 @@ ID:
   That code is not valid or has expired: Kode itu tidak valid atau sudah kedaluwarsa
   This field has no invocation URL (forms[0].href) in its schema: Bidang ini tidak memiliki URL pemanggilan (forms[0].href) dalam skemanya
   This node has no actions in its schema.: Node ini tidak memiliki aksi dalam skemanya.
+  This node has no actions or writable properties in its schema.: Node ini tidak memiliki aksi atau properti yang dapat ditulis dalam skemanya.
   Time On (s): Waktu Nyala (d)
   To: Sampai
   Too many attempts - please wait a few minutes: Terlalu banyak percobaan - harap tunggu beberapa menit
@@ -1248,7 +1295,8 @@ ID:
   We will email you a code and a link to choose a new password.: Kami akan mengirim kode dan tautan lewat email untuk memilih kata sandi baru.
   When: Ketika
   WiFi: WiFi
-`);
+
+  You do not have permission for this organization: Anda tidak memiliki izin untuk organisasi ini`);
 
 // Initialise from ?lang= immediately so language-picker renders with the correct selection
 // before any element connects. mqtt-wrapper.changeAttribute("lang") will reinforce this later.
