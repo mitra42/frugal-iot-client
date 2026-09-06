@@ -1386,13 +1386,23 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
      ];
    }
    // Just one section, with no tab strip around it - what an admin card holds
+   /*
+    * One section on its own, which is how the project's back shows each admin card (cards.js).
+    *
+    * No organization dropdown when the card was given one. The page's own selector - in the wrapper
+    * above the cards - has already decided, and cards.js passes it as the `org` attribute, so a
+    * dropdown here would be a second control for a choice already made. It is still offered when
+    * the element was created without an org, the only case where the card could not otherwise be
+    * used at all; `el` omits an undefined attribute, so the two cases are distinguishable.
+    */
    renderSection(key) {
      if (key === 'flash') return el('div', {class: 'mqtt-admin'}, [el('mqtt-flash', {})]);
      const section = this.adminSections().find((s) => s.key === key);
      if (!section) { XXX(["No such admin section", key]); return null; }
      if (!this[section.orgs].length) return null; // no permission for it
      return el('div', {class: 'mqtt-admin'}, [
-       this.state.elements[section.dropdown] = el('span', {textContent: "Waiting"}),
+       this.state.org ? null
+         : (this.state.elements[section.dropdown] = el('span', {textContent: "Waiting"})),
        this.state.elements[section.rest] = this.gatedContent(section),
      ]);
    }
