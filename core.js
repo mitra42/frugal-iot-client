@@ -310,13 +310,17 @@ EN:
   Action: Action
   Action *: Action *
   Add: Add
+  Add another enrolment secret: Add another enrolment secret
+  Added: Added
   Admin: Admin
   Advanced: Advanced
   All: All
   Already have an account?: Already have an account?
   API: API
+  Approved: Approved
   AQI: AQI
   AQI500: AQI500
+  Asked and was refused. Click to let it enrol.: Asked and was refused. Click to let it enrol.
   Auth Token: Auth Token
   Back to sign in: Back to sign in
   Base URL: Base URL
@@ -333,6 +337,7 @@ EN:
   close: close
   Collapse: Collapse
   Color:  Color
+  "Compiled into a node's firmware, this is what lets it ask this server for its own broker credential. It grants nothing else - no reading and no publishing. Add a second one to change it: both are accepted, so nodes already flashed keep working until you withdraw the old one.": "Compiled into a node's firmware, this is what lets it ask this server for its own broker credential. It grants nothing else - no reading and no publishing. Add a second one to change it: both are accepted, so nodes already flashed keep working until you withdraw the old one."
   Connect board: Connect board
   connected: connected
   connecting: connecting
@@ -343,20 +348,26 @@ EN:
   Dashboard: Dashboard
   Data: Data
   Delete these: Delete these
+  Denied: Denied
   Description: Description
   Device: Device
   Display carousel: Display carousel
+  Done: Done
   ds18b20: ds18b20
   e.g. LiteFarm: e.g. LiteFarm
   Each node has its own broker credential, which it collects from this server the first time it connects. Forget one to have it issued a new credential - needed if its filesystem has been erased, because it can then no longer prove which node it is.: Each node has its own broker credential, which it collects from this server the first time it connects. Forget one to have it issued a new credential - needed if its filesystem has been erased, because it can then no longer prove which node it is.
   eCO2: eCO2
   Email: Email
+  Enrol URL: Enrol URL
+  Enrolled: Enrolled
   Enrolled nodes: Enrolled nodes
+  Enrolment secret: Enrolment secret
   ENS AHT: ENS AHT
   Enter the code we emailed you, then choose a new password.: Enter the code we emailed you, then choose a new password.
   Enter topic: Enter topic
   Enter value: Enter value
   Existing OTA Files: Existing OTA Files
+  Failed: Failed
   Farm ID *: Farm ID *
   Farm registered: Farm registered
   Farms: Farms
@@ -369,12 +380,15 @@ EN:
   Flash this over USB: Flash this over USB
   Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer: Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer
   for node: for node
+  Forget: Forget
+  Forget this node, so it is issued a new credential: Forget this node, so it is issued a new credential
   Forgot password?: Forgot password?
   From: From
   Frugal IoT project: Frugal IoT project
   Frugal-IoT Username *: Frugal-IoT Username *
   Full provision - all configuration on the board will be erased: Full provision - all configuration on the board will be erased
   Greater Than: Greater Than
+  Has its own broker credential. Click to deny it.: Has its own broker credential. Click to deny it.
   heating: heating
   humidifier: humidifier
   Humidity: Humidity
@@ -389,7 +403,9 @@ EN:
   Incorrect username or password: Incorrect username or password
   Info: Info
   Input: Input
+  Its next request will be accepted. Click to deny it.: Its next request will be accepted. Click to deny it.
   Key: Key
+  Last asked: Last asked
   Last Seen: Last Seen
   Last seen: Last seen
   LED: LED
@@ -424,6 +440,7 @@ EN:
   No projects added for this organization yet.: No projects added for this organization yet.
   No projects to display until organization selected: No projects to display until organization selected
   Nobody added for this organization yet.: Nobody added for this organization yet.
+  Node: Node
   Node Actions: Node Actions
   Node ID:  Node ID
   Node Name:  Node Name
@@ -500,6 +517,7 @@ EN:
   set: set
   Setpoint: Setpoint
   Settings: Settings
+  Show enrolment secrets: Show enrolment secrets
   SHT: SHT
   SHT30: SHT30
   Sign In: Sign In
@@ -514,6 +532,7 @@ EN:
   stale: Not reported recently
   Status: Status
   Stop monitor: Stop monitor
+  Stopped, and its credential removed. Click to clear.: Stopped, and its credential removed. Click to clear.
   Submit: Submit
   System: System
   Temperature: Temperature
@@ -522,6 +541,7 @@ EN:
   This field has no invocation URL (forms[0].href) in its schema: This field has no invocation URL (forms[0].href) in its schema
   This node has no actions in its schema.: This node has no actions in its schema.
   This node has no actions or writable properties in its schema.: This node has no actions or writable properties in its schema.
+  This organization has no enrolment secret, so no new node can enrol. Add one.: This organization has no enrolment secret, so no new node can enrol. Add one.
   Time On (s): Time On (s)
   To: To
   Too many attempts - please wait a few minutes: Too many attempts - please wait a few minutes
@@ -548,6 +568,8 @@ EN:
   We will email you a code and a link to choose a new password.: We will email you a code and a link to choose a new password.
   When: When
   WiFi: WiFi
+  Withdrawn: Withdrawn
+  Yes: Yes
   You do not have permission for this organization: You do not have permission for this organization
 FR:
   "+ matches one level, # matches the rest. Look before deleting.": "+ correspond à un niveau, # au reste. Regardez avant de supprimer."
@@ -557,13 +579,17 @@ FR:
   Action: Action
   Action *: Action *
   Add: Ajouter
+  Add another enrolment secret: Ajouter un autre secret d'enrôlement
+  Added: Ajouté
   Admin: Admin
   Advanced: Avancé
   All: Tous
   Already have an account?: Vous avez déjà un compte ?
   API: API
+  Approved: Approuvé
   AQI: IQA  
   AQI500: IQA500  
+  Asked and was refused. Click to let it enrol.: A demandé et a été refusé. Cliquez pour l'autoriser à s'enrôler.
   Auth Token: Jeton d'authentification
   Back to sign in: Retour à la connexion
   Base URL: URL de base
@@ -580,6 +606,7 @@ FR:
   close: fermer
   Collapse: Réduire
   Color: Couleur  
+  "Compiled into a node's firmware, this is what lets it ask this server for its own broker credential. It grants nothing else - no reading and no publishing. Add a second one to change it: both are accepted, so nodes already flashed keep working until you withdraw the old one.": "Compilé dans le micrologiciel d'un nœud, c'est ce qui lui permet de demander à ce serveur son propre identifiant de broker. Il n'accorde rien d'autre - ni lecture ni publication. Ajoutez-en un second pour le changer : les deux sont acceptés, donc les nœuds déjà flashés continuent de fonctionner jusqu'à ce que vous retiriez l'ancien."
   Connect board: Connecter la carte
   connected: connecté
   connecting: connexion
@@ -590,20 +617,26 @@ FR:
   Dashboard: Tableau de bord
   Data: Données
   Delete these: Supprimer ceux-ci
+  Denied: Refusé
   Description: Description
   Device: Appareil
   Display carousel: Carrousel d'affichage
+  Done: Fait
   ds18b20: ds18b20
   e.g. LiteFarm: par ex. LiteFarm
   Each node has its own broker credential, which it collects from this server the first time it connects. Forget one to have it issued a new credential - needed if its filesystem has been erased, because it can then no longer prove which node it is.: Chaque nœud a son propre identifiant de broker, qu'il récupère sur ce serveur lors de sa première connexion. Oubliez-en un pour qu'un nouvel identifiant lui soit délivré - nécessaire si son système de fichiers a été effacé, car il ne peut alors plus prouver quel nœud il est.
   eCO2: eCO2
   Email: Email
+  Enrol URL: URL d'enrôlement
+  Enrolled: Enrôlé
   Enrolled nodes: Nœuds enrôlés
+  Enrolment secret: Secret d'enrôlement
   ENS AHT: ENS AHT  
   Enter the code we emailed you, then choose a new password.: Saisissez le code que nous vous avons envoyé par e-mail, puis choisissez un nouveau mot de passe.
   Enter topic: Entrez le sujet
   Enter value: Entrez la valeur
   Existing OTA Files: Fichiers OTA existants
+  Failed: Échec
   Farm ID *: ID de la ferme *
   Farm registered: Ferme enregistrée
   Farms: Fermes
@@ -616,12 +649,15 @@ FR:
   Flash this over USB: Flasher ceci par USB
   Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer: Le flashage nécessite l'API Web Serial - utilisez Chrome, Edge ou Opera sur un ordinateur de bureau
   for node: pour le nœud
+  Forget: Oublier
+  Forget this node, so it is issued a new credential: Oublier ce nœud, pour qu'un nouvel identifiant lui soit délivré
   Forgot password?: Mot de passe oublié ?
   From: De
   Frugal IoT project: Projet Frugal IoT
   Frugal-IoT Username *: Nom d'utilisateur Frugal-IoT *
   Full provision - all configuration on the board will be erased: Provisionnement complet - toute la configuration de la carte sera effacée
   Greater Than: Supérieur à
+  Has its own broker credential. Click to deny it.: Possède son propre identifiant de broker. Cliquez pour le refuser.
   heating: chauffage
   humidifier: humidificateur
   Humidity: Humidité
@@ -638,7 +674,9 @@ FR:
   Incorrect username or password: Nom d'utilisateur ou mot de passe incorrect
   Info: Infos
   Input: Entrée
+  Its next request will be accepted. Click to deny it.: Sa prochaine demande sera acceptée. Cliquez pour le refuser.
   Key: Clé
+  Last asked: Dernière demande
   Last Seen: Dernière activité
   Last seen: Vu pour la dernière fois
   LED: LED
@@ -673,6 +711,7 @@ FR:
   No projects added for this organization yet.: Aucun projet ajouté pour cette organisation pour l'instant.
   No projects to display until organization selected: Aucun projet à afficher tant qu'une organisation n'est sélectionnée
   Nobody added for this organization yet.: Personne n'a encore été ajouté pour cette organisation.
+  Node: Nœud
   Node Actions: Actions du nœud
   Node Id: ID du nœud
   Node Name: Nom du nœud  
@@ -749,6 +788,7 @@ FR:
   set: défini
   Setpoint: consigne
   Settings: Réglages
+  Show enrolment secrets: Afficher les secrets d'enrôlement
   SHT: SHT
   SHT30: SHT30
   Sign In: Se connecter
@@ -763,6 +803,7 @@ FR:
   stale: Pas de nouvelles récentes
   Status: État
   Stop monitor: Arrêter moniteur
+  Stopped, and its credential removed. Click to clear.: Arrêté, et son identifiant supprimé. Cliquez pour annuler.
   Submit: Soumettre
   System: Système
   Temperature: Température
@@ -771,6 +812,7 @@ FR:
   This field has no invocation URL (forms[0].href) in its schema: Ce champ n'a pas d'URL d'invocation (forms[0].href) dans son schéma
   This node has no actions in its schema.: Ce nœud n'a aucune action dans son schéma.
   This node has no actions or writable properties in its schema.: Ce nœud n'a aucune action ni propriété modifiable dans son schéma.
+  This organization has no enrolment secret, so no new node can enrol. Add one.: Cette organisation n'a aucun secret d'enrôlement, donc aucun nouveau nœud ne peut s'enrôler. Ajoutez-en un.
   Time On (s): Durée active (s)
   To: À
   Too many attempts - please wait a few minutes: Trop de tentatives - veuillez patienter quelques minutes
@@ -797,6 +839,8 @@ FR:
   We will email you a code and a link to choose a new password.: Nous vous enverrons par e-mail un code et un lien pour choisir un nouveau mot de passe.
   When: Quand
   WiFi: WiFi
+  Withdrawn: Retiré
+  Yes: Oui
   You do not have permission for this organization: Vous n'avez pas la permission pour cette organisation
 HI:
   "+ matches one level, # matches the rest. Look before deleting.": "+ एक स्तर से मेल खाता है, # बाकी सभी से। हटाने से पहले देख लें।"
@@ -806,13 +850,17 @@ HI:
   Action: क्रिया
   Action *: क्रिया *
   Add: जोड़ें
+  Add another enrolment secret: एक और पंजीकरण सीक्रेट जोड़ें
+  Added: जोड़ा गया
   Admin: एडमिन
   Advanced: उन्नत
   All: सभी
   Already have an account?: पहले से खाता है?
   API: एपीआई
+  Approved: स्वीकृत
   AQI: वायु गुणवत्ता सूचकांक  
   AQI500: वायु गुणवत्ता सूचकांक 500  
+  Asked and was refused. Click to let it enrol.: अनुरोध किया और अस्वीकार हुआ। पंजीकरण की अनुमति देने के लिए क्लिक करें।
   Auth Token: प्रमाणीकरण टोकन
   Back to sign in: साइन इन पर वापस जाएँ
   Base URL: बेस यूआरएल
@@ -829,6 +877,7 @@ HI:
   close: बंद करें
   Collapse: छोटा करें
   Color: रंग  
+  "Compiled into a node's firmware, this is what lets it ask this server for its own broker credential. It grants nothing else - no reading and no publishing. Add a second one to change it: both are accepted, so nodes already flashed keep working until you withdraw the old one.": "नोड के फ़र्मवेयर में संकलित, यही उसे इस सर्वर से अपना ब्रोकर क्रेडेंशियल माँगने देता है। यह और कुछ नहीं देता - न पढ़ना, न प्रकाशित करना। इसे बदलने के लिए दूसरा जोड़ें: दोनों स्वीकार किए जाते हैं, इसलिए पहले फ़्लैश किए गए नोड तब तक काम करते रहते हैं जब तक आप पुराना वापस नहीं लेते।"
   Connect board: बोर्ड कनेक्ट करें
   connected: जुड़े हुए
   connecting: कनेक्ट हो रहा है
@@ -839,20 +888,26 @@ HI:
   Dashboard: डैशबोर्ड
   Data: डेटा
   Delete these: इन्हें हटाएँ
+  Denied: अस्वीकृत
   Description: विवरण
   Device: उपकरण
   Display carousel: डिस्प्ले कैरोसेल
+  Done: पूर्ण
   ds18b20: ds18b20
   e.g. LiteFarm: उदाहरण के लिए LiteFarm
   Each node has its own broker credential, which it collects from this server the first time it connects. Forget one to have it issued a new credential - needed if its filesystem has been erased, because it can then no longer prove which node it is.: हर नोड का अपना ब्रोकर क्रेडेंशियल होता है, जो वह पहली बार जुड़ते समय इस सर्वर से लेता है। किसी को भुला दें ताकि उसे नया क्रेडेंशियल मिले - यह ज़रूरी है यदि उसका फ़ाइल-सिस्टम मिटा दिया गया हो, क्योंकि तब वह यह सिद्ध नहीं कर सकता कि वह कौन सा नोड है।
   eCO2: ईसीओ2
   Email: ईमेल
+  Enrol URL: पंजीकरण URL
+  Enrolled: पंजीकृत
   Enrolled nodes: पंजीकृत नोड
+  Enrolment secret: पंजीकरण सीक्रेट
   ENS AHT: ईएनएस एएचटी  
   Enter the code we emailed you, then choose a new password.: हमने आपको ईमेल किया कोड दर्ज करें, फिर नया पासवर्ड चुनें।
   Enter topic: टॉपिक दर्ज करें
   Enter value: मान दर्ज करें
   Existing OTA Files: मौजूदा OTA फ़ाइलें
+  Failed: असफल
   Farm ID *: फार्म आईडी *
   Farm registered: फार्म पंजीकृत किया गया
   Farms: फार्म
@@ -865,12 +920,15 @@ HI:
   Flash this over USB: इसे USB से फ्लैश करें
   Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer: फ्लैश करने के लिए Web Serial API आवश्यक है - डेस्कटॉप कंप्यूटर पर Chrome, Edge या Opera का उपयोग करें
   for node: नोड के लिए
+  Forget: भुलाएँ
+  Forget this node, so it is issued a new credential: इस नोड को भुला दें, ताकि इसे नया क्रेडेंशियल मिले
   Forgot password?: पासवर्ड भूल गए?
   From: से
   Frugal IoT project: फ़्रूगल IoT परियोजना
   Frugal-IoT Username *: Frugal-IoT उपयोगकर्ता नाम *
   Full provision - all configuration on the board will be erased: पूर्ण प्रोविजनिंग - बोर्ड की सारी कॉन्फ़िगरेशन मिट जाएगी
   Greater Than: इससे बड़ा
+  Has its own broker credential. Click to deny it.: इसके पास अपना ब्रोकर क्रेडेंशियल है। अस्वीकार करने के लिए क्लिक करें।
   heating: हीटिंग
   humidifier: ह्यूमिडिफ़ायर
   Humidity: आर्द्रता
@@ -887,7 +945,9 @@ HI:
   Incorrect username or password: उपयोगकर्ता नाम या पासवर्ड गलत है
   Info: जानकारी
   Input: इनपुट
+  Its next request will be accepted. Click to deny it.: इसका अगला अनुरोध स्वीकार किया जाएगा। अस्वीकार करने के लिए क्लिक करें।
   Key: कुंजी
+  Last asked: अंतिम अनुरोध
   Last Seen: अंतिम बार देखा गया
   Last seen: अंतिम बार देखा
   LED: एलईडी
@@ -922,6 +982,7 @@ HI:
   No projects added for this organization yet.: इस संगठन के लिए अभी तक कोई प्रोजेक्ट नहीं जोड़ा गया है।
   No projects to display until organization selected: संगठन चुने जाने तक कोई प्रोजेक्ट प्रदर्शित नहीं होगा
   Nobody added for this organization yet.: इस संगठन के लिए अभी तक कोई नहीं जोड़ा गया है।
+  Node: नोड
   Node Actions: नोड क्रियाएँ
   Node ID: नोड आईडी
   Node Name: नोड नाम 
@@ -998,6 +1059,7 @@ HI:
   set: सेट किया गया
   Setpoint: सेटपॉइंट
   Settings: सेटिंग्स
+  Show enrolment secrets: पंजीकरण सीक्रेट दिखाएँ
   SHT: एसएचटी
   SHT30: एसएचटी30
   Sign In: साइन इन करें
@@ -1012,6 +1074,7 @@ HI:
   stale: हाल में रिपोर्ट नहीं
   Status: स्थिति
   Stop monitor: मॉनिटर बंद करें
+  Stopped, and its credential removed. Click to clear.: रोका गया, और इसका क्रेडेंशियल हटा दिया गया। हटाने के लिए क्लिक करें।
   Submit: जमा करें
   System: सिस्टम
   Temperature: तापमान
@@ -1020,6 +1083,7 @@ HI:
   This field has no invocation URL (forms[0].href) in its schema: इस फ़ील्ड के स्कीमा में कोई इनवोकेशन यूआरएल (forms[0].href) नहीं है
   This node has no actions in its schema.: इस नोड के स्कीमा में कोई क्रिया नहीं है।
   This node has no actions or writable properties in its schema.: इस नोड के स्कीमा में कोई क्रिया या लिखने योग्य गुण नहीं है।
+  This organization has no enrolment secret, so no new node can enrol. Add one.: इस संगठन के पास कोई पंजीकरण सीक्रेट नहीं है, इसलिए कोई नया नोड पंजीकृत नहीं हो सकता। एक जोड़ें।
   Time On (s): चालू समय (से)
   To: तक
   Too many attempts - please wait a few minutes: बहुत अधिक प्रयास - कृपया कुछ मिनट प्रतीक्षा करें
@@ -1046,6 +1110,8 @@ HI:
   We will email you a code and a link to choose a new password.: हम आपको नया पासवर्ड चुनने के लिए एक कोड और एक लिंक ईमेल करेंगे।
   When: कब
   WiFi: वाई-फ़ाई
+  Withdrawn: वापस लिया गया
+  Yes: हाँ
   You do not have permission for this organization: इस संगठन के लिए आपके पास अनुमति नहीं है
 ID:
   "+ matches one level, # matches the rest. Look before deleting.": "+ cocok dengan satu tingkat, # dengan sisanya. Lihat dulu sebelum menghapus."
@@ -1055,13 +1121,17 @@ ID:
   Action: Aksi
   Action *: Aksi *
   Add: Tambah
+  Add another enrolment secret: Tambah rahasia pendaftaran lain
+  Added: Ditambahkan
   Admin: Admin
   Advanced: Lanjutan
   All: Semua
   Already have an account?: Sudah punya akun?
   API: API
+  Approved: Disetujui
   AQI: Indeks Kualitas Udara  
   AQI500: Indeks Kualitas Udara 500  
+  Asked and was refused. Click to let it enrol.: Meminta dan ditolak. Klik untuk mengizinkannya mendaftar.
   Auth Token: Token Autentikasi
   Back to sign in: Kembali ke masuk
   Base URL: URL Dasar
@@ -1078,6 +1148,7 @@ ID:
   close: tutup
   Collapse: Ciutkan
   Color: Warna  
+  "Compiled into a node's firmware, this is what lets it ask this server for its own broker credential. It grants nothing else - no reading and no publishing. Add a second one to change it: both are accepted, so nodes already flashed keep working until you withdraw the old one.": "Dikompilasi ke dalam firmware sebuah node, inilah yang memungkinkannya meminta kredensial broker miliknya sendiri dari server ini. Ia tidak memberi apa pun selain itu - tidak membaca dan tidak menerbitkan. Tambahkan yang kedua untuk menggantinya: keduanya diterima, sehingga node yang sudah di-flash tetap bekerja sampai Anda mencabut yang lama."
   Connect board: Hubungkan papan
   connected: terhubung
   connecting: menghubungkan
@@ -1088,20 +1159,26 @@ ID:
   Dashboard: Dasbor
   Data: Data
   Delete these: Hapus ini
+  Denied: Ditolak
   Description: Deskripsi
   Device: Perangkat
   Display carousel: Karosel tampilan
+  Done: Selesai
   ds18b20: ds18b20
   e.g. LiteFarm: misalnya LiteFarm
   Each node has its own broker credential, which it collects from this server the first time it connects. Forget one to have it issued a new credential - needed if its filesystem has been erased, because it can then no longer prove which node it is.: Setiap node memiliki kredensial broker sendiri, yang diambilnya dari server ini saat pertama kali tersambung. Lupakan salah satu agar diberi kredensial baru - diperlukan jika sistem berkasnya telah dihapus, karena node itu tidak lagi dapat membuktikan node yang mana dirinya.
   eCO2: eCO2  
   Email: Email
+  Enrol URL: URL pendaftaran
+  Enrolled: Terdaftar
   Enrolled nodes: Node terdaftar
+  Enrolment secret: Rahasia pendaftaran
   ENS AHT: ENS AHT  
   Enter the code we emailed you, then choose a new password.: Masukkan kode yang kami kirim lewat email, lalu pilih kata sandi baru.
   Enter topic: Masukkan topik
   Enter value: Masukkan nilai
   Existing OTA Files: Berkas OTA yang Ada
+  Failed: Gagal
   Farm ID *: ID Farm *
   Farm registered: Farm terdaftar
   Farms: Farm
@@ -1114,12 +1191,15 @@ ID:
   Flash this over USB: Flash ini melalui USB
   Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer: Flashing memerlukan Web Serial API - gunakan Chrome, Edge atau Opera di komputer desktop
   for node: untuk node
+  Forget: Lupakan
+  Forget this node, so it is issued a new credential: Lupakan node ini, agar diberi kredensial baru
   Forgot password?: Lupa kata sandi?
   From: Dari
   Frugal IoT project: Proyek Frugal IoT
   Frugal-IoT Username *: Nama Pengguna Frugal-IoT *
   Full provision - all configuration on the board will be erased: Provisioning penuh - semua konfigurasi pada papan akan dihapus
   Greater Than: Lebih dari
+  Has its own broker credential. Click to deny it.: Memiliki kredensial broker sendiri. Klik untuk menolaknya.
   heating: pemanas
   humidifier: pelembap
   Humidity: Kelembapan
@@ -1136,7 +1216,9 @@ ID:
   Incorrect username or password: Nama pengguna atau kata sandi salah
   Info: Info
   Input: Masukan
+  Its next request will be accepted. Click to deny it.: Permintaan berikutnya akan diterima. Klik untuk menolaknya.
   Key: Kunci
+  Last asked: Terakhir meminta
   Last Seen: Terakhir Dilihat
   Last seen: Terakhir terlihat
   LED: LED
@@ -1171,6 +1253,7 @@ ID:
   No projects added for this organization yet.: Belum ada proyek yang ditambahkan untuk organisasi ini.
   No projects to display until organization selected: Tidak ada proyek untuk ditampilkan sampai organisasi dipilih
   Nobody added for this organization yet.: Belum ada yang ditambahkan untuk organisasi ini.
+  Node: Node
   Node Actions: Aksi Node
   Node ID: ID Node
   Node Name: Nama Node  
@@ -1247,6 +1330,7 @@ ID:
   set: diatur
   Setpoint: titik setel
   Settings: Pengaturan
+  Show enrolment secrets: Tampilkan rahasia pendaftaran
   SHT: SHT
   SHT30: SHT30
   Sign In: Masuk
@@ -1261,6 +1345,7 @@ ID:
   stale: Belum melapor baru-baru ini
   Status: Status
   Stop monitor: Hentikan monitor
+  Stopped, and its credential removed. Click to clear.: Dihentikan, dan kredensialnya dihapus. Klik untuk membatalkan.
   Submit: Kirim
   System: Sistem
   Temperature: Suhu
@@ -1269,6 +1354,7 @@ ID:
   This field has no invocation URL (forms[0].href) in its schema: Bidang ini tidak memiliki URL pemanggilan (forms[0].href) dalam skemanya
   This node has no actions in its schema.: Node ini tidak memiliki aksi dalam skemanya.
   This node has no actions or writable properties in its schema.: Node ini tidak memiliki aksi atau properti yang dapat ditulis dalam skemanya.
+  This organization has no enrolment secret, so no new node can enrol. Add one.: Organisasi ini tidak memiliki rahasia pendaftaran, jadi tidak ada node baru yang dapat mendaftar. Tambahkan satu.
   Time On (s): Waktu Nyala (d)
   To: Sampai
   Too many attempts - please wait a few minutes: Terlalu banyak percobaan - harap tunggu beberapa menit
@@ -1296,6 +1382,8 @@ ID:
   When: Ketika
   WiFi: WiFi
 
+  Withdrawn: Dicabut
+  Yes: Ya
   You do not have permission for this organization: Anda tidak memiliki izin untuk organisasi ini`);
 
 // Initialise from ?lang= immediately so language-picker renders with the correct selection
@@ -1402,6 +1490,14 @@ function POST(httpurl, body, cb) {
    * POST a JSON body to a URL and cb(err, json)
    */
   requestJSONp('POST', httpurl, body)
+    .then((json) => cb(null, json))
+    .catch((err) => cb(err));
+}
+function DELETE(httpurl, body, cb) {
+  /**
+   * DELETE, with a JSON body saying which one, and cb(err, json)
+   */
+  requestJSONp('DELETE', httpurl, body)
     .then((json) => cb(null, json))
     .catch((err) => cb(err));
 }
@@ -2907,6 +3003,7 @@ export {
   MqttTopicGroup,
   MqttTopicNode,
   MqttTopicProject,
+  DELETE,
   POST,
   RECEIVER_ATTRIBUTES,
   Watchdog,

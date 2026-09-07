@@ -7,7 +7,7 @@
 
 import {EL, GET, HTMLElementExtended} from '/node_modules/html-element-extended/htmlelementextended.js';
 import mqtt from '/node_modules/mqtt/dist/mqtt.esm.js'; // https://www.npmjs.com/package/mqtt
-import { CssUrl, POST, XXX, configSet, el, getString, hasCapability, mqttTempConnect, retainedPattern, locationParameterChange, mqtt_client, preferedLanguageSet, preferedLanguages, redirectToLogin, server_config } from './core.js';
+import { CssUrl, DELETE, POST, XXX, configSet, el, getString, hasCapability, mqttTempConnect, retainedPattern, locationParameterChange, mqtt_client, preferedLanguageSet, preferedLanguages, redirectToLogin, server_config } from './core.js';
 
 
 // ---------- USB flashing over WebSerial ----------
@@ -197,6 +197,61 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     });
   }
   // Which nodes have enrolled, and forgetting one so it can enrol again.
+  /*
+   * The organization's enrolment secrets (SECURITY.md S10).
+   *
+   * Its own request, not part of /config.json, which is served to every logged-in user. Fetched
+   * only when the admin asks to see them, so an open Nodes card does not put a secret on screen.
+   */
+  getEnrolmentSecrets() {
+    if (!this.state.org) return;
+    GET(`/enrolment_secret/${this.state.org}`, {}, (err, json) => {
+      if (err) { this.message(err.message); return; }
+      this.state.enrolment = json;   // {org, secrets, enrol_url}
+      this.replaceElement("enrolment_secrets", this.enrolmentSecretsList());
+    });
+  }
+  onEnrolmentSecretAdd() {
+    POST(`/enrolment_secret/${this.state.org}`, {}, (err, json) => {
+      this.message(err ? err.message : (json && json.message) || getString("Added"), false);
+      this.getEnrolmentSecrets();
+    });
+  }
+  onEnrolmentSecretDelete(secret) {
+    // Irreversible for any node still holding it, and those nodes cannot be told - they are the
+    // ones not yet enrolled, so nothing on the server knows they exist.
+    if (!window.confirm(
+      `Withdraw this enrolment secret?\n\n` +
+      `Any node flashed with it that has not enrolled yet will be refused and will need ` +
+      `reflashing. Nodes that have already enrolled are unaffected - they never present it again.`)) return;
+    DELETE(`/enrolment_secret/${this.state.org}`, {secret}, (err, json) => {
+      this.message(err ? err.message : (json && json.message) || getString("Withdrawn"), false);
+      this.getEnrolmentSecrets();
+    });
+  }
+  enrolmentSecretsList() {
+    const e = this.state.enrolment;
+    if (!e) {
+      return el('p', {}, [
+        el('span', {class: 'pseudolink', textContent: "Show enrolment secrets",
+          onclick: this.getEnrolmentSecrets.bind(this)}),
+      ]);
+    }
+    return el('div', {}, [
+      ...(e.secrets.length ? e.secrets.map((secret, i) => el('p', {}, [
+        el('span', {class: 'pseudolink', textContent: ' 🗑 ',
+          onclick: this.onEnrolmentSecretDelete.bind(this, secret)}),
+        // The line to paste into a sketch, so nobody has to work out the argument order
+        el('code', {i8n: false, class: 'enrolment__line', textContent:
+          `frugal_iot.configure_mqtt_enrolled("${(server_config.mqtt && server_config.mqtt.broker) || ''}", "${secret}");`}),
+      ])) : [el('p', {textContent:
+        "This organization has no enrolment secret, so no new node can enrol. Add one."})]),
+      el('button', {class: 'submit', type: 'button', textContent: "Add another enrolment secret",
+        onclick: this.onEnrolmentSecretAdd.bind(this)}),
+      el('p', {i8n: false, class: 'retained__help', textContent:
+        `${getString("Enrol URL")}: ${e.enrol_url}`}),
+    ]);
+  }
   getEnrolledNodes() {
     if (!this.state.org) return;
     GET(`/nodes_list/${this.state.org}`, {}, (err, json) => {
@@ -219,20 +274,69 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       this.getEnrolledNodes();
     });
   }
+  /*
+   * What each state means, what clicking it does next, and how it reads.
+   *
+   * A node id cannot be discovered from the server, so a node that keeps asking and being refused
+   * is how an admin learns it exists - which is why "failed" is a state here rather than an error
+   * somewhere in a log. Those rows are untrusted: anyone can make an id appear by attempting
+   * enrolment, so the row shows when it asked and from where, for the admin to recognise.
+   */
+  nodeStates() {
+    return {
+      enrolled: { label: "Yes",      next: 'denied',   hint: "Has its own broker credential. Click to deny it." },
+      failed:   { label: "Failed",   next: 'approved', hint: "Asked and was refused. Click to let it enrol." },
+      approved: { label: "Approved", next: 'denied',   hint: "Its next request will be accepted. Click to deny it." },
+      denied:   { label: "Denied",   next: 'cleared',  hint: "Stopped, and its credential removed. Click to clear." },
+    };
+  }
+  onNodeState(project, nodeid, state) {
+    if (state === 'denied' && !window.confirm(
+      `Deny ${nodeid}?\n\n` +
+      `Its broker account is deleted, so it stops being able to publish or subscribe, and it ` +
+      `cannot enrol again until you clear this. Use it for a node sending bad readings.`)) return;
+    POST(`/node_state/${this.state.org}`, {project, nodeid, state}, (err, json) => {
+      this.message(err ? err.message : (json && json.message) || getString("Done"), false);
+      this.getEnrolledNodes();
+    });
+  }
   enrolledNodesList() {
     const nodes = this.state.enrolled_nodes;
     if (!nodes || !nodes.length) {
       return el('p', {textContent:
         "No nodes have enrolled yet. A node enrols itself the first time it connects."});
     }
-    return el('p', {}, nodes.map((n) => [
-      el('span', {class: 'pseudolink', textContent: ' 🗑 ',
-        onclick: this.onNodeReset.bind(this, n.project, n.nodeid)}),
-      el('span', {i8n: false, textContent:
-        `${n.project}/${n.nodeid}${n.lora ? ' (LoRa)' : ''}` +
-        (n.enrolled_at ? ` - enrolled ${new Date(n.enrolled_at).toISOString().slice(0, 10)}` : '')}),
-      el('br', {}),
-    ]));
+    const states = this.nodeStates();
+    return el('table', {class: 'nodestates'}, [
+      el('tr', {}, [
+        el('th', {textContent: "Project"}), el('th', {textContent: "Node"}),
+        el('th', {textContent: "Enrolled"}), el('th', {textContent: "Last asked"}),
+        el('th', {textContent: "Forget"}),
+      ]),
+      ...nodes.map((n) => {
+        const st = states[n.state] || states.failed;
+        return el('tr', {}, [
+          el('td', {i8n: false, textContent: n.project || ''}),
+          el('td', {i8n: false, textContent: `${n.nodeid}${n.lora ? ' (LoRa)' : ''}`}),
+          el('td', {}, [
+            el('span', {class: 'pseudolink', title: getString(st.hint), textContent: st.label,
+              onclick: this.onNodeState.bind(this, n.project, n.nodeid, st.next)}),
+          ]),
+          // Untrusted, and shown as such: an address and a time for the admin to recognise
+          el('td', {i8n: false, textContent: n.asked_at
+            ? `${this.formatLastSeen(new Date(n.asked_at).toISOString())} from ${n.asked_from || '?'}` +
+              `${n.asked_count > 1 ? ` (${n.asked_count}x)` : ''}`
+            : (n.enrolled_at ? new Date(n.enrolled_at).toISOString().slice(0, 10) : '')}),
+          el('td', {}, [
+            n.enrolled_at
+              ? el('span', {class: 'pseudolink', textContent: ' 🗑 ',
+                  title: getString("Forget this node, so it is issued a new credential"),
+                  onclick: this.onNodeReset.bind(this, n.project, n.nodeid)})
+              : el('span', {}),
+          ]),
+        ]);
+      }),
+    ]);
   }
   getPeopleList() {
     if (this.state.org) {
@@ -1253,6 +1357,15 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
            "time it connects. Forget one to have it issued a new credential - needed if its " +
            "filesystem has been erased, because it can then no longer prove which node it is."}),
          this.state.elements.enrolled_nodes = this.enrolledNodesList(),
+       ]),
+       el('section', {}, [
+         el('h3', {textContent: "Enrolment secret"}),
+         el('p', {textContent:
+           "Compiled into a node's firmware, this is what lets it ask this server for its own " +
+           "broker credential. It grants nothing else - no reading and no publishing. Add a second " +
+           "one to change it: both are accepted, so nodes already flashed keep working until you " +
+           "withdraw the old one."}),
+         this.state.elements.enrolment_secrets = this.enrolmentSecretsList(),
        ]),
      ]);
    }

@@ -201,6 +201,12 @@ div.mqtt-text {
             cursor: pointer;
         }
         .message {margin: 0.5em; font-weight: bold; font-size: x-large; }
+        /* An enrolment secret is a long unbroken string; without this it runs off a phone. */
+        .enrolment__line { word-break: break-all; }
+        /* The enrolment state table: compact, since most of its cells are one word. */
+        .nodestates { border-collapse: collapse; }
+        .nodestates th, .nodestates td { text-align: left; padding: 0.15em 0.6em 0.15em 0; }
+        .nodestates th { border-bottom: 1px solid #ccc; }
     }
 /* USB flashing - stylesheet is loaded inside the mqtt-flash shadow root, so match the wrapper div */
 .mqtt-flash {
