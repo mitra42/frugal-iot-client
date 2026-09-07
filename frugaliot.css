@@ -194,84 +194,14 @@ div.mqtt-text {
 
 
 /* Related to authentication */
-    .mqtt-admin, .tabbed-display, tabbed-display {
+    .mqtt-admin {
         .pseudolink {
             color: blue;
             text-decoration: underline;
             cursor: pointer;
         }
-        .tabs {
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            margin-bottom: 0em;
-            padding-bottom: 0em;
-        }
-        .tab {
-            border: 2px, black, solid;
-            width: 50%;
-            font-size: x-large;
-            margin-bottom: 0.2em;
-            margin-bottom: 0em;
-            padding: 0.6em;
-            border-top-left-radius: 20px;
-            border-top-right-radius: 20px;
-        }
-        .tab.active {
-            background-color: #ffffff;
-            font-weight: bolder;
-            border-bottom: 0px;
-        }
-        .tab.inactive {
-            background-color: #888888;
-            font-weight: lighter;
-        }
         .message {margin: 0.5em; font-weight: bold; font-size: x-large; }
-        /* The admin top bar: one organization dropdown for every tab, beside the message and the
-           language picker. A row that wraps, so a narrow phone stacks them instead of clipping. */
-        .mqtt-admin__topbar { display: flex; align-items: center; gap: 0.5em; flex-wrap: wrap; }
-        .mqtt-admin__topbar > span > section { display: flex; align-items: center; gap: 0.4em; margin: 0.5em; }
-        .tabbed-section.inactive { display: none; }
-        tabbed-display.solo .tabbed-section.active {
-            padding: 0;
-            border: none;
-            border-radius: 0;
-        }
-        .tabbed-section.active {
-            padding: 10px;
-            border: black solid 2px;
-            /*border-top: 2px; */
-            border-bottom-left-radius: 20px;
-            border-bottom-right-radius: 20px;
-            h3 {
-                font-size: 2.3em;
-                font-weight: bold;
-                margin: 0.6em 0 0.4em 0;
-                border-bottom: 3px solid #444;
-                padding-bottom: 0.15em;
-            }
-            label {
-                font-size: xx-large;
-                display: block;
-            }
-            section {
-                margin: 0.5em;
-                input {
-                    font-size: xx-large;
-                    margin: 0.5em;
-                }
-            }
-            button { font-size: x-large; padding: 10px; border-radius: 10px; }
-        }
     }
-/* Claude suggested this not to impact the Login page - not sure if it does */
-/* Fix: was width:50% shared with the 2-tab login view, breaking the 5-tab dashboard bar */
-
-.tabbed-display .tab, tabbed-display .tab {
-    width: auto;
-    flex: 1 1 auto;
-}
-
 /* USB flashing - stylesheet is loaded inside the mqtt-flash shadow root, so match the wrapper div */
 .mqtt-flash {
     .flash-status {

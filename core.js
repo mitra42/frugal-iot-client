@@ -1561,6 +1561,7 @@ class MqttTopic {
   }
   // e.g. or for node /dev/project/node/# and should not be used at element level as subscribe at node level.
   get topicSubscribePath() {
+    // isNode was the old UI's MqttNode element. Nothing sets it now, so this is the embedded path.
     if (this.element && this.element.isNode) {
       return this.topicPath + "/#"; // Subscribe to all subtopics
     } else {
@@ -2167,18 +2168,9 @@ class MqttTopicProject extends MqttTopic {
     if (this.graphdataset) this.graphdataset.dataChanged(); //TODO-73 cant think why project has a dataset?
   }
   // Handle a discovery message. Creates a new node if not yet seen.
-  // In headless mode: calls this.addNode directly (no MqttProject element or watchdog).
   topicValueSet(topicPath, message) {
     const val = this.valueFromText(message);
-    if (this.headless) {
-      if (!this.nodes[val]) this.addNode(val);
-    } else if (this.element && this.element.state.discover) {
-      if (this.nodes[val]) {
-        this.nodes[val].element?.tickle();
-      } else {
-        this.element.addNode(val);
-      }
-    }
+    if (!this.nodes[val]) this.addNode(val);
   }
   // Creates the MqttTopicNode for a node id. Works in both headless and normal mode.
   // In normal mode, MqttProject.addNode calls this and then does the DOM layer on top.
@@ -2241,14 +2233,8 @@ class MqttTopicNode extends MqttTopic {
     const groupId = parts[0];
     // Auto-create group from template if it hasn't been seen yet
     if (!this.groups[groupId]) {
-      if (this.element) {
-        if (this.element.addGroupFromTemplate(groupId)) {
-          this.element.project?.rebuildTopicDropdowns();
-        }
-      } else if (this.headless) {
-        if (this.addGroupFromTemplate(groupId)) {
-          document.dispatchEvent(new CustomEvent('frugaliot:topicschanged', { detail: { project: this._projectMt } }));
-        }
+      if (this.addGroupFromTemplate(groupId)) {
+        document.dispatchEvent(new CustomEvent('frugaliot:topicschanged', { detail: { project: this._projectMt } }));
       }
     }
     let matched = this.sendMessageToMatchingTopics(topicPath, twig, message);
@@ -2279,14 +2265,8 @@ class MqttTopicNode extends MqttTopic {
         t = expandTopicTemplate('controlouttoggle', {leaf, name: guessName});
       }
       if (t) {
-        if (this.element) {
-          if (this.element.addTopicFromTemplate(t, groupId)) {
-            this.element.project?.rebuildTopicDropdowns();
-          }
-        } else if (this.headless) {
-          if (this.addTopicFromTemplate(t, groupId)) {
-            document.dispatchEvent(new CustomEvent('frugaliot:topicschanged', { detail: { project: this._projectMt } }));
-          }
+        if (this.addTopicFromTemplate(t, groupId)) {
+          document.dispatchEvent(new CustomEvent('frugaliot:topicschanged', { detail: { project: this._projectMt } }));
         }
         if (!this.sendMessageToMatchingTopics(topicPath, twig, message)) {
           XXX(["Even after adding topic from template, no destination for", twig]);
@@ -2682,8 +2662,9 @@ class MqttWrapper extends HTMLElementExtended {
     super();
     this.state.elements = {}; // Pointer to specific child elements for targeted updates
   }
-  static get observedAttributes() { return RECEIVER_ATTRIBUTES.concat(['organization','project','node','lang','headless','clientdisplay']); }
-  static get boolAttributes() { return ['headless']; }
+  // No 'headless' any more: it chose between the data tree alone and the data tree plus the old
+  // node/group DOM, and there is only the tree now.
+  static get observedAttributes() { return RECEIVER_ATTRIBUTES.concat(['organization','project','node','lang','clientdisplay']); }
   // Maybe add 'discover' but think thru interactions
 
   // Note this is not using the standard connectedCallBack which loads content and re-renders,
@@ -2756,20 +2737,17 @@ class MqttWrapper extends HTMLElementExtended {
     clientEl.setAttribute('password', me.mqtt_password);
     clientEl.setAttribute('username', me.mqtt_username);
   }
-  // Creates the MqttTopicProject and (unless headless) its paired MqttProject DOM element.
-  // Always returns the MqttTopicProject. appender() accesses the element via mt.element when needed.
+  /*
+   * Creates the MqttTopicProject - the data tree for one project, and nothing else.
+   *
+   * There used to be a paired DOM tree as well, of mqtt-project / mqtt-node / mqtt-group elements.
+   * That was the old node/group UI; it is gone, and the cards build their display from this tree
+   * instead - which is what the wrapper's `headless` attribute used to ask for.
+   */
   addProject(discover) {
     const twig = `${this.state.organization}/${this.state.project}`;
     const mt = new MqttTopicProject();
-    if (this.state.headless) {
-      mt.initialize({ type: "text", twig, headless: true });
-    } else {
-      // noinspection JSUnresolvedReference
-      const elProject = el('mqtt-project', {discover, id: this.state.project, name: server_config.organizations[this.state.organization].projects[this.state.project].name }, []);
-      mt.initialize({ type: "text", twig, element: elProject });
-      elProject.mt = mt;
-      this.append(elProject);
-    }
+    mt.initialize({ type: "text", twig, headless: true });
     mt.subscribe();
     this.state.elements["project"] = mt; // Store MqttTopicProject directly
     // So a page built around the wrapper knows a project now exists. topicschanged only fires once
@@ -2796,11 +2774,7 @@ class MqttWrapper extends HTMLElementExtended {
         }
       } // Drop through with n & o & p
       const mt = this.addProject(false);
-      if (this.state.headless) {
-        mt.addNode(this.state.node);
-      } else {
-        mt.element.valueSet(this.state.node, true); // Create node on project along with its MqttNode
-      }
+      mt.addNode(this.state.node);
     } else { // !n
       if (!this.state.project)  { // !n !p ?o
         if (!this.state.organization) { // !n !p !o
@@ -2845,20 +2819,16 @@ class MqttWrapper extends HTMLElementExtended {
         const mt = this.addProject(true);
         // noinspection JSUnresolvedReference
         const nodes = Object.entries(server_config.organizations[this.state.organization].projects[this.state.project].nodes || {});
-        if (this.state.headless) {
-          nodes.filter(([id, nc]) => id !== '+' && nc.lastseen)
-            .forEach(([id, nc]) => {
-              const nodeMt = mt.nodes[id] || mt.addNode(id);
-              // Seed when the server last heard from it, so a device that has not reported since the
-              // page loaded reads as offline with a real age rather than as never seen at all.
-              // lastseen is a Date in the logger, so it arrives here as an ISO string through JSON -
-              // subtracting that from a number gives NaN, which reaches Intl as a RangeError.
-              const seen = Date.parse(nc.lastseen);
-              if (!nodeMt.lastMessageAt && Number.isFinite(seen)) nodeMt.lastMessageAt = seen;
-            });
-        } else {
-          mt.element.nodesFromConfig(nodes);
-        }
+        nodes.filter(([id, nc]) => id !== '+' && nc.lastseen)
+          .forEach(([id, nc]) => {
+            const nodeMt = mt.nodes[id] || mt.addNode(id);
+            // Seed when the server last heard from it, so a device that has not reported since the
+            // page loaded reads as offline with a real age rather than as never seen at all.
+            // lastseen is a Date in the logger, so it arrives here as an ISO string through JSON -
+            // subtracting that from a number gives NaN, which reaches Intl as a RangeError.
+            const seen = Date.parse(nc.lastseen);
+            if (!nodeMt.lastMessageAt && Number.isFinite(seen)) nodeMt.lastMessageAt = seen;
+          });
       }
     }
   }

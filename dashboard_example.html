@@ -24,7 +24,11 @@
             }
         }
     </script>
-    <script src="./webcomponents.js" type="module"></script>
+    <script type="module">
+      import './core.js';
+      import './widgets.js';
+      import './graph.js';
+    </script>
     <style>
         * { box-sizing: border-box; }
         body { font-family: sans-serif; margin: 0; background: #f5f5f5; }
@@ -170,8 +174,8 @@
         Select organisation and project, then choose your control module, sensor, and actuator.
     </div>
 
-    <!-- mqtt-wrapper in headless mode: builds the data tree only, no DOM for project/node/group/leaf. -->
-    <mqtt-wrapper headless></mqtt-wrapper>
+    <!-- mqtt-wrapper builds the data tree; this page renders it itself. -->
+    <mqtt-wrapper></mqtt-wrapper>
 
     <language-picker></language-picker>
 
@@ -184,7 +188,7 @@
 </div>
 
 <script type="module">
-  import { el, getString, addVocabulary, preferedLanguageSet } from './webcomponents.js';
+  import { el, getString, addVocabulary, preferedLanguageSet } from './core.js';
 
   // Seed the language from ?lang= before any el()/getString() calls, so translated strings
   // are correct from the first render rather than waiting for mqtt-wrapper's async config fetch.

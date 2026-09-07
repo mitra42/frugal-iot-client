@@ -16,6 +16,12 @@ function withCapabilities(...caps) {
 before(async () => {
   mock = await import('./mock.js');
   cards = await import('../cards.js');
+  // The widgets a card renders. They used to arrive with everything else through
+  // webcomponents.js; each test now names what it renders.
+  await import('../widgets.js');
+  await import('../graph.js');
+  await import('../admin.js');   // mqtt-admin - the project's back renders one per admin card
+  await import('../flash.js');   // mqtt-flash - the Flash over USB card
   core = await import('../core.js');
 });
 beforeEach(() => { withCapabilities('READ'); try { localStorage.clear(); } catch (e) { /* none */ } });
@@ -147,8 +153,8 @@ describe('the project back', () => {
   });
 
   test('an opened section knows which data to load', () => {
-    // Without a tab strip nothing fires tabchange, so activeTabTitle stayed at "Dashboard",
-    // setOrganization loaded that tab's data - none - and the section sat empty with no request made
+    // The section is what decides which data setOrganization fetches. Left at its default it would
+    // ask for "Dashboard", which needs nothing, and the card would sit there empty.
     withCapabilities('ADMIN');
     const back = document.createElement('mqtt-projectback');
     back.setAttribute('organization', 'dev');
@@ -156,7 +162,7 @@ describe('the project back', () => {
     back.state.elements.admin.querySelector('.fi-admincard__head').click();
     const admin = back.querySelector('mqtt-admin');
     assert.equal(admin.getAttribute('section'), 'admin');
-    assert.equal(admin.state.activeTabTitle, 'Admin', 'it would have asked for the Dashboard tab');
+    assert.equal(admin.state.activeSectionTitle, 'Admin', 'it would have asked for Dashboard');
     back.remove();
   });
 
@@ -223,7 +229,7 @@ describe('the page', () => {
   test('the header carries the wrapper, which supplies the selectors and the connection', () => {
     const page = document.createElement('mqtt-dashboard');
     document.body.append(page);
-    assert.ok(page.querySelector('.fi-header mqtt-wrapper[headless]'));
+    assert.ok(page.querySelector('.fi-header mqtt-wrapper'));
     assert.ok(page.querySelector('.fi-header language-picker'));
     assert.ok(page.querySelector('.fi-header .fi-header__break'), 'no break to split the two rows');
     page.remove();

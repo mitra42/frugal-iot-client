@@ -843,7 +843,6 @@ class MqttDashboard extends HTMLElementExtendedMinimum {
         ]),
         // Supplies the organization and project selectors, the connection status, and the data tree
         this.state.elements.wrapper = el('mqtt-wrapper', {
-          headless: true,
           clientdisplay: 'status',   // which broker, and as whom, live on the Info card
           organization: this.getAttribute('organization') || undefined,
           project: this.getAttribute('project') || undefined,

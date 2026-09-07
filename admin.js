@@ -1,74 +1,14 @@
 /*
- * Frugal IoT client - the tab strip, and the admin panel: OTA, permissions, projects, nodes
- * and the API tools. The login page moved to login.js, so that it does not have to load this.
+ * Frugal IoT client - the admin sections: OTA, permissions, projects, nodes and the API tools.
+ *
+ * One <mqtt-admin section="..."> renders one of them, and cards.js makes one per card on a
+ * project's back. The login page is in login.js, so that it does not have to load this.
  */
 
 import {EL, GET, HTMLElementExtended} from '/node_modules/html-element-extended/htmlelementextended.js';
 import mqtt from '/node_modules/mqtt/dist/mqtt.esm.js'; // https://www.npmjs.com/package/mqtt
 import { CssUrl, POST, XXX, configSet, el, getString, hasCapability, mqttTempConnect, retainedPattern, locationParameterChange, mqtt_client, preferedLanguageSet, preferedLanguages, redirectToLogin, server_config } from './core.js';
 
-class TabbedDisplay extends HTMLElementExtended {
-  constructor() {
-    super();
-    this.state = {tab: 0};
-    this.tabs = [];
-  }
-  static get observedAttributes() { return ['tab']; }
-  static get integerAttributes() { return ['tab']; }
-
-  tabSelect(tab) {
-    this.changeAttribute('tab', tab);
-    this.renderAndReplace();
-    // Let a parent lazily load a tab's data only once it's actually selected, rather than eagerly
-    // for every tab whenever e.g. the organization changes - see MqttAdmin.onTabChange.
-    const title = this.children[tab] && this.children[tab].getAttribute('title');
-    this.dispatchEvent(new CustomEvent('tabchange', {detail: {tab, title}}));
-  }
-  updateActive(value) {
-    // Note this may get called before children added, so careful not to change 'tab'
-    if (this.children.length && this.tabs.length) {
-      if (value < 0) value = 0;
-      if (value >= this.children.length) value = this.children.length - 1;
-      for (let i = 0; i < this.children.length; i++) {
-        //if (this.children[i].tagName.toLowerCase() === 'section') {
-        if (i === value) {
-          // TODO could do this more easily with classList, but need to edit CSS
-          this.children[i].className = "tabbed-section active";
-          this.tabs[i].className = "tab active";
-        } else {
-          this.children[i].className = "tabbed-section inactive";
-          this.tabs[i].className = "tab inactive";
-        }
-        //}
-      }
-    }
-  }
-  changeAttribute(name, value) {
-    super.changeAttribute(name, value); // will set this.state.tab if name is "tab"
-    if (name === "tab") {
-      this.updateActive(this.state.tab);
-    }
-  }
-  render() {
-    //let contents = [];
-    let i = 0;
-    this.tabs = Array.from(this.children).map((c, i) =>
-      el('button', {
-        onclick: this.tabSelect.bind(this, i),
-        textContent: c.getAttribute('title') })
-    );
-    this.updateActive(this.state.tab); // sets active/inactive on children and tabs
-    this.classList.toggle('solo', this.tabs.length <= 1); // light-DOM class so CSS can suppress border
-    return [
-      el('link', {rel: 'stylesheet', href: CssUrl}),
-      el('div', {class: 'tabbed-display'}, [
-        this.tabs.length > 1 ? el('section', {class: 'tabs'}, this.tabs) : null,
-        el('slot',{}), // Children are the sections i.e. each tabs content
-      ]),
-    ];
-  }
-}
-customElements.define('tabbed-display', TabbedDisplay);
 
 // ---------- USB flashing over WebSerial ----------
 // The .bin files the OTA tab handles are application images. An ESP32 also needs a bootloader,
@@ -78,10 +18,10 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     super(props);
     this.state = {register: false, ota_files: [], people_list: [], projects_list: [], platforms_list: [], farms_list: [], farm_nodes_list: [],
       selected_platform_id: null, selected_farm_id: null, selected_farm_node: null, device_schema: null, selected_action: null,
-      // Default tab is "Dashboard" (index 0 in render()) - tabsNeedingLoad tracks which of the other,
-      // network-backed tabs (OTA/Admin/API) still need their data (re-)fetched for the current
-      // organization; see setOrganization and onTabChange.
-      activeTabTitle: 'Dashboard', tabsNeedingLoad: new Set()};
+      // Which section this card is, and whether its data has been fetched for the current
+      // organization - the sections that need a server round trip only make it once. The section is
+      // set from the attribute (see changeAttribute); 'Dashboard' is the do-nothing default.
+      activeSectionTitle: 'Dashboard', sectionsNeedingLoad: new Set()};
     this.state.elements = {};
   }
   static get observedAttributes() { return ['register','message','url','lang','org','section']; }
@@ -106,22 +46,6 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   }
   get otaOrgs() {
     return this.orgsByPerm("OTAUPDATE");
-  }
-  /*
-   * Every organization any admin tab could be about, for the ONE dropdown in the top bar.
-   *
-   * The tabs do not all cover the same organizations - OTA needs OTAUPDATE, the rest need ADMIN -
-   * so the shared dropdown offers the union and each tab says for itself whether the chosen one is
-   * one of its own (see gatedContent). Before this each tab carried its own copy of the dropdown,
-   * all of them writing to the same this.state.org, so the same choice was drawn several times.
-   */
-  get allAdminOrgs() {
-    const seen = new Set();
-    return [...this.otaOrgs, ...this.adminOrgs].filter(([oid]) => {
-      if (seen.has(oid)) return false;
-      seen.add(oid);
-      return true;
-    });
   }
   connectedCallback() {
     // TODO-22 security this will be replaced by a subset of config.yaml,
@@ -153,12 +77,12 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     //super.connectedCallback(); // Not doing as finishes with a re-render.
   }
   changeAttribute(name, value) {
-    // Rendering a single section means there is no tab strip and so no tabchange event ever fires.
-    // activeTabTitle would stay at its default of "Dashboard", setOrganization would load that
-    // tab's data (there is none), and the section would sit there empty with no request made.
+    // Which section this is decides which data setOrganization goes on to fetch. Without this it
+    // would stay at the do-nothing default of "Dashboard" and the card would sit there empty with
+    // no request ever made.
     if (name === "section") {
       const section = this.adminSections().find((x) => x.key === value);
-      if (section) this.state.activeTabTitle = section.title;
+      if (section) this.state.activeSectionTitle = section.title;
     }
     if (name === "lang") {
       if (value.includes(',')) {
@@ -898,25 +822,19 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     this.state.farms_list = [];
     this.state.farm_nodes_list = [];
     // Rebuild the gated content of each tab first, since it re-creates the elements (e.g. ota_files,
-    // people_perms_list, platforms_list_display) that loadTabData() below then asynchronously replaces.
+    // people_perms_list, platforms_list_display) that loadSectionData() below then asynchronously replaces.
     this.adminSections().forEach((section) => this.replaceElement(section.rest, this.gatedContent(section)));
     // Which tabs do their own network fetch, and so need one again for a new organization. Only
     // Dashboard does not (mqtt-wrapper handles it). "Nodes" is in the list because it now fetches
     // the enrolled-node list as well as reading server_config - leaving it out was why that section
-    // always said "No nodes have enrolled yet": loadTabIfNeeded returns early for a tab that is not
+    // always said "No nodes have enrolled yet": loadSectionIfNeeded returns early for a tab that is not
     // in this set, so the fetch never happened.
-    this.state.tabsNeedingLoad = new Set(['OTA', 'Admin', 'Projects', 'Nodes', 'API']);
-    this.loadTabIfNeeded(this.state.activeTabTitle);
-    // The one in the top bar when this is the tabbed view, the card's own when it is a single card -
-    // replaceElement does nothing for an element this rendering never created, so both are safe to
-    // ask for. Fine too if this.state.org is undefined.
-    this.replaceElement('orgdropdown', this.orgDropdown(this.state.org, this.allAdminOrgs, 'organizations'));
+    this.state.sectionsNeedingLoad = new Set(['OTA', 'Admin', 'Projects', 'Nodes', 'API']);
+    this.loadSectionIfNeeded(this.state.activeSectionTitle);
+    // Only a card created without an organization has a dropdown of its own; replaceElement does
+    // nothing for an element this rendering never made. Fine too if this.state.org is undefined.
     this.adminSections().forEach((section) =>
       this.replaceElement(section.dropdown, this.orgDropdown(this.state.org, this[section.orgs], `${section.key}organizations`)));
-    // Keep the Dashboard tab's own organization in sync with the shared dropdown above.
-    if (this.state.elements.mqttWrapper) {
-      this.state.elements.mqttWrapper.setOrganization(org);
-    }
   }
   setDefaultOrganization() {
     let org = this.state.org;
@@ -934,19 +852,13 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   onOrganization(e) {
     this.setOrganization(e.target.value);
   }
-  // Fired by tabbed-display's 'tabchange' event (see TabbedDisplay.tabSelect) whenever the user
-  // switches tabs - lazily loads that tab's data if it hasn't been fetched yet for the current org.
-  onTabChange({title}) {
-    this.state.activeTabTitle = title;
-    this.loadTabIfNeeded(title);
-  }
-  loadTabIfNeeded(title) {
-    if (!this.state.tabsNeedingLoad.has(title)) { return; }
-    this.state.tabsNeedingLoad.delete(title);
-    this.loadTabData(title);
+  loadSectionIfNeeded(title) {
+    if (!this.state.sectionsNeedingLoad.has(title)) { return; }
+    this.state.sectionsNeedingLoad.delete(title);
+    this.loadSectionData(title);
   }
   // OTA/Admin/Projects/Nodes/API each have their own server round trip; Dashboard needs nothing.
-  loadTabData(title) {
+  loadSectionData(title) {
     if (title === 'OTA') {
       this.getOtaFiles();
     } else if (title === 'Admin') {
@@ -1372,8 +1284,8 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
        ]),
      ]);
    }
-   // The admin functions, described once. The tabbed view below shows them all; the project back
-   // (CARDS_UX.md 11) puts each in its own card, by setting section="ota" and so on.
+   // The admin functions, described once. The project back (CARDS_UX.md 11) puts each in its own
+   // card, by setting section="ota" and so on.
    adminSections() {
      return [
        { key: 'ota',   title: "OTA",   orgs: 'otaOrgs',   dropdown: 'otaorgsdropdown',   rest: 'ota_rest',   content: this.otaRestContent },
@@ -1407,43 +1319,17 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
      ]);
    }
 
-   render() { //TODO-89 needs styles
-     if (this.state.section) {
-       return [el('link', {rel: 'stylesheet', href: CssUrl}), this.renderSection(this.state.section)];
+   /*
+    * One admin section, always. This element is created by cards.js, once per card on the project's
+    * back, with a `section` attribute saying which - there is no longer a tabbed page that shows
+    * them all at once.
+    */
+   render() {
+     if (!this.state.section) {
+       XXX(["mqtt-admin needs a section attribute - it renders one admin card, not a page"]);
+       return null;
      }
-     const tabbedDisplay = el('tabbed-display', {tab: 0}, [
-           el('section', {title: "Dashboard"}, [
-             this.state.elements.mqttWrapper = el('mqtt-wrapper'),
-           ]),
-           // From adminSections, so a section added for the cards gets a tab here too
-           ...this.adminSections().map((section) => (!this[section.orgs].length ? null :
-             el('section', {title: section.title}, [
-               // No dropdown here: one in the top bar serves every tab
-               this.state.elements[section.rest] = this.gatedContent(section),
-             ]))),
-     ]);
-     // Lazily load a tab's data only once the user actually switches to it - see onTabChange.
-     tabbedDisplay.addEventListener('tabchange', (e) => this.onTabChange(e.detail));
-     return [
-       el('link', {rel: 'stylesheet', href: CssUrl}),
-       el('div', {class: 'mqtt-admin'},[
-         /*
-          * The top bar: the organization, then the message and the language picker.
-          *
-          * The organization belongs here rather than on each tab, because every tab is about the
-          * same one - they all read this.state.org. It sits OUTSIDE .message, which is bold and
-          * x-large for a message and would render a dropdown that way too.
-          */
-         el('div',{class: 'mqtt-admin__topbar'},[
-           this.state.elements.orgdropdown = el('span', {textContent: "Waiting"}),
-           el('div',{class: 'message'},[
-             this.state.elements.message = el('span', {textContent: this.state.message}),
-             el('language-picker'),
-           ]),
-         ]),
-         tabbedDisplay,
-       ]),
-     ];
+     return [el('link', {rel: 'stylesheet', href: CssUrl}), this.renderSection(this.state.section)];
    }
 }
 customElements.define('mqtt-admin', MqttAdmin);

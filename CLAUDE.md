@@ -14,15 +14,22 @@ it loadable on its own, and it is maintained by reaching the display elements **
 | `widgets.js` | core | `mqtt-bar`, `mqtt-text`, `mqtt-toggle`, `mqtt-gauge`, `mqtt-slider`, `mqtt-color`, `mqtt-choosetopic` — all shadow DOM |
 | `graph.js` | core, widgets | `mqtt-graph`, `mqtt-graphdataset` — pulls Chart.js |
 | `cards.js` | core | the card UI: `mqtt-devicecard`, `mqtt-devicegrid`, `mqtt-projectback`, `mqtt-dashboard`, the layout store |
-| `nodeview.js` | core, widgets | the old node/group UI — **retires with `index-old.html`**; nothing new belongs here |
 | `flash.js` | core | `mqtt-flash` — pulls esptool-js |
-| `admin.js` | core | `mqtt-admin`, `tabbed-display` |
+| `admin.js` | core | `mqtt-admin` — one admin section, rendered per card by `cards.js` |
 | `login.js` | core | `mqtt-login` — sign in, register, forgot/reset password; light DOM |
 
-Entry points: `index.html` → `dashboard.js` (the card UI, everything but `nodeview.js`);
-`index-old.html` → `webcomponents.js` (everything, and the only remaining user of it);
-`login.html` → `login.js`, which imports only `core.js` — that is why `mqtt-login` is not in
-`admin.js`; `index-embedded.html` needs only `core.js` + `widgets.js` and must keep working.
+Every page loads the modules it needs; there is no file that loads everything.
+
+| Page | Loads |
+|---|---|
+| `index.html` | `dashboard.js` — the card UI |
+| `login.html` | `login.js`, which imports only `core.js` — that is why `mqtt-login` is not in `admin.js` |
+| `index-embedded.html`, `dashboard_example.html` | `core.js` + `widgets.js` + `graph.js` |
+
+Retired with the pre-cards UI: `index-old.html`, `index-project.html`, `nodeview.js` and
+`webcomponents.js` (the shim that loaded everything), `mqtt-admin`'s tab strip, and the wrapper's
+`headless` attribute — the data tree is all it builds now. `mqtt-admin` renders one section, chosen
+by its `section` attribute; the cards on a project's back make one per card.
 
 Dashboards (e.g. `dashboard_example.html`) are thin HTML pages importing selectively.
 
@@ -283,9 +290,9 @@ Each of these cost real time. They are not obvious from reading the code.
   `innerHTML`, `action`) as properties. **Any other function is silently put in `el.state`** and
   never wired up: `el({onpointerdown: fn})` does nothing at all. Use `addEventListener`.
 - **`@media (max-width: 1001px)` in `frugaliot.css`** inflates fonts and icons for the node/group UI,
-  where a node is one wide block. Inside a card it makes everything wider than the card. Those rules
-  read `var(--fi-chrome-font, …)`; the card page sets it to `1rem`. Anything new that is not
-  `nodeview.js` should opt out the same way. Replace them properly when `nodeview.js` goes.
+  which is now retired — so these rules have no page they were drawn for. The card page opts out by
+  setting `--fi-chrome-font: 1rem`, which the rules read. They still reach the login page and the
+  embedded examples, so removing them is a visual change to those and wants looking at on a phone.
 - **`:host-context(details[open]) div { display: block }`** near the top of `frugaliot.css` has
   specificity (0,2,2) and overrides most rules for any div in a shadow root inside an open
   `<details>` — which is every widget in the old UI.
@@ -340,9 +347,9 @@ regress unnoticed; regenerate deliberately with `npm run test:update` and read t
 
 ## Internationalisation
 
-The master language table is `const languages` in `webcomponents.js`. Dashboard-specific strings are added via `addVocabulary(yamlString)` in the dashboard's `<script>`.
+The master language table is `const languages` in `core.js`. Dashboard-specific strings are added via `addVocabulary(yamlString)` in the dashboard's `<script>`.
 
-Every `addVocabulary` block must include **all four** language sections (EN, FR, HI, ID). Strings absent from `webcomponents.js` must be explicitly added in the dashboard block — do not assume the core file covers them.
+Every `addVocabulary` block must include **all four** language sections (EN, FR, HI, ID). Strings absent from `core.js` must be explicitly added in the dashboard block — do not assume the core file covers them.
 
 ### How a string gets translated
 

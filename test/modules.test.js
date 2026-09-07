@@ -15,9 +15,8 @@ describe('the module graph stays a DAG', () => {
   test('widgets needs only core', () => {
     assert.deepEqual(importsOf('widgets.js').sort(), ['core']);
   });
-  test('graph and nodeview need only core and widgets', () => {
+  test('graph needs only core and widgets', () => {
     assert.deepEqual(importsOf('graph.js').sort(), ['core', 'widgets']);
-    assert.deepEqual(importsOf('nodeview.js').sort(), ['core', 'widgets']);
   });
   test('admin and flash need only core', () => {
     assert.deepEqual(importsOf('admin.js').sort(), ['core']);

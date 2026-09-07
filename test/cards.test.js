@@ -12,6 +12,10 @@ let mock, core;
 before(async () => {
   mock = await import('./mock.js');
   core = await import('../core.js');
+  // The widgets a card renders. They used to arrive with everything else through
+  // webcomponents.js; each test now names what it renders.
+  await import('../widgets.js');
+  await import('../graph.js');
   mock.loadConfig(config);
 });
 beforeEach(() => mock.setNow(null));
@@ -201,7 +205,7 @@ describe('the summary line', () => {
   });
 
   test('a module summary works with no element - the point of moving it to the data tree', () => {
-    const { projectMt } = mock.runScenario('control-wired', { headless: true });
+    const { projectMt } = mock.runScenario('control-wired');
     const groups = projectMt.nodes['esp8266-fb94bb'].groups;
     assert.equal(groups.sht.element, undefined, 'headless: there should be no element');
     assert.equal(groups.sht.summaryText(), '30.1°C 85.1%RH'); // formatted, and units from the schema

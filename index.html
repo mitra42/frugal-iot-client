@@ -26,9 +26,8 @@
             }
         }
     </script>
-    <!-- The card UI. The node/group UI it replaces is still at index-old.html, linked from the
-         project's home page - see CARDS_UX.md O-3. This loads the modules it needs rather than
-         webcomponents.js, which would also pull in nodeview.js. -->
+    <!-- The card UI. Every page now loads the modules it needs; the node/group UI it replaced,
+         and the shim that used to load everything, are gone. -->
     <script src="./dashboard.js" type="module"></script>
 </head>
 <body>

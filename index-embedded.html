@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Frugal IoT  Demo</title>
     <link href="./frugaliot.css" rel="stylesheet" type="text/css">
-    <!-- this maps files that webcomponents uses, -->
+    <!-- this maps the libraries the modules below import -->
     <script type="importmap">
         {
         "imports": {
@@ -18,9 +18,11 @@
             }
         }
     </script>
-    <!-- load webcomponents.js either from local server, or from frugaliot.naturalinnovation.org -->
-    <script src="./webcomponents.js" type="module"></script>
-    <!--<script src="./webcomponents.js" type="module"></script>-->
+    <script type="module">
+      import './core.js';
+      import './widgets.js';
+      import './graph.js';
+    </script>
 </head>
 <body>
 <h1>This is an example of embedding a widget in a page</h1>

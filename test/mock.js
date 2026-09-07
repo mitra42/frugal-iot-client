@@ -4,8 +4,8 @@
  * Works unchanged in node (see setup.js) and in a browser (see mock.html), because the only seam
  * it uses is mqtt_deliver - the same call the real client makes for every message it receives.
  */
-import { configSet, el, mqtt_deliver, mqtt_unsubscribe_organization, server_config, setClock,
-         MqttTopicProject } from '../webcomponents.js';
+import { configSet, mqtt_deliver, mqtt_unsubscribe_organization, server_config, setClock,
+         MqttTopicProject } from '../core.js';
 
 const ORG = 'dev';
 const PROJECT = 'lotus';
@@ -234,7 +234,7 @@ export function setNow(t) {
 // headless: true builds the data tree only. headless: false builds the existing node/group UI too,
 // which is how the same scenarios give that UI a regression check - see CARDS_PLAN.md phase 0.
 // Returns { projectMt, projectEl } (projectEl is null when headless).
-export function runScenario(name, { headless = true, container = null, at = null } = {}) {
+export function runScenario(name, { at = null } = {}) {
   const scenario = scenarios[name];
   if (!scenario) throw new Error(`No such scenario: ${name}`);
   if (at !== null) setNow(at); // Deliver the whole scenario at one instant
@@ -242,16 +242,10 @@ export function runScenario(name, { headless = true, container = null, at = null
   // scenario's messages into the previous scenario's tree.
   mqtt_unsubscribe_organization(ORG);
 
+  // Always the data tree alone. The paired DOM tree was the old node/group UI, which is gone; the
+  // cards build their own display from the tree, so nothing needs an element here.
   const projectMt = new MqttTopicProject();
-  let projectEl = null;
-  if (headless) {
-    projectMt.initialize({ type: 'text', twig: `${ORG}/${PROJECT}`, headless: true });
-  } else {
-    projectEl = el('mqtt-project', { discover: true, id: PROJECT, name: 'Lotus Ponds' }, []);
-    projectMt.initialize({ type: 'text', twig: `${ORG}/${PROJECT}`, element: projectEl });
-    projectEl.mt = projectMt;
-    (container || document.body).append(projectEl); // connectedCallback renders on append
-  }
+  projectMt.initialize({ type: 'text', twig: `${ORG}/${PROJECT}`, headless: true });
   projectMt.subscribe();
   // A message may carry the instant it arrived, so a replayed history is spread over real time
   // rather than piling onto one moment
@@ -259,7 +253,7 @@ export function runScenario(name, { headless = true, container = null, at = null
     if (when !== undefined) setNow(when);
     mqtt_deliver(topic, payload);
   });
-  return { projectMt, projectEl };
+  return { projectMt };
 }
 
 // Deliver one extra message into a scenario already running - a device arriving late, say

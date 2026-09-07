@@ -39,9 +39,8 @@
     <span id="title">Mock harness</span>
     <label>Scenario <select id="scenario"></select></label>
     <label>View <select id="view">
-        <option value="cards">cards (new)</option>
-        <option value="nodeview">node/group UI (existing)</option>
-        <option value="headless">headless (data tree only)</option>
+        <option value="cards">cards</option>
+        <option value="headless">data tree only</option>
     </select></label>
     <button id="rerun">Re-run</button>
     <button id="forget" title="Clear the remembered card order and open/closed state">Forget layout</button>
@@ -57,7 +56,7 @@
   import { scenarios, loadConfig, runScenario, messagesOf } from './mock.js';
   import { snapshot } from './serialize.js';
   import '../cards.js';
-  import { el } from '../webcomponents.js';
+  import { el } from '../core.js';
 
   // The fixture is generated from the real server schema - see fixtures/regenerate.js
   const config = await (await fetch('./fixtures/config.json')).json();
@@ -81,7 +80,7 @@
       messages.map(([topic, payload]) => `${topic} = ${payload}`).join('\n');
 
     // The cards read the data tree, so they need no elements of their own built for them
-    const { projectMt, projectEl } = runScenario(name, { headless: view !== 'nodeview', container: stage });
+    const { projectMt } = runScenario(name);
 
     if (view === 'cards') {
       // The grid makes its own cards, in the order it remembers, and adds more as devices arrive

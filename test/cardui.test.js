@@ -15,6 +15,10 @@ before(async () => {
   mock = await import('./mock.js');
   core = await import('../core.js');
   await import('../cards.js');
+  // The widgets a card renders. They used to arrive with everything else through
+  // webcomponents.js; each test now names what it renders.
+  await import('../widgets.js');
+  await import('../graph.js');
   mock.loadConfig(config);
 });
 beforeEach(() => mock.setNow(null));
