@@ -1546,12 +1546,22 @@ class MqttTopic {
   // reporting -999 into a width of 4 overflows the field rather than being shown as -99.
   get formatted() {
     const v = this.state.value;
-    if (v === undefined || v === null || v === '') return '';
+    // null is "the sensor reported that it has no reading" - worth showing as such, and
+    // different from never having reported at all, which stays blank.
+    if (v === null) return '\u2014'; // em dash
+    if (v === undefined || v === '') return '';
     // A bool is a state, not a word: "true" in a summary reads as a bug rather than as a relay
     // being on, and ✓/✗ is what the rest of the UI already uses for one
     if (typeof v === 'boolean') return v ? '✓' : '✗';
     if (typeof v !== 'number') return String(v);
     return v.toFixed(this.decimals) + unitSuffix(this.units);
+  }
+  // The sensor said it has no reading, by publishing "nan" - see valueFromText. Distinct from
+  // outOfRange below, which is a real reading that falls outside its declared min/max: a sensor
+  // may legitimately report an extreme value and that value is information, not an error.
+  // Never-reported topics are not invalid - state.value is undefined then, not null.
+  get invalid() {
+    return this.state.value === null;
   }
   // Outside its declared range - a broken sensor, or a range that needs revisiting
   get outOfRange() {
@@ -1726,8 +1736,15 @@ class MqttTopic {
           return toBool(message);
         case "float":
         case "int":
-        case "exponential":
-          return Number(message)
+        case "exponential": {
+          // "nan" is Frugal-IoT's on-the-wire form for "this sensor currently has no reading" -
+          // a failed read, an absent device, a validate() that rejected the value. See "Invalid
+          // readings" in the node library's CLAUDE.md. null rather than NaN, so that it can be
+          // tested for: every comparison against NaN is false, and toFixed(NaN) renders the
+          // literal string "NaN" into the card.
+          const n = Number(message);
+          return Number.isNaN(n) ? null : n;
+        }
         case "text":
         case "topic":
         case "color":

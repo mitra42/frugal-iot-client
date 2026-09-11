@@ -132,6 +132,7 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
     (e.widgets || []).forEach(({ row, widget }) => {
       if (row.mt.state.value !== undefined) widget.valueSet(row.mt.state.value);
       widget.parentElement?.classList.toggle('fi-row--outofrange', row.mt.outOfRange);
+      widget.parentElement?.classList.toggle('fi-row--invalid', row.mt.invalid);
     });
     // A row can appear or disappear - a sensor starts reporting, a control gets wired
     if (e.rows && (e.widgets.length !== nodeMt.frontRows.filter((r) => r.mt).length)) this.renderAndReplace();
@@ -303,7 +304,7 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
     const widget = this.widgetFor(row);
     this.state.elements.widgets.push({ row, widget });
     return el('div', {
-      class: `fi-row fi-row--${row.kind}${row.mt.outOfRange ? ' fi-row--outofrange' : ''}`,
+      class: `fi-row fi-row--${row.kind}${row.mt.outOfRange ? ' fi-row--outofrange' : ''}${row.mt.invalid ? ' fi-row--invalid' : ''}`,
     }, [widget]);
   }
 
@@ -408,7 +409,7 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
         const widget = this.widgetForTopic(mt, mt.name);
         this.state.elements.widgets.push({ row: { mt }, widget });
         return el('div', {
-          class: `fi-field fi-field--reading${mt.outOfRange ? ' fi-row--outofrange' : ''}`,
+          class: `fi-field fi-field--reading${mt.outOfRange ? ' fi-row--outofrange' : ''}${mt.invalid ? ' fi-row--invalid' : ''}`,
         }, [widget]);
       }));
   }
