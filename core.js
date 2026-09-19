@@ -400,6 +400,7 @@ EN:
   Frugal IoT project: Frugal IoT project
   Frugal-IoT Username *: Frugal-IoT Username *
   Full provision - all configuration on the board will be erased: Full provision - all configuration on the board will be erased
+  Gas Resistance: Gas Resistance
   Greater Than: Greater Than
   heating: heating
   humidifier: humidifier
@@ -480,6 +481,7 @@ EN:
   Platform Name *: Platform Name *
   Platform registered: Platform registered
   Please login: Please login
+  Pressure: Pressure
   Project: Project
   Project changed to: Project changed to
   Project ID: Project ID
@@ -635,6 +637,7 @@ FR:
   Frugal IoT project: Projet Frugal IoT
   Frugal-IoT Username *: Nom d'utilisateur Frugal-IoT *
   Full provision - all configuration on the board will be erased: Provisionnement complet - toute la configuration de la carte sera effacée
+  Gas Resistance: Résistance du gaz
   Greater Than: Supérieur à
   heating: chauffage
   humidifier: humidificateur
@@ -717,6 +720,7 @@ FR:
   Platform Name *: Nom de la plateforme *
   Platform registered: Plateforme enregistrée
   Please login: Veuillez vous connecter
+  Pressure: Pression
   Project: Projet
   Project changed to: Projet changé en
   Project ID: ID du projet
@@ -872,6 +876,7 @@ HI:
   Frugal IoT project: फ़्रूगल IoT परियोजना
   Frugal-IoT Username *: Frugal-IoT उपयोगकर्ता नाम *
   Full provision - all configuration on the board will be erased: पूर्ण प्रोविजनिंग - बोर्ड की सारी कॉन्फ़िगरेशन मिट जाएगी
+  Gas Resistance: गैस प्रतिरोध
   Greater Than: इससे बड़ा
   heating: हीटिंग
   humidifier: ह्यूमिडिफ़ायर
@@ -954,6 +959,7 @@ HI:
   Platform Name *: प्लेटफ़ॉर्म का नाम *
   Platform registered: प्लेटफ़ॉर्म पंजीकृत किया गया
   Please login: कृपया लॉगिन करें
+  Pressure: दाब
   Project: परियोजना
   Project changed to: प्रोजेक्ट बदलकर किया गया
   Project ID: प्रोजेक्ट आईडी
@@ -1109,6 +1115,7 @@ ID:
   Frugal IoT project: Proyek Frugal IoT
   Frugal-IoT Username *: Nama Pengguna Frugal-IoT *
   Full provision - all configuration on the board will be erased: Provisioning penuh - semua konfigurasi pada papan akan dihapus
+  Gas Resistance: Resistansi gas
   Greater Than: Lebih dari
   heating: pemanas
   humidifier: pelembap
@@ -1191,6 +1198,7 @@ ID:
   Platform Name *: Nama Platform *
   Platform registered: Platform terdaftar
   Please login: Silakan masuk
+  Pressure: Tekanan
   Project: Proyek
   Project changed to: Proyek diubah menjadi
   Project ID: ID Proyek
@@ -2424,14 +2432,19 @@ class MqttTopicNode extends MqttTopic {
   // readings, then actuators, then one row per control.
   get frontRows() {
     const cfg = this.deviceConfig;
-    const entries = (cfg && cfg.front) || this.defaultFrontEntries;
-    const rows = entries.map((e) => this.resolveEntry(e)).filter(Boolean);
+    const declared = cfg && cfg.front;
+    let rows = this.resolveEntries(declared || this.defaultFrontEntries);
+    // A declared list that resolves to nothing means the device no longer matches the entry its OTA
+    // key picked - a scratch application rebuilt with different sensors. Show what it does have,
+    // because a blank front says nothing at all about a device that is reporting fine (D-50).
+    if (declared && !rows.length) rows = this.resolveEntries(this.defaultFrontEntries);
     const mts = rows.filter((r) => r.mt).map((r) => r.mt);
     rows.forEach((r) => {
       r.label = r.mt ? this.labelFor(r.mt, mts) : (r.groupMt.state.name || r.groupMt.group);
     });
     return rows;
   }
+  resolveEntries(entries) { return entries.map((e) => this.resolveEntry(e)).filter(Boolean); }
   get defaultFrontEntries() {
     const readings = [], actuators = [], controls = [];
     this.orderedGroupIds.forEach((groupId) => {
@@ -2455,8 +2468,11 @@ class MqttTopicNode extends MqttTopic {
     const fromList = (list) => list.map((e) => this.resolveEntry(e)).filter(Boolean)
       .map((r) => ({ text: r.mt ? r.mt.formatted : r.groupMt.summaryShort(), row: r }))
       .filter((c) => (c.text !== null) && (c.text !== ''));
-    if (cfg && cfg.summary) return fromList(cfg.summary);   // declared: however many were asked for
-    if (cfg && cfg.front) return fromList(cfg.front.slice(0, SUMMARY_CHIP_LIMIT));
+    // Each declared list falls through when it resolves to nothing, for the same reason frontRows
+    // does: a device that has drifted from its entry still has readings worth a chip (D-50).
+    const declared = (cfg && cfg.summary) ? fromList(cfg.summary)   // however many were asked for
+      : (cfg && cfg.front) ? fromList(cfg.front.slice(0, SUMMARY_CHIP_LIMIT)) : [];
+    if (declared.length) return declared;
     return this.orderedGroupIds
       .filter((groupId) => contributesToSummary(groupId))
       .map((groupId) => ({ text: this.groups[groupId].summaryShort(),
