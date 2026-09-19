@@ -237,8 +237,42 @@ function hasCapability(org, capability) {
   return perms.some((p) => (p.capability === capability) && (p.org === org));
 }
 
+/* Resolve a module id to its schema entry in modules.yaml.
+ *
+ * An exact match wins. Failing that, a numbered or suffixed INSTANCE falls back to its base
+ * module: a node with several probes or several irrigation sectors publishes `soil1`, `soil2`,
+ * `sector1`... and modules.yaml should not have to carry a near-duplicate entry for each one.
+ * Without this, every such reading landed in the card's "Not in the schema" section with no name,
+ * units, colour or range - and `soil1` in particular was on the legacy-drop list in
+ * topicValueSet(), so its readings were discarded outright.
+ *
+ * The suffix must be all digits (`soil1`) or start with a separator (`soil_north`, `soil-2`).
+ * A bare-word suffix is NOT accepted, so a module genuinely called `door` does not silently
+ * resolve to the `do` (dissolved oxygen) template. Longest prefix wins, so `soilmodbus1` finds
+ * `soilmodbus` rather than `soil`.
+ */
+function moduleBaseId(groupId) {
+  const modules = (server_config && server_config.schema && server_config.schema.modules) || {};
+  if (modules[groupId]) return groupId;
+  let best = null;
+  for (const key of Object.keys(modules)) {
+    if ((groupId.length > key.length) && groupId.startsWith(key)
+        && (best === null || key.length > best.length)) {
+      const suffix = groupId.substring(key.length);
+      if (/^[0-9]+$/.test(suffix) || /^[-_]/.test(suffix)) best = key;
+    }
+  }
+  return best;
+}
 function moduleTemplate(groupId) {
-  return server_config && server_config.schema && server_config.schema.modules[groupId];
+  const base = moduleBaseId(groupId);
+  return base && server_config && server_config.schema && server_config.schema.modules[base];
+}
+// The part that distinguishes one instance from another - "1" for soil1, "north" for soil_north,
+// "" for an exact match. Used to tell the instances apart by name in the UX.
+function moduleInstanceSuffix(groupId) {
+  const base = moduleBaseId(groupId);
+  return (base && (base !== groupId)) ? groupId.substring(base.length).replace(/^[-_]/, '') : '';
 }
 // TODO-L4 a name prefix, until modules.yaml carries `control: true`
 function isControlModule(groupId) { return groupId.startsWith('control'); }
@@ -252,7 +286,9 @@ function contributesToSummary(groupId) {
 // arrive, so a card looks the same on every load
 function moduleOrder(groupId) {
   const modules = (server_config && server_config.schema && server_config.schema.modules) || {};
-  const i = Object.keys(modules).indexOf(groupId);
+  // Order by the BASE module, so soil1/soil2/soil3 sort together where `soil` sits rather than
+  // scattering to the end of the card as unknowns
+  const i = Object.keys(modules).indexOf(moduleBaseId(groupId));
   return i === -1 ? Number.MAX_SAFE_INTEGER : i;
 }
 
@@ -2178,7 +2214,6 @@ class MqttTopicNode extends MqttTopic {
       (topicPath === this.topicPath)
       || ["relay"].includes(twig)
       || twig.startsWith("set")
-      || twig.startsWith("soil1")
       || twig.startsWith("control/")
       || twig.startsWith("humidity/")
       || twig.startsWith("led/")
@@ -2434,8 +2469,11 @@ class MqttTopicNode extends MqttTopic {
   // MqttNode.addGroupFromTemplate delegates here and then adds the DOM element on top.
   addGroupFromTemplate(groupId) {
     if (this.groups[groupId]) return false;
-    const moduleTemplate = server_config.schema.modules[groupId];
-    const groupName = moduleTemplate ? moduleTemplate.name : groupId;
+    const mTemplate = moduleTemplate(groupId); // Resolves soil1 -> soil etc, see moduleBaseId
+    // An instance resolved by prefix gets its suffix appended, so three probes read as
+    // "Soil Moisture 1/2/3" rather than three identically named groups
+    const suffix = moduleInstanceSuffix(groupId);
+    const groupName = mTemplate ? (suffix ? `${mTemplate.name} ${suffix}` : mTemplate.name) : groupId;
     const GroupClass = topicGroupClasses[groupId] || MqttTopicGroup;
     const groupMt = new GroupClass();
     groupMt.name = groupName;
@@ -2444,10 +2482,10 @@ class MqttTopicNode extends MqttTopic {
     groupMt.twig = groupId;   // So topicPath resolves to org/project/node/group
     groupMt.nodeMt = this;    // So projectMt works, which a control summary needs to name its wiring
     this._groups[groupId] = groupMt;
-    if (!moduleTemplate) {
+    if (!mTemplate) {
       XXX(["Unknown group - no template found", groupId]);
     } else {
-      moduleTemplate.topics.forEach(topicUnexpandedTemplate => {
+      mTemplate.topics.forEach(topicUnexpandedTemplate => {
         const topicExpandedTemplate = expandTopicTemplate(topicUnexpandedTemplate.leaf_from || topicUnexpandedTemplate.leaf, topicUnexpandedTemplate) || topicUnexpandedTemplate;
         this.addTopicFromTemplate(topicExpandedTemplate, groupId);
       });
@@ -2895,6 +2933,7 @@ export {
   isEditableTarget,
   leafAttribute,
   locationParameterChange,
+  moduleBaseId,
   mqtt_client,
   mqttTempConnect,
   mqtt_deliver,

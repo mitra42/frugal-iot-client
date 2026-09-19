@@ -8,8 +8,11 @@ import { readFileSync } from 'node:fs';
 const config = JSON.parse(readFileSync(new URL('./fixtures/config.json', import.meta.url), 'utf8'));
 let mock;
 
+let core;
+
 before(async () => {
   mock = await import('./mock.js');
+  core = await import('../core.js');
   mock.loadConfig(config);
 });
 
@@ -30,6 +33,80 @@ describe('discovery', () => {
     const { projectMt } = mock.runScenario('every-device');
     assert.equal(Object.keys(projectMt.nodes).length,
       Object.keys(config.schema.devices).length, 'a configured layout with no device to show it');
+  });
+});
+
+describe('module instances', () => {
+  /* modules.yaml describes a module once, but a node can carry several of it - three soil probes,
+   * four irrigation sectors. Those publish soil1/soil2/soil3, and the schema should not need a
+   * near-duplicate entry for each. See moduleBaseId() in core.js.
+   */
+  test('a numbered instance gets its base module\'s schema, not "unknown"', () => {
+    const { projectMt } = mock.runScenario('numbered-instances');
+    const mt = projectMt.nodes['esp8266-sectors'].groups.soil1.topics.soil;
+    assert.equal(mt.type, 'int');
+    assert.equal(mt.min, 0);
+    assert.equal(mt.max, 100);
+  });
+
+  test('a numbered instance\'s readings arrive', () => {
+    // Regression: soil1 was on the legacy-drop list in topicValueSet, so its values were
+    // discarded outright rather than merely displayed without a schema
+    const { projectMt } = mock.runScenario('numbered-instances');
+    const groups = projectMt.nodes['esp8266-sectors'].groups;
+    assert.equal(groups.soil1.topics.soil.state.value, 12);
+    assert.equal(groups.soil2.topics.soil.state.value, 34);
+  });
+
+  test('instances are named apart', () => {
+    const { projectMt } = mock.runScenario('numbered-instances');
+    const groups = projectMt.nodes['esp8266-sectors'].groups;
+    assert.equal(groups.soil.name, 'Soil', 'an exact match keeps the plain name');
+    assert.equal(groups.soil1.name, 'Soil 1');
+    assert.equal(groups.soil_north.name, 'Soil north');
+  });
+
+  test('a bare-word suffix does not resolve - "door" is not an instance of "do"', () => {
+    const { projectMt } = mock.runScenario('numbered-instances');
+    const door = projectMt.nodes['esp8266-sectors'].groups.door;
+    assert.equal(door.name, 'door', 'no module template, so the raw id stands in');
+    assert.equal(door.topics.do, undefined,
+      'and the "do" module\'s topics were not created for it');
+    // The leaf itself still picks up topics.yaml metadata by its own name, which is the
+    // pre-existing unknown-module path and not part of module resolution
+    assert.equal(door.topics.soil.state.value, 78, 'the reading still arrives');
+  });
+
+  describe('moduleBaseId', () => {
+    test('exact match wins over any prefix', () => {
+      assert.equal(core.moduleBaseId('soil'), 'soil');
+    });
+    test('digits and separators are instance suffixes', () => {
+      assert.equal(core.moduleBaseId('soil1'), 'soil');
+      assert.equal(core.moduleBaseId('soil12'), 'soil');
+      assert.equal(core.moduleBaseId('soil_north'), 'soil');
+      assert.equal(core.moduleBaseId('soil-2'), 'soil');
+    });
+    test('a bare word is not', () => {
+      assert.equal(core.moduleBaseId('door'), null, '"do" must not swallow "door"');
+      assert.equal(core.moduleBaseId('soilmoisture'), null);
+    });
+    test('an unknown module stays unknown', () => {
+      assert.equal(core.moduleBaseId('nosuchthing'), null);
+    });
+    test('the longest prefix wins', () => {
+      // `soilmodbus` is a real module on other branches and starts with `soil`, which is exactly
+      // the case a shortest-match rule would get wrong
+      const extended = JSON.parse(JSON.stringify(config));
+      extended.schema.modules.soilmodbus = { name: 'Soil Probe', topics: [{ leaf: 'humidity' }] };
+      mock.loadConfig(extended);
+      try {
+        assert.equal(core.moduleBaseId('soilmodbus1'), 'soilmodbus');
+        assert.equal(core.moduleBaseId('soil1'), 'soil');
+      } finally {
+        mock.loadConfig(config); // Config is module-level state - do not leak it to later tests
+      }
+    });
   });
 });
 
