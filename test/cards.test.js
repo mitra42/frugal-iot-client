@@ -140,6 +140,24 @@ describe('the front of a card', () => {
     assert.equal(nodeMt.frontRows.some((r) => r.kind === 'control'), false);
   });
 
+  test('a declared list that resolves to nothing falls back to the defaults', () => {
+    // The real case: devices.yaml carried an entry for the "temp" scratch application, which had
+    // been rebuilt with a different sensor. Every declared twig resolved to null, and the card went
+    // blank while the device was reporting perfectly well. See CARDS_UX.md D-50.
+    const { projectMt } = mock.runScenario('default-front');
+    const nodeMt = projectMt.nodes['esp8266-two-temps'];
+    mock.loadConfig({ ...config, schema: { ...config.schema, devices: {
+      ...config.schema.devices, workbench: { front: ['aht20/temperature', 'bmp280/pressure'] },
+    } } });
+    assert.deepEqual(nodeMt.deviceConfig.front, ['aht20/temperature', 'bmp280/pressure']);
+    assert.equal(nodeMt.groups.aht20, undefined, 'this device has none of the declared modules');
+    assert.ok(nodeMt.frontRows.length, 'a blank front is the bug this guards');
+    assert.deepEqual(nodeMt.frontRows.map((r) => `${r.mt.group}/${r.mt.leaf}`),
+      nodeMt.defaultFrontEntries);
+    assert.ok(nodeMt.summaryChips.length, 'the summary falls through the same way');
+    mock.loadConfig(config);
+  });
+
   test('with no entry: readings, then actuators, then controls', () => {
     const { projectMt } = mock.runScenario('default-front');
     const rows = projectMt.nodes['esp8266-two-temps'].frontRows;
