@@ -305,6 +305,17 @@ out are exactly the writable settings and the text/metadata fields. **D-22**
 If that default proves wrong in practice, the fix is a module-level boolean, not a second render
 key.
 
+**The default is also the fallback when a declared `front:` resolves to nothing.** A single
+unresolvable entry is dropped and the rest stand — a device legitimately lacking one of its
+application's sensors (§4.6). But when *every* entry is dropped, the device no longer resembles the
+entry its OTA key selected at all, and the honest reading is that the entry does not apply to it.
+Showing the default list says what the device is actually reporting; showing the empty declared list
+says nothing, on a card whose header is meanwhile reporting the device as live. This is not
+hypothetical: a `temp:` entry for the scratch application, rebuilt with a BME680 in place of the
+AHT20/BMP280 it named, blanked the front of a perfectly healthy device, and the device's readings
+were reachable only by turning the card over. `summary:` falls through the same way, and then to
+§4.7 rule 3. **D-50**
+
 ### 4.3 Labels
 
 On the **front**, a row is labelled by the topic's `name` from `topics.yaml` — `Temperature`,
@@ -777,6 +788,7 @@ Reopening one means revisiting this document, not deciding it in code.
 | D-47 | How a forgotten password is reset | A stateless HMAC code — see §16. Nothing is stored, so there is no token table to expire, leak or clean up |
 | D-48 | Six digits to type, or a link to click? | Both, from the same digest — see §16 |
 | D-49 | Is `email` optional at registration? | No, required now. It was optional, and an account without one cannot use D-47 at all |
+| D-50 | A declared `front:`/`summary:` that resolves to nothing | Fall back to the default list — a device that has drifted from its entry still shows its readings, rather than a blank card |
 
 ---
 
