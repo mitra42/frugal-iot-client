@@ -330,6 +330,12 @@ div.mqtt-text {
 .fi-row__rule  { font-variant-numeric: tabular-nums; }
 /* A reading past its declared range is a broken sensor, or a range that needs revisiting */
 .fi-row--outofrange { color: #c0392b; }
+/* The sensor said it has no reading at all (it published "nan"), as opposed to a real reading
+   that happens to fall outside its declared range. Muted rather than hidden, for the same
+   reason the stale and offline states above stay legible: "this one is not reporting" is
+   itself information. The two are mutually exclusive - outOfRange tests typeof value is a
+   number, and an invalid reading is null. */
+.fi-row--invalid { color: var(--fi-muted); opacity: 0.65; }
 .fi-card__foot {
     display: flex;
     gap: 10px;

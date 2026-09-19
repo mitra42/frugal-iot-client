@@ -243,8 +243,42 @@ function hasCapability(org, capability, project) {
     && (!project || !p.project || (p.project === project)));
 }
 
+/* Resolve a module id to its schema entry in modules.yaml.
+ *
+ * An exact match wins. Failing that, a numbered or suffixed INSTANCE falls back to its base
+ * module: a node with several probes or several irrigation sectors publishes `soil1`, `soil2`,
+ * `sector1`... and modules.yaml should not have to carry a near-duplicate entry for each one.
+ * Without this, every such reading landed in the card's "Not in the schema" section with no name,
+ * units, colour or range - and `soil1` in particular was on the legacy-drop list in
+ * topicValueSet(), so its readings were discarded outright.
+ *
+ * The suffix must be all digits (`soil1`) or start with a separator (`soil_north`, `soil-2`).
+ * A bare-word suffix is NOT accepted, so a module genuinely called `door` does not silently
+ * resolve to the `do` (dissolved oxygen) template. Longest prefix wins, so `soilmodbus1` finds
+ * `soilmodbus` rather than `soil`.
+ */
+function moduleBaseId(groupId) {
+  const modules = (server_config && server_config.schema && server_config.schema.modules) || {};
+  if (modules[groupId]) return groupId;
+  let best = null;
+  for (const key of Object.keys(modules)) {
+    if ((groupId.length > key.length) && groupId.startsWith(key)
+        && (best === null || key.length > best.length)) {
+      const suffix = groupId.substring(key.length);
+      if (/^[0-9]+$/.test(suffix) || /^[-_]/.test(suffix)) best = key;
+    }
+  }
+  return best;
+}
 function moduleTemplate(groupId) {
-  return server_config && server_config.schema && server_config.schema.modules[groupId];
+  const base = moduleBaseId(groupId);
+  return base && server_config && server_config.schema && server_config.schema.modules[base];
+}
+// The part that distinguishes one instance from another - "1" for soil1, "north" for soil_north,
+// "" for an exact match. Used to tell the instances apart by name in the UX.
+function moduleInstanceSuffix(groupId) {
+  const base = moduleBaseId(groupId);
+  return (base && (base !== groupId)) ? groupId.substring(base.length).replace(/^[-_]/, '') : '';
 }
 // TODO-L4 a name prefix, until modules.yaml carries `control: true`
 function isControlModule(groupId) { return groupId.startsWith('control'); }
@@ -258,7 +292,9 @@ function contributesToSummary(groupId) {
 // arrive, so a card looks the same on every load
 function moduleOrder(groupId) {
   const modules = (server_config && server_config.schema && server_config.schema.modules) || {};
-  const i = Object.keys(modules).indexOf(groupId);
+  // Order by the BASE module, so soil1/soil2/soil3 sort together where `soil` sits rather than
+  // scattering to the end of the card as unknowns
+  const i = Object.keys(modules).indexOf(moduleBaseId(groupId));
   return i === -1 ? Number.MAX_SAFE_INTEGER : i;
 }
 
@@ -1703,12 +1739,22 @@ class MqttTopic {
   // reporting -999 into a width of 4 overflows the field rather than being shown as -99.
   get formatted() {
     const v = this.state.value;
-    if (v === undefined || v === null || v === '') return '';
+    // null is "the sensor reported that it has no reading" - worth showing as such, and
+    // different from never having reported at all, which stays blank.
+    if (v === null) return '\u2014'; // em dash
+    if (v === undefined || v === '') return '';
     // A bool is a state, not a word: "true" in a summary reads as a bug rather than as a relay
     // being on, and ✓/✗ is what the rest of the UI already uses for one
     if (typeof v === 'boolean') return v ? '✓' : '✗';
     if (typeof v !== 'number') return String(v);
     return v.toFixed(this.decimals) + unitSuffix(this.units);
+  }
+  // The sensor said it has no reading, by publishing "nan" - see valueFromText. Distinct from
+  // outOfRange below, which is a real reading that falls outside its declared min/max: a sensor
+  // may legitimately report an extreme value and that value is information, not an error.
+  // Never-reported topics are not invalid - state.value is undefined then, not null.
+  get invalid() {
+    return this.state.value === null;
   }
   // Outside its declared range - a broken sensor, or a range that needs revisiting
   get outOfRange() {
@@ -1883,8 +1929,15 @@ class MqttTopic {
           return toBool(message);
         case "float":
         case "int":
-        case "exponential":
-          return Number(message)
+        case "exponential": {
+          // "nan" is Frugal-IoT's on-the-wire form for "this sensor currently has no reading" -
+          // a failed read, an absent device, a validate() that rejected the value. See "Invalid
+          // readings" in the node library's CLAUDE.md. null rather than NaN, so that it can be
+          // tested for: every comparison against NaN is false, and toFixed(NaN) renders the
+          // literal string "NaN" into the card.
+          const n = Number(message);
+          return Number.isNaN(n) ? null : n;
+        }
         case "text":
         case "topic":
         case "color":
@@ -2309,7 +2362,6 @@ class MqttTopicNode extends MqttTopic {
       (topicPath === this.topicPath)
       || ["relay"].includes(twig)
       || twig.startsWith("set")
-      || twig.startsWith("soil1")
       || twig.startsWith("control/")
       || twig.startsWith("humidity/")
       || twig.startsWith("led/")
@@ -2553,8 +2605,11 @@ class MqttTopicNode extends MqttTopic {
   // MqttNode.addGroupFromTemplate delegates here and then adds the DOM element on top.
   addGroupFromTemplate(groupId) {
     if (this.groups[groupId]) return false;
-    const moduleTemplate = server_config.schema.modules[groupId];
-    const groupName = moduleTemplate ? moduleTemplate.name : groupId;
+    const mTemplate = moduleTemplate(groupId); // Resolves soil1 -> soil etc, see moduleBaseId
+    // An instance resolved by prefix gets its suffix appended, so three probes read as
+    // "Soil Moisture 1/2/3" rather than three identically named groups
+    const suffix = moduleInstanceSuffix(groupId);
+    const groupName = mTemplate ? (suffix ? `${mTemplate.name} ${suffix}` : mTemplate.name) : groupId;
     const GroupClass = topicGroupClasses[groupId] || MqttTopicGroup;
     const groupMt = new GroupClass();
     groupMt.name = groupName;
@@ -2563,10 +2618,10 @@ class MqttTopicNode extends MqttTopic {
     groupMt.twig = groupId;   // So topicPath resolves to org/project/node/group
     groupMt.nodeMt = this;    // So projectMt works, which a control summary needs to name its wiring
     this._groups[groupId] = groupMt;
-    if (!moduleTemplate) {
+    if (!mTemplate) {
       XXX(["Unknown group - no template found", groupId]);
     } else {
-      moduleTemplate.topics.forEach(topicUnexpandedTemplate => {
+      mTemplate.topics.forEach(topicUnexpandedTemplate => {
         const topicExpandedTemplate = expandTopicTemplate(topicUnexpandedTemplate.leaf_from || topicUnexpandedTemplate.leaf, topicUnexpandedTemplate) || topicUnexpandedTemplate;
         this.addTopicFromTemplate(topicExpandedTemplate, groupId);
       });
@@ -3016,6 +3071,7 @@ export {
   isEditableTarget,
   leafAttribute,
   locationParameterChange,
+  moduleBaseId,
   mqtt_client,
   mqttTempConnect,
   mqtt_deliver,

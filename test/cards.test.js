@@ -57,6 +57,22 @@ describe('formatting a value', () => {
     assert.equal(mt.outOfRange, true);
     assert.equal(mt.formatted, '-999.0°C'); // wider than width 4 - never lie about the value
   });
+
+  test('a sensor publishing "nan" has no reading, which is not the same as out of range', () => {
+    const { projectMt } = mock.runScenario('one-device');
+    const mt = projectMt.nodes['esp8266-fb94bb'].groups.sht.topics.temperature;
+    assert.equal(mt.invalid, false);          // starts with a real reading
+
+    mock.deliver(mt.topicPath, 'nan');
+    assert.equal(mt.state.value, null);       // null, not NaN - every comparison against NaN is false
+    assert.equal(mt.invalid, true);
+    assert.equal(mt.outOfRange, false);       // there is no reading, so it is not a range problem
+    assert.equal(mt.formatted, '\u2014');     // em dash rather than the literal string "NaN"
+
+    mock.deliver(mt.topicPath, '21.5');       // and it recovers
+    assert.equal(mt.invalid, false);
+    assert.equal(mt.formatted, '21.5°C');
+  });
 });
 
 describe('retained message patterns', () => {

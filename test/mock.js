@@ -54,6 +54,20 @@ export const scenarios = {
     messages: device('esp8266-fb94bb', 'Greenhouse North', { ...SHT, ...LED }),
   },
 
+  'numbered-instances': {
+    // Several probes of one kind on one node. modules.yaml has `soil` but no `soil1`, so every
+    // one of these depends on an instance falling back to its base module. `door` is the
+    // negative case - `do` is a real module, but "or" is not a valid instance suffix.
+    title: 'Numbered and named instances of one module',
+    messages: device('esp8266-sectors', 'Several Sectors', {
+      'soil/soil': '41',
+      'soil1/soil': '12',
+      'soil2/soil': '34',
+      'soil_north/soil': '56',
+      'door/soil': '78',
+    }),
+  },
+
   'no-readings': {
     title: 'Device discovered but silent - no readings yet',
     messages: [[`${ORG}/${PROJECT}`, 'esp8266-newborn']],
