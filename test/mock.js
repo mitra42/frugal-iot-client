@@ -85,6 +85,18 @@ export const scenarios = {
     }, { ota: 'workbench_c3' }),
   },
 
+  'one-module-many-readings': {
+    // A real BME680 device (dev/lotus/esp32-accb20): four readings, all from one module. It showed
+    // two of them on the summary while three chip slots sat empty - see CARDS_UX.md D-51.
+    title: 'One module reporting four readings (BME680)',
+    messages: device('esp32-accb20', 'BME680', {
+      'bme680/temperature': '18.4',
+      'bme680/humidity': '68.8',
+      'bme680/pressure': '1022.3',
+      'bme680/gas': '58.6',
+    }, { ota: 'temp_supermini-4x', battery: null }),
+  },
+
   'out-of-range': {
     // temperature is 0..50 and humidity 0..100 in topics.yaml, so one is far below its range and
     // the other above it - the two ends look different and both need checking

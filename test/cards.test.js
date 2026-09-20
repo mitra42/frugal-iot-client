@@ -215,6 +215,29 @@ describe('the summary line', () => {
     assert.ok(chips.every((c) => c.text));
   });
 
+  test('one module reporting four readings gets the whole line, not two of them', () => {
+    // The chip slots a device does not use go to a module that can fill them. Before this, the same
+    // four readings showed in full when they came from two modules and were cut to two when they
+    // came from one - a difference the reader has no way to see. See CARDS_UX.md D-51.
+    const { projectMt } = mock.runScenario('one-module-many-readings');
+    const nodeMt = projectMt.nodes['esp32-accb20'];
+    assert.equal(Object.keys(nodeMt.groups.bme680.topics).length, 4);
+    assert.deepEqual(nodeMt.summaryChips.map((c) => c.text),
+      ['18.4°C 68.8%RH 1022.3 hPa 58.6 kOhm']);
+  });
+
+  test('the spare is only ever handed out, so a multi-module summary never shrinks', () => {
+    // Several modules already fill the line; nothing is taken away to pay for the rule above
+    const { projectMt } = mock.runScenario('default-front');
+    const nodeMt = projectMt.nodes['esp8266-two-temps'];
+    const groupMts = nodeMt.orderedGroupIds.map((g) => nodeMt.groups[g])
+      .filter((g) => nodeMt.summaryChips.some((c) => c.row.groupMt === g));
+    assert.ok(groupMts.length > 1, 'this scenario is meant to have several contributing modules');
+    nodeMt.summaryBudget(groupMts).forEach((n, i) =>
+      assert.ok(n >= Math.min(groupMts[i].summaryCapacity, core.SUMMARY_READINGS_PER_MODULE),
+        `${groupMts[i].group} allowed ${n}, below its guarantee`));
+  });
+
   test('a control is a chip, not its whole rule', () => {
     // "Relay ✓" on the summary line; the full rule belongs on the front row
     const { projectMt } = mock.runScenario('control-wired');

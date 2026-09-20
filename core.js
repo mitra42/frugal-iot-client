@@ -2091,34 +2091,43 @@ class MqttTopicGroup extends MqttTopic {
   // should be, and it means every module has a summary rather than only the ten that had one written
   // by hand - a device with no devices.yaml entry used to show a blank line if its modules happened
   // to be among the other twenty. Overridden below only where a list of values is the wrong shape.
-  summaryText() {
-    const shown = Object.values(this.topics)
+  summaryReadings() {
+    return Object.values(this.topics)
       .filter((mt) => mt.graphable && (mt.rw === 'r'))
       .map((mt) => mt.formatted)
       .filter(Boolean);
-    return shown.length ? shown.slice(0, SUMMARY_READINGS_PER_MODULE).join(' ') : null;
+  }
+  // How many items this group's chip can hold. A subclass writing its own sentence shows one thing
+  // however much room the line has, so it says so and the spare goes to a module that can use it.
+  get summaryCapacity() { return this.summaryReadings().length; }
+  summaryText(limit = SUMMARY_READINGS_PER_MODULE) {
+    const shown = this.summaryReadings();
+    return shown.length ? shown.slice(0, limit).join(' ') : null;
   }
   // The chip form, for the one-line summary. Same as summaryText for a sensor, but a control's
   // rule is a sentence and a summary wants "Relay ✓", not "Relay = SHT:Temperature > 32 +/- 3 ✓".
-  summaryShort() {
-    return this.summaryText();
+  summaryShort(limit) {
+    return this.summaryText(limit);
   }
   trueFalseSymbol(val) {
     return (val === undefined) ? '?' : (val ? '✓' : '✗');
   }
 }
 class MqttTopicGroupRelay extends MqttTopicGroup {
+  get summaryCapacity() { return 1; }   // one sentence, however much room there is
   // Named, because a lone ✓ on a summary line does not say what is on
   summaryText() {
     return `${this.state.name} ${this.trueFalseSymbol(this.state.on)}`
   }
 }
 class MqttTopicGroupOta extends MqttTopicGroup {
+  get summaryCapacity() { return 1; }   // one sentence, however much room there is
   summaryText() {
     return `${this.state.key}`
   }
 }
 class MqttTopicGroupControlHysteresis extends MqttTopicGroup {
+  get summaryCapacity() { return 1; }   // one sentence, however much room there is
   // A wired input shows the name of what it is wired to, rather than the value copied from it
   nameOrValue(val, wired) {
     const projMt = this.projectMt;
@@ -2473,12 +2482,30 @@ class MqttTopicNode extends MqttTopic {
     const declared = (cfg && cfg.summary) ? fromList(cfg.summary)   // however many were asked for
       : (cfg && cfg.front) ? fromList(cfg.front.slice(0, SUMMARY_CHIP_LIMIT)) : [];
     if (declared.length) return declared;
-    return this.orderedGroupIds
-      .filter((groupId) => contributesToSummary(groupId))
-      .map((groupId) => ({ text: this.groups[groupId].summaryShort(),
-                           row: { kind: 'control', groupMt: this.groups[groupId] } }))
-      .filter((c) => (c.text !== null) && (c.text !== ''))
-      .slice(0, SUMMARY_CHIP_LIMIT);
+    const groupMts = this.orderedGroupIds.filter((groupId) => contributesToSummary(groupId))
+      .slice(0, SUMMARY_CHIP_LIMIT).map((groupId) => this.groups[groupId]);
+    const budget = this.summaryBudget(groupMts);
+    return groupMts.map((groupMt, i) => ({ text: groupMt.summaryShort(budget[i]),
+                                           row: { kind: 'control', groupMt } }))
+      .filter((c) => (c.text !== null) && (c.text !== ''));
+  }
+  // How many readings each module may put on the summary line. Every module keeps its
+  // SUMMARY_READINGS_PER_MODULE; if that leaves the line short of SUMMARY_CHIP_LIMIT items, the
+  // difference is offered to the modules in order. Without it a device reporting four readings from
+  // one module showed two of them with three chip slots empty, while the same four split across two
+  // modules showed all four - and the reader cannot see module boundaries, so they should not decide
+  // what fits. The spare is only ever handed out, never taken, so no existing summary shrinks.
+  // See CARDS_UX.md 4.7 and D-51.
+  summaryBudget(groupMts) {
+    const want = groupMts.map((g) => g.summaryCapacity);
+    const allow = want.map((w) => Math.min(w, SUMMARY_READINGS_PER_MODULE));
+    let spare = SUMMARY_CHIP_LIMIT - allow.reduce((a, b) => a + b, 0);
+    for (let i = 0; (i < allow.length) && (spare > 0); i++) {
+      const extra = Math.min(want[i] - allow[i], spare);
+      allow[i] += extra;
+      spare -= extra;
+    }
+    return allow;
   }
 
   // Data-tree group creation: builds MqttTopicGroup and its template topics with no paired DOM element.
@@ -2964,6 +2991,7 @@ export {
   relativeTime,
   retainedPattern,
   SUMMARY_CHIP_LIMIT,
+  SUMMARY_READINGS_PER_MODULE,
   server_config,
   setClock,
   standaloneTopic,

@@ -408,6 +408,17 @@ Rules (2) and (3) are capped at **four** chips, which is enough for temperature 
 quality + a control — two was too few, and an ENS160 device could not say what it was for. A declared
 `summary:` list is not capped: if an author asks for six, they get six. **D-36**
 
+Under rule (3) the cap is on **readings, not modules**. Each module is guaranteed the two readings
+of §4.1, and if that leaves the line short of four items the difference is offered to the modules in
+order, so a module with more to say can use the room its neighbours do not. Without this the same
+four readings showed in full when they arrived from two modules and were cut to two when they
+arrived from one — a BME680 reporting temperature, humidity, pressure and gas showed two of them
+with three chip slots empty, while an AHT20 plus a BMP280 showed all four. A module boundary is
+invisible to the reader, so it should not be what decides how much fits. The spare is only ever
+handed out, never taken, so no device's summary shrinks to pay for this. A module whose chip is a
+written sentence (a relay, an OTA key, a control) counts as one item however much room there
+is. **D-51**
+
 A **control contributes a chip, not its rule**: `Relay ✓`, where the front row shows
 `Relay = Temperature > 32 ±3 ✓`. Two methods, `summaryShort()` and `summaryText()`, because a
 sentence in a chip row wraps the card to three lines. **D-38**
@@ -789,6 +800,7 @@ Reopening one means revisiting this document, not deciding it in code.
 | D-48 | Six digits to type, or a link to click? | Both, from the same digest — see §16 |
 | D-49 | Is `email` optional at registration? | No, required now. It was optional, and an account without one cannot use D-47 at all |
 | D-50 | A declared `front:`/`summary:` that resolves to nothing | Fall back to the default list — a device that has drifted from its entry still shows its readings, rather than a blank card |
+| D-51 | What the summary line's cap counts | Readings, not modules. Two per module are guaranteed and the remainder of the four is offered in module order, so one module reporting four readings is not cut to two while three chip slots sit empty |
 
 ---
 
