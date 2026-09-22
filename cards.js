@@ -126,7 +126,7 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
     if (e.name) e.name.textContent = nodeMt.usableName;
     if (e.meta) e.meta.replaceChildren(...this.renderMeta());
     if (e.chips) e.chips.replaceChildren(...this.renderChips());
-    if (e.footer) e.footer.replaceChildren(...this.renderFooter().childNodes);
+    if (e.footer) e.footer.replaceChildren(...this.footerContent());
     // Push values into the widgets rather than letting them subscribe, so nothing competes for
     // mt.element - see widgetFor
     (e.widgets || []).forEach(({ row, widget }) => {
@@ -458,14 +458,34 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
     ];
   }
 
-  // Battery and last-seen, small and grey, always present
+  // Same gesture as the icon on a reading's widget: this series joins the shared graph panel
+  // (D-11). Its own class, not the widgets' .icon - that one floats right and doubles in size
+  // below 1001px, which is sized for a node/group page rather than a card.
+  graphIcon(mt) {
+    if (!mt.graphable) return null;
+    return el('button', {
+      class: 'fi-graphbtn', type: 'button', title: getString('Graph'), i8n: false,
+      onclick: (e) => { e.stopPropagation(); mt.createGraph(); },
+    }, [el('img', { class: 'fi-graphbtn__icon', src: `${ImagesUrl}icon_graph.svg`, alt: getString('Graph'), i8n: false })]);
+  }
+
+  // Battery and last-seen, small and grey, always present. Battery feeds the status strip rather
+  // than a front row, so the icon here is the only way to graph it at all - see CARDS_UX.md D-52.
   renderFooter() {
-    const nodeMt = this.nodeMt;
-    const battery = nodeMt.battery;
-    return this.state.elements.footer = el('div', { class: 'fi-card__foot' }, [
-      battery ? el('span', { class: 'fi-foot__battery', i8n: false, textContent: battery.mt.formatted }) : null,
+    return this.state.elements.footer = el('div', { class: 'fi-card__foot' }, this.footerContent());
+  }
+  // Separate from renderFooter because refresh() replaces the children of the footer already in the
+  // page: calling renderFooter there would repoint state.elements.footer at a detached element and
+  // every later refresh would update that instead, freezing the age in the page.
+  footerContent() {
+    const battery = this.nodeMt.battery;
+    return [
+      battery ? el('span', { class: 'fi-foot__battery' }, [
+        el('span', { i8n: false, textContent: battery.mt.formatted }),
+        this.graphIcon(battery.mt),
+      ].filter(Boolean)) : null,
       el('span', { class: 'fi-foot__age', i8n: false, textContent: this.ageText }),
-    ].filter(Boolean));
+    ].filter(Boolean);
   }
 
   renderChips() {

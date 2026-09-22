@@ -35,10 +35,11 @@ Dashboards (e.g. `dashboard_example.html`) are thin HTML pages importing selecti
 
 ## Design documents
 
-`CARDS_UX.md` is the design for the card UI — every decision is numbered (D-n) with its reasoning,
-deferred work is L-n, and it is the place to argue with a choice rather than re-deciding it in code.
-`CARDS_PLAN.md` is how it was built, including the bugs found on the way. `FLASH_PLAN.md` and
-`HEADLESS_PLAN.md` cover their own areas.
+`docs/CARDS_UX.md` is the design for the card UI — every decision is numbered (D-n) with its
+reasoning, deferred work is L-n, and it is the place to argue with a choice rather than re-deciding
+it in code. `docs/CARDS_PLAN.md` is how it was built, including the bugs found on the way.
+`docs/FLASH_PLAN.md` and `HEADLESS_PLAN.md` cover their own areas. Comments throughout the code cite
+these by bare filename (`see CARDS_UX.md 4.7`); they all live in `docs/` except `HEADLESS_PLAN.md`.
 
 ## Code style
 

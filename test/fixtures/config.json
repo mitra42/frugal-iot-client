@@ -23,12 +23,117 @@
      }
     ]
    },
+   "airtemp": {
+    "name": "Air Temperature",
+    "topics": [
+     {
+      "leaf": "airtemp",
+      "leaf_from": "temperature",
+      "name": "Air Temperature",
+      "min": -20,
+      "max": 60
+     }
+    ]
+   },
+   "analog": {
+    "name": "Analog Out",
+    "topics": [
+     {
+      "leaf": "volts"
+     }
+    ]
+   },
    "battery": {
     "name": "Battery",
     "insidefrugaliot": true,
     "topics": [
      {
       "leaf": "battery"
+     }
+    ]
+   },
+   "batteryhealth": {
+    "name": "Battery Health",
+    "topics": [
+     {
+      "leaf": "health",
+      "leaf_from": "percent",
+      "name": "Health",
+      "duplicates": {
+       "significantdate": 86400000,
+       "significantvalue": 1
+      }
+     },
+     {
+      "leaf": "state",
+      "leaf_from": "controltext",
+      "name": "State",
+      "rw": "r"
+     },
+     {
+      "leaf": "soc",
+      "leaf_from": "controlfloat",
+      "name": "Charge",
+      "min": 0,
+      "max": 100
+     },
+     {
+      "leaf": "capacity",
+      "leaf_from": "controlfloat",
+      "name": "Capacity Ah",
+      "min": 0,
+      "max": 500,
+      "wireable": false
+     },
+     {
+      "leaf": "load",
+      "leaf_from": "controlfloat",
+      "name": "Average load A",
+      "min": 0,
+      "max": 50,
+      "wireable": false
+     },
+     {
+      "leaf": "active",
+      "leaf_from": "controlint",
+      "name": "Irrigation active",
+      "min": 0,
+      "max": 16
+     },
+     {
+      "leaf": "panelwatts",
+      "leaf_from": "controlfloat",
+      "name": "Panel watts",
+      "min": 0,
+      "max": 2000,
+      "wireable": false
+     },
+     {
+      "leaf": "storageratio",
+      "leaf_from": "controlfloat",
+      "name": "Storage ratio",
+      "min": 0,
+      "max": 50,
+      "rw": "r",
+      "wireable": false
+     },
+     {
+      "leaf": "advice",
+      "leaf_from": "controltext",
+      "name": "Advice",
+      "rw": "r"
+     }
+    ]
+   },
+   "batttemp": {
+    "name": "Battery Temperature",
+    "topics": [
+     {
+      "leaf": "batttemp",
+      "leaf_from": "temperature",
+      "name": "Battery Temperature",
+      "min": -20,
+      "max": 60
      }
     ]
    },
@@ -215,13 +320,13 @@
       "leaf_from": "controlfloat",
       "name": "Temperature",
       "max": 50,
-      "color": "red"
+      "color": "#ff0000"
      },
      {
       "leaf": "humidity",
       "leaf_from": "controlfloat",
       "name": "Humidity",
-      "color": "blue"
+      "color": "#0000ff"
      },
      {
       "leaf": "aqi"
@@ -322,6 +427,18 @@
      }
     ]
    },
+   "heatsink": {
+    "name": "Heatsink Temperature",
+    "topics": [
+     {
+      "leaf": "heatsink",
+      "leaf_from": "temperature",
+      "name": "Heatsink Temperature",
+      "min": 0,
+      "max": 120
+     }
+    ]
+   },
    "ht": {
     "name": "HT",
     "topics": [
@@ -353,12 +470,91 @@
      }
     ]
    },
+   "irrigation": {
+    "name": "Irrigation",
+    "topics": [
+     {
+      "leaf": "hour",
+      "leaf_from": "controlint",
+      "name": "Start hour",
+      "min": 0,
+      "max": 23
+     },
+     {
+      "leaf": "minute",
+      "leaf_from": "controlint",
+      "name": "Start minute",
+      "min": 0,
+      "max": 59
+     },
+     {
+      "leaf": "maxminutes",
+      "leaf_from": "controlfloat",
+      "name": "Max minutes per sector",
+      "min": 0,
+      "max": 120
+     },
+     {
+      "leaf": "enabled",
+      "leaf_from": "controlintoggle",
+      "name": "Enabled"
+     },
+     {
+      "leaf": "tank",
+      "leaf_from": "controlfloat",
+      "name": "Tank level",
+      "color": "#0000ff"
+     },
+     {
+      "leaf": "tankstart",
+      "leaf_from": "controlfloat",
+      "name": "Tank level to start"
+     },
+     {
+      "leaf": "tankempty",
+      "leaf_from": "controlfloat",
+      "name": "Tank level to stop"
+     },
+     {
+      "leaf": "power",
+      "leaf_from": "controlintoggle",
+      "name": "Power ok",
+      "wireable": true
+     },
+     {
+      "leaf": "solar",
+      "leaf_from": "controlintoggle",
+      "name": "Input power",
+      "wireable": true
+     },
+     {
+      "leaf": "pump",
+      "leaf_from": "controlouttoggle",
+      "name": "Pump"
+     },
+     {
+      "leaf": "active",
+      "leaf_from": "controlint",
+      "name": "Active sector",
+      "min": 0,
+      "max": 16
+     }
+    ]
+   },
    "lcd": {
     "summary": false,
     "name": "LCD",
     "topics": [
      {
       "leaf": "message"
+     }
+    ]
+   },
+   "load": {
+    "name": "Load",
+    "topics": [
+     {
+      "leaf": "on"
      }
     ]
    },
@@ -394,6 +590,125 @@
      }
     ]
    },
+   "mppt": {
+    "name": "Charge Control",
+    "topics": [
+     {
+      "leaf": "automatic",
+      "leaf_from": "controlintoggle",
+      "name": "Automatic"
+     },
+     {
+      "leaf": "state",
+      "leaf_from": "controltext",
+      "name": "State",
+      "rw": "r"
+     },
+     {
+      "leaf": "profile",
+      "leaf_from": "controlint",
+      "name": "Battery type",
+      "min": 0,
+      "max": 3,
+      "wireable": false
+     },
+     {
+      "leaf": "chargeend",
+      "leaf_from": "controlfloat",
+      "name": "Charge end",
+      "min": 10000,
+      "max": 16000,
+      "wireable": false
+     },
+     {
+      "leaf": "tempcoeff",
+      "leaf_from": "controlfloat",
+      "name": "Temp coefficient",
+      "min": 0,
+      "max": 60,
+      "wireable": false
+     },
+     {
+      "leaf": "hotcharge",
+      "leaf_from": "controlfloat",
+      "name": "Hot battery",
+      "min": 10000,
+      "max": 16000,
+      "wireable": false
+     },
+     {
+      "leaf": "batttemp",
+      "leaf_from": "controlfloat",
+      "name": "Battery temp",
+      "min": -20,
+      "max": 60
+     },
+     {
+      "leaf": "heatsink",
+      "leaf_from": "controlfloat",
+      "name": "Heatsink temp",
+      "min": 0,
+      "max": 120
+     },
+     {
+      "leaf": "target",
+      "leaf_from": "controlfloat",
+      "name": "Target",
+      "min": 10000,
+      "max": 16000,
+      "rw": "r",
+      "wireable": false
+     },
+     {
+      "leaf": "step",
+      "leaf_from": "controlint",
+      "name": "DAC step",
+      "min": 0,
+      "max": 255,
+      "wireable": false
+     },
+     {
+      "leaf": "panel",
+      "leaf_from": "controlfloat",
+      "name": "Panel",
+      "min": 0,
+      "max": 30000
+     },
+     {
+      "leaf": "battery",
+      "leaf_from": "controlfloat",
+      "name": "Battery",
+      "min": 0,
+      "max": 16000
+     },
+     {
+      "leaf": "voc",
+      "leaf_from": "controlfloat",
+      "name": "Open circuit",
+      "min": 0,
+      "max": 30000,
+      "rw": "r",
+      "wireable": false
+     },
+     {
+      "leaf": "vmpp",
+      "leaf_from": "controlfloat",
+      "name": "Panel target",
+      "min": 0,
+      "max": 30,
+      "rw": "r",
+      "wireable": false
+     },
+     {
+      "leaf": "dacvolts",
+      "leaf_from": "controlfloat",
+      "name": "DAC volts",
+      "min": 0,
+      "max": 3.3,
+      "rw": "r"
+     }
+    ]
+   },
    "ms5803": {
     "name": "MS5803",
     "topics": [
@@ -411,6 +726,37 @@
     "topics": [
      {
       "leaf": "key"
+     }
+    ]
+   },
+   "panel": {
+    "name": "Solar Panel",
+    "topics": [
+     {
+      "leaf": "panel",
+      "leaf_from": "voltage",
+      "name": "Panel Voltage",
+      "max": 30000
+     }
+    ]
+   },
+   "pcbtemp": {
+    "name": "Board Temperature",
+    "topics": [
+     {
+      "leaf": "pcbtemp",
+      "leaf_from": "temperature",
+      "name": "Board Temperature",
+      "min": -20,
+      "max": 100
+     }
+    ]
+   },
+   "pump": {
+    "name": "Pump",
+    "topics": [
+     {
+      "leaf": "on"
      }
     ]
    },
@@ -433,6 +779,32 @@
      }
     ]
    },
+   "sector": {
+    "name": "Irrigation sector",
+    "topics": [
+     {
+      "leaf": "moisture",
+      "leaf_from": "controlfloat",
+      "name": "Moisture",
+      "color": "#a52a2a"
+     },
+     {
+      "leaf": "target",
+      "leaf_from": "controlfloat",
+      "name": "Target"
+     },
+     {
+      "leaf": "enable",
+      "leaf_from": "controlintoggle",
+      "name": "Enable"
+     },
+     {
+      "leaf": "valve",
+      "leaf_from": "controlouttoggle",
+      "name": "Valve"
+     }
+    ]
+   },
    "sht": {
     "name": "SHT",
     "topics": [
@@ -444,6 +816,47 @@
      }
     ]
    },
+   "soc": {
+    "name": "State of Charge",
+    "topics": [
+     {
+      "leaf": "soc",
+      "leaf_from": "percent",
+      "name": "Charge",
+      "duplicates": {
+       "significantdate": 900000,
+       "significantvalue": 1
+      }
+     },
+     {
+      "leaf": "charging",
+      "leaf_from": "controlouttoggle",
+      "name": "Charging"
+     },
+     {
+      "leaf": "battery",
+      "leaf_from": "controlfloat",
+      "name": "Battery",
+      "min": 0,
+      "max": 16000
+     },
+     {
+      "leaf": "panel",
+      "leaf_from": "controlfloat",
+      "name": "Panel",
+      "min": 0,
+      "max": 30000
+     },
+     {
+      "leaf": "profile",
+      "leaf_from": "controlint",
+      "name": "Battery type",
+      "min": 0,
+      "max": 3,
+      "wireable": false
+     }
+    ]
+   },
    "soil": {
     "name": "Soil",
     "topics": [
@@ -452,11 +865,51 @@
      }
     ]
    },
+   "tank": {
+    "name": "Water Tank",
+    "topics": [
+     {
+      "leaf": "tank"
+     }
+    ]
+   },
+   "soilmodbus": {
+    "name": "Soil Probe",
+    "topics": [
+     {
+      "leaf": "humidity",
+      "name": "Soil Moisture",
+      "color": "brown",
+      "units": "%"
+     },
+     {
+      "leaf": "temperature",
+      "name": "Soil Temperature",
+      "color": "brown"
+     }
+    ]
+   },
    "ultrasonic": {
     "name": "Ultrasonic Distance",
     "topics": [
      {
       "leaf": "ultrasonic"
+     }
+    ]
+   },
+   "usb": {
+    "name": "USB Supply",
+    "topics": [
+     {
+      "leaf": "on"
+     }
+    ]
+   },
+   "valve": {
+    "name": "Valve",
+    "topics": [
+     {
+      "leaf": "on"
      }
     ]
    }
@@ -471,7 +924,7 @@
     "min": -500,
     "max": 9000,
     "width": 6,
-    "color": "black",
+    "color": "#000000",
     "log": true,
     "duplicates": {
      "significantdate": 900000,
@@ -499,7 +952,7 @@
     "display": "bar",
     "min": 0,
     "max": 5,
-    "color": "purple",
+    "color": "#800080",
     "rw": "r",
     "graphable": true,
     "log": true,
@@ -515,7 +968,7 @@
     "display": "bar",
     "min": 0,
     "max": 500,
-    "color": "brown",
+    "color": "#a52a2a",
     "rw": "r",
     "graphable": true,
     "log": true,
@@ -531,7 +984,7 @@
     "display": "text",
     "min": 3000,
     "max": 5000,
-    "color": "green",
+    "color": "#008000",
     "rw": "r",
     "graphable": true,
     "log": true,
@@ -559,7 +1012,7 @@
     "min": 0,
     "max": 32,
     "width": 5,
-    "color": "green",
+    "color": "#008000",
     "rw": "r",
     "log": true,
     "units": "V",
@@ -575,7 +1028,7 @@
     "type": "bool",
     "log": true,
     "display": "toggle",
-    "color": "black",
+    "color": "#000000",
     "rw": "r",
     "duplicates": {
      "significantdate": 900000,
@@ -597,7 +1050,7 @@
     "type": "float",
     "log": false,
     "display": "text",
-    "color": "black",
+    "color": "#000000",
     "wireable": true,
     "rw": "w",
     "retain": true
@@ -608,7 +1061,7 @@
     "type": "int",
     "log": false,
     "display": "text",
-    "color": "black",
+    "color": "#000000",
     "wireable": true,
     "rw": "w",
     "retain": true
@@ -619,7 +1072,7 @@
     "type": "text",
     "log": false,
     "display": "text",
-    "color": "black",
+    "color": "#000000",
     "wireable": true,
     "rw": "w",
     "retain": true
@@ -628,7 +1081,7 @@
     "type": "bool",
     "log": false,
     "display": "toggle",
-    "color": "black",
+    "color": "#000000",
     "rw": "w",
     "wireable": false
    },
@@ -636,7 +1089,7 @@
     "type": "bool",
     "log": true,
     "display": "toggle",
-    "color": "black",
+    "color": "#000000",
     "rw": "r",
     "wireable": true,
     "duplicates": {
@@ -652,7 +1105,7 @@
     "min": 0,
     "max": 360,
     "width": 5,
-    "color": "black",
+    "color": "#000000",
     "log": true,
     "duplicates": {
      "significantdate": 900000,
@@ -670,7 +1123,7 @@
     "min": -3200,
     "max": 3200,
     "width": 7,
-    "color": "red",
+    "color": "#ff0000",
     "rw": "r",
     "log": true,
     "units": "mA",
@@ -698,7 +1151,7 @@
     "min": 0,
     "max": 20,
     "width": 5,
-    "color": "blue",
+    "color": "#0000ff",
     "rw": "r",
     "log": true,
     "units": "mg/L",
@@ -715,7 +1168,7 @@
     "display": "bar",
     "min": 300,
     "max": 900,
-    "color": "brown",
+    "color": "#a52a2a",
     "log": true,
     "units": "ppm",
     "duplicates": {
@@ -733,7 +1186,7 @@
     "min": 0,
     "max": 500,
     "width": 5,
-    "color": "green",
+    "color": "#008000",
     "rw": "r",
     "log": true,
     "units": "kOhm",
@@ -751,7 +1204,7 @@
     "min": 0,
     "max": 50,
     "width": 5,
-    "color": "black",
+    "color": "#000000",
     "log": false,
     "duplicates": {
      "significantdate": 900000,
@@ -768,7 +1221,7 @@
     "min": 0,
     "max": 100,
     "width": 5,
-    "color": "blue",
+    "color": "#0000ff",
     "log": true,
     "duplicates": {
      "significantdate": 900000,
@@ -801,7 +1254,7 @@
     "type": "text",
     "log": false,
     "display": "text",
-    "color": "black",
+    "color": "#000000",
     "rw": "r"
    },
    "lastseen": {
@@ -821,7 +1274,7 @@
     "min": -90,
     "max": 90,
     "width": 9,
-    "color": "black",
+    "color": "#000000",
     "log": true,
     "duplicates": {
      "significantdate": 900000,
@@ -839,7 +1292,7 @@
     "min": 0,
     "max": 32,
     "width": 5,
-    "color": "green",
+    "color": "#008000",
     "rw": "r",
     "log": true,
     "units": "V",
@@ -857,7 +1310,7 @@
     "min": 0,
     "max": 65000,
     "width": 7,
-    "color": "yellow",
+    "color": "#b8860b",
     "log": true,
     "duplicates": {
      "significantdate": 900000,
@@ -875,7 +1328,7 @@
     "min": -180,
     "max": 180,
     "width": 10,
-    "color": "black",
+    "color": "#000000",
     "log": true,
     "duplicates": {
      "significantdate": 900000,
@@ -893,7 +1346,7 @@
     "min": 0,
     "max": 65000,
     "width": 5,
-    "color": "yellow",
+    "color": "#b8860b",
     "log": true,
     "rw": "r",
     "duplicates": {
@@ -908,7 +1361,7 @@
     "name": "Manual",
     "type": "bool",
     "display": "toggle",
-    "color": "black",
+    "color": "#000000",
     "rw": "r",
     "log": true,
     "graphable": true,
@@ -926,7 +1379,7 @@
     "type": "text",
     "log": false,
     "display": "text",
-    "color": "black",
+    "color": "#000000",
     "wireable": true,
     "rw": "w",
     "retain": true
@@ -939,7 +1392,7 @@
     "min": 0,
     "max": 500,
     "width": 5,
-    "color": "blue",
+    "color": "#0000ff",
     "rw": "r",
     "log": true,
     "duplicates": {
@@ -964,7 +1417,7 @@
     "name": "On",
     "type": "bool",
     "display": "toggle",
-    "color": "black",
+    "color": "#000000",
     "rw": "w",
     "log": true,
     "duplicates": {
@@ -978,7 +1431,7 @@
     "name": "Out",
     "type": "bool",
     "display": "toggle",
-    "color": "black",
+    "color": "#000000",
     "rw": "r",
     "log": true,
     "wireable": true,
@@ -988,13 +1441,32 @@
      "significantvalue": 1
     }
    },
+   "percent": {
+    "leaf": "percent",
+    "name": "Percent",
+    "type": "float",
+    "display": "bar",
+    "min": 0,
+    "max": 100,
+    "width": 3,
+    "color": "#008000",
+    "rw": "r",
+    "wireable": false,
+    "log": true,
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 1
+    },
+    "graphable": true,
+    "units": "%"
+   },
    "position": {
     "leaf": "position",
     "name": "Position",
     "type": "text",
     "log": false,
     "display": "text",
-    "color": "black",
+    "color": "#000000",
     "rw": "r"
    },
    "power": {
@@ -1005,7 +1477,7 @@
     "min": 0,
     "max": 100000,
     "width": 8,
-    "color": "orange",
+    "color": "#ffa500",
     "rw": "r",
     "log": true,
     "units": "mW",
@@ -1024,7 +1496,7 @@
     "max": 1100,
     "width": 6,
     "units": "hPa",
-    "color": "blue",
+    "color": "#0000ff",
     "rw": "r",
     "log": true,
     "duplicates": {
@@ -1041,7 +1513,7 @@
     "min": 0,
     "max": 500,
     "width": 5,
-    "color": "blue",
+    "color": "#0000ff",
     "rw": "r",
     "log": true,
     "duplicates": {
@@ -1059,7 +1531,7 @@
     "min": 0,
     "max": 32,
     "width": 2,
-    "color": "black",
+    "color": "#000000",
     "log": false,
     "duplicates": {
      "significantdate": 900000,
@@ -1076,7 +1548,7 @@
     "log": false,
     "min": 0,
     "display": "text",
-    "color": "black",
+    "color": "#000000",
     "wireable": false,
     "rw": "w",
     "retain": true
@@ -1089,7 +1561,7 @@
     "min": -320,
     "max": 320,
     "width": 6,
-    "color": "blue",
+    "color": "#0000ff",
     "rw": "r",
     "log": true,
     "units": "mV",
@@ -1107,7 +1579,7 @@
     "min": 0,
     "max": 999,
     "width": 5,
-    "color": "black",
+    "color": "#000000",
     "log": true,
     "duplicates": {
      "significantdate": 900000,
@@ -1124,7 +1596,7 @@
     "display": "bar",
     "min": 0,
     "max": 100,
-    "color": "brown",
+    "color": "#a52a2a",
     "rw": "r",
     "log": true,
     "duplicates": {
@@ -1133,6 +1605,24 @@
     },
     "graphable": true,
     "calibrate": true,
+    "units": "%"
+   },
+   "tank": {
+    "leaf": "tank",
+    "name": "Water Tank",
+    "type": "float",
+    "display": "bar",
+    "min": 0,
+    "max": 100,
+    "width": 5,
+    "color": "#0000ff",
+    "rw": "r",
+    "log": true,
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 1
+    },
+    "graphable": true,
     "units": "%"
    },
    "temperature": {
@@ -1144,7 +1634,7 @@
     "min": 0,
     "max": 50,
     "width": 4,
-    "color": "red",
+    "color": "#ff0000",
     "wireable": false,
     "log": true,
     "units": "Cel",
@@ -1163,7 +1653,7 @@
     "type": "float",
     "log": false,
     "display": "text",
-    "color": "black",
+    "color": "#000000",
     "rw": "w",
     "wireable": true,
     "units": "s"
@@ -1177,7 +1667,7 @@
     "type": "float",
     "log": false,
     "display": "text",
-    "color": "black",
+    "color": "#000000",
     "rw": "w",
     "wireable": true,
     "units": "s"
@@ -1189,7 +1679,7 @@
     "display": "bar",
     "min": 0,
     "max": 99,
-    "color": "green",
+    "color": "#008000",
     "rw": "r",
     "log": true,
     "units": "ppb",
@@ -1207,7 +1697,7 @@
     "min": 0,
     "max": 7500,
     "width": 4,
-    "color": "blue",
+    "color": "#0000ff",
     "rw": "r",
     "log": true,
     "units": "mm",
@@ -1224,8 +1714,44 @@
     "type": "text",
     "log": false,
     "display": "text",
-    "color": "black",
+    "color": "#000000",
     "rw": "r"
+   },
+   "voltage": {
+    "leaf": "voltage",
+    "name": "Voltage",
+    "type": "int",
+    "display": "text",
+    "min": 0,
+    "max": 30000,
+    "color": "#800080",
+    "rw": "r",
+    "graphable": true,
+    "log": true,
+    "units": "mV",
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 100
+    }
+   },
+   "volts": {
+    "leaf": "volts",
+    "name": "Volts",
+    "type": "float",
+    "display": "slider",
+    "rw": "w",
+    "min": 0,
+    "max": 3.3,
+    "width": 4,
+    "color": "#800080",
+    "units": "V",
+    "wireable": true,
+    "log": true,
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 0.05
+    },
+    "graphable": true
    },
    "wifibars": {
     "leaf": "wifibars",
@@ -1235,7 +1761,7 @@
     "display": "text",
     "min": 0,
     "max": 4,
-    "color": "blue",
+    "color": "#0000ff",
     "rw": "r",
     "duplicates": {
      "significantdate": 900000,
@@ -1248,7 +1774,7 @@
     "type": "text",
     "log": false,
     "display": "text",
-    "color": "blue",
+    "color": "#0000ff",
     "rw": "r"
    }
   },
@@ -1375,13 +1901,6 @@
    "sonoff": {
     "front": [
      "relay/on",
-     "controlhysteresis"
-    ]
-   },
-   "temp": {
-    "front": [
-     "aht20/temperature",
-     "bmp280/pressure",
      "controlhysteresis"
     ]
    }

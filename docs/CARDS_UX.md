@@ -305,6 +305,17 @@ out are exactly the writable settings and the text/metadata fields. **D-22**
 If that default proves wrong in practice, the fix is a module-level boolean, not a second render
 key.
 
+**The default is also the fallback when a declared `front:` resolves to nothing.** A single
+unresolvable entry is dropped and the rest stand — a device legitimately lacking one of its
+application's sensors (§4.6). But when *every* entry is dropped, the device no longer resembles the
+entry its OTA key selected at all, and the honest reading is that the entry does not apply to it.
+Showing the default list says what the device is actually reporting; showing the empty declared list
+says nothing, on a card whose header is meanwhile reporting the device as live. This is not
+hypothetical: a `temp:` entry for the scratch application, rebuilt with a BME680 in place of the
+AHT20/BMP280 it named, blanked the front of a perfectly healthy device, and the device's readings
+were reachable only by turning the card over. `summary:` falls through the same way, and then to
+§4.7 rule 3. **D-50**
+
 ### 4.3 Labels
 
 On the **front**, a row is labelled by the topic's `name` from `topics.yaml` — `Temperature`,
@@ -397,6 +408,17 @@ Rules (2) and (3) are capped at **four** chips, which is enough for temperature 
 quality + a control — two was too few, and an ENS160 device could not say what it was for. A declared
 `summary:` list is not capped: if an author asks for six, they get six. **D-36**
 
+Under rule (3) the cap is on **readings, not modules**. Each module is guaranteed the two readings
+of §4.1, and if that leaves the line short of four items the difference is offered to the modules in
+order, so a module with more to say can use the room its neighbours do not. Without this the same
+four readings showed in full when they arrived from two modules and were cut to two when they
+arrived from one — a BME680 reporting temperature, humidity, pressure and gas showed two of them
+with three chip slots empty, while an AHT20 plus a BMP280 showed all four. A module boundary is
+invisible to the reader, so it should not be what decides how much fits. The spare is only ever
+handed out, never taken, so no device's summary shrinks to pay for this. A module whose chip is a
+written sentence (a relay, an OTA key, a control) counts as one item however much room there
+is. **D-51**
+
 A **control contributes a chip, not its rule**: `Relay ✓`, where the front row shows
 `Relay = Temperature > 32 ±3 ✓`. Two methods, `summaryShort()` and `summaryText()`, because a
 sentence in a chip row wraps the card to three lines. **D-38**
@@ -474,6 +496,14 @@ in-card graph cannot show.
 
 Alternative considered and rejected: graph inside the card. It would make the card tall, fight the
 flip's fixed box, and lose cross-device comparison. **D-11**
+
+**Battery gets the same icon, in the front's footer.** Battery is `insidefrugaliot`, so it never
+becomes a front row and never carries a widget — which left the one reading whose *trend* matters
+most as the only one that could not be graphed at all. A device's voltage curve is what says
+whether it will last the night, or whether a panel is charging. So the footer's mV reading has a
+graph icon beside it, going to the same shared panel. It is the reading, not the level icon in the
+header, that carries it: the header icon is a glance, and the footer is where the number already
+is. **D-52**
 
 ## 7. Layout, ordering and memory
 
@@ -777,6 +807,9 @@ Reopening one means revisiting this document, not deciding it in code.
 | D-47 | How a forgotten password is reset | A stateless HMAC code — see §16. Nothing is stored, so there is no token table to expire, leak or clean up |
 | D-48 | Six digits to type, or a link to click? | Both, from the same digest — see §16 |
 | D-49 | Is `email` optional at registration? | No, required now. It was optional, and an account without one cannot use D-47 at all |
+| D-50 | A declared `front:`/`summary:` that resolves to nothing | Fall back to the default list — a device that has drifted from its entry still shows its readings, rather than a blank card |
+| D-51 | What the summary line's cap counts | Readings, not modules. Two per module are guaranteed and the remainder of the four is offered in module order, so one module reporting four readings is not cut to two while three chip slots sit empty |
+| D-52 | How the battery reading gets graphed | A graph icon beside the mV reading in the front's footer — it is never a front row, so it has no widget to carry the usual icon |
 
 ---
 

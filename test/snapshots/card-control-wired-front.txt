@@ -13,7 +13,7 @@
         "✕"
     <div class="fi-card__rows">
       <div class="fi-row fi-row--reading">
-        <mqtt-bar topic="dev/lotus/esp8266-fb94bb/sht/temperature" value="30.142857" label="Temperature" type="float" min="0" max="50" color="red">
+        <mqtt-bar topic="dev/lotus/esp8266-fb94bb/sht/temperature" value="30.142857" label="Temperature" type="float" min="0" max="50" color="#ff0000">
           #shadow
             <div class="outer mqtt-bar">
               <div class="name">
@@ -31,7 +31,7 @@
                   "50"
               <slot>
       <div class="fi-row fi-row--reading">
-        <mqtt-bar topic="dev/lotus/esp8266-fb94bb/sht/humidity" value="85.1" label="Humidity" type="float" min="0" max="100" color="blue">
+        <mqtt-bar topic="dev/lotus/esp8266-fb94bb/sht/humidity" value="85.1" label="Humidity" type="float" min="0" max="100" color="#0000ff">
           #shadow
             <div class="outer mqtt-bar">
               <div class="name">
@@ -55,6 +55,9 @@
           "Relay = SHT:Temperature > 32 +/- 3 ✓"
     <div class="fi-card__foot">
       <span class="fi-foot__battery">
-        "3940 mV"
+        <span>
+          "3940 mV"
+        <button class="fi-graphbtn" type="button">
+          <img class="fi-graphbtn__icon">
       <span class="fi-foot__age">
         "now"

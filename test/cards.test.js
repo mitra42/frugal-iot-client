@@ -144,6 +144,24 @@ describe('the front of a card', () => {
     assert.equal(nodeMt.frontRows.some((r) => r.kind === 'control'), false);
   });
 
+  test('a declared list that resolves to nothing falls back to the defaults', () => {
+    // The real case: devices.yaml carried an entry for the "temp" scratch application, which had
+    // been rebuilt with a different sensor. Every declared twig resolved to null, and the card went
+    // blank while the device was reporting perfectly well. See CARDS_UX.md D-50.
+    const { projectMt } = mock.runScenario('default-front');
+    const nodeMt = projectMt.nodes['esp8266-two-temps'];
+    mock.loadConfig({ ...config, schema: { ...config.schema, devices: {
+      ...config.schema.devices, workbench: { front: ['aht20/temperature', 'bmp280/pressure'] },
+    } } });
+    assert.deepEqual(nodeMt.deviceConfig.front, ['aht20/temperature', 'bmp280/pressure']);
+    assert.equal(nodeMt.groups.aht20, undefined, 'this device has none of the declared modules');
+    assert.ok(nodeMt.frontRows.length, 'a blank front is the bug this guards');
+    assert.deepEqual(nodeMt.frontRows.map((r) => `${r.mt.group}/${r.mt.leaf}`),
+      nodeMt.defaultFrontEntries);
+    assert.ok(nodeMt.summaryChips.length, 'the summary falls through the same way');
+    mock.loadConfig(config);
+  });
+
   test('with no entry: readings, then actuators, then controls', () => {
     const { projectMt } = mock.runScenario('default-front');
     const rows = projectMt.nodes['esp8266-two-temps'].frontRows;
@@ -199,6 +217,29 @@ describe('the summary line', () => {
     const chips = projectMt.nodes['esp8266-two-temps'].summaryChips;
     assert.ok(chips.length <= core.SUMMARY_CHIP_LIMIT, `${chips.length} chips is a paragraph`);
     assert.ok(chips.every((c) => c.text));
+  });
+
+  test('one module reporting four readings gets the whole line, not two of them', () => {
+    // The chip slots a device does not use go to a module that can fill them. Before this, the same
+    // four readings showed in full when they came from two modules and were cut to two when they
+    // came from one - a difference the reader has no way to see. See CARDS_UX.md D-51.
+    const { projectMt } = mock.runScenario('one-module-many-readings');
+    const nodeMt = projectMt.nodes['esp32-accb20'];
+    assert.equal(Object.keys(nodeMt.groups.bme680.topics).length, 4);
+    assert.deepEqual(nodeMt.summaryChips.map((c) => c.text),
+      ['18.4°C 68.8%RH 1022.3 hPa 58.6 kOhm']);
+  });
+
+  test('the spare is only ever handed out, so a multi-module summary never shrinks', () => {
+    // Several modules already fill the line; nothing is taken away to pay for the rule above
+    const { projectMt } = mock.runScenario('default-front');
+    const nodeMt = projectMt.nodes['esp8266-two-temps'];
+    const groupMts = nodeMt.orderedGroupIds.map((g) => nodeMt.groups[g])
+      .filter((g) => nodeMt.summaryChips.some((c) => c.row.groupMt === g));
+    assert.ok(groupMts.length > 1, 'this scenario is meant to have several contributing modules');
+    nodeMt.summaryBudget(groupMts).forEach((n, i) =>
+      assert.ok(n >= Math.min(groupMts[i].summaryCapacity, core.SUMMARY_READINGS_PER_MODULE),
+        `${groupMts[i].group} allowed ${n}, below its guarantee`));
   });
 
   test('a control is a chip, not its whole rule', () => {
