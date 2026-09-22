@@ -497,6 +497,14 @@ in-card graph cannot show.
 Alternative considered and rejected: graph inside the card. It would make the card tall, fight the
 flip's fixed box, and lose cross-device comparison. **D-11**
 
+**Battery gets the same icon, in the front's footer.** Battery is `insidefrugaliot`, so it never
+becomes a front row and never carries a widget — which left the one reading whose *trend* matters
+most as the only one that could not be graphed at all. A device's voltage curve is what says
+whether it will last the night, or whether a panel is charging. So the footer's mV reading has a
+graph icon beside it, going to the same shared panel. It is the reading, not the level icon in the
+header, that carries it: the header icon is a glance, and the footer is where the number already
+is. **D-52**
+
 ## 7. Layout, ordering and memory
 
 ### 7.1 One mechanism, not two
@@ -801,6 +809,7 @@ Reopening one means revisiting this document, not deciding it in code.
 | D-49 | Is `email` optional at registration? | No, required now. It was optional, and an account without one cannot use D-47 at all |
 | D-50 | A declared `front:`/`summary:` that resolves to nothing | Fall back to the default list — a device that has drifted from its entry still shows its readings, rather than a blank card |
 | D-51 | What the summary line's cap counts | Readings, not modules. Two per module are guaranteed and the remainder of the four is offered in module order, so one module reporting four readings is not cut to two while three chip slots sit empty |
+| D-52 | How the battery reading gets graphed | A graph icon beside the mV reading in the front's footer — it is never a front row, so it has no widget to carry the usual icon |
 
 ---
 

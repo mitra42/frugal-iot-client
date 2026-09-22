@@ -1139,7 +1139,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
      return el('div', {class: 'retained'}, [
        el('div', {class: 'formgroup'}, [
          el('label', {for: 'retained_pattern', textContent: "Pattern"}),
-         el('span', {i8n: false, textContent: `${this.state.org}/`}),
+         el('span', {class: 'retained__prefix', i8n: false, textContent: `${this.state.org}/`}),
          this.state.elements.retained_pattern = el('input', {id: 'retained_pattern', type: 'text',
            value: r.pattern, placeholder: 'lotus/+/sht30/#'}),
          el('button', {class: 'submit', type: 'button', textContent: "List",

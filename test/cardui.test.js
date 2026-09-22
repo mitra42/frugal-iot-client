@@ -172,6 +172,22 @@ describe('front mode', () => {
     card.remove();
   });
 
+  test('the battery reading can be graphed from the footer', () => {
+    const { card, nodeMt } = cardFor('one-device', 'esp8266-fb94bb', { mode: 'front', at: T0 });
+    const button = card.querySelector('.fi-foot__battery .fi-graphbtn');
+    assert.ok(button, 'no graph icon beside the battery reading');
+    // Stubbed rather than run: createGraph needs mqtt-graph, and pulling Chart.js in would test
+    // the graph rather than whether this button is wired to anything at all
+    let asked = 0;
+    const batteryMt = nodeMt.battery.mt;
+    const real = batteryMt.createGraph;
+    batteryMt.createGraph = () => { asked += 1; };
+    button.click();
+    batteryMt.createGraph = real;
+    assert.equal(asked, 1, 'clicking the icon did not ask for a graph');
+    card.remove();
+  });
+
   test('collapse goes back to the summary, the gear goes to the back', () => {
     const { card } = cardFor('one-device', 'esp8266-fb94bb', { mode: 'front', at: T0 });
     card.querySelector('.fi-btn:not(.fi-btn--close)').click();

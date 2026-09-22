@@ -55,6 +55,9 @@
           "Relay = SHT:Temperature > 32 +/- 3 ✓"
     <div class="fi-card__foot">
       <span class="fi-foot__battery">
-        "3940 mV"
+        <span>
+          "3940 mV"
+        <button class="fi-graphbtn" type="button">
+          <img class="fi-graphbtn__icon">
       <span class="fi-foot__age">
         "now"

@@ -401,6 +401,7 @@ EN:
   Frugal-IoT Username *: Frugal-IoT Username *
   Full provision - all configuration on the board will be erased: Full provision - all configuration on the board will be erased
   Gas Resistance: Gas Resistance
+  Graph: Graph
   Greater Than: Greater Than
   heating: heating
   humidifier: humidifier
@@ -638,6 +639,7 @@ FR:
   Frugal-IoT Username *: Nom d'utilisateur Frugal-IoT *
   Full provision - all configuration on the board will be erased: Provisionnement complet - toute la configuration de la carte sera effacée
   Gas Resistance: Résistance du gaz
+  Graph: Graphique
   Greater Than: Supérieur à
   heating: chauffage
   humidifier: humidificateur
@@ -877,6 +879,7 @@ HI:
   Frugal-IoT Username *: Frugal-IoT उपयोगकर्ता नाम *
   Full provision - all configuration on the board will be erased: पूर्ण प्रोविजनिंग - बोर्ड की सारी कॉन्फ़िगरेशन मिट जाएगी
   Gas Resistance: गैस प्रतिरोध
+  Graph: ग्राफ़
   Greater Than: इससे बड़ा
   heating: हीटिंग
   humidifier: ह्यूमिडिफ़ायर
@@ -1116,6 +1119,7 @@ ID:
   Frugal-IoT Username *: Nama Pengguna Frugal-IoT *
   Full provision - all configuration on the board will be erased: Provisioning penuh - semua konfigurasi pada papan akan dihapus
   Gas Resistance: Resistansi gas
+  Graph: Grafik
   Greater Than: Lebih dari
   heating: pemanas
   humidifier: pelembap

@@ -406,6 +406,20 @@ div.mqtt-text {
     font-size: 0.85em;
     font-variant-numeric: tabular-nums;
 }
+/* The reading and its graph icon are one item, so the footer's 10px gap does not strand the icon
+   halfway to the age */
+.fi-foot__battery { display: inline-flex; align-items: center; gap: 4px; }
+/* Not .fi-btn: that reserves 32px each way, which would treble the height of the footer strip */
+.fi-graphbtn {
+    background: none;
+    border: 0;
+    padding: 0 2px;
+    line-height: 1;
+    cursor: pointer;
+    color: inherit;
+}
+.fi-graphbtn__icon { height: 1.2em; width: 1.2em; vertical-align: middle; opacity: 0.7; }
+.fi-graphbtn:hover .fi-graphbtn__icon { opacity: 1; }
 .fi-btn {
     background: none;
     border: 0;
@@ -626,6 +640,8 @@ body:has(mqtt-dashboard) {
 }
 
 /* Retained messages: a list to read before deleting anything, so it must not be cramped */
+/* .formgroup has no styling, so nothing separates the label from the org prefix that follows it */
+.retained__prefix { margin-left: 0.4em; }
 .retained__help { color: var(--fi-muted); font-size: 0.85em; margin: 4px 0 8px; }
 .retained__list {
     max-height: 40vh;
