@@ -7,7 +7,7 @@
 
 import {EL, GET, HTMLElementExtended} from '/node_modules/html-element-extended/htmlelementextended.js';
 import mqtt from '/node_modules/mqtt/dist/mqtt.esm.js'; // https://www.npmjs.com/package/mqtt
-import { CssUrl, DELETE, POST, XXX, configSet, el, getString, hasCapability, mqttTempConnect, retainedPattern, locationParameterChange, mqtt_client, preferedLanguageSet, preferedLanguages, redirectToLogin, server_config } from './core.js';
+import { CssUrl, DELETE, POST, XXX, brokerHost, configSet, el, getString, hasCapability, mqttTempConnect, retainedPattern, locationParameterChange, mqtt_client, preferedLanguageSet, preferedLanguages, redirectToLogin, server_config } from './core.js';
 
 
 // ---------- USB flashing over WebSerial ----------
@@ -238,18 +238,37 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       ]);
     }
     return el('div', {}, [
-      ...(e.secrets.length ? e.secrets.map((secret, i) => el('p', {}, [
-        el('span', {class: 'pseudolink', textContent: ' 🗑 ',
-          onclick: this.onEnrolmentSecretDelete.bind(this, secret)}),
-        // The line to paste into a sketch, so nobody has to work out the argument order
-        el('code', {i8n: false, class: 'enrolment__line', textContent:
-          `frugal_iot.configure_mqtt_enrolled("${(server_config.mqtt && server_config.mqtt.broker) || ''}", "${secret}");`}),
-      ])) : [el('p', {textContent:
+      ...(e.secrets.length ? [
+        el('p', {textContent: "Put this in platformio-local.ini, which is not committed:"}),
+        ...e.secrets.map((secret) => el('p', {}, [
+          el('span', {class: 'pseudolink', textContent: ' 🗑 ',
+            onclick: this.onEnrolmentSecretDelete.bind(this, secret)}),
+          el('code', {i8n: false, class: 'enrolment__line', textContent:
+            `'-D SYSTEM_MQTT_ENROL_SECRET="${secret}"'`}),
+        ])),
+        /*
+         * The host, and this server's own enrolment URL, for anyone building against something
+         * other than the production server the firmware defaults to.
+         *
+         * SYSTEM_MQTT_HOST is a HOST, derived from the broker URL rather than being it: that URL is
+         * the WebSocket address a browser uses through the reverse proxy, while the firmware
+         * resolves this string as a DNS name and connects to 1883. Handing over the URL gives
+         * "DNS Failed ... -54" on a node that has already enrolled, so it reads as an enrolment
+         * fault and is not one.
+         */
+        el('p', {textContent:
+          "And these two, if you are not building against the production server:"}),
+        el('p', {}, [
+          el('code', {i8n: false, class: 'enrolment__line', textContent:
+            `'-D SYSTEM_MQTT_HOST="${brokerHost(server_config.mqtt && server_config.mqtt.broker)}"'`}),
+          el('br', {}),
+          el('code', {i8n: false, class: 'enrolment__line', textContent:
+            `'-D SYSTEM_MQTT_ENROL_URL="${e.enrol_url}"'`}),
+        ]),
+      ] : [el('p', {textContent:
         "This organization has no enrolment secret, so no new node can enrol. Add one."})]),
       el('button', {class: 'submit', type: 'button', textContent: "Add another enrolment secret",
         onclick: this.onEnrolmentSecretAdd.bind(this)}),
-      el('p', {i8n: false, class: 'retained__help', textContent:
-        `${getString("Enrol URL")}: ${e.enrol_url}`}),
     ]);
   }
   getEnrolledNodes() {

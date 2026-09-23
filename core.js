@@ -159,6 +159,22 @@ function retainedPattern(org, relative) {
   return `${org}/${rest || '#'}`;
 }
 
+/*
+ * The broker's host name, out of the URL a browser connects with.
+ *
+ * They are not the same thing and a node needs the host. A browser is given something like
+ * "wss://frugaliot.naturalinnovation.org/wss" - a WebSocket URL, through the reverse proxy - while
+ * firmware opens a plain TCP connection to the host on 1883 and resolves that string as a DNS name.
+ * Handing the URL to configure_mqtt_enrolled() gets "DNS Failed ... error -54" and a node that
+ * enrols and then never connects, which is how this was found.
+ */
+function brokerHost(url) {
+  return String(url || '')
+    .replace(/^[a-z][a-z0-9+.-]*:\/\//i, '')   // scheme
+    .replace(/\/.*$/, '')                      // path
+    .replace(/:\d+$/, '');                     // port
+}
+
 // Route a received message to every matching subscription.
 // Separate from the client's on('message') so a test or mock can inject messages with no broker.
 function mqtt_deliver(topic, msg) {
@@ -352,6 +368,7 @@ EN:
   Advanced: Advanced
   All: All
   Already have an account?: Already have an account?
+  "And these two, if you are not building against the production server:": "And these two, if you are not building against the production server:"
   API: API
   Approved: Approved
   AQI: AQI
@@ -524,6 +541,7 @@ EN:
   Provision instead (erases config): Provision instead (erases config)
   Publish Message: Publish Message
   "Published to ": "Published to "
+  "Put this in platformio-local.ini, which is not committed:": "Put this in platformio-local.ini, which is not committed:"
   QoS: QoS
   reconnect: reconnect
   Reconnect the board to flash again: Reconnect the board to flash again
@@ -624,6 +642,7 @@ FR:
   Advanced: Avancé
   All: Tous
   Already have an account?: Vous avez déjà un compte ?
+  "And these two, if you are not building against the production server:": "Et ces deux-ci, si vous ne compilez pas pour le serveur de production :"
   API: API
   Approved: Approuvé
   AQI: IQA  
@@ -798,6 +817,7 @@ FR:
   Provision instead (erases config): Provisionner plutôt (effacer la configuration)
   Publish Message: Publier un message
   "Published to ": "Publié sur "
+  "Put this in platformio-local.ini, which is not committed:": "Mettez ceci dans platformio-local.ini, qui n'est pas commité :"
   QoS: QoS
   reconnect: reconnecter
   Reconnect the board to flash again: Reconnectez la carte pour flasher à nouveau
@@ -898,6 +918,7 @@ HI:
   Advanced: उन्नत
   All: सभी
   Already have an account?: पहले से खाता है?
+  "And these two, if you are not building against the production server:": "और ये दो, यदि आप उत्पादन सर्वर के लिए बिल्ड नहीं कर रहे हैं:"
   API: एपीआई
   Approved: स्वीकृत
   AQI: वायु गुणवत्ता सूचकांक  
@@ -1072,6 +1093,7 @@ HI:
   Provision instead (erases config): इसके बजाय प्रोविजन करें (कॉन्फ़िगरेशन मिटेगी)
   Publish Message: संदेश प्रकाशित करें
   "Published to ": "पर प्रकाशित किया गया "
+  "Put this in platformio-local.ini, which is not committed:": "इसे platformio-local.ini में रखें, जो कमिट नहीं किया जाता:"
   QoS: QoS
   reconnect: पुनः कनेक्ट करें
   Reconnect the board to flash again: फिर से फ्लैश करने के लिए बोर्ड को दोबारा कनेक्ट करें
@@ -1172,6 +1194,7 @@ ID:
   Advanced: Lanjutan
   All: Semua
   Already have an account?: Sudah punya akun?
+  "And these two, if you are not building against the production server:": "Dan dua ini, jika Anda tidak membangun untuk server produksi:"
   API: API
   Approved: Disetujui
   AQI: Indeks Kualitas Udara  
@@ -1346,6 +1369,7 @@ ID:
   Provision instead (erases config): Provisioning saja (menghapus konfigurasi)
   Publish Message: Publikasikan Pesan
   "Published to ": "Dipublikasikan ke "
+  "Put this in platformio-local.ini, which is not committed:": "Letakkan ini di platformio-local.ini, yang tidak di-commit:"
   QoS: QoS
   reconnect: sambungkan kembali
   Reconnect the board to flash again: Hubungkan kembali papan untuk flash lagi
@@ -3131,6 +3155,7 @@ export {
   hasCapability,
   redirectToLogin,
   relativeTime,
+  brokerHost,
   retainedPattern,
   SUMMARY_CHIP_LIMIT,
   SUMMARY_READINGS_PER_MODULE,

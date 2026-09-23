@@ -75,6 +75,27 @@ describe('formatting a value', () => {
   });
 });
 
+describe('the broker host a node is told to use', () => {
+  // A node resolves this as a DNS name and opens a plain connection to 1883. The browser's own
+  // broker address is a WebSocket URL through the reverse proxy, and pasting that into a sketch
+  // produced a node that enrolled and then reported "DNS Failed ... -54" for ever.
+  test('the host comes out of the websocket URL a browser is given', () => {
+    assert.equal(core.brokerHost('wss://frugaliot.naturalinnovation.org/wss'),
+      'frugaliot.naturalinnovation.org');
+  });
+
+  test('a port is not part of a host name', () => {
+    assert.equal(core.brokerHost('ws://frugaliot.local:9012'), 'frugaliot.local');
+    assert.equal(core.brokerHost('mqtt://192.168.1.107:1883'), '192.168.1.107');
+  });
+
+  test('a bare host is left alone, and nothing is not a crash', () => {
+    assert.equal(core.brokerHost('frugaliot.local'), 'frugaliot.local');
+    assert.equal(core.brokerHost(undefined), '');
+    assert.equal(core.brokerHost(null), '');
+  });
+});
+
 describe('retained message patterns', () => {
   test('a pattern is written relative to the organization', () => {
     // "lotus/+/sht30" on org dev means dev/lotus/+/sht30 - nobody should have to type the org
