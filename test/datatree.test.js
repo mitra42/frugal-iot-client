@@ -16,6 +16,54 @@ before(async () => {
   mock.loadConfig(config);
 });
 
+/*
+ * What counts as having heard from a node.
+ *
+ * Nodes publish almost everything retained, so subscribing replays every last-known value whatever
+ * state the node is in. Counting that as contact made a device that died weeks ago read as "live"
+ * on any server whose logger had restarted since - the logger only learns lastseen from the
+ * non-retained discovery heartbeat, so the nodes with no lastseen are exactly the dead ones.
+ */
+describe('a retained message is the broker talking, not the node', () => {
+  const scenario = () => {
+    const { projectMt } = mock.runScenario('one-device');
+    return projectMt.nodes['esp8266-fb94bb'];
+  };
+
+  test('a replayed value does not make a silent node look live', () => {
+    const node = scenario();
+    node.lastMessageAt = undefined;          // as it is before anything has been heard
+    core.mqtt_deliver('dev/lotus/esp8266-fb94bb/sht/temperature', '21.5', true);
+    assert.equal(node.age, null, 'age is unknown, not zero');
+    assert.equal(node.status, 'never');
+  });
+
+  test('but its value still arrives - the reading is current, the timestamp is not', () => {
+    const node = scenario();
+    node.lastMessageAt = undefined;
+    core.mqtt_deliver('dev/lotus/esp8266-fb94bb/sht/temperature', '23.5', true);
+    assert.equal(node.groups.sht.topics.temperature.state.value, 23.5);
+  });
+
+  test('a live publish does count', () => {
+    // The flag is clear on any delivery to an already-established subscription, so this is what a
+    // node actually reporting looks like
+    const node = scenario();
+    node.lastMessageAt = undefined;
+    core.mqtt_deliver('dev/lotus/esp8266-fb94bb/sht/temperature', '21.5', false);
+    assert.ok(node.age !== null && node.age < 1000);
+    assert.equal(node.status, 'live');
+  });
+
+  test('config.json lastseen is what fills the gap for a node we have not heard', () => {
+    // The wrapper seeds it from the server's own record, which comes from the discovery heartbeat
+    const node = scenario();
+    node.lastMessageAt = Date.now() - 60 * 60 * 1000;
+    core.mqtt_deliver('dev/lotus/esp8266-fb94bb/sht/temperature', '21.5', true);
+    assert.ok(node.age > 59 * 60 * 1000, 'a replay must not reset it to now');
+  });
+});
+
 describe('discovery', () => {
   test('a node id on the project topic creates a node', () => {
     const { projectMt } = mock.runScenario('one-device');
@@ -244,5 +292,60 @@ describe('two temperature sources', () => {
     const nodeMt = projectMt.nodes['esp8266-agri'];
     assert.equal(nodeMt.groups.sht.state.name, 'SHT');
     assert.equal(nodeMt.groups.ds18b20.state.name, 'Soil Temperature');
+  });
+});
+
+/*
+ * Seeding "last seen" from config.json.
+ *
+ * The server knows when it last saw each node - from the non-retained discovery heartbeat - and
+ * puts it in config.json. The wrapper uses that as its starting point, which is the only thing
+ * that tells a browser anything about a node that has not spoken since the page loaded. Load
+ * bearing since a retained delivery stopped counting as contact, and previously easy to lose: the
+ * seed is skipped if anything has already been heard, so a retained flood arriving first would
+ * silently replace an hour-old timestamp with "now".
+ *
+ * appender() is called directly rather than by appending the element: connectedCallback fetches
+ * /config.json unconditionally and there is no server here. Everything below it is the real path.
+ */
+describe('last seen, taken from config.json', () => {
+  const AN_HOUR = 60 * 60 * 1000;
+
+  const wrapperFor = (isoSeen) => {
+    const cfg = JSON.parse(JSON.stringify(config));
+    cfg.organizations.dev.projects.lotus.nodes = { 'esp8266-fb94bb': { lastseen: isoSeen } };
+    core.configSet(cfg);
+    core.mqtt_unsubscribe_organization('dev');   // module-level, so it leaks between tests
+    const w = document.createElement('mqtt-wrapper');
+    w.setAttribute('organization', 'dev');
+    w.setAttribute('project', 'lotus');
+    w.appender();
+    return w;
+  };
+  const tidy = () => { core.mqtt_unsubscribe_organization('dev'); core.configSet(config); };
+
+  test('a node nobody has heard from still shows when the server last saw it', () => {
+    const w = wrapperFor(new Date(Date.now() - AN_HOUR).toISOString());
+    const node = w.projectMt && w.projectMt.nodes['esp8266-fb94bb'];
+    assert.ok(node, 'the node should exist from the config alone');
+    assert.ok(node.age >= AN_HOUR - 5000 && node.age <= AN_HOUR + 5000, `age was ${node.age}`);
+    assert.equal(node.status, 'offline');   // an hour with nothing heard, not "live"
+    tidy();
+  });
+
+  test('and a replayed retained value does not overwrite it', () => {
+    const w = wrapperFor(new Date(Date.now() - AN_HOUR).toISOString());
+    core.mqtt_deliver('dev/lotus/esp8266-fb94bb/sht/temperature', '21.5', true);
+    const node = w.projectMt.nodes['esp8266-fb94bb'];
+    assert.ok(node.age > AN_HOUR - 5000, `a replay reset it to ${node.age}`);
+    assert.equal(node.groups.sht.topics.temperature.state.value, 21.5, 'the value still arrives');
+    tidy();
+  });
+
+  test('a live publish does replace it, because that is real contact', () => {
+    const w = wrapperFor(new Date(Date.now() - AN_HOUR).toISOString());
+    core.mqtt_deliver('dev/lotus/esp8266-fb94bb/sht/temperature', '21.5', false);
+    assert.ok(w.projectMt.nodes['esp8266-fb94bb'].age < 5000);
+    tidy();
   });
 });

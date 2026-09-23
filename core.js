@@ -177,11 +177,11 @@ function brokerHost(url) {
 
 // Route a received message to every matching subscription.
 // Separate from the client's on('message') so a test or mock can inject messages with no broker.
-function mqtt_deliver(topic, msg) {
+function mqtt_deliver(topic, msg, retained) {
   // The subscriptions are all going to be MqttNode which will then look at rest of topic
   for (let o of mqtt_subscriptions) {
     if (topicMatches(o.topic, topic)) { // Matches trailing wildcards, but not middle ones
-      o.cb(topic, msg);
+      o.cb(topic, msg, retained);
     }
   }
 }
@@ -2395,9 +2395,18 @@ class MqttTopicProject extends MqttTopic {
 // Always created by MqttTopicProject.addNode. In normal mode MqttProject.addNode then adds the paired
 // MqttNode element (this.element) and replaces _groups with elNode.topicGroups.
 class MqttTopicNode extends MqttTopic {
-  // Route directly on the data-tree object rather than through the element.
-  message_received(topicPath, message) {
-    this.noteMessage();
+  /*
+   * Route directly on the data-tree object rather than through the element.
+   *
+   * A RETAINED delivery updates the values but does not count as having heard from the node. Nodes
+   * publish almost everything retained, so subscribing produces a flood of last-known values
+   * whatever state the node is in - and treating those as "just seen" made a device that died
+   * weeks ago read as live, on any server whose logger had restarted since. The honest answer for
+   * such a node is that we do not know when it last spoke, which is what an unset lastMessageAt
+   * already says ("never"); config.json's lastseen fills it in where the logger does know.
+   */
+  message_received(topicPath, message, retained) {
+    if (!retained) this.noteMessage();
     this.topicValueSet(topicPath, message);
     if (this.graphdataset) this.graphdataset.dataChanged();
   }
@@ -2831,12 +2840,16 @@ class MqttClient extends HTMLElementExtended {
         this.setStatus("Error:" + error.message);
       }.bind(this));
       // Message received, iterate over mqtt_subscriptions and call cb of subscription if matches
-      mqtt_client.on('message', (topic, message) => {
+      mqtt_client.on('message', (topic, message, packet) => {
         // message is Buffer
         // TODO - check whether topic is string or buffer.
         let msg = message.toString();
         console.log("Received", topic, " ", msg);
-        mqtt_deliver(topic, msg);
+        // packet.retain distinguishes the broker replaying its retained store, on subscribe, from
+        // the node actually publishing. MQTT 3.1.1 requires the flag be cleared on a delivery to an
+        // already-established subscription, so it is exactly "this arrived because we just
+        // subscribed" - see MqttTopicNode.message_received for why that matters.
+        mqtt_deliver(topic, msg, !!(packet && packet.retain));
       });
     } else {
       // console.log("XXX already started connection") // We expect this, probably one time
