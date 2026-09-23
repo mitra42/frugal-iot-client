@@ -930,6 +930,24 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     }
     return this.state.elements[name];
   }
+  // Each of these lists is the result of one fetch made when the card opened - nothing pushes a
+  // change, so the heading carries the way to ask again.
+  refreshableHeading(title, refreshFn) {
+    return el('h3', {}, [
+      el('span', {textContent: title}),
+      el('span', {class: 'pseudolink refresh', i8n: false, title: getString("Refresh"),
+        textContent: ' \u27f3', onclick: refreshFn.bind(this)}),
+    ]);
+  }
+  // The organization's nodes are read out of server_config, so refreshing this table means fetching
+  // /config.json again rather than re-rendering what is already here.
+  refreshNodesTable() {
+    GET("/config.json", {}, (err, json) => {
+      if (err) { this.message(err.message); return; }
+      configSet(json);
+      this.replaceElement("nodes_table", this.nodesTable());
+    });
+  }
   setOrganization(org) {
     this.state.org =  org;
     this.state.selected_platform_id = null;
@@ -1207,7 +1225,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
          el('button', {class: "submit", type: "submit", textContent: 'Upload'}),
        ]), //form
        el('section', {}, [
-         el('h3', {textContent: "Existing OTA Files"}),
+         this.refreshableHeading("Existing OTA Files", this.getOtaFiles),
          this.state.elements.ota_files = this.otaFilesList(),
        ]), // section ota
        el('section', {}, [
@@ -1219,7 +1237,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
    adminRestContent() {
      return el('div', {}, [
        el('section', {}, [
-             el('h3', {textContent: "Permissions"}),
+             this.refreshableHeading("Permissions", this.getPeopleList),
              // List of people and their permissions, with option to delete,
              this.state.elements.people_perms_list = this.peoplePermList(), // This gets replaced when actions taken
              // and form to add (dropdown of people and permissions)
@@ -1322,7 +1340,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
    projectsRestContent() {
      return el('div', {}, [
        el('section', {}, [
-             el('h3', {textContent: "Projects"}),
+             this.refreshableHeading("Projects", this.getProjectsList),
              // List of existing projects for this organization,
              this.state.elements.projects_display_list = this.projectsDisplayList(),
              // and, once expanded, a form to add a new project (id and name)
@@ -1367,10 +1385,10 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
    // Content of the Nodes tab below the organization dropdown - only rendered once an org is selected
    nodesRestContent() {
      return el('div', {}, [
-       el('h3', {textContent: "Nodes in Organization"}),
+       this.refreshableHeading("Nodes in Organization", this.refreshNodesTable),
        this.state.elements.nodes_table = this.nodesTable(),
        el('section', {}, [
-         el('h3', {textContent: "Enrolled nodes"}),
+         this.refreshableHeading("Enrolled nodes", this.getEnrolledNodes),
          el('p', {textContent:
            "Each node has its own broker credential, which it collects from this server the first " +
            "time it connects. Forget one to have it issued a new credential - needed if its " +
@@ -1392,25 +1410,25 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
    apiRestContent() {
      return el('div', {}, [
        el('section', {}, [
-         el('h3', {textContent: "Registered Platforms"}),
+         this.refreshableHeading("Registered Platforms", this.getPlatformsList),
          this.state.elements.platforms_list_display = this.platformsListDisplay(),
        ]),
        el('section', {}, [
          this.state.elements.add_platform = this.collapsibleArea('add_platform', "Add Platform", this.platformRegisterForm),
        ]),
        el('section', {}, [
-         el('h3', {textContent: "Farms"}),
+         this.refreshableHeading("Farms", this.getFarmsList),
          this.state.elements.farms_list_display = this.farmsListDisplay(),
        ]),
        el('section', {}, [
          this.state.elements.add_farm = this.collapsibleArea('add_farm', "Add Farm", this.farmRegisterForm),
        ]),
        el('section', {}, [
-         el('h3', {textContent: "Nodes in Farm"}),
+         this.refreshableHeading("Nodes in Farm", this.getFarmNodesList),
          this.state.elements.farm_nodes_table = this.farmNodesTable(),
        ]),
        el('section', {}, [
-         el('h3', {textContent: "Node Actions"}),
+         this.refreshableHeading("Node Actions", this.getDeviceActionSchema),
          this.state.elements.farm_node_actions = this.farmNodeActions(),
          this.state.elements.action_section = this.actionSection(),
        ]),

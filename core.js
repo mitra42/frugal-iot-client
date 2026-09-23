@@ -548,6 +548,7 @@ EN:
   Register: Register
   Register a platform above before adding a farm.: Register a platform above before adding a farm.
   Register Farm: Register Farm
+  Refresh: Refresh
   Register Platform: Register Platform
   Registered Platforms: Registered Platforms
   Registration failed: Registration failed
@@ -824,6 +825,7 @@ FR:
   Register: Registre
   Register a platform above before adding a farm.: Enregistrez une plateforme ci-dessus avant d'ajouter une ferme.
   Register Farm: Enregistrer la ferme
+  Refresh: Actualiser
   Register Platform: Enregistrer la plateforme
   Registered Platforms: Plateformes enregistrées
   Registration failed: L'inscription a échoué
@@ -1100,6 +1102,7 @@ HI:
   Register: पंजीकरण करें
   Register a platform above before adding a farm.: फार्म जोड़ने से पहले ऊपर एक प्लेटफ़ॉर्म पंजीकृत करें।
   Register Farm: फार्म पंजीकृत करें
+  Refresh: ताज़ा करें
   Register Platform: प्लेटफ़ॉर्म पंजीकृत करें
   Registered Platforms: पंजीकृत प्लेटफ़ॉर्म
   Registration failed: पंजीकरण विफल
@@ -1376,6 +1379,7 @@ ID:
   Register: Daftar
   Register a platform above before adding a farm.: Daftarkan platform di atas sebelum menambahkan farm.
   Register Farm: Daftarkan Farm
+  Refresh: Segarkan
   Register Platform: Daftarkan Platform
   Registered Platforms: Platform Terdaftar
   Registration failed: Pendaftaran gagal

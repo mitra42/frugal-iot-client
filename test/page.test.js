@@ -143,8 +143,9 @@ describe('the project back', () => {
     // Reach into the shadow root: the card's own textContent does not see the section's headings
     const headings = (key) => {
       back.state.elements[key].querySelector('.fi-admincard__head').click();
+      // The heading's first span is its title - the one beside it is the refresh control
       return [...back.state.elements[key].querySelector('mqtt-admin')
-        .shadowRoot.querySelectorAll('h3')].map((h) => h.textContent);
+        .shadowRoot.querySelectorAll('h3')].map((h) => (h.querySelector('span') || h).textContent);
     };
     assert.deepEqual(headings('admin'), ['Permissions'], 'people only');
     assert.deepEqual(headings('projects'), ['Projects']);
