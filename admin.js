@@ -36,10 +36,22 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     }
     //this.append(el('div', {class: 'message', textContent: msg}));
   }
+  // Only organizations server_config holds: a permission row can name one this server does not
+  // serve, and no card could act on it. Keyed by id so an organization-wide and a project-scoped
+  // row for the same capability list it once.
   orgsByPerm(capability) {
-    return server_config.user.permissions
+    const orgs = new Map();
+    server_config.user.permissions
       .filter(o => o.capability === capability)
-      .map(o => [ o.org, server_config.organizations[o.org].name ])
+      .forEach(o => {
+        const org = server_config.organizations[o.org];
+        if (org) orgs.set(o.org, org.name);
+      });
+    return [...orgs];
+  }
+  // An organization gains its projects block only once one exists, so this is not always there.
+  projectsOf(org) {
+    return (server_config.organizations[org] || {}).projects || {};
   }
   get adminOrgs() {
     return this.orgsByPerm("ADMIN");
@@ -102,7 +114,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     return el('select', {id: 'projects', name: 'project' /*onchange: this.onOrganization.bind(this)*/}, [
       //el('option', {value: "", textContent: "Not selected", selected: !this.state.value}),
       el('option', {value: "+", textContent: "All", selected: true}),
-      Object.entries(server_config.organizations[org].projects)
+      Object.entries(this.projectsOf(org))
         .map(([pid, p]) => [ pid, p.name ])
         .map(([pid, name]) =>
           el('option', {value: pid, textContent: `${pid}: ${name}`, selected: false}))
@@ -1041,12 +1053,12 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
 
    // Flattens server_config's nodes-by-project data for one org into the row shape nodesTableFor() renders.
    nodesForOrg(org) {
-     const projects = (server_config.organizations[org] || {}).projects || {};
+     const projects = this.projectsOf(org);
      return this.nodesForProjects(org, Object.keys(projects));
    }
    // Same, but restricted to a specific set of project ids (e.g. those api_farms maps to a farm).
    nodesForProjects(org, projectIds) {
-     const projects = (server_config.organizations[org] || {}).projects || {};
+     const projects = this.projectsOf(org);
      let nodes = [];
      projectIds.forEach(projectId => {
        const project = projects[projectId];
@@ -1146,7 +1158,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       // Create dropdown for selecting a different project for a node
       if (!org) { return el('span', {textContent: "No organization"}); }
       return el('select', {name: 'project'}, [
-        Object.entries(server_config.organizations[org].projects)
+        Object.entries(this.projectsOf(org))
           .map(([pid, p]) => [ pid, p.name ])
           .map(([pid, name]) =>
             el('option', {value: pid, textContent: `${pid}: ${name}`, selected: pid === currentProjectId}))

@@ -26,6 +26,50 @@ before(async () => {
 });
 beforeEach(() => { withCapabilities('READ'); try { localStorage.clear(); } catch (e) { /* none */ } });
 
+// The permissions table outlives config.d - an organization dropped from it, or hosted on another
+// server, keeps its rows, and buildConfigFor serves only the organizations the config has.
+describe('a permission naming an organization that is not in the config', () => {
+  const withStaleOrg = () => mock.loadConfig({ ...base, user: { id: 2, name: 'test', permissions: [
+    { org: 'dev', capability: 'ADMIN' },
+    { org: 'dev', capability: 'OTAUPDATE' },
+    { org: 'gone', capability: 'ADMIN' },      // no such organization in this config
+    { org: 'gone', capability: 'OTAUPDATE' },
+  ] } });
+
+  test('does not stop the section rendering', () => {
+    withStaleOrg();
+    const admin = document.createElement('mqtt-admin');
+    admin.setAttribute('section', 'admin');
+    document.body.append(admin);    // connectedCallback used to throw here
+    assert.ok(admin.shadowRoot.querySelector('.mqtt-admin'), 'the section rendered nothing');
+    admin.remove();
+  });
+
+  test('is left out, rather than offered and then failing on every card it opens', () => {
+    withStaleOrg();
+    const admin = document.createElement('mqtt-admin');
+    admin.setAttribute('section', 'admin');
+    document.body.append(admin);
+    assert.deepEqual(admin.adminOrgs, [['dev', 'Development']]);
+    assert.deepEqual(admin.otaOrgs, [['dev', 'Development']]);
+    // Only one left, so it is chosen without asking - which is the point of dropping the other
+    assert.equal(admin.state.org, 'dev');
+    admin.remove();
+  });
+
+  test('an organization-wide and a project-scoped row list it once', () => {
+    mock.loadConfig({ ...base, user: { id: 2, name: 'test', permissions: [
+      { org: 'dev', capability: 'ADMIN' },
+      { org: 'dev', capability: 'ADMIN', project: 'lotus' },
+    ] } });
+    const admin = document.createElement('mqtt-admin');
+    admin.setAttribute('section', 'admin');
+    document.body.append(admin);
+    assert.deepEqual(admin.adminOrgs, [['dev', 'Development']]);
+    admin.remove();
+  });
+});
+
 describe('which admin cards a user gets', () => {
   test('a reader gets Info and nothing else', () => {
     // Info needs no capability: connection details are reference information, and having one card

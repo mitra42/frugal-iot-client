@@ -48,6 +48,10 @@ these by bare filename (`see CARDS_UX.md 4.7`); they all live in `docs/` except 
 - **Comments**: explain WHY, not WHAT. One short line is enough; do not restate what the code clearly shows. No multi-line docstrings.
   - Good: `// topicSetPath throws when this.node is null — guard before calling`
   - Bad: `// Check if topic starts with the set path`
+- **A comment says what is true now, not what used to break.** When fixing a bug, state the
+  constraint that still holds; the diagnosis — what it threw, where, why one deployment differed —
+  belongs in the pull request or the chat, not in the source, where it buries the one line that
+  still matters.
 - **No trailing summaries** — do not add a comment block or prose after a method explaining what it does.
 - **Getters**: prefer `get foo()` over plain property access whenever a value is derived or retrieved by traversing connected objects (e.g. `this.node.project`, `this.parentElement`, `this.mt.node.groups[this.group]`). Getters make the dependency chain explicit and let callers read `thing.project` naturally.
 - **Dashboard functionality**: prefer adding reusable behaviour to the shared modules over implementing it inside a custom dashboard file. If a dashboard needs to traverse the topic tree, compute a list, or fire an event, that logic belongs on the relevant class as a getter or method.
