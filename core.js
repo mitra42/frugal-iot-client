@@ -2056,7 +2056,7 @@ class MqttTopic {
       display: this.type !== 'bool',
       title: {
         // noinspection JSUnresolvedReference
-        color: this.color,  // May need to vary so not all e.g. humidity same color
+        color: this.color,  // The family colour; the per-line variation happens in MqttGraph.addDataset
         // noinspection JSUnresolvedReference
         text: getString(this.name.replace(/[0-9]+$/,'')),
       },
@@ -2092,7 +2092,6 @@ class MqttTopic {
     
     // Create a graphdataset to put in the chart
     if (!this.graphdataset) {
-      let nodename = this.node ? this.node.usableName : "";
       // noinspection JSUnresolvedReference
       this.graphdataset = el('mqtt-graphdataset', {
         // noinspection JSUnresolvedReference
@@ -2104,7 +2103,9 @@ class MqttTopic {
         min: this.min,
         max: this.max,
         yaxisid: yaxisid,
-        label: `${nodename}:${this.name}`
+        // fullName, not name - the legend has to say which device a reading came from, and it goes
+        // through nodeMt because this.node (the MqttNode element) is absent on a headless page.
+        label: this.fullName,
       });
       this.graphdataset.mt = this;
     }

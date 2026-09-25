@@ -273,8 +273,20 @@ class MqttGraph extends MqttElement {
     this.chart.update();
   }
   addDataset(chartdataset) {
+    this.assignColor(chartdataset);
     this.datasets.push(chartdataset);
     this.makeChart();
+  }
+  // Only the graph knows what is already drawn, so it is the graph that decides how far a line has
+  // to move off its schema colour. Lowest free variant, so removing a line frees its colour again.
+  assignColor(chartdataset) {
+    const base = chartdataset.baseColor;
+    const used = this.datasets.filter(d => d.baseColor === base).map(d => d.colorVariant);
+    let n = 0;
+    while (used.includes(n)) n++;
+    chartdataset.colorVariant = n;
+    chartdataset.borderColor = variantColor(base, n); // also sets colour of point
+    chartdataset.backgroundColor = addAlpha(chartdataset.borderColor, 0.3); // 30% opacity
   }
   removeDataset(chartdataset) {
     // Removes a single chartjs dataset object from this graph and redraws.
@@ -302,8 +314,75 @@ class MqttGraph extends MqttElement {
   }
 }
 customElements.define('mqtt-graph', MqttGraph);
-let lightenablecolors =  ['coral','salmon','pink','salmon','yellow','goldenrodyellow',
-  'green','seagreen','cyan','steelblue','blue','skyblue','gray','slategray'];
+
+/* ===== Colour helpers ==========
+   The schema gives one colour per kind of reading, so two humidities on the same graph arrive the
+   same blue. variantColor spreads them apart while keeping them recognisably the same family. */
+
+// Only the names likely to appear in a schema; anything else falls through and is used unchanged.
+const namedColors = {
+  black: [0, 0, 0], gray: [128, 128, 128], grey: [128, 128, 128], white: [255, 255, 255],
+  red: [255, 0, 0], green: [0, 128, 0], blue: [0, 0, 255], purple: [128, 0, 128],
+  brown: [165, 42, 42], orange: [255, 165, 0], yellow: [255, 255, 0], pink: [255, 192, 203],
+  cyan: [0, 255, 255], magenta: [255, 0, 255],
+};
+
+function colorToRgb(color) {
+  if (!color) return null;
+  const c = color.toLowerCase().trim();
+  if (c.startsWith('#')) {
+    const hex = c.length === 4 ? c[1] + c[1] + c[2] + c[2] + c[3] + c[3] : c.slice(1, 7);
+    if (hex.length !== 6) return null;
+    return [0, 2, 4].map(i => parseInt(hex.slice(i, i + 2), 16));
+  }
+  if (c.startsWith('rgb')) {
+    const parts = c.match(/[\d.]+/g);
+    return parts && parts.length >= 3 ? parts.slice(0, 3).map(Number) : null;
+  }
+  return namedColors[c] || null;
+}
+
+function addAlpha(color, alpha) {
+  if (!color) return color;
+  if (color.startsWith('rgba')) return color.replace(/[\d.]+\)$/, alpha + ')');
+  const rgb = colorToRgb(color);
+  return rgb ? `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${alpha})` : color;
+}
+
+function rgbToHsl([r, g, b]) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2;
+  if (max === min) return [0, 0, l];
+  const d = max - min;
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  const h = (max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4) * 60;
+  return [h, s, l];
+}
+
+function hslToRgb([h, s, l]) {
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l - c / 2;
+  const [r, g, b] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x]
+    : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+  return [r, g, b].map(v => Math.round((v + m) * 255));
+}
+
+// n is how many lines already share this base colour: 0 keeps it, later ones step alternately either
+// side in hue and lightness, so neighbours differ but all stay within a recognisable band.
+function variantColor(baseColor, n) {
+  const rgb = n && colorToRgb(baseColor);
+  if (!rgb) return baseColor;
+  let [h, s, l] = rgbToHsl(rgb);
+  const step = (n % 2 ? 1 : -1) * Math.ceil(n / 2); // 1, -1, 2, -2 ...
+  if (s < 0.15) s = 0.45;       // black and grey have no hue to rotate, so give the variants one
+  if (l < 0.2 || l > 0.8) l = 0.45; // and no room to move either, so start them mid-range
+  h = (h + step * 28 + 360) % 360;
+  l = Math.min(0.75, Math.max(0.25, l + step * 0.08));
+  const [vr, vg, vb] = hslToRgb([h, s, l]);
+  return `rgb(${vr}, ${vg}, ${vb})`;
+}
+
 class MqttGraphDataset extends MqttElement {
   /*
   chartdataset: { data[{value, time}], parsing: { xAixKey: 'time', yAxisKey: 'value' }
@@ -349,48 +428,12 @@ class MqttGraphDataset extends MqttElement {
       };
     }
     // Things that are changed by attributes
-    this.chartdataset.label = this.state.label; // TODO-80 Needs device name
-    this.chartdataset.borderColor = this.state.color; // also sets color of point
-    this.chartdataset.backgroundColor = this.addAlpha(this.state.color, 0.3); // 30% opacity
+    this.chartdataset.label = this.state.label;
+    // Only the schema colour is recorded here; MqttGraph.addDataset sets the line and fill colours,
+    // varying this one against whatever is already on the graph.
+    this.chartdataset.baseColor = this.state.color;
     this.chartdataset.yAxisID = this.state.yaxisid;
     // Should override display and position and grid of each axis used
-  }
-
-  // Helper method to add alpha transparency to a color
-  addAlpha(color, alpha) {
-    // Named color map for common colors
-    const namedColors = {
-      'purple': 'rgb(128, 0, 128)',
-      'brown': 'rgb(165, 42, 42)',
-      'red': 'rgb(255, 0, 0)',
-      'pink': 'rgb(255, 192, 203)',
-      'green': 'rgb(0, 128, 0)',
-      'blue': 'rgb(0, 0, 255)',
-      'black': 'rgb(0, 0, 0)'
-    };
-
-    // If it's already an rgba color, modify the alpha
-    if (color.startsWith('rgba')) {
-      return color.replace(/[\d.]+\)$/, alpha + ')');
-    }
-    // Convert hex or named color to rgba
-    if (color.startsWith('#')) {
-      const r = parseInt(color.slice(1, 3), 16);
-      const g = parseInt(color.slice(3, 5), 16);
-      const b = parseInt(color.slice(5, 7), 16);
-      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-    }
-    // If it's rgb, convert to rgba
-    if (color.startsWith('rgb')) {
-      return color.replace('rgb', 'rgba').replace(')', `, ${alpha})`);
-    }
-    // Check for named colors
-    const lowerColor = color.toLowerCase().trim();
-    if (namedColors[lowerColor]) {
-      return namedColors[lowerColor].replace('rgb', 'rgba').replace(')', `, ${alpha})`);
-    }
-    // For unknown colors, return as-is
-    return color;
   }
 
   // Normally the MqttTopic creates the MqttGraphDataset,
