@@ -541,7 +541,7 @@ EN:
   Provision instead (erases config): Provision instead (erases config)
   Publish Message: Publish Message
   "Published to ": "Published to "
-  "Put this in platformio-local.ini, which is not committed:": "Put this in platformio-local.ini, which is not committed:"
+  "Put this in platformio-secrets-local.ini, which is not committed:": "Put this in platformio-secrets-local.ini, which is not committed:"
   QoS: QoS
   reconnect: reconnect
   Reconnect the board to flash again: Reconnect the board to flash again
@@ -818,7 +818,7 @@ FR:
   Provision instead (erases config): Provisionner plutôt (effacer la configuration)
   Publish Message: Publier un message
   "Published to ": "Publié sur "
-  "Put this in platformio-local.ini, which is not committed:": "Mettez ceci dans platformio-local.ini, qui n'est pas commité :"
+  "Put this in platformio-secrets-local.ini, which is not committed:": "Mettez ceci dans platformio-secrets-local.ini, qui n'est pas commité :"
   QoS: QoS
   reconnect: reconnecter
   Reconnect the board to flash again: Reconnectez la carte pour flasher à nouveau
@@ -1095,7 +1095,7 @@ HI:
   Provision instead (erases config): इसके बजाय प्रोविजन करें (कॉन्फ़िगरेशन मिटेगी)
   Publish Message: संदेश प्रकाशित करें
   "Published to ": "पर प्रकाशित किया गया "
-  "Put this in platformio-local.ini, which is not committed:": "इसे platformio-local.ini में रखें, जो कमिट नहीं किया जाता:"
+  "Put this in platformio-secrets-local.ini, which is not committed:": "इसे platformio-secrets-local.ini में रखें, जो कमिट नहीं किया जाता:"
   QoS: QoS
   reconnect: पुनः कनेक्ट करें
   Reconnect the board to flash again: फिर से फ्लैश करने के लिए बोर्ड को दोबारा कनेक्ट करें
@@ -1372,7 +1372,7 @@ ID:
   Provision instead (erases config): Provisioning saja (menghapus konfigurasi)
   Publish Message: Publikasikan Pesan
   "Published to ": "Dipublikasikan ke "
-  "Put this in platformio-local.ini, which is not committed:": "Letakkan ini di platformio-local.ini, yang tidak di-commit:"
+  "Put this in platformio-secrets-local.ini, which is not committed:": "Letakkan ini di platformio-secrets-local.ini, yang tidak di-commit:"
   QoS: QoS
   reconnect: sambungkan kembali
   Reconnect the board to flash again: Hubungkan kembali papan untuk flash lagi

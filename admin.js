@@ -251,7 +251,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     }
     return el('div', {}, [
       ...(e.secrets.length ? [
-        el('p', {textContent: "Put this in platformio-local.ini, which is not committed:"}),
+        el('p', {textContent: "Put this in platformio-secrets-local.ini, which is not committed:"}),
         ...e.secrets.map((secret) => el('p', {}, [
           el('span', {class: 'pseudolink', textContent: ' 🗑 ',
             onclick: this.onEnrolmentSecretDelete.bind(this, secret)}),
