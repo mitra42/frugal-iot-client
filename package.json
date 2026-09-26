@@ -29,7 +29,10 @@
   "license": "MIT",
   "main": "webcomponents.js",
   "name": "frugal-iot-client",
-  "repository": "https://github.com/mitra42/frugal-iot-client",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mitra42/frugal-iot-client.git"
+  },
   "scripts": {
     "fixtures": "node test/fixtures/regenerate.js",
     "link:hee": "ln -sfn ../../html-element-extended node_modules/html-element-extended && ls -ld node_modules/html-element-extended",
