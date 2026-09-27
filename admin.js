@@ -7,7 +7,7 @@
 
 import {EL, GET, HTMLElementExtended} from '/node_modules/html-element-extended/htmlelementextended.js';
 import mqtt from '/node_modules/mqtt/dist/mqtt.esm.js'; // https://www.npmjs.com/package/mqtt
-import { CssUrl, DELETE, POST, XXX, brokerHost, configSet, el, getString, hasCapability, mqttTempConnect, retainedPattern, locationParameterChange, mqtt_client, preferedLanguageSet, preferedLanguages, redirectToLogin, server_config } from './core.js';
+import { CssUrl, DELETE, POST, XXX, brokerHost, configSet, el, getString, hasCapability, mqttTempConnect, mqtt_subscribe, retainedPattern, locationParameterChange, mqtt_client, preferedLanguageSet, preferedLanguages, redirectToLogin, server_config } from './core.js';
 
 
 // ---------- USB flashing over WebSerial ----------
@@ -291,6 +291,92 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       this.replaceElement("enrolled_nodes", this.enrolledNodesList());
     });
   }
+  /*
+   * The Pis bridging to this server, and whether each is currently connected.
+   *
+   * Two independent answers, which is the point of showing both. "Last check-in" is the server's
+   * own record of that Pi collecting replicated logins, so it says the Pi is alive and talking
+   * HTTP. "Bridge" is the broker's retained state for that account, so it says the MQTT relay
+   * itself is up. A Pi with a broken bridge still checks in, and that difference is exactly what
+   * is hard to see from production any other way.
+   */
+  getBridges() {
+    if (!this.state.org) return;
+    GET(`/bridges_list/${this.state.org}`, {}, (err, json) => {
+      if (err) { this.message(err.message); return; }
+      this.state.bridges = json; // [{ site, account, created_at, last_pull }]
+      this.subscribeBridgeState();
+      this.replaceElement("bridges_list", this.bridgesList());
+    });
+  }
+  /*
+   * Watch each bridge's connection state.
+   *
+   * One subscription per bridge rather than the "+" wildcard, because mqtt_deliver matches an
+   * incoming topic with topicMatches, which understands a trailing "/#" and nothing else - a "+" in
+   * the middle is compared literally, so the broker would send the messages and none would ever be
+   * delivered to this callback. Exact topics are narrower anyway, and the retained value arrives
+   * immediately, so a state appears without waiting for anything to change.
+   *
+   * Tracked in a Set because mqtt_subscribe does not de-duplicate: without this, every refresh and
+   * every organization change would add another copy of the same subscription.
+   */
+  subscribeBridgeState() {
+    this.state.bridge_state = this.state.bridge_state || {};
+    this.state.bridge_subscribed = this.state.bridge_subscribed || new Set();
+    for (const b of (this.state.bridges || [])) {
+      const topic = `$SYS/broker/connection/${b.account}/state`;
+      if (this.state.bridge_subscribed.has(topic)) continue;
+      this.state.bridge_subscribed.add(topic);
+      // (topic, msg, retained) - the first argument is the topic, not the message
+      mqtt_subscribe(topic, (_topic, msg) => {
+        this.state.bridge_state[b.account] = String(msg);
+        this.replaceElement("bridges_list", this.bridgesList());
+      });
+    }
+  }
+  bridgesList() {
+    const bridges = this.state.bridges;
+    if (!bridges || !bridges.length) {
+      return el('p', {textContent:
+        "No Pi bridges to this server for this organization. A bridge relays a Pi's readings here " +
+        "while the Pi carries on working on its own - see INSTALLATION.md step 11."});
+    }
+    const state = this.state.bridge_state || {};
+    return el('table', {class: 'nodestates'}, [
+      el('tr', {}, [
+        el('th', {textContent: "Site"}), el('th', {textContent: "Bridge"}),
+        el('th', {textContent: "Last check-in"}), el('th', {textContent: "Added"}),
+      ]),
+      ...bridges.map((b) => {
+        // Three states, not two: nothing received yet is not the same as "down", and saying
+        // "Unknown" avoids reporting a healthy bridge as broken while the retained message is still
+        // in flight or when this login has not been granted the $SYS topic.
+        const raw = state[b.account];
+        const up = (raw === undefined) ? { label: "Unknown", hint: "No state received from the broker yet" }
+          : (raw === '1') ? { label: "Up", hint: "The broker reports this bridge connected" }
+          : { label: "DOWN", hint: "The broker reports this bridge not connected" };
+        return el('tr', {}, [
+          el('td', {i8n: false, textContent: b.site}),
+          el('td', {i8n: false, title: getString(up.hint), textContent: up.label}),
+          el('td', {i8n: false, textContent: b.last_pull ? this.formatLastSeen(new Date(b.last_pull).toISOString()) : getString("Never seen")}),
+          el('td', {i8n: false, textContent: b.created_at ? this.formatLastSeen(new Date(b.created_at).toISOString()) : ''}),
+        ]);
+      }),
+    ]);
+  }
+  bridgesRestContent() {
+    return el('div', {}, [
+      this.refreshableHeading("Bridged Pis", this.getBridges),
+      el('p', {textContent:
+        "A bridge relays a Pi's readings to this server, so its nodes appear here too, while the " +
+        "Pi carries on recording and serving on its own whenever the link is down. \"Bridge\" is " +
+        "the broker's live view of the relay; \"Last check-in\" is when that Pi last collected " +
+        "this organization's logins, which it does over HTTP - so a Pi can be checking in while " +
+        "its bridge is down, and the two together say which half is broken."}),
+      this.state.elements.bridges_list = this.bridgesList(),
+    ]);
+  }
   onNodeReset(project, nodeid) {
     // Destructive and not obvious: forgetting a node that is running is safe (it notices its
     // credential being refused and enrols again) but it does cost that node a few minutes offline.
@@ -315,10 +401,32 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
    */
   nodeStates() {
     return {
-      enrolled: { label: "Yes",      next: 'denied',   hint: "Has its own broker credential. Click to deny it." },
-      failed:   { label: "Failed",   next: 'approved', hint: "Asked and was refused. Click to let it enrol." },
-      approved: { label: "Approved", next: 'denied',   hint: "Its next request will be accepted. Click to deny it." },
-      denied:   { label: "Denied",   next: 'cleared',  hint: "Stopped, and its credential removed. Click to clear." },
+      enrolled: { label: "Yes",              next: 'denied',   hint: "Has its own broker credential. Click to deny it." },
+      // "Failed" alone read as a status rather than a control, so the one action this card exists to
+      // offer - approving a node that cannot prove anything - was not findable by someone looking
+      // for it. The label says what clicking does.
+      failed:   { label: "Failed - approve", next: 'approved', hint: "Asked and was refused. Click to let it enrol." },
+      approved: { label: "Approved",         next: 'denied',   hint: "Its next request will be accepted. Click to deny it." },
+      denied:   { label: "Denied",           next: 'cleared',  hint: "Stopped, and its credential removed. Click to clear." },
+    };
+  }
+  /*
+   * Why the server turned a node away, in words rather than the wire code.
+   *
+   * Worth the table: the codes are deliberately vague to the NODE (so that probing an organization
+   * name learns nothing), but an administrator looking at their own organization needs the
+   * difference - "wrong secret" and "project not registered" have completely different fixes, and
+   * neither is fixed by approving the node.
+   */
+  nodeAskReasons() {
+    return {
+      refused:            "enrolment secret wrong or missing",
+      no_such_project:    "project is not registered here",
+      bad_request:        "malformed org, project or node id",
+      needs_reset:        "already enrolled, cannot prove it",
+      denied:             "denied here",
+      rate_limited:       "asking too often",
+      broker_unavailable: "broker was unavailable",
     };
   }
   onNodeState(project, nodeid, state) {
@@ -335,7 +443,9 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     const nodes = this.state.enrolled_nodes;
     if (!nodes || !nodes.length) {
       return el('p', {textContent:
-        "No nodes have enrolled yet. A node enrols itself the first time it connects."});
+        "No nodes have enrolled yet, and none is asking to. A node enrols itself the first time it " +
+        "connects; one that asks and is refused is listed here too, so an empty list means nothing " +
+        "is reaching this server at all - check that the node's org and enrol URL are this one."});
     }
     const states = this.nodeStates();
     return el('table', {class: 'nodestates'}, [
@@ -353,10 +463,14 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
             el('span', {class: 'pseudolink', title: getString(st.hint), textContent: st.label,
               onclick: this.onNodeState.bind(this, n.project, n.nodeid, st.next)}),
           ]),
-          // Untrusted, and shown as such: an address and a time for the admin to recognise
+          // Untrusted, and shown as such: an address and a time for the admin to recognise. The
+          // reason is here too - without it every refusal looks the same, and the ones an admin can
+          // do something about (a project that is not registered, a node id that is not a node id)
+          // are indistinguishable from the one that approving fixes.
           el('td', {i8n: false, textContent: n.asked_at
             ? `${this.formatLastSeen(new Date(n.asked_at).toISOString())} from ${n.asked_from || '?'}` +
-              `${n.asked_count > 1 ? ` (${n.asked_count}x)` : ''}`
+              `${n.asked_count > 1 ? ` (${n.asked_count}x)` : ''}` +
+              `${n.asked_reason ? ` - ${this.nodeAskReasons()[n.asked_reason] || n.asked_reason}` : ''}`
             : (n.enrolled_at ? new Date(n.enrolled_at).toISOString().slice(0, 10) : '')}),
           el('td', {}, [
             n.enrolled_at
@@ -982,7 +1096,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     // the enrolled-node list as well as reading server_config - leaving it out was why that section
     // always said "No nodes have enrolled yet": loadSectionIfNeeded returns early for a tab that is not
     // in this set, so the fetch never happened.
-    this.state.sectionsNeedingLoad = new Set(['OTA', 'Admin', 'Projects', 'Nodes', 'API']);
+    this.state.sectionsNeedingLoad = new Set(['OTA', 'Admin', 'Projects', 'Nodes', 'Bridges', 'API']);
     this.loadSectionIfNeeded(this.state.activeSectionTitle);
     // Only a card created without an organization has a dropdown of its own; replaceElement does
     // nothing for an element this rendering never made. Fine too if this.state.org is undefined.
@@ -1020,6 +1134,8 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       this.getProjectsList();
     } else if (title === 'Nodes') {
       this.getEnrolledNodes();
+    } else if (title === 'Bridges') {
+      this.getBridges();
     } else if (title === 'API') {
       this.getPlatformsList();
       this.getFarmsList();
@@ -1404,7 +1520,9 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
          el('p', {textContent:
            "Each node has its own broker credential, which it collects from this server the first " +
            "time it connects. Forget one to have it issued a new credential - needed if its " +
-           "filesystem has been erased, because it can then no longer prove which node it is."}),
+           "filesystem has been erased, because it can then no longer prove which node it is. A " +
+           "node that asked and was refused is listed here as well, with why: click Approve on it " +
+           "to accept its next request whatever secret it presents. It retries every half hour."}),
          this.state.elements.enrolled_nodes = this.enrolledNodesList(),
        ]),
        el('section', {}, [
@@ -1456,6 +1574,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
        { key: 'message', title: "Message", orgs: 'adminOrgs', dropdown: 'messageorgsdropdown', rest: 'message_rest', content: this.messageRestContent },
        { key: 'retained', title: "Retained", orgs: 'adminOrgs', dropdown: 'retainedorgsdropdown', rest: 'retained_rest', content: this.retainedRestContent },
        { key: 'nodes', title: "Nodes", orgs: 'adminOrgs', dropdown: 'nodesorgsdropdown', rest: 'nodes_rest', content: this.nodesRestContent },
+       { key: 'bridges', title: "Bridges", orgs: 'adminOrgs', dropdown: 'bridgesorgsdropdown', rest: 'bridges_rest', content: this.bridgesRestContent },
        { key: 'api',   title: "API",   orgs: 'adminOrgs', dropdown: 'apiorgsdropdown',   rest: 'api_rest',   content: this.apiRestContent },
      ];
    }

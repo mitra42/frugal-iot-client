@@ -118,8 +118,14 @@ function unshiftUnique(arr, v) {
 }
  */
 
-// Subscribe to a topic (no wild cards as topic not passed to cb)
-function mqtt_subscribe(topic, cb) { // cb(message)
+/*
+ * Subscribe to a topic.  cb(topic, message, retained) - see mqtt_deliver, which passes all three.
+ *
+ * A trailing "/#" works. A "+" anywhere does NOT: topicMatches understands only the trailing form,
+ * so the broker would deliver the messages and none of them would reach cb. Subscribe to each
+ * concrete topic instead, or teach topicMatches about "+".
+ */
+function mqtt_subscribe(topic, cb) { // cb(topic, message, retained)
   console.log("Subscribing to ", topic);
   mqtt_subscriptions.push({topic, cb});
   // There may be no client yet - it only connects once it knows which organization's credentials to use
