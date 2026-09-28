@@ -119,6 +119,25 @@ function unshiftUnique(arr, v) {
  */
 
 /*
+ * Say what the broker made of a subscription.
+ *
+ * A broker that REFUSES one does not report an error: MQTT 3.1.1 answers with SUBACK return code
+ * 0x80, which mqtt.js hands back as granted qos 128 in the second argument. Checking only `err`
+ * therefore made a refusal completely silent - "Subscribing to X" and then nothing, for ever,
+ * looking exactly like a topic nobody publishes to. That is the difference between "no permission"
+ * and "no data", and it is the first thing you want to know.
+ */
+function subscribeResult(topic, err, granted) {
+  if (err) { console.error("Subscribe failed", topic, err); return; }
+  const refused = (granted || []).filter((g) => g.qos === 128);
+  if (refused.length) {
+    console.error(`Subscribe REFUSED by the broker: ${topic} - this login's broker account has no `
+      + `permission for it. Its rights are set when it logs in; a permission added since then `
+      + `needs a fresh login, or "frugal-iot-rebuild-dynsec" on the server.`);
+  }
+}
+
+/*
  * Subscribe to a topic.  cb(topic, message, retained) - see mqtt_deliver, which passes all three.
  *
  * A trailing "/#" works. A "+" anywhere does NOT: topicMatches understands only the trailing form,
@@ -130,9 +149,7 @@ function mqtt_subscribe(topic, cb) { // cb(topic, message, retained)
   mqtt_subscriptions.push({topic, cb});
   // There may be no client yet - it only connects once it knows which organization's credentials to use
   if (mqtt_client && mqtt_client.connected) {
-    mqtt_client.subscribe(topic, (err) => {
-      if (err) console.error(err);
-    })
+    mqtt_client.subscribe(topic, (err, granted) => subscribeResult(topic, err, granted))
   } else {
     console.log("Delaying till connected"); // It will resubscribe from "subscriptions"
   }
@@ -2832,9 +2849,7 @@ class MqttClient extends HTMLElementExtended {
           mqtt_subscriptions.forEach((s) => {
             if (!mqtt_client._resubscribeTopics[s.topic]) { // Not really public interface but cleaner console as not needed
               console.log("Now connected, subscribing to", s.topic);
-              mqtt_client.subscribe(s.topic, (err) => {
-                if (err) console.error(err);
-              });
+              mqtt_client.subscribe(s.topic, (err, granted) => subscribeResult(s.topic, err, granted));
             }
           })
         } else {
