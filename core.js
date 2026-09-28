@@ -2061,10 +2061,13 @@ class MqttTopic {
       type: this.type === 'exponential' ? 'logarithmic' : 'linear',
       display: this.type !== 'bool',
       title: {
+        display: true, // Chart.js hides a scale title unless asked - without this the axis has no label at all
         // noinspection JSUnresolvedReference
         color: this.color,  // The family colour; the per-line variation happens in MqttGraph.addDataset
+        font: { size: 20 },
+        // The unit is what tells two axes apart when both read as a number - "Temperature (°C)"
         // noinspection JSUnresolvedReference
-        text: getString(this.name.replace(/[0-9]+$/,'')),
+        text: getString(this.name.replace(/[0-9]+$/,'')) + (unitSymbol(this.units) ? ` (${unitSymbol(this.units)})` : ''),
       },
       // 0 is not valid on a logarithmic axis, so fall back to auto-scaling (undefined) rather than 0
       // noinspection JSUnresolvedReference

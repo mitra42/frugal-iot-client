@@ -733,6 +733,7 @@ const ADMIN_CARDS = [
   { section: 'message',  title: 'Publish Message',  capability: 'ADMIN' },
   { section: 'retained', title: 'Retained messages', capability: 'ADMIN' },
   { section: 'nodes',   title: 'Nodes',            capability: 'ADMIN' },
+  { section: 'bridges', title: 'Bridges',          capability: 'ADMIN' },
   { section: 'api',   title: 'API',             capability: 'ADMIN' },
 ];
 

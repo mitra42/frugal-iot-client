@@ -67,3 +67,24 @@ describe('lines sharing a schema colour are told apart', () => {
     assert.equal(new Set(colors).size, 3);
   });
 });
+
+describe('an axis says what it measures', () => {
+  // graphdataset.graph is the route to a graph that does not need a connected element or a canvas
+  const axisOf = (mt, g) => { mt.graphdataset = { graph: g }; const id = mt.yaxisid; return g.state.scales[id]; };
+
+  test('the title is drawn, and carries the unit symbol', () => {
+    const { projectMt } = mock.runScenario('one-device');
+    const g = new (customElements.get('mqtt-graph'))();
+    const axis = axisOf(projectMt.nodes['esp8266-fb94bb'].groups.sht.topics.temperature, g);
+    assert.equal(axis.title.display, true);
+    assert.equal(axis.title.text, 'Temperature (°C)');
+  });
+
+  test('a reading with no unit in the schema gets a bare name', () => {
+    const { projectMt } = mock.runScenario('one-device');
+    const g = new (customElements.get('mqtt-graph'))();
+    const mt = projectMt.nodes['esp8266-fb94bb'].groups.sht.topics.temperature;
+    mt.units = undefined;
+    assert.equal(axisOf(mt, g).title.text, 'Temperature');
+  });
+});
