@@ -365,6 +365,59 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       }),
     ]);
   }
+  /*
+   * Add a bridge, or re-issue an existing one's credentials.
+   *
+   * The result is shown once and is not stored anywhere it can be read back: the password is
+   * derived from a server secret and this row's timestamp, so the only copy is the one you put into
+   * the Pi's configuration. Re-running for the same site mints new ones and revokes the old, which
+   * is what makes it the way to recover from having lost them.
+   */
+  onBridgeAdd() {
+    const input = this.state.elements.bridge_site;
+    const site = (input && input.value || '').trim();
+    if (!site) { this.message(getString("Give the Pi a short name first")); return; }
+    if (this.state.bridges && this.state.bridges.some((b) => b.site === site)
+        && !window.confirm(
+          `"${site}" already exists.\n\n` +
+          `Adding it again issues a new broker password and a new replica token, and the ones that ` +
+          `Pi is using now stop working. It will stay disconnected until you put the new ones into ` +
+          `its configuration and restart its broker.`)) return;
+    POST(`/bridge_add/${this.state.org}`, { site }, (err, json) => {
+      if (err) { this.message(err.message); return; }
+      this.state.new_bridge = json;   // shown once, below
+      this.getBridges();              // refreshes the table and re-renders the card
+      this.replaceElement("bridge_new", this.newBridgeDetails());
+    });
+  }
+  /*
+   * What the Pi needs, once. Deliberately not fetchable again: there is no route that reads a
+   * bridge's password back, so losing it means issuing a new one.
+   */
+  newBridgeDetails() {
+    const b = this.state.new_bridge;
+    if (!b) return el('span', {});
+    return el('div', {class: 'bridge-new'}, [
+      el('h4', {textContent: "Copy these now - they are not shown again"}),
+      el('p', {textContent:
+        "Run this on the Pi, in the directory the server is installed in. Replace the placeholder " +
+        "with this server's fully-qualified name - the one on its certificate, which you can check " +
+        "by opening https:// that name in a browser. It will then ask for the broker password and " +
+        "for the replica token, in that order, so have both of the values below to hand."}),
+      el('pre', {i8n: false, textContent: b.command}),
+      el('table', {class: 'nodestates'}, [
+        el('tr', {}, [el('th', {textContent: "Broker account"}), el('td', {i8n: false, textContent: b.account})]),
+        el('tr', {}, [el('th', {textContent: "Broker password"}), el('td', {i8n: false, textContent: b.password})]),
+        el('tr', {}, [el('th', {textContent: "Replica token"}), el('td', {i8n: false, textContent: b.replica_token})]),
+      ]),
+      el('p', {textContent:
+        "Two credentials for two different connections: the password is what the MQTT bridge logs " +
+        "in with on port 8883, and the token is what lets that Pi pull this organization's logins " +
+        "over HTTPS, so the same people can log in there too. The token can be skipped - press " +
+        "Enter at its prompt - and added later by doing this again. Neither is asked for on the " +
+        "command line, so that neither ends up in the Pi's shell history."}),
+    ]);
+  }
   bridgesRestContent() {
     return el('div', {}, [
       this.refreshableHeading("Bridged Pis", this.getBridges),
@@ -375,6 +428,18 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
         "this organization's logins, which it does over HTTP - so a Pi can be checking in while " +
         "its bridge is down, and the two together say which half is broken."}),
       this.state.elements.bridges_list = this.bridgesList(),
+      el('section', {}, [
+        el('h3', {textContent: "Add a bridge"}),
+        el('p', {textContent:
+          "Give the Pi a short name - it becomes its broker account and cannot be changed later " +
+          "without reconfiguring that Pi. Lower-case letters, digits and hyphens."}),
+        el('div', {}, [
+          this.state.elements.bridge_site = el('input',
+            {type: 'text', name: 'site', placeholder: 'pi4', size: 16}),
+          el('button', {textContent: "Add", onclick: this.onBridgeAdd.bind(this)}),
+        ]),
+        this.state.elements.bridge_new = this.newBridgeDetails(),
+      ]),
     ]);
   }
   onNodeReset(project, nodeid) {
