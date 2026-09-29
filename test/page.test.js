@@ -84,7 +84,7 @@ describe('which admin cards a user gets', () => {
     assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section), ['info', 'flash']);
     withCapabilities('READ', 'ADMIN');
     assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section),
-      ['info', 'admin', 'projects', 'message', 'retained', 'nodes', 'api']);
+      ['info', 'admin', 'projects', 'message', 'retained', 'nodes', 'bridges', 'api']);
   });
 
   test('flashing and pushing an OTA binary are separate capabilities', () => {
@@ -108,7 +108,7 @@ describe('the project back', () => {
     const back = document.createElement('mqtt-projectback');
     back.setAttribute('organization', 'dev');
     document.body.append(back);
-    assert.equal(back.querySelectorAll('.fi-admincard').length, 7);
+    assert.equal(back.querySelectorAll('.fi-admincard').length, 8);
     back.remove();
   });
 
@@ -228,7 +228,7 @@ describe('the project back', () => {
     document.body.append(back);
     back.querySelectorAll('.fi-admincard__head').forEach((h) => h.click());
     const sections = [...back.querySelectorAll('mqtt-admin')].map((a) => a.getAttribute('section'));
-    assert.deepEqual(sections, ['admin', 'projects', 'message', 'retained', 'nodes', 'api']);
+    assert.deepEqual(sections, ['admin', 'projects', 'message', 'retained', 'nodes', 'bridges', 'api']);
     back.remove();
   });
 });
