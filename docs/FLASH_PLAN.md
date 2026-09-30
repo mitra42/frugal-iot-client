@@ -678,6 +678,27 @@ polling is involved.
 `Monitor` also works standalone, requesting a port if none is held, so a running board can be watched
 without flashing it. It is stopped before `Connect` since esptool cannot open a port the monitor holds.
 
+It also survives the port going away, and follows the device to the port it comes back as. Chrome
+does not revive a `SerialPort` whose device went away: a board that resets or is replugged on native
+USB re-enumerates and appears as a *new* object, so reopening the one being held fails for ever.
+`monitorCandidates()` therefore asks `navigator.serial.getPorts()` on every attempt and tries each
+granted port whose `getInfo()` matches the device's vendor and product ids, keeping whichever opens -
+and putting it in `state.port`, so Connect and Flash use the live one too. A port that never went
+away is returned by `getPorts()` as the same object, so the ordinary case is unchanged.
+
+A matching USB device is required, never merely a port that happens to be there. A Mac always offers
+Bluetooth-Incoming-Port and debug-console, and quietly monitoring one of those is worse than not
+reconnecting at all; neither has a `usbVendorId`. When the port being held has no vendor id either -
+the user picked something that is not a USB device - there is nothing to match on, so only that port
+is retried rather than guessing at a replacement. A frugal-iot node deep-sleeps between readings, and on native
+USB that takes the serial port with it - the stream ends and the port cannot be opened again until
+the board wakes, which is normal operation rather than a fault. `monitorRun()` therefore loops:
+anything but **Stop** leads back to waiting for the port, retrying every `MonitorRetryMs` and saying
+so once per outage rather than once per attempt. Two things are deliberately first-pass only - the
+RTS pulse that restarts the board (a reconnect must not reset a board that has just woken) and the
+25s silence deadline that catches a wrong monitor speed. After that a `read()` with no deadline is
+exactly right: it settles when the board wakes, or when Stop cancels it.
+
 ### Serial monitor speed
 
 frugal-iot's `startSerial()` picks the rate by toolchain, so the boot log needs a selector rather
@@ -795,6 +816,15 @@ rejects it independently, so we know whether our check is the only guard or a se
 
 Two related refusals in the same code path are likewise untested: an app larger than the app
 partition, and a `<chip>-<flashsize>` combination absent from `boards.json`.
+
+### The ⚡ across two cards
+
+Since the project's back became cards (CARDS_UX.md 11) the OTA list and the flasher are separate
+`mqtt-admin` elements, and the Flash card is not built until it is opened - so neither can hold a
+reference to the other. The bolt fires `frugaliot:flashfile` on `document`; `mqtt-projectback` opens
+the Flash card, scrolls to it, and calls `flashRemote()` on its `mqtt-admin`, which is the only
+thing that can see the `mqtt-flash` in its own shadow root. The bolt is left out entirely without
+OTAFLASH, since there is then no Flash card for it to open.
 
 ### 8. UI polish
 

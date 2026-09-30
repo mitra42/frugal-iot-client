@@ -7,8 +7,22 @@
 
 import {EL, GET, HTMLElementExtended} from '/node_modules/html-element-extended/htmlelementextended.js';
 import mqtt from '/node_modules/mqtt/dist/mqtt.esm.js'; // https://www.npmjs.com/package/mqtt
-import { CssUrl, DELETE, POST, XXX, brokerHost, configSet, el, getString, hasCapability, mqttTempConnect, mqtt_subscribe, retainedPattern, locationParameterChange, mqtt_client, preferedLanguageSet, preferedLanguages, redirectToLogin, server_config } from './core.js';
+import { CssUrl, DELETE, POST, XXX, brokerHost, configSet, el, getString, getStringWith, hasCapability, mqttTempConnect, mqtt_subscribe, retainedPattern, locationParameterChange, mqtt_client, preferedLanguageSet, preferedLanguages, redirectToLogin, server_config } from './core.js';
 
+
+// The OTA upload is multipart, which POST() (JSON) cannot carry. Callback-style, like the rest.
+// The server answers every outcome with a redirect carrying ?message=, so the final URL is the reply.
+function postFormData(url, formData, cb) {
+  fetch(url, {method: 'POST', body: formData})
+    .then((res) => {
+      if (res.body) res.body.cancel(); // the redirect lands on a page we have no use for
+      const message = new URL(res.url, window.location.href).searchParams.get('message');
+      // No message means this was not the redirect we expect - a 401 back to login, say - so do not
+      // report a success the server did not claim
+      cb(null, message || (res.ok ? "Upload finished - check the list below" : `Upload failed (${res.status})`));
+    })
+    .catch((err) => cb(err));
+}
 
 // ---------- USB flashing over WebSerial ----------
 // The .bin files the OTA tab handles are application images. An ESP32 also needs a bootloader,
@@ -181,16 +195,47 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     console.log(ev,val);
     this.getOrDeleteOtaFiles(`/ota_delete/${val}`);
   }
+  /*
+   * The flasher is a card of its own (cards.js), which may not be open - or even built - when the
+   * ⚡ beside a file here is clicked. So this asks, and mqtt-projectback opens that card and
+   * passes the request on to its mqtt-admin.
+   */
   onOtaFlash(path) {
-    const flashEl = this.state.elements.flash;
-    if (flashEl) flashEl.setRemoteSource(this.state.org, path);
+    document.dispatchEvent(new CustomEvent('frugaliot:flashfile',
+      {detail: {org: this.state.org, path}}));
+  }
+  // Called by mqtt-projectback on the flash card, once it is open: the mqtt-flash is in this shadow root.
+  flashRemote(org, path) {
+    const flashEl = this.renderRoot.querySelector('mqtt-flash');
+    if (!flashEl) { XXX(["flashRemote on an admin element that is not the flash section", this.state.section]); return; }
+    flashEl.setRemoteSource(org, path);
+  }
+  /*
+   * Posted here rather than by the browser: the server answers with a redirect to the `url` field
+   * below, so a plain form submit left the whole page on /dashboard/ with no organization chosen -
+   * away from the card that asked, and with the admin cards shut again.
+   */
+  onOtaUpload(ev) {
+    ev.preventDefault();
+    const form = ev.target;
+    this.message("Uploading");
+    postFormData('/ota_update', new FormData(form), (err, message) => {
+      this.message(err ? err.message : message, !err);
+      if (!err) form.reset();
+      this.getOtaFiles(); // says more than the message does: the file is either listed or it is not
+    });
   }
   otaFilesList() {
     return this.state.ota_files.length === 0 ?
       el('p', {textContent: "No OTA files uploaded yet."}) :
       el('p', {}, this.state.ota_files.map(f => [
-        el('span', {class: 'pseudolink', title: getString("Flash this over USB"), textContent: '⚡', onclick: this.onOtaFlash.bind(this, f)}),
-        el('span', {class: 'pseudolink', textContent: `🗑  ${f}`, onclick: this.onOtaDelete.bind(this,`${this.state.org}/${f}`)}),
+        hasCapability(this.state.org, 'OTAFLASH') // no flash card to send it to otherwise
+          ? el('span', {class: 'pseudolink otaicon', title: getString("Flash this over USB"), textContent: '⚡', onclick: this.onOtaFlash.bind(this, f)})
+          : null,
+        // The basket alone deletes; the name beside it downloads, which is what a name invites.
+        el('span', {class: 'pseudolink otaicon', title: getString("Delete this firmware"), textContent: '🗑', onclick: this.onOtaDelete.bind(this,`${this.state.org}/${f}`)}),
+        el('a', {href: `/ota_get/${this.state.org}/${f}`, download: `${f.replace(/\//g, '-')}-firmware.bin`,
+          title: getString("Download this firmware"), textContent: f, i8n: false}),
         el('br', {}),
         ])
       );
@@ -233,9 +278,9 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     // Irreversible for any node still holding it, and those nodes cannot be told - they are the
     // ones not yet enrolled, so nothing on the server knows they exist.
     if (!window.confirm(
-      `Withdraw this enrolment secret?\n\n` +
-      `Any node flashed with it that has not enrolled yet will be refused and will need ` +
-      `reflashing. Nodes that have already enrolled are unaffected - they never present it again.`)) return;
+      getString("Withdraw this enrolment secret?") + "\n\n" +
+      getString("Any node flashed with it that has not enrolled yet will be refused and will need " +
+        "reflashing. Nodes that have already enrolled are unaffected - they never present it again."))) return;
     DELETE(`/enrolment_secret/${this.state.org}`, {secret}, (err, json) => {
       this.message(err ? err.message : (json && json.message) || getString("Withdrawn"), false);
       this.getEnrolmentSecrets();
@@ -358,7 +403,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
           : { label: "DOWN", hint: "The broker reports this bridge not connected" };
         return el('tr', {}, [
           el('td', {i8n: false, textContent: b.site}),
-          el('td', {i8n: false, title: getString(up.hint), textContent: up.label}),
+          el('td', {i8n: false, title: getString(up.hint), textContent: getString(up.label)}),
           el('td', {i8n: false, textContent: b.last_pull ? this.formatLastSeen(new Date(b.last_pull).toISOString()) : getString("Never seen")}),
           el('td', {i8n: false, textContent: b.created_at ? this.formatLastSeen(new Date(b.created_at).toISOString()) : ''}),
         ]);
@@ -379,10 +424,10 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     if (!site) { this.message(getString("Give the Pi a short name first")); return; }
     if (this.state.bridges && this.state.bridges.some((b) => b.site === site)
         && !window.confirm(
-          `"${site}" already exists.\n\n` +
-          `Adding it again issues a new broker password and a new replica token, and the ones that ` +
-          `Pi is using now stop working. It will stay disconnected until you put the new ones into ` +
-          `its configuration and restart its broker.`)) return;
+          getStringWith('"%s" already exists.', site) + "\n\n" +
+          getString("Adding it again issues a new broker password and a new replica token, and the " +
+            "ones that Pi is using now stop working. It will stay disconnected until you put the " +
+            "new ones into its configuration and restart its broker."))) return;
     POST(`/bridge_add/${this.state.org}`, { site }, (err, json) => {
       if (err) { this.message(err.message); return; }
       this.state.new_bridge = json;   // shown once, below
@@ -399,23 +444,24 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     if (!b) return el('span', {});
     return el('div', {class: 'bridge-new'}, [
       el('h4', {textContent: "Copy these now - they are not shown again"}),
-      el('p', {textContent:
+      // el() will not translate a string containing ':' or '/', so ask for it directly
+      el('p', {i8n: false, textContent: getString(
         "Run this on the Pi, in the directory the server is installed in. Replace the placeholder " +
         "with this server's fully-qualified name - the one on its certificate, which you can check " +
         "by opening https:// that name in a browser. It will then ask for the broker password and " +
-        "for the replica token, in that order, so have both of the values below to hand."}),
+        "for the replica token, in that order, so have both of the values below to hand.")}),
       el('pre', {i8n: false, textContent: b.command}),
       el('table', {class: 'nodestates'}, [
         el('tr', {}, [el('th', {textContent: "Broker account"}), el('td', {i8n: false, textContent: b.account})]),
         el('tr', {}, [el('th', {textContent: "Broker password"}), el('td', {i8n: false, textContent: b.password})]),
         el('tr', {}, [el('th', {textContent: "Replica token"}), el('td', {i8n: false, textContent: b.replica_token})]),
       ]),
-      el('p', {textContent:
+      el('p', {i8n: false, textContent: getString(
         "Two credentials for two different connections: the password is what the MQTT bridge logs " +
         "in with on port 8883, and the token is what lets that Pi pull this organization's logins " +
         "over HTTPS, so the same people can log in there too. The token can be skipped - press " +
         "Enter at its prompt - and added later by doing this again. Neither is asked for on the " +
-        "command line, so that neither ends up in the Pi's shell history."}),
+        "command line, so that neither ends up in the Pi's shell history.")}),
     ]);
   }
   bridgesRestContent() {
@@ -435,7 +481,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
           "without reconfiguring that Pi. Lower-case letters, digits and hyphens."}),
         el('div', {}, [
           this.state.elements.bridge_site = el('input',
-            {type: 'text', name: 'site', placeholder: 'pi4', size: 16}),
+            {i8n: false, type: 'text', name: 'site', placeholder: 'pi4', size: 16}),
           el('button', {textContent: "Add", onclick: this.onBridgeAdd.bind(this)}),
         ]),
         this.state.elements.bridge_new = this.newBridgeDetails(),
@@ -447,10 +493,10 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     // credential being refused and enrols again) but it does cost that node a few minutes offline.
     // Worth asking, unlike the OTA deletes beside it where the file can simply be uploaded again.
     if (!window.confirm(
-      `Forget ${project}/${nodeid}?\n\n` +
-      `It will be issued a new broker credential the next time it asks. A node that is running ` +
-      `will be offline for a minute or two while it notices; a node whose filesystem was erased ` +
-      `needs this before it can rejoin at all.`)) return;
+      getStringWith("Forget %s?", `${project}/${nodeid}`) + "\n\n" +
+      getString("It will be issued a new broker credential the next time it asks. A node that is " +
+        "running will be offline for a minute or two while it notices; a node whose filesystem " +
+        "was erased needs this before it can rejoin at all."))) return;
     POST(`/node_reset/${this.state.org}`, { project, nodeid }, (err, json) => {
       this.message(err ? err.message : (json && json.message) || "Forgotten");
       this.getEnrolledNodes();
@@ -496,9 +542,9 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   }
   onNodeState(project, nodeid, state) {
     if (state === 'denied' && !window.confirm(
-      `Deny ${nodeid}?\n\n` +
-      `Its broker account is deleted, so it stops being able to publish or subscribe, and it ` +
-      `cannot enrol again until you clear this. Use it for a node sending bad readings.`)) return;
+      getStringWith("Deny %s?", nodeid) + "\n\n" +
+      getString("Its broker account is deleted, so it stops being able to publish or subscribe, " +
+        "and it cannot enrol again until you clear this. Use it for a node sending bad readings."))) return;
     POST(`/node_state/${this.state.org}`, {project, nodeid, state}, (err, json) => {
       this.message(err ? err.message : (json && json.message) || getString("Done"), false);
       this.getEnrolledNodes();
@@ -1387,7 +1433,8 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
    // Content of the OTA tab below the organization dropdown - only rendered once an org is selected
    otaRestContent() {
      return el('div', {}, [
-       el('form', {action: '/ota_update', method: "post", enctype: "multipart/form-data"}, [
+       el('form', {action: '/ota_update', method: "post", enctype: "multipart/form-data",
+         onsubmit: this.onOtaUpload.bind(this)}, [
          el('input', {id: "url2", name: "url", type: "hidden", value: `/dashboard/`}),
          el('input', {id: "lang", name: "lang", type: "hidden", value: preferedLanguages.join(',')}),
          // The organization dropdown for this tab is a sibling of this form rather than inside it
@@ -1421,9 +1468,6 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
          this.refreshableHeading("Existing OTA Files", this.getOtaFiles),
          this.state.elements.ota_files = this.otaFilesList(),
        ]), // section ota
-       el('section', {}, [
-         this.state.section ? null : (this.state.elements.flash = el('mqtt-flash', {})), // its own card on the project back
-       ]), // section flash
      ]);
    }
    // Content of the Admin tab below the organization dropdown - only rendered once an org is selected
@@ -1661,6 +1705,10 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
      return el('div', {class: 'mqtt-admin'}, [
        this.state.org ? null
          : (this.state.elements[section.dropdown] = el('span', {textContent: "Waiting"})),
+       // message() had nowhere to write until now, so every failed fetch reported itself only to
+       // the console. One line per card, above whatever that card is saying.
+       this.state.elements.message = el('div', {class: 'message', i8n: false,
+         textContent: this.state.message || ''}),
        this.state.elements[section.rest] = this.gatedContent(section),
      ]);
    }

@@ -25,9 +25,10 @@ for (const k of Object.getOwnPropertyNames(dom.window)) {
 }
 globalThis.window = dom.window;
 globalThis.document = dom.window.document;
-// Node provides its own Event/CustomEvent/EventTarget globals, which jsdom's document rejects.
-// The loop above skips them because they already exist, so override explicitly.
-for (const k of ['Event', 'CustomEvent', 'EventTarget', 'MessageEvent']) {
+// Node provides its own Event/CustomEvent/EventTarget globals, which jsdom's document rejects, and
+// its own FormData, which refuses to be built from a jsdom <form>. The loop above skips them
+// because they already exist, so override explicitly.
+for (const k of ['Event', 'CustomEvent', 'EventTarget', 'MessageEvent', 'FormData']) {
   globalThis[k] = dom.window[k];
 }
 

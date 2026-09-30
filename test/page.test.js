@@ -233,6 +233,124 @@ describe('the project back', () => {
   });
 });
 
+// The bolt is in the OTA card and the flasher is a card of its own, so this is the one path between
+// two mqtt-admin elements that cannot be reached by either on its own.
+describe('the bolt beside an OTA file', () => {
+  // /ota_get is a real request the jsdom tests cannot make; record it instead
+  function withFetchRecorded(fn) {
+    const asked = [];
+    const real = globalThis.fetch;
+    globalThis.fetch = (url) => { asked.push(url); return Promise.resolve({ok: true, arrayBuffer: () => Promise.resolve(new ArrayBuffer(4))}); };
+    try { fn(asked); } finally { globalThis.fetch = real; }
+  }
+  function backWithOtaFile(file) {
+    const back = document.createElement('mqtt-projectback');
+    back.setAttribute('organization', 'dev');
+    document.body.append(back);
+    back.state.elements.ota.querySelector('.fi-admincard__head').click();
+    const otaAdmin = back.state.elements.ota.querySelector('mqtt-admin');
+    otaAdmin.state.ota_files = [file];                              // what /ota_list would have said
+    otaAdmin.replaceElement('ota_files', otaAdmin.otaFilesList());
+    return {back, otaAdmin};
+  }
+
+  test('opens the Flash card and hands it the file', () => {
+    withCapabilities('OTAUPDATE', 'OTAFLASH');
+    const {back, otaAdmin} = backWithOtaFile('esp32/lotus/1.0.0');
+    withFetchRecorded((asked) => {
+      otaAdmin.shadowRoot.querySelector('.otaicon').click();       // the bolt, not a handler call
+      assert.ok(back.state.elements.flash.classList.contains('fi-admincard--open'), 'Flash stayed shut');
+      assert.deepEqual(asked, ['/ota_get/dev/esp32/lotus/1.0.0']);
+    });
+    back.remove();
+  });
+
+  test('is not offered without OTAFLASH, since there is then no Flash card to open', () => {
+    withCapabilities('OTAUPDATE');
+    const {back, otaAdmin} = backWithOtaFile('esp32/lotus/1.0.0');
+    assert.equal(otaAdmin.shadowRoot.querySelector('.otaicon[title]').textContent, '\u{1f5d1}',
+      'the only icon should be the basket');
+    back.remove();
+  });
+
+  test('the name downloads rather than deleting - a mis-tap cost a file', () => {
+    withCapabilities('OTAUPDATE');
+    const {back, otaAdmin} = backWithOtaFile('esp32/lotus/1.0.0');
+    const link = otaAdmin.shadowRoot.querySelector('a[download]');
+    assert.ok(link, 'the file name should be a download link');
+    assert.equal(link.textContent, 'esp32/lotus/1.0.0');
+    assert.equal(link.getAttribute('href'), '/ota_get/dev/esp32/lotus/1.0.0');
+    back.remove();
+  });
+});
+
+// The server answers an OTA upload with a redirect, so a plain form post landed the whole page on
+// /dashboard/ - no organization chosen, and the admin cards shut.
+describe('uploading an OTA binary', () => {
+  // Every request the card makes: the list it reads on opening, the upload, and the re-read after.
+  // Node's Request wants an absolute URL, where a browser resolves one against the page, so GET()
+  // cannot reach the stub without standing in for that too.
+  function withFetch(fn) {
+    const asked = [];
+    const real = {fetch: globalThis.fetch, Request: globalThis.Request};
+    globalThis.Request = class { constructor(url, init) { Object.assign(this, init); this.url = String(url); } };
+    globalThis.fetch = (req, opts) => {
+      const url = (req && req.url) || String(req);
+      asked.push({url, method: (opts && opts.method) || (req && req.method) || 'GET'});
+      if (url.startsWith('/ota_list')) return Promise.resolve({
+        ok: true, status: 200, url,
+        headers: {get: () => 'application/json'},
+        json: () => Promise.resolve(['esp32/lotus/1.0.0']),
+      });
+      return Promise.resolve({ok: true, status: 200, body: null, // what the redirect lands on
+        url: '/dashboard/?message=OTA%20binary%20uploaded&lang=EN'});
+    };
+    return Promise.resolve(fn(asked))
+      .finally(() => { globalThis.fetch = real.fetch; globalThis.Request = real.Request; });
+  }
+  // Opening the card reads the OTA list, so the stub has to be in place before it is built
+  function otaCardAdmin() {
+    const back = document.createElement('mqtt-projectback');
+    back.setAttribute('organization', 'dev');
+    document.body.append(back);
+    back.state.elements.ota.querySelector('.fi-admincard__head').click();
+    return {back, otaAdmin: back.state.elements.ota.querySelector('mqtt-admin')};
+  }
+  const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+  test('stays on the card it was posted from', async () => {
+    withCapabilities('OTAUPDATE');
+    await withFetch(async (asked) => {
+      const {back, otaAdmin} = otaCardAdmin();
+      const form = otaAdmin.shadowRoot.querySelector('form');
+      const notPrevented = form.dispatchEvent(new Event('submit', {cancelable: true, bubbles: true}));
+      assert.equal(notPrevented, false, 'the browser would have navigated away');
+      await settle();
+      const upload = asked.find((a) => a.url === '/ota_update');
+      assert.ok(upload, 'nothing was posted');
+      assert.equal(upload.method, 'POST');
+      assert.ok(back.querySelector('mqtt-admin'), 'the card should still be here');
+      back.remove();
+    });
+  });
+
+  test('says what the server said, and re-reads the list', async () => {
+    withCapabilities('OTAUPDATE');
+    await withFetch(async (asked) => {
+      const {back, otaAdmin} = otaCardAdmin();
+      await settle();                                  // the list the card reads on opening
+      const before = asked.filter((a) => a.url === '/ota_list/dev').length;
+      otaAdmin.shadowRoot.querySelector('form')
+        .dispatchEvent(new Event('submit', {cancelable: true, bubbles: true}));
+      await settle();
+      assert.equal(otaAdmin.state.elements.message.textContent, 'OTA binary uploaded');
+      assert.equal(asked.filter((a) => a.url === '/ota_list/dev').length, before + 1,
+        'the list should have been re-read, which is what actually shows the upload arrived');
+      back.remove();
+    });
+  });
+});
+
 describe('the page', () => {
   test('with no project chosen it says so rather than showing an empty grid', () => {
     const page = document.createElement('mqtt-dashboard');

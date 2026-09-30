@@ -23,9 +23,15 @@ const FlashBaudRates = [921600, 460800, 230400, 115200];
 // 74880 is the ESP8266 ROM's own boot-message rate
 const MonitorBaudRates = [460800, 115200, 921600, 74880];
 const BootLogMs = 25000; // startSerial() waits 5s before printing, then WiFi/captive portal follows
+// How often the monitor tries the port again while it is gone - a deep sleep is measured in
+// seconds to minutes, so there is nothing to gain from trying harder than this
+const MonitorRetryMs = 1000;
 // esptool-js's readFlash waits FLASH_READ_TIMEOUT (100s) for its first packet, which stalls Connect
 // on any board that does not answer the stub's read command
 const FlashReadMs = 8000;
+// How long to wait for the port to close before saying it did not - esptool-js's disconnect() waits
+// on the streams unlocking with no deadline of its own
+const TransportReleaseMs = 5000;
 // JEDEC capacity byte -> size, mirroring esptool-js's own table so we can tell a real detection from
 // its silent 4MB fallback, which on an S3 is also the signature of unsupported octal flash
 const DetectedFlashSizes = {
@@ -35,6 +41,14 @@ const DetectedFlashSizes = {
   0x32: "256KB", 0x33: "512KB", 0x34: "1MB", 0x35: "2MB", 0x36: "4MB", 0x37: "8MB", 0x38: "16MB",
   0x39: "32MB", 0x3a: "64MB",
 };
+
+// Promise.race leaves the loser's timer running - on a 25s deadline that holds the event loop long
+// after the answer arrived, which is also what kept the test run alive for half a minute
+function withTimeout(promise, ms, value) {
+  let timer = null;
+  const timeout = new Promise((resolve) => { timer = setTimeout(() => resolve(value), ms); });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
 
 // 32-byte records: magic u16, type, subtype, offset u32, size u32, label[16], flags u32
 function partitionsParse(bytes) {
@@ -97,19 +111,29 @@ class MqttFlash extends HTMLElementExtended {
   constructor(props) {
     super(props);
     this.state = {elements: {}, log: [], app: null, device: null, busy: false,
-      baudrate: FlashBaudRates[0], monitorBaudrate: MonitorBaudRates[0]};
+      baudrate: FlashBaudRates[0], monitorBaudrate: MonitorBaudRates[0], monitorRetryMs: MonitorRetryMs};
   }
   get supported() { return 'serial' in navigator; }
   // esploader goes null after flashing, so a second flash needs a reconnect rather than a stale loader
   get ready() {
     return !!(this.state.app && this.state.device && this.state.esploader && !this.state.device.refusal && !this.state.busy);
   }
+  /*
+   * The port stays open until this runs, and WebSerial then refuses the next open with "The port is
+   * already open" - so every path out of a connect or a flash, failed ones included, must reach here.
+   *
+   * disconnect() waits for the streams to unlock with no deadline of its own, so it is bounded:
+   * a reader that never releases would otherwise leave the button disabled with nothing said.
+   */
   async transportRelease() {
-    if (this.state.transport) {
-      try { await this.state.transport.disconnect(); } catch (e) { XXX(`transport disconnect: ${e.message}`); }
-    }
+    const transport = this.state.transport;
     this.state.transport = null;
     this.state.esploader = null;
+    if (!transport) return;
+    const released = transport.disconnect().catch((e) => { XXX(`transport disconnect: ${e.message}`); });
+    if (await withTimeout(released, TransportReleaseMs, 'timeout') === 'timeout') {
+      this.logLine("The serial port did not close - unplug the board or reload the page before connecting again.");
+    }
   }
 
   // ---- logging ----
@@ -151,7 +175,7 @@ class MqttFlash extends HTMLElementExtended {
       this.statusRender();
     });
   }
-  // Called by MqttAdmin when the ⚡ beside a server-hosted OTA file is clicked
+  // Reached from the ⚡ in the OTA card, by way of mqtt-projectback and MqttAdmin.flashRemote
   setRemoteSource(org, path) {
     const url = `/ota_get/${org}/${path}`;
     this.logLine(`Fetching ${url}`);
@@ -172,7 +196,7 @@ class MqttFlash extends HTMLElementExtended {
     this.state.busy = true;
     this.state.error = null;
     this.statusRender();
-    portPromise
+    this.state.connectDone = portPromise // kept so a test can await the click
       .then((port) => this.connectAndInspect(port))
       .catch((e) => {
         this.logLine(`Error: ${e.message}`);
@@ -181,20 +205,24 @@ class MqttFlash extends HTMLElementExtended {
       })
       .then(() => { this.state.busy = false; this.statusRender(); });
   }
+  // A seam: the real thing is 214KB of esptool-js and wants a board on the other end of a port
+  esptoolImport() { return import('esptool-js'); }
   async connectAndInspect(port) {
     await this.monitorStop();      // the monitor holds the port open, so esptool cannot have it
     await this.transportRelease(); // clicking Connect twice must not stack transports on one port
-    const {ESPLoader, Transport} = await import('esptool-js'); // 214KB, so not loaded until first use
+    const {ESPLoader, Transport} = await this.esptoolImport(); // not loaded until first use
     const transport = new Transport(port, true);
     const esploader = new ESPLoader({transport, baudrate: this.state.baudrate, terminal: this.terminal});
+    // Recorded before main(), which opens the port: a failure after that has to be releasable, or
+    // the retry meets a port this element no longer knows it holds
+    this.state.port = port;
+    this.state.transport = transport;
+    this.state.esploader = esploader;
     const description = await esploader.main(); // returns the description, not the chip name
     const chipName = esploader.chip.CHIP_NAME;
     const flashIdCapacity = (await esploader.readFlashId()) >> 16 & 0xff;
     const flashSizeGuessed = !DetectedFlashSizes[flashIdCapacity];
     const flashSize = DetectedFlashSizes[flashIdCapacity] || await esploader.detectFlashSize();
-    this.state.port = port;
-    this.state.transport = transport;
-    this.state.esploader = esploader;
     this.state.device = {chipName, description, flashSize, flashSizeGuessed};
     if (flashSizeGuessed) {
       this.logLine(`WARNING: flash size not recognised (capacity byte 0x${flashIdCapacity.toString(16)}), assuming ${flashSize}`);
@@ -239,8 +267,7 @@ class MqttFlash extends HTMLElementExtended {
   async readFlashBounded(offset, length) {
     const read = this.state.esploader.readFlash(offset, length)
       .catch((e) => { this.logLine(`(read of 0x${offset.toString(16)} failed: ${e.message})`); return null; });
-    const timeout = new Promise((resolve) => setTimeout(() => resolve(null), FlashReadMs));
-    const bytes = await Promise.race([read, timeout]);
+    const bytes = await withTimeout(read, FlashReadMs, null);
     if (!bytes) this.logLine(`(could not read 0x${offset.toString(16)} - skipping inspection)`);
     return bytes;
   }
@@ -419,20 +446,92 @@ class MqttFlash extends HTMLElementExtended {
       XXX(`boot log reset signals: ${e.message}`);
     }
   }
-  // Reopen the port with plain WebSerial and stream it until stopped. Runs indefinitely once the
-  // board is talking - the timeout only covers the case where nothing arrives at all.
+  // Reopen the port with plain WebSerial and stream it until stopped.
   monitorStart() {
     if (this.state.monitoring || !this.state.port) return this.state.monitorDone || Promise.resolve();
     this.state.monitoring = true;
-    this.state.monitorDone = this.monitorStream(this.state.port)
-      .catch((e) => XXX(`monitor stream: ${e.message}`)) // cleanup below must run either way
+    this.state.monitorDone = this.monitorRun(this.state.port)
+      .catch((e) => XXX(`monitor run: ${e.message}`)) // cleanup below must run either way
       .then(() => {
         this.state.monitoring = false;
         this.state.monitorReader = null;
+        this.logLine("---- monitor stopped ----");
         this.statusRender();
       });
     this.statusRender();
     return this.state.monitorDone;
+  }
+  /*
+   * A board that deep-sleeps takes its USB serial with it - on native USB the port disappears
+   * mid-log and comes back only when the board wakes - so the monitor has to outlive the port, the
+   * way `pio device monitor` does. Stop is the only thing that ends this loop; every other way a
+   * stream can end leads back to waiting for the port.
+   */
+  async monitorRun(port) {
+    let streamed = false; // a stream has run, so a failure to open is the board going away
+    let waiting = false;  // the outage has been reported: not once a second
+    while (this.state.monitoring) {
+      let err = null;
+      let opened = null;
+      for (const candidate of await this.monitorCandidates(port)) {
+        err = await this.monitorOpen(candidate);
+        if (!err) { opened = candidate; break; }
+      }
+      if (opened) {
+        if (waiting) this.logLine("---- port back ----");
+        waiting = false;
+        port = this.state.port = opened; // Connect and Flash must use the live one too
+        await this.monitorStream(port, !streamed); // only the first pass resets the board
+        streamed = true;
+      } else if (!waiting) {
+        waiting = true;
+        this.logLine(streamed ? `(port gone - waiting for the board: ${err})` : `(could not open port: ${err})`);
+      }
+      if (this.state.monitoring) await this.monitorWait(this.state.monitorRetryMs);
+    }
+  }
+  // Settled early by monitorStop, so Stop is not left waiting out a retry delay
+  monitorWait(ms) {
+    return new Promise((resolve) => {
+      this.state.monitorWake = resolve;
+      setTimeout(resolve, ms);
+    });
+  }
+  /*
+   * A device that re-enumerates comes back as a NEW SerialPort: the object being held stays lost
+   * for good, so reopening it can never succeed - which is why unplugging and plugging back in did
+   * not bring the monitor back, while Connect, which asks for a port afresh, did.
+   *
+   * So each attempt tries every port this page already has permission for that looks like the same
+   * device. The one being held comes first while it is still valid, since getPorts() hands back the
+   * very same object for a device that never went away.
+   */
+  async monitorCandidates(port) {
+    const info = (port && port.getInfo) ? port.getInfo() : {};
+    const granted = (navigator.serial && navigator.serial.getPorts)
+      ? await navigator.serial.getPorts().catch((e) => { XXX(`getPorts: ${e.message}`); return []; })
+      : [];
+    /*
+     * The same USB device and nothing else. A Mac always offers Bluetooth-Incoming-Port and
+     * debug-console, and quietly monitoring one of those is worse than not reconnecting at all -
+     * neither has a usbVendorId, so requiring a matching one rules them out. If the port being held
+     * has no vendor id either, there is nothing to match on and only it is retried: the user picked
+     * it themselves, and a port like that does not re-enumerate anyway.
+     */
+    const sameDevice = info.usbVendorId ? granted.filter((p) => {
+      const i = p.getInfo ? p.getInfo() : {};
+      return i.usbVendorId === info.usbVendorId && i.usbProductId === info.usbProductId
+        && !i.bluetoothServiceClassId;
+    }) : [];
+    return [...sameDevice, port].filter((p, i, all) => p && all.indexOf(p) === i);
+  }
+  async monitorOpen(port) {
+    try {
+      await port.open({baudRate: this.state.monitorBaudrate});
+      return null;
+    } catch (e) {
+      return e.message;
+    }
   }
   // cancel() settles the pending read(), so no polling is needed to notice the stop
   monitorStop() {
@@ -440,6 +539,7 @@ class MqttFlash extends HTMLElementExtended {
     this.state.monitoring = false;
     const reader = this.state.monitorReader;
     if (reader) reader.cancel().catch((e) => XXX(`monitor cancel: ${e.message}`));
+    if (this.state.monitorWake) this.state.monitorWake(); // it may be between attempts rather than reading
     return this.state.monitorDone || Promise.resolve();
   }
   onMonitor() {
@@ -454,32 +554,24 @@ class MqttFlash extends HTMLElementExtended {
       .then((port) => { this.state.port = port; return this.monitorStart(); })
       .catch((e) => { this.state.error = e.message; this.logLine(`Error: ${e.message}`); this.statusRender(); });
   }
-  async monitorStream(port) {
-    const baud = this.state.monitorBaudrate;
-    this.logLine(`---- monitor (${baud} baud) ----`);
-    try {
-      await port.open({baudRate: baud});
-    } catch (e) {
-      this.logLine(`(could not open port: ${e.message})`);
-      return;
-    }
+  // Takes an open port and always closes it, so monitorRun can open it again
+  async monitorStream(port, firstPass) {
+    this.logLine(`---- monitor (${this.state.monitorBaudrate} baud) ----`);
     let reader = null;
     let quiet = true;
     try {
-      await this.bootReset(port);
+      if (firstPass) await this.bootReset(port); // a reconnect must not reset a board that just woke
       if (!port.readable) throw new Error("port has no readable stream");
       const decoder = new TextDecoder();
       reader = port.readable.getReader();
       this.state.monitorReader = reader;
       const quietUntil = Date.now() + BootLogMs;
       while (this.state.monitoring) {
-        // Until the first byte arrives, read() may never resolve, so it needs a deadline. Once the
-        // board is talking, plain read() is right - monitorStop() settles it with cancel().
-        const chunk = quiet
-          ? await Promise.race([
-              reader.read(),
-              new Promise((resolve) => setTimeout(() => resolve('timeout'), Math.max(250, quietUntil - Date.now()))),
-            ])
+        // On the first pass silence is worth reporting - it usually means the wrong speed - and
+        // read() on a quiet port may never resolve, so that needs a deadline. Afterwards the wait
+        // is the point: a sleeping board settles the read when it wakes, and Stop cancels it.
+        const chunk = (quiet && firstPass)
+          ? await withTimeout(reader.read(), Math.max(250, quietUntil - Date.now()), 'timeout')
           : await reader.read();
         if (chunk === 'timeout' || chunk.done) break;
         if (chunk.value && chunk.value.length) {
@@ -488,17 +580,16 @@ class MqttFlash extends HTMLElementExtended {
         }
       }
     } catch (e) {
-      this.logLine(`(monitor ended: ${e.message})`);
+      this.logLine(`(stream ended: ${e.message})`);
     } finally {
       if (reader) {
         try { await reader.cancel(); } catch (e) { XXX(`monitor reader cancel: ${e.message}`); }
         try { reader.releaseLock(); } catch (e) { XXX(`monitor reader release: ${e.message}`); }
       }
       try { await port.close(); } catch (e) { XXX(`monitor port close: ${e.message}`); }
-      if (quiet) {
-        this.logLine("(no output - check the monitor speed, that the build defines ANY_DEBUG, or reconnect: a board on native USB re-enumerates after reset and needs picking again)");
+      if (quiet && firstPass) {
+        this.logLine("(no output yet - check the monitor speed and that the build defines ANY_DEBUG. Still listening: a board on native USB drops the port when it sleeps and is picked up again when it wakes.)");
       }
-      this.logLine("---- monitor stopped ----");
     }
   }
 

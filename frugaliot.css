@@ -202,6 +202,8 @@ div.mqtt-text {
         }
         /* The \27f3 beside a heading: still a link, but underlining a glyph reads as a typo. */
         .refresh { text-decoration: none; }
+        /* An OTA row's glyphs: the padding is the whole hit area, so a mis-tap cannot reach delete. */
+        .otaicon { text-decoration: none; padding: 0 0.3em; }
         .message {margin: 0.5em; font-weight: bold; font-size: x-large; }
         /* An enrolment secret is a long unbroken string; without this it runs off a phone. */
         .enrolment__line { word-break: break-all; }

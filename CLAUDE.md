@@ -280,6 +280,7 @@ const mt = document.querySelector('mqtt-wrapper')?.projectMt?.findTopic(this.sta
 | `frugaliot:organizationchanged` | `MqttWrapper.onOrganization` | `{ organization }` | capabilities are per organization, so this precedes any project |
 | `frugaliot:cardmove` / `cardmoveover` | `mqtt-devicecard` | `{ nodeId, delta }` / `{ nodeId, targetNodeId }` | the card asks to be moved; the grid decides what that means |
 | `frugaliot:cardmode` | `mqtt-devicecard` | `{ nodeId, mode }` | so the grid can remember what was open |
+| `frugaliot:flashfile` | `mqtt-admin` (OTA section) | `{ org, path }` | the ⚡ beside an OTA file: `mqtt-projectback` opens the Flash card and passes it on |
 
 ---
 

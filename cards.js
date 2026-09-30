@@ -748,6 +748,25 @@ class MqttProjectBack extends HTMLElementExtendedMinimum {
     super();
     this.state.elements = {};
     this.state.open = {};
+    this.onFlashFile = this.onFlashFile.bind(this);
+  }
+  connectedCallback() {
+    super.connectedCallback();
+    document.addEventListener('frugaliot:flashfile', this.onFlashFile);
+  }
+  disconnectedCallback() {
+    document.removeEventListener('frugaliot:flashfile', this.onFlashFile);
+    if (super.disconnectedCallback) super.disconnectedCallback();
+  }
+
+  // The OTA card asks; only this knows where the flasher is, and whether its card is open yet.
+  onFlashFile(e) {
+    const card = this.state.elements.flash;
+    if (!card) return; // No OTAFLASH here, so no card - the OTA list should not have offered it
+    if (!this.state.open.flash) this.toggle('flash');
+    const adminEl = card.querySelector('mqtt-admin');
+    if (adminEl) adminEl.flashRemote(e.detail.org, e.detail.path);
+    if (card.scrollIntoView) card.scrollIntoView({behavior: 'smooth', block: 'start'}); // jsdom has none
   }
 
   // An admin card has a summary and a back, and nothing that makes sense as a front: it is its name
