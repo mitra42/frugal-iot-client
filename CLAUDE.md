@@ -359,11 +359,14 @@ Every `addVocabulary` block must include **all four** language sections (EN, FR,
 
 ### How a string gets translated
 
-There are three ways a piece of UI text is translated. If a string doesn't go through one of these, it silently stays in English regardless of the selected language:
+There are four ways a piece of UI text is translated. If a string doesn't go through one of these, it silently stays in English regardless of the selected language:
 
 1. **Direct call to `getString(tag)`** — looks the string up in `languages`, falling back to the English value, falling back to `tag` itself. Used for names built dynamically (e.g. a graph's scale/axis name at `text: getString(this.name...)`).
 2. **Via `el(tag, attributes, children)`** — `el()` auto-translates certain *attributes* on certain *tags*, per the `i8ntags` table (currently `label`, `button`, `span`, `option`, `p`, `h1`–`h5`, `th`, all via their `textContent` attribute). Add a tag/attribute pair to `i8ntags` when a new kind of element needs translated text. Excluded even on a listed tag: values containing `:` or `/` (these are usually paths or key:value pairs, not prose), and values not starting with a letter (emoji/symbol-only content). Pass `i8n: false` on an element you know is untranslatable (a proper name, an id, dynamic per-row data).
 3. **Via a graph's scale name** — same as (1), a direct `getString()` call when building the Chart.js scale config.
+4. **Via `getStringWith(tag, value)`** — prose with a name in it. The table entry holds a `%s` and the value is substituted after the lookup: `getStringWith("Forget %s?", nodeId)`. Concatenating a translated fragment with the name instead pins the word order to English, which is wrong in HI. The `window.confirm` dialogs in `admin.js` are built this way.
+
+**Prose that `el()` skips can still be translated.** A paragraph containing a URL or a colon is excluded by (2), so call `getString()` on it yourself and pass `i8n: false` — otherwise `el()` looks up the already-translated text, misses, and falls back to translating it word by word.
 
 **Only `textContent` is translated — never a literal string passed as a DOM `children` argument.** `el('p', {}, ["Some text"])` bypasses the mechanism entirely because the filter inspects `attributes`, not `children`. Always write `el('p', {textContent: "Some text"})` instead. This applies to `p`, `h1`–`h5`, `span`, and any other tag in `i8ntags`.
 
@@ -375,6 +378,7 @@ When adding a new UI string: add matching entries to all four language sections 
 
 - `el(tag, attributes, children)` — local wrapper around `EL` that applies i18n translation to label/button/span text. Pass `i8n: false` in attributes to suppress translation for names/IDs.
 - `getString(tag)` — look up a string in the current language(s); falls back to English.
+- `getStringWith(tag, value)` — as `getString`, then substitutes `value` for `%s` in the result, so a translation chooses where the name falls in the sentence.
 - `mqtt_subscribe(topic, cb)` — registers a subscription; replays on reconnect.
 - `GET(url, opts, cb)` — from `html-element-extended`; callback-style HTTP GET returning parsed JSON.
 - `XXX(args)` — debug log with a breakpoint hook; use for unexpected states. Leave calls in place.
