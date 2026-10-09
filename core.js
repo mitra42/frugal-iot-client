@@ -1818,8 +1818,13 @@ class MqttTopic {
   // Creation & initialization =========
   constructor() {
     this.data = []; // Tracks previous values of this topic - used for graphing
-    this.qos = 0; // Default to send and not care if received
-    this.retain = false; // Default to not retain
+    /* For what this publishes - "set/..." commands to a node. QoS 1 so the broker holds them for a
+     * node that is asleep, until it reconnects to its persistent session; QoS 0 is dropped for anyone
+     * not connected at that moment. Not retained: the node writes a set value to its own flash, and
+     * a retained command would be replayed at every fresh subscribe, e.g. each reboot.
+     */
+    this.qos = 1;
+    this.retain = false;
     this.state = {}; // Dynamic state: value, groupMt roll-up fields (now_wired, out_wired, on, etc.)
   }
 
@@ -2021,8 +2026,6 @@ class MqttTopic {
         case 'toggle':
           //noinspection JSUnresolvedVariable
           elx = el('mqtt-toggle', {color: this.color, graphable: this.graphable });
-          this.retain = true;
-          this.qos = 1;
           break;
         case 'bar':
           // noinspection JSUnresolvedReference
@@ -2305,7 +2308,7 @@ class MqttTopic {
   }
   publishWired(val) {
     console.log("Publishing ", this.topicWiredPath, val, this.retain ? "retain" : "", this.qos ? `qos=${this.qos}` : "");
-    mqtt_client.publish(this.topicWiredPath, val, {retain: true, qos: 1});
+    mqtt_client.publish(this.topicWiredPath, val, {retain: this.retain, qos: this.qos});
   }
   // Adds historical data to the chart - typically chart updates data for each line, then updates the chart.
   addDataFrom(filename, first, cb) {

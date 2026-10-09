@@ -503,7 +503,7 @@ customElements.define('mqtt-graphdataset', MqttGraphDataset);
 // This event is used by custom dashboards to send
 document.addEventListener('frugaliot:publish', ({detail}) => {
   if (mqtt_client && detail.topic && detail.value !== undefined)
-    mqtt_client.publish(detail.topic, String(detail.value), detail.options || {retain: true, qos: 1});
+    mqtt_client.publish(detail.topic, String(detail.value), detail.options || {retain: false, qos: 1}); // As for MqttTopic - see its constructor
 });
 
 // Public API for custom dashboards and pages that import this module.
