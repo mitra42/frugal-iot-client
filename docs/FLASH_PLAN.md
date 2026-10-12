@@ -55,7 +55,7 @@ So an ESP32 board needs three extra regions that are **independent of your sketc
 | Piece | Depends on | Per-app? |
 |---|---|---|
 | `bootloader.bin` | chip + flash mode/freq | No |
-| `partitions.bin` | partition scheme (`min_spiffs`, `frugal_8mb`, …) | No |
+| `partitions.bin` | partition scheme (`min_spiffs`, `default_8MB`, …) | No |
 | `boot_app0.bin` | nothing — fixed 8192-byte blob | No |
 | `firmware.bin` | your app | Yes — this is what the OTA tab already stores |
 
@@ -194,18 +194,25 @@ This can be decided with high confidence by reading the flash back before writin
 exposes `readFlash()`, and with the stub loaded, reading ~7 KB is fast.
 
 1. Read 3 KB at `0x8000`. Absent partition-table magic (`AA 50`) → no valid layout → **provision**.
-2. Parse the on-device table and check the **app slot only** — `app0` at `0x10000`, size `0x1E0000`.
-   Differs → the board is laid out for something else → **provision**.
+2. Parse the on-device table and check the **app slot's position only** — `app0` at `0x10000`.
+   Elsewhere → the board is laid out for something else → **provision**. Its size is not compared
+   here; it becomes the limit the image is checked against once one is chosen (see the refusals).
 3. Read 4 bytes at `chip.BOOTLOADER_FLASH_OFFSET`. Not `0xE9` → **provision**.
 4. Read the first 4 KB of the on-device FS partition (offset from *its* table, not ours) and look for
    the littlefs superblock magic — the ASCII string `littlefs`. Present → a filesystem exists worth
    preserving → **app-only**.
 
-Comparing only the app slot rather than the whole table is deliberate, and it's what the fixed app
-geometry buys: a board whose FS partition is a different size than our scheme would produce is still
-perfectly safe to update app-only. That correctly covers a board provisioned by an earlier version of
-this tool, or flashed by hand from PlatformIO with stock `min_spiffs`, instead of needlessly wiping
-its config.
+Comparing only where the app slot starts, rather than the whole table, is deliberate. An app image
+runs from any slot it fits in, so a board laid out differently from our scheme — a bigger app slot,
+a filesystem elsewhere — is still perfectly safe to update app-only. That correctly covers a board
+provisioned by an earlier version of this tool, or flashed by hand from PlatformIO with any stock
+scheme (`min_spiffs`, `default`, `default_8MB`), instead of needlessly wiping its config.
+
+**App-only also resets otadata.** A board that has taken a wireless OTA update may be booting from
+`app1`, and would then ignore the app just written to `app0`. So the app-only path writes
+`boot_app0.bin` at the otadata offset from the *board's own* table — exactly what a PlatformIO
+upload does — which selects `app0` without touching the filesystem. If the table could not be read,
+otadata is left alone and the log says the old firmware may keep booting.
 
 That resolves the "is it virgin?" question definitively. The one residue is step 4's blind spot: a
 matching partition table plus a valid LittleFS **belonging to a different project**. Flash contents
@@ -272,42 +279,40 @@ base/
   partitions/
     min_spiffs.bin               3 KB   — chip-independent (Arduino stock, 4 MB)
     min_spiffs.csv                      — provenance for the above
-    frugal_8mb.bin                      — custom, see below
-    frugal_8mb.csv
-    frugal_16mb.bin
-    frugal_16mb.csv
+    default_8MB.bin                     — Arduino stock, see below
+    default_8MB.csv
+    default_16MB.bin
+    default_16MB.csv
 ```
 
 Target chip set: **ESP8266** (no base needed at all), **ESP32-C3**, **ESP32-S2**, **ESP32-S3**.
 `min_spiffs` for the smaller chips, per Frugal IoT convention.
 
-### Partition schemes: fixed app size, all spare space to LittleFS
+### Partition schemes: the stock tables PlatformIO uses
 
-Bigger boards get the *same* app partitions as a 4 MB board, with the surplus going to the
-filesystem. Arduino's stock large-flash schemes do the opposite (`default_8MB` gives 3.1 MB app
-slots and only 1.5 MB of FS), so these are custom tables.
+Every scheme is Arduino's own, unmodified, so a board provisioned here has exactly the table a
+PlatformIO upload of the matching env writes. That is the point: a USB upload from PlatformIO onto a
+board provisioned here — or the reverse — rewrites the table with an identical one, and the
+filesystem (with the board's WiFi and MQTT config) stays where it is.
 
-Starting from stock `min_spiffs` (4 MB), which is unchanged:
+| Partition | Type/Subtype | `min_spiffs` (4 MB) | `default_8MB` | `default_16MB` |
+|---|---|---|---|---|
+| `nvs` | data/nvs | `0x9000` `0x5000` | `0x9000` `0x5000` | `0x9000` `0x5000` |
+| `otadata` | data/ota | `0xe000` `0x2000` | `0xe000` `0x2000` | `0xe000` `0x2000` |
+| `app0` | app/ota_0 | `0x10000` `0x1E0000` | `0x10000` `0x330000` | `0x10000` `0x640000` |
+| `app1` | app/ota_1 | `0x1F0000` `0x1E0000` | `0x340000` `0x330000` | `0x650000` `0x640000` |
+| `spiffs` | data/spiffs | `0x3D0000` `0x20000` | `0x670000` `0x180000` | `0xC90000` `0x360000` |
+| `coredump` | data/coredump | `0x3F0000` `0x10000` | `0x7F0000` `0x10000` | `0xFF0000` `0x10000` |
 
-| Partition | Type/Subtype | Offset | `min_spiffs` (4 MB) | `frugal_8mb` | `frugal_16mb` |
-|---|---|---|---|---|---|
-| `nvs` | data/nvs | `0x9000` | `0x5000` | `0x5000` | `0x5000` |
-| `otadata` | data/ota | `0xe000` | `0x2000` | `0x2000` | `0x2000` |
-| `app0` | app/ota_0 | `0x10000` | `0x1E0000` | `0x1E0000` | `0x1E0000` |
-| `app1` | app/ota_1 | `0x1F0000` | `0x1E0000` | `0x1E0000` | `0x1E0000` |
-| `spiffs` | data/spiffs | `0x3D0000` | `0x20000` (128 KB) | `0x420000` (4.125 MB) | `0xC20000` (12.125 MB) |
-| `coredump` | data/coredump | *varies* | `0x3F0000` | `0x7F0000` | `0xFF0000` |
+**What is relied on:** `app0` is at `0x10000` in every scheme, so the app-only path always writes
+there. Its size varies, and an image fits any slot it is no bigger than — so the same
+`firmware.bin` from a 4 MB build flashes to an 8 or 16 MB board, and a wireless OTA moves it between
+`app0` and `app1` regardless. The image is checked against the slot actually on the board.
 
-App partitions stay 64 KB-aligned and the FS partition stays 4 KB-aligned in all three, and each
-table sums exactly to its flash size.
-
-**Two consequences worth relying on:**
-
-1. **The app image is flash-size-independent.** `app0` has the same offset *and* size in every
-   scheme, so one `firmware.bin` flashes to a 4, 8 or 16 MB board. The OTA files in the tab need no
-   per-size variants, and the app-only path always writes at `0x10000`.
-2. **A 1.875 MB app slot is generous** and unchanged from what 4 MB boards already run, so nothing
-   about existing builds needs revisiting.
+An earlier version of this plan used custom `frugal_8mb`/`frugal_16mb` tables (`min_spiffs` app
+slots, all surplus to LittleFS). They were dropped because the firmware's PlatformIO envs build for
+the board default, and a PlatformIO upload onto a board provisioned with a different table moves the
+filesystem and loses its config.
 
 **Keep the label `spiffs`, even though the content is LittleFS.** Arduino's LittleFS mounts by
 partition label, defaulting to `"spiffs"`
@@ -315,10 +320,9 @@ partition label, defaulting to `"spiffs"`
 Renaming the partition to `littlefs` would stop the firmware mounting it unless `begin()` is also
 changed. Not worth the coupling.
 
-These CSVs are Frugal IoT's own, so they belong in the **firmware** repo (so builds can reference them
-via `board_build.partitions`), with the generated `.bin` plus a copy of the `.csv` committed here for
-the flasher. Generate with the core's `tools/gen_esp32part.py`, or just harvest
-`.pio/build/<env>/partitions.bin` from a build configured with that CSV.
+The `.csv` files are copied from the core's `tools/partitions/`, and the `.bin` generated from them
+with the core's `tools/gen_esp32part.py` — or harvested from `.pio/build/<env>/partitions.bin` of a
+build using that scheme.
 
 `boards.json` maps a detected `<chip>-<flashsize>` to the parts to use, so lookup after detection is
 a single key:
@@ -329,8 +333,8 @@ a single key:
     "ESP32-C3-4MB": "min_spiffs",
     "ESP32-S2-4MB": "min_spiffs",
     "ESP32-S3-4MB": "min_spiffs",
-    "ESP32-S3-8MB": "frugal_8mb",
-    "ESP32-S3-16MB": "frugal_16mb"
+    "ESP32-S3-8MB": "default_8MB",
+    "ESP32-S3-16MB": "default_16MB"
   },
   "bootloaderByChip": {
     "ESP32-C3": "bootloader/esp32c3.bin",
@@ -380,8 +384,8 @@ support without touching the client code:
 
 1. Build the firmware for the board.
 2. If the **chip** is new, copy `bootloader.bin` to `base/bootloader/<chip>.bin`.
-3. If the **flash size** is new, write a CSV following the table above — same app partitions, all
-   surplus to `spiffs` — and commit both it and the generated `.bin` to `base/partitions/`.
+3. If the **flash size** is new, copy the core's stock CSV for it — the one the board's PlatformIO
+   env uses — and commit both it and the generated `.bin` to `base/partitions/`.
 4. Add one `"<CHIP>-<SIZE>": "<scheme>"` line to `schemeByChipAndSize`.
 
 `boot_app0.bin` never needs touching, and the app binary never needs rebuilding for a different flash
@@ -397,8 +401,10 @@ All four are **refusals, not warnings** — a bad combination here means a board
 2. App image: byte 0 == `0xE9`, and for ESP32-family images `chip_id` (u16 LE at offset 12) ==
    `esploader.chip.IMAGE_CHIP_ID` (0=ESP32, 2=S2, 5=C3, 9=S3, 12=C2, 13=C6, 16=H2 — the ROM classes
    expose it). This catches the classic "C3 build onto a D1 Mini".
-3. App byte length ≤ app-slot size from the parsed partition table. Catches a `min_spiffs` app
-   dropped onto a `default`-scheme board.
+3. App byte length ≤ app-slot size — the board's own slot for an app-only write, the base scheme's
+   when provisioning. Catches a `default_8MB` build too big for a `min_spiffs` board. A too-big image
+   is refused rather than provisioned automatically, since provisioning erases the board's config;
+   the message says when "Provision instead" would make it fit.
 4. `detectFlashSize()` must produce a `<chip>-<flashsize>` key present in `schemeByChipAndSize` — and
    if the size came from the `"4MB"` fallback, require confirmation (and on an S3, warn about octal
    flash).
@@ -847,9 +853,8 @@ Nothing structural — the flow works but is a little unintuitive. Known rough e
   fact rather than a guess.
 - Confirm `writeFlash` tolerates an omitted `calculateMD5Hash` (see Client change 7).
 - **Ship 4 MB only at first.** Larger boards are still more expensive and not seen in practice, so
-  `min_spiffs` is the only scheme that needs to work on day one. The `frugal_8mb` / `frugal_16mb`
-  tables above are specified so they *can* be added without redesign, but they should be generated and
-  tested by someone holding the hardware rather than committed untested — an unlisted
+  `min_spiffs` is the only scheme that needs to work on day one. `default_8MB` / `default_16MB` are
+  the stock tables, but provisioning with them is untested on real hardware — an unlisted
   `<chip>-<flashsize>` already fails cleanly as "unsupported board".
 - Whether an ESP32-S2 `bootloader.bin` is worth harvesting up front, given `ARDUINO_LOLIN_S2_MINI`
   appears in the firmware but may not be in active use.

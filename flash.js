@@ -13,9 +13,11 @@ const PartitionTableOffset = 0x8000;
 const PartitionTableMagic = 0x50aa; // AA 50 on the wire
 const PartitionType = {app: 0x00, data: 0x01};
 const PartitionSubtype = {factory: 0x00, ota0: 0x10, otadata: 0x00, spiffs: 0x82, littlefs: 0x83};
-// Every Frugal IoT scheme keeps app0 here, so one firmware.bin suits any flash size - see FLASH_PLAN.md
+// Every Arduino scheme keeps app0 here; only its size varies, and an image fits any slot it is no
+// bigger than - see FLASH_PLAN.md
 const AppPartitionOffset = 0x10000;
-const AppPartitionSize = 0x1e0000;
+// The smallest app0 we provision (min_spiffs) - the limit when the board's own table is unreadable
+const AppPartitionSizeMin = 0x1e0000;
 const ImageMagic = 0xe9;
 const LittleFsMagic = [0x6c, 0x69, 0x74, 0x74, 0x6c, 0x65, 0x66, 0x73]; // "littlefs" in the superblock
 const FlashBaudRates = [921600, 460800, 230400, 115200];
@@ -238,7 +240,6 @@ class MqttFlash extends HTMLElementExtended {
       dev.wholeImage = true;                 // ESP8266 firmware.bin is a complete image at 0x0
       dev.provision = false;                 // and does not overlap the filesystem
       dev.appAddress = 0x0;
-      dev.appLimit = null;
       return;
     }
     const scheme = boards.schemeByChipAndSize[`${dev.chipName}-${dev.flashSize}`];
@@ -255,11 +256,14 @@ class MqttFlash extends HTMLElementExtended {
       partitions: {url: partUrl(boards.partitionsByScheme[scheme]), address: boards.partitionTableOffset},
       otadata: {url: partUrl(boards.otadata), address: null}, // from the partition table below
     };
+    // Fetched now rather than at flash time, so the size check knows the base's app slot
+    const baseApp = partitionApp(partitionsParse(await fetchBytes(dev.base.partitions.url)));
+    dev.base.appSize = baseApp ? baseApp.size : AppPartitionSizeMin;
     // The filesystem partition is deliberately left erased - the firmware's LittleFS.begin(true)
     // formats it on first boot. See FLASH_PLAN.md: it only appeared unable to when we were writing a
     // bootloader from the wrong framework.
     dev.appAddress = AppPartitionOffset;
-    dev.appLimit = AppPartitionSize;
+    dev.onDeviceAppSize = AppPartitionSizeMin;
     await this.deviceInspect();
   }
   // Returns null rather than stalling, so a board that will not answer the stub's read command does
@@ -287,6 +291,7 @@ class MqttFlash extends HTMLElementExtended {
       dev.inspected = false;
       dev.provision = false;
       this.logLine("Could not inspect the board - assuming it is already provisioned. Use \"Provision instead\" if this is a new board.");
+      this.logLine("Without its partition table otadata cannot be reset, so a board that has taken an OTA update may keep booting the old firmware.");
       return;
     }
     dev.inspected = true;
@@ -295,8 +300,13 @@ class MqttFlash extends HTMLElementExtended {
     const app = partitionApp(onDeviceParts);
     if (!onDeviceParts.length) reasons.push("no partition table");
     else if (!app) reasons.push("no app partition");
-    // Only the app slot has to match - a differently sized filesystem is still safe to keep
-    else if (app.offset !== AppPartitionOffset || app.size !== AppPartitionSize) reasons.push("app partition differs");
+    // Only the app slot's position has to match - its size is checked against the image at flash
+    // time, and a differently laid out filesystem is still safe to keep
+    else if (app.offset !== AppPartitionOffset) reasons.push("app partition not at 0x10000");
+    if (app) dev.onDeviceAppSize = app.size;
+    // Only an ota_0 slot is selected through otadata - a factory app boots without it
+    const otadata = partitionOtadata(onDeviceParts);
+    if (app && app.subtype === PartitionSubtype.ota0 && otadata) dev.onDeviceOtadataOffset = otadata.offset;
     // Worth always logging - a layout that disagrees with the base explains most boot failures
     if (onDeviceParts.length) {
       this.logLine("On-device partition table:");
@@ -359,8 +369,15 @@ class MqttFlash extends HTMLElementExtended {
       if (chipId !== this.state.esploader.chip.IMAGE_CHIP_ID) {
         throw new Error(`${this.state.app.name} was built for chip id ${chipId}, but this board is ${dev.chipName} (chip id ${this.state.esploader.chip.IMAGE_CHIP_ID})`);
       }
-      if (dev.appLimit && bytes.length > dev.appLimit) {
-        throw new Error(`${this.state.app.name} is ${bytesToSizeString(bytes.length)}, larger than the ${bytesToSizeString(dev.appLimit)} app partition`);
+      // Not provisioned automatically: that erases the board's configuration, so it is the user's call
+      if (dev.provision && bytes.length > dev.base.appSize) {
+        throw new Error(`${this.state.app.name} is ${bytesToSizeString(bytes.length)}, larger than the ${bytesToSizeString(dev.base.appSize)} app partition of ${dev.scheme}`);
+      }
+      if (!dev.provision && bytes.length > dev.onDeviceAppSize) {
+        const fix = bytes.length <= dev.base.appSize
+          ? ` - "Provision instead" would lay it out as ${dev.scheme}, but erases its configuration`
+          : "";
+        throw new Error(`${this.state.app.name} is ${bytesToSizeString(bytes.length)}, larger than the ${bytesToSizeString(dev.onDeviceAppSize)} app partition on this board${fix}`);
       }
     }
     if (dev.flashSizeGuessed && !this.state.confirmed) {
@@ -381,6 +398,9 @@ class MqttFlash extends HTMLElementExtended {
       files.push({data: partitions, address: dev.base.partitions.address});
       files.push({data: otadata, address: otadataPart.offset});
       dev.verifyAddress = dev.base.partitions.address; // read back below to confirm the write landed
+    } else if (!dev.wholeImage && dev.onDeviceOtadataOffset != null) {
+      // After an OTA update the board boots app1, so the app written to app0 would never run
+      files.push({data: await fetchBytes(dev.base.otadata.url), address: dev.onDeviceOtadataOffset});
     }
     files.push({data: this.state.app.bytes, address: dev.appAddress});
     return files;

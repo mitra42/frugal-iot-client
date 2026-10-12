@@ -1,8 +1,9 @@
 // The flasher's hold on the serial port. WebSerial refuses a second open of the same port, so the
 // element is the only thing that can close it - and a connect that fails is exactly when it must.
 import './setup.js';
-import { test, describe, before, beforeEach, afterEach } from 'node:test';
+import { test, describe, before, after, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 let ports; // what a fake Transport did, in order
 
@@ -215,6 +216,90 @@ describe('the serial monitor', () => {
     await new Promise((r) => setTimeout(r, 30));
     assert.equal(flash.state.port.opened, opened, 'it should have stopped trying');
     assert.match(log(flash), /---- monitor stopped ----/);
+    flash.remove();
+  });
+});
+
+/*
+ * Provision vs app-only, against real partition tables from base/. A board is only re-laid out when
+ * its app slot is somewhere else - a different size is checked against the image instead, since
+ * provisioning erases the board's configuration.
+ */
+describe('flashing over a board that is already laid out', () => {
+  const readBase = (p) => new Uint8Array(readFileSync(new URL(`../base/${p}`, import.meta.url)));
+  const boards = JSON.parse(readFileSync(new URL('../base/boards.json', import.meta.url), 'utf8'));
+  let writes;
+  // An 8MB S3 whose flash holds `table` at 0x8000, a bootloader, and an erased filesystem
+  function fakeS3(table) {
+    return async () => ({
+      Transport: class { async disconnect() {} },
+      ESPLoader: class {
+        constructor() { this.chip = {CHIP_NAME: 'ESP32-S3', BOOTLOADER_FLASH_OFFSET: 0, IMAGE_CHIP_ID: 9}; }
+        async main() { return 'ESP32-S3'; }
+        async readFlashId() { return 0x17 << 16; }
+        async readFlash(offset, length) {
+          const block = new Uint8Array(length).fill(0xff);
+          if (offset === 0) block[0] = 0xe9;
+          if (offset === 0x8000) block.set(table.subarray(0, length));
+          return block;
+        }
+        async writeFlash({fileArray}) { writes.push(...fileArray.map((f) => f.address)); }
+        async after() {}
+      },
+    });
+  }
+  async function connected(table) {
+    const flash = document.createElement('mqtt-flash');
+    document.body.append(flash);
+    flash.esptoolImport = fakeS3(table);
+    flash.state.boards = boards;
+    flash.monitorStart = () => {};
+    await flash.connectAndInspect({});
+    return flash;
+  }
+  const image = (size) => { const b = new Uint8Array(size); b[0] = 0xe9; b[12] = 9; return b; };
+  let realFetch;
+  before(() => {
+    realFetch = globalThis.fetch;
+    globalThis.fetch = async (url) => {
+      const bytes = readBase(String(url).replace(/^\.\/base\//, '').replace(/\?.*$/, ''));
+      return {ok: true, arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)};
+    };
+  });
+  after(() => { globalThis.fetch = realFetch; });
+  beforeEach(() => { writes = []; });
+
+  test('a board on a bigger app slot than our scheme is updated app-only, keeping its config', async () => {
+    const flash = await connected(readBase('partitions/default_8MB.bin'));
+    assert.equal(flash.state.device.provision, false, flash.state.log.join('\n'));
+    flash.state.app = {name: 'firmware.bin', bytes: image(0x200000)}; // too big for min_spiffs, fits here
+    await flash.flash();
+    assert.deepEqual(writes, [0xe000, 0x10000], 'otadata reset, then the app - nothing else');
+    flash.remove();
+  });
+
+  test('an app-only write resets otadata where the board says, so it boots app0 and not an older app1', async () => {
+    const flash = await connected(readBase('partitions/min_spiffs.bin'));
+    flash.state.app = {name: 'firmware.bin', bytes: image(0x1000)};
+    await flash.flash();
+    assert.ok(writes.includes(0xe000), 'otadata should have been written');
+    flash.remove();
+  });
+
+  test('an image too big for the board is refused, not provisioned behind the user’s back', async () => {
+    const flash = await connected(readBase('partitions/min_spiffs.bin'));
+    flash.state.app = {name: 'firmware.bin', bytes: image(0x200000)};
+    await assert.rejects(flash.flash(), /larger than the 1\.88MB app partition on this board - "Provision instead"/);
+    assert.deepEqual(writes, []);
+    flash.remove();
+  });
+
+  test('a board whose app slot is somewhere else is provisioned', async () => {
+    const table = readBase('partitions/min_spiffs.bin').slice();
+    new DataView(table.buffer).setUint32(2 * 32 + 4, 0x20000, true); // app0 is the third record
+    const flash = await connected(table);
+    assert.equal(flash.state.device.provision, true);
+    assert.deepEqual(flash.state.device.provisionReasons, ['app partition not at 0x10000']);
     flash.remove();
   });
 });
