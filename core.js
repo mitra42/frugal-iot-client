@@ -430,7 +430,7 @@ EN:
   close: close
   Collapse: Collapse
   Color:  Color
-  "Compiled into a node's firmware, this is what lets it ask this server for its own broker credential. It grants nothing else - no reading and no publishing. Add a second one to change it: both are accepted, so nodes already flashed keep working until you withdraw the old one.": "Compiled into a node's firmware, this is what lets it ask this server for its own broker credential. It grants nothing else - no reading and no publishing. Add a second one to change it: both are accepted, so nodes already flashed keep working until you withdraw the old one."
+  "Compiled into firmware and used to request broker credential. Add a second one to change it: both are accepted, so nodes already flashed keep working until you withdraw the old one.": "Compiled into firmware and used to request broker credential. Add a second one to change it: both are accepted, so nodes already flashed keep working until you withdraw the old one."
   Connect board: Connect board
   connected: connected
   connecting: connecting
@@ -453,7 +453,6 @@ EN:
   Done: Done
   ds18b20: ds18b20
   e.g. LiteFarm: e.g. LiteFarm
-  Each node has its own broker credential, which it collects from this server the first time it connects. Forget one to have it issued a new credential - needed if its filesystem has been erased, because it can then no longer prove which node it is.: Each node has its own broker credential, which it collects from this server the first time it connects. Forget one to have it issued a new credential - needed if its filesystem has been erased, because it can then no longer prove which node it is.
   eCO2: eCO2
   Email: Email
   Enrol URL: Enrol URL
@@ -540,7 +539,7 @@ EN:
   No farms registered for this organization yet.: No farms registered for this organization yet.
   No nodes found for this farm's project(s).: No nodes found for this farm's project(s).
   No nodes found for this organization: No nodes found for this organization
-  No nodes have enrolled yet. A node enrols itself the first time it connects.: No nodes have enrolled yet. A node enrols itself the first time it connects.
+  No nodes have enrolled yet, and none have asked and been rejected.: No nodes have enrolled yet, and none have asked and been rejected.
   No organization: No organization
   No organization selected: No organization selected
   No OTA files uploaded yet.: No OTA files uploaded yet.
@@ -557,6 +556,7 @@ EN:
   Nodes: Nodes
   Nodes in Farm: Nodes in Farm
   Nodes in Organization: Nodes in Organization
+  Nodes that have obtained broker credentials on first connection. Forget reissues a new credential at next connection and is needed if memory has been erased. Refused nodes are listed - click Approve to allow (on next retry, typically 30 minutes).: Nodes that have obtained broker credentials on first connection. Forget reissues a new credential at next connection and is needed if memory has been erased. Refused nodes are listed - click Approve to allow (on next retry, typically 30 minutes).
   Not in the schema: Not in the schema
   Not selected: Not selected
   Note this is your organization - not the organizations whose devices you want to access.: Note this is your organization - not the organizations whose devices you want to access.
@@ -742,7 +742,7 @@ FR:
   close: fermer
   Collapse: Réduire
   Color: Couleur  
-  "Compiled into a node's firmware, this is what lets it ask this server for its own broker credential. It grants nothing else - no reading and no publishing. Add a second one to change it: both are accepted, so nodes already flashed keep working until you withdraw the old one.": "Compilé dans le micrologiciel d'un nœud, c'est ce qui lui permet de demander à ce serveur son propre identifiant de broker. Il n'accorde rien d'autre - ni lecture ni publication. Ajoutez-en un second pour le changer : les deux sont acceptés, donc les nœuds déjà flashés continuent de fonctionner jusqu'à ce que vous retiriez l'ancien."
+  "Compiled into firmware and used to request broker credential. Add a second one to change it: both are accepted, so nodes already flashed keep working until you withdraw the old one.": "Compilé dans le micrologiciel et utilisé pour demander l'identifiant de broker. Ajoutez-en un second pour le changer : les deux sont acceptés, donc les nœuds déjà flashés continuent de fonctionner jusqu'à ce que vous retiriez l'ancien."
   Connect board: Connecter la carte
   connected: connecté
   connecting: connexion
@@ -765,7 +765,6 @@ FR:
   Done: Fait
   ds18b20: ds18b20
   e.g. LiteFarm: par ex. LiteFarm
-  Each node has its own broker credential, which it collects from this server the first time it connects. Forget one to have it issued a new credential - needed if its filesystem has been erased, because it can then no longer prove which node it is.: Chaque nœud a son propre identifiant de broker, qu'il récupère sur ce serveur lors de sa première connexion. Oubliez-en un pour qu'un nouvel identifiant lui soit délivré - nécessaire si son système de fichiers a été effacé, car il ne peut alors plus prouver quel nœud il est.
   eCO2: eCO2
   Email: Email
   Enrol URL: URL d'enrôlement
@@ -852,7 +851,7 @@ FR:
   No farms registered for this organization yet.: Aucune ferme enregistrée pour cette organisation pour l'instant.
   No nodes found for this farm's project(s).: Aucun nœud trouvé pour le(s) projet(s) de cette ferme.
   No nodes found for this organization: Aucun nœud trouvé pour cette organisation
-  No nodes have enrolled yet. A node enrols itself the first time it connects.: Aucun nœud ne s'est encore enrôlé. Un nœud s'enrôle lui-même lors de sa première connexion.
+  No nodes have enrolled yet, and none have asked and been rejected.: Aucun nœud ne s'est encore enrôlé, et aucun n'a été refusé.
   No organization: Aucune organisation
   No organization selected: Aucune organisation sélectionnée
   No OTA files uploaded yet.: Aucun fichier OTA téléversé pour l'instant.
@@ -869,6 +868,7 @@ FR:
   Nodes: Nœuds
   Nodes in Farm: Nœuds dans la ferme
   Nodes in Organization: Nœuds dans l'organisation
+  Nodes that have obtained broker credentials on first connection. Forget reissues a new credential at next connection and is needed if memory has been erased. Refused nodes are listed - click Approve to allow (on next retry, typically 30 minutes).: Nœuds ayant obtenu leur identifiant de broker à la première connexion. Oublier en délivre un nouveau à la prochaine connexion, nécessaire si la mémoire a été effacée. Les nœuds refusés sont listés - cliquez sur Approuver pour autoriser (à la prochaine tentative, généralement 30 minutes).
   Not in the schema: Absent du schéma
   Not selected: Non sélectionné
   Note this is your organization - not the organizations whose devices you want to access.: Ceci est votre organisation - pas les organisations dont vous voulez accéder aux appareils.
@@ -1054,7 +1054,7 @@ HI:
   close: बंद करें
   Collapse: छोटा करें
   Color: रंग  
-  "Compiled into a node's firmware, this is what lets it ask this server for its own broker credential. It grants nothing else - no reading and no publishing. Add a second one to change it: both are accepted, so nodes already flashed keep working until you withdraw the old one.": "नोड के फ़र्मवेयर में संकलित, यही उसे इस सर्वर से अपना ब्रोकर क्रेडेंशियल माँगने देता है। यह और कुछ नहीं देता - न पढ़ना, न प्रकाशित करना। इसे बदलने के लिए दूसरा जोड़ें: दोनों स्वीकार किए जाते हैं, इसलिए पहले फ़्लैश किए गए नोड तब तक काम करते रहते हैं जब तक आप पुराना वापस नहीं लेते।"
+  "Compiled into firmware and used to request broker credential. Add a second one to change it: both are accepted, so nodes already flashed keep working until you withdraw the old one.": "फ़र्मवेयर में संकलित और ब्रोकर क्रेडेंशियल माँगने के लिए उपयोग किया जाता है। इसे बदलने के लिए दूसरा जोड़ें: दोनों स्वीकार किए जाते हैं, इसलिए पहले फ़्लैश किए गए नोड तब तक काम करते रहते हैं जब तक आप पुराना वापस नहीं लेते।"
   Connect board: बोर्ड कनेक्ट करें
   connected: जुड़े हुए
   connecting: कनेक्ट हो रहा है
@@ -1077,7 +1077,6 @@ HI:
   Done: पूर्ण
   ds18b20: ds18b20
   e.g. LiteFarm: उदाहरण के लिए LiteFarm
-  Each node has its own broker credential, which it collects from this server the first time it connects. Forget one to have it issued a new credential - needed if its filesystem has been erased, because it can then no longer prove which node it is.: हर नोड का अपना ब्रोकर क्रेडेंशियल होता है, जो वह पहली बार जुड़ते समय इस सर्वर से लेता है। किसी को भुला दें ताकि उसे नया क्रेडेंशियल मिले - यह ज़रूरी है यदि उसका फ़ाइल-सिस्टम मिटा दिया गया हो, क्योंकि तब वह यह सिद्ध नहीं कर सकता कि वह कौन सा नोड है।
   eCO2: ईसीओ2
   Email: ईमेल
   Enrol URL: पंजीकरण URL
@@ -1164,7 +1163,7 @@ HI:
   No farms registered for this organization yet.: इस संगठन के लिए अभी तक कोई फार्म पंजीकृत नहीं है।
   No nodes found for this farm's project(s).: इस फार्म के प्रोजेक्ट (प्रोजेक्ट्स) के लिए कोई नोड नहीं मिला।
   No nodes found for this organization: इस संगठन के लिए कोई नोड नहीं मिला
-  No nodes have enrolled yet. A node enrols itself the first time it connects.: अभी तक कोई नोड पंजीकृत नहीं हुआ है। नोड पहली बार जुड़ते समय स्वयं पंजीकृत हो जाता है।
+  No nodes have enrolled yet, and none have asked and been rejected.: अभी तक कोई नोड पंजीकृत नहीं हुआ है, और किसी को अस्वीकार नहीं किया गया है।
   No organization: कोई संगठन नहीं
   No organization selected: कोई संगठन चयनित नहीं
   No OTA files uploaded yet.: अभी तक कोई OTA फ़ाइल अपलोड नहीं की गई है।
@@ -1181,6 +1180,7 @@ HI:
   Nodes: नोड्स
   Nodes in Farm: फार्म में नोड्स
   Nodes in Organization: संगठन में नोड्स
+  Nodes that have obtained broker credentials on first connection. Forget reissues a new credential at next connection and is needed if memory has been erased. Refused nodes are listed - click Approve to allow (on next retry, typically 30 minutes).: वे नोड जिन्होंने पहली बार जुड़ने पर ब्रोकर क्रेडेंशियल प्राप्त किए हैं। भुलाएँ अगली बार जुड़ने पर नया क्रेडेंशियल जारी करता है, और यह ज़रूरी है यदि मेमोरी मिटा दी गई हो। अस्वीकृत नोड भी सूचीबद्ध हैं - अनुमति देने के लिए स्वीकृत करें पर क्लिक करें (अगले प्रयास पर, आमतौर पर 30 मिनट)।
   Not in the schema: स्कीमा में नहीं
   Not selected: चयनित नहीं
   Note this is your organization - not the organizations whose devices you want to access.: ध्यान दें यह आपका संगठन है - वे संगठन नहीं जिनके उपकरणों तक आप पहुंचना चाहते हैं।
@@ -1366,7 +1366,7 @@ ID:
   close: tutup
   Collapse: Ciutkan
   Color: Warna  
-  "Compiled into a node's firmware, this is what lets it ask this server for its own broker credential. It grants nothing else - no reading and no publishing. Add a second one to change it: both are accepted, so nodes already flashed keep working until you withdraw the old one.": "Dikompilasi ke dalam firmware sebuah node, inilah yang memungkinkannya meminta kredensial broker miliknya sendiri dari server ini. Ia tidak memberi apa pun selain itu - tidak membaca dan tidak menerbitkan. Tambahkan yang kedua untuk menggantinya: keduanya diterima, sehingga node yang sudah di-flash tetap bekerja sampai Anda mencabut yang lama."
+  "Compiled into firmware and used to request broker credential. Add a second one to change it: both are accepted, so nodes already flashed keep working until you withdraw the old one.": "Dikompilasi ke dalam firmware dan digunakan untuk meminta kredensial broker. Tambahkan yang kedua untuk menggantinya: keduanya diterima, sehingga node yang sudah di-flash tetap bekerja sampai Anda mencabut yang lama."
   Connect board: Hubungkan papan
   connected: terhubung
   connecting: menghubungkan
@@ -1389,7 +1389,6 @@ ID:
   Done: Selesai
   ds18b20: ds18b20
   e.g. LiteFarm: misalnya LiteFarm
-  Each node has its own broker credential, which it collects from this server the first time it connects. Forget one to have it issued a new credential - needed if its filesystem has been erased, because it can then no longer prove which node it is.: Setiap node memiliki kredensial broker sendiri, yang diambilnya dari server ini saat pertama kali tersambung. Lupakan salah satu agar diberi kredensial baru - diperlukan jika sistem berkasnya telah dihapus, karena node itu tidak lagi dapat membuktikan node yang mana dirinya.
   eCO2: eCO2  
   Email: Email
   Enrol URL: URL pendaftaran
@@ -1476,7 +1475,7 @@ ID:
   No farms registered for this organization yet.: Belum ada farm yang terdaftar untuk organisasi ini.
   No nodes found for this farm's project(s).: Tidak ada node ditemukan untuk proyek farm ini.
   No nodes found for this organization: Tidak ada node ditemukan untuk organisasi ini
-  No nodes have enrolled yet. A node enrols itself the first time it connects.: Belum ada node yang mendaftar. Sebuah node mendaftarkan dirinya sendiri saat pertama kali tersambung.
+  No nodes have enrolled yet, and none have asked and been rejected.: Belum ada node yang terdaftar, dan tidak ada yang ditolak.
   No organization: Tidak ada organisasi
   No organization selected: Tidak ada organisasi yang dipilih
   No OTA files uploaded yet.: Belum ada berkas OTA yang diunggah.
@@ -1493,6 +1492,7 @@ ID:
   Nodes: Node
   Nodes in Farm: Node dalam Farm
   Nodes in Organization: Node dalam Organisasi
+  Nodes that have obtained broker credentials on first connection. Forget reissues a new credential at next connection and is needed if memory has been erased. Refused nodes are listed - click Approve to allow (on next retry, typically 30 minutes).: Node yang telah memperoleh kredensial broker saat pertama kali tersambung. Lupakan menerbitkan kredensial baru pada sambungan berikutnya, dan diperlukan jika memori telah dihapus. Node yang ditolak juga dicantumkan - klik Setujui untuk mengizinkan (pada percobaan berikutnya, biasanya 30 menit).
   Not in the schema: Tidak ada di skema
   Not selected: Tidak dipilih
   Note this is your organization - not the organizations whose devices you want to access.: Ini adalah organisasi Anda - bukan organisasi yang perangkatnya ingin Anda akses.

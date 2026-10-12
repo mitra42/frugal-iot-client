@@ -558,9 +558,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     const nodes = this.state.enrolled_nodes;
     if (!nodes || !nodes.length) {
       return el('p', {textContent:
-        "No nodes have enrolled yet, and none is asking to. A node enrols itself the first time it " +
-        "connects; one that asks and is refused is listed here too, so an empty list means nothing " +
-        "is reaching this server at all - check that the node's org and enrol URL are this one."});
+        "No nodes have enrolled yet, and none have asked and been rejected."});
     }
     const states = this.nodeStates();
     return el('table', {class: 'nodestates'}, [
@@ -1226,9 +1224,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     this.adminSections().forEach((section) => this.replaceElement(section.rest, this.gatedContent(section)));
     // Which tabs do their own network fetch, and so need one again for a new organization. Only
     // Dashboard does not (mqtt-wrapper handles it). "Nodes" is in the list because it now fetches
-    // the enrolled-node list as well as reading server_config - leaving it out was why that section
-    // always said "No nodes have enrolled yet": loadSectionIfNeeded returns early for a tab that is not
-    // in this set, so the fetch never happened.
+    // the enrolled-node list as well as reading server_config:
     this.state.sectionsNeedingLoad = new Set(['OTA', 'Admin', 'Projects', 'Nodes', 'Bridges', 'API']);
     this.loadSectionIfNeeded(this.state.activeSectionTitle);
     // Only a card created without an organization has a dropdown of its own; replaceElement does
@@ -1672,20 +1668,17 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
        el('section', {}, [
          this.refreshableHeading("Enrolled nodes", this.getEnrolledNodes),
          el('p', {textContent:
-           "Each node has its own broker credential, which it collects from this server the first " +
-           "time it connects. Forget one to have it issued a new credential - needed if its " +
-           "filesystem has been erased, because it can then no longer prove which node it is. A " +
-           "node that asked and was refused is listed here as well, with why: click Approve on it " +
-           "to accept its next request whatever secret it presents. It retries every half hour."}),
+           "Nodes that have obtained broker credentials on first connection. " +
+           "Forget reissues a new credential at next connection and is needed if memory has been erased. " +
+           "Refused nodes are listed - click Approve to allow (on next retry, typically 30 minutes)."}),
          this.state.elements.enrolled_nodes = this.enrolledNodesList(),
        ]),
        el('section', {}, [
          el('h3', {textContent: "Enrolment secret"}),
-         el('p', {textContent:
-           "Compiled into a node's firmware, this is what lets it ask this server for its own " +
-           "broker credential. It grants nothing else - no reading and no publishing. Add a second " +
-           "one to change it: both are accepted, so nodes already flashed keep working until you " +
-           "withdraw the old one."}),
+         el('p', {i8n: false, textContent: getString(
+           "Compiled into firmware and used to request broker credential. " +
+           "Add a second one to change it: both are accepted, so nodes already flashed keep working until you " +
+           "withdraw the old one.")}),
          this.state.elements.enrolment_secrets = this.enrolmentSecretsList(),
        ]),
      ]);
