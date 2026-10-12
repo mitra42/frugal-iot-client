@@ -173,8 +173,9 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     ]);
   }
 // Fetch ota files and display
-  getOrDeleteOtaFiles(url) {
+  getOrDeleteOtaFiles(url, cb = () => {}) {
     GET(url, {}, (err, json) => {
+      cb();
       if (err) {
         this.message(err);
         return;
@@ -184,11 +185,11 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       }
     });
   }
-  getOtaFiles() {
-    if (this.state.org) {
-      if (this.otaOrgs.map(o => o[0]).includes(this.state.org)) {
-        this.getOrDeleteOtaFiles(`/ota_list/${this.state.org}`);
-      }
+  getOtaFiles(cb = () => {}) {
+    if (this.state.org && this.otaOrgs.map(o => o[0]).includes(this.state.org)) {
+      this.getOrDeleteOtaFiles(`/ota_list/${this.state.org}`, cb);
+    } else {
+      cb();
     }
   }
   onOtaDelete(val, ev) {
@@ -241,8 +242,9 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       );
   }
   // Fetch people and display
-  getOrChangeAdminPeople(url) {
+  getOrChangeAdminPeople(url, cb = () => {}) {
     GET(url, {}, (err, json) => {
+      cb();
       if (err) {
         this.message(err.message);
         return;
@@ -328,9 +330,10 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
         onclick: this.onEnrolmentSecretAdd.bind(this)}),
     ]);
   }
-  getEnrolledNodes() {
-    if (!this.state.org) return;
+  getEnrolledNodes(cb = () => {}) {
+    if (!this.state.org) { cb(); return; }
     GET(`/nodes_list/${this.state.org}`, {}, (err, json) => {
+      cb();
       if (err) { this.message(err.message); return; }
       this.state.enrolled_nodes = json; // [{ project, nodeid, lora, enrolled_at }]
       this.replaceElement("enrolled_nodes", this.enrolledNodesList());
@@ -345,9 +348,10 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
    * itself is up. A Pi with a broken bridge still checks in, and that difference is exactly what
    * is hard to see from production any other way.
    */
-  getBridges() {
-    if (!this.state.org) return;
+  getBridges(cb = () => {}) {
+    if (!this.state.org) { cb(); return; }
     GET(`/bridges_list/${this.state.org}`, {}, (err, json) => {
+      cb();
       if (err) { this.message(err.message); return; }
       this.state.bridges = json; // [{ site, account, created_at, last_pull }]
       this.subscribeBridgeState();
@@ -594,14 +598,17 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       }),
     ]);
   }
-  getPeopleList() {
+  getPeopleList(cb = () => {}) {
     if (this.state.org) {
-      this.getOrChangeAdminPeople(`/people_list/${this.state.org}`);
+      this.getOrChangeAdminPeople(`/people_list/${this.state.org}`, cb);
+    } else {
+      cb();
     }
   }
   // Fetch projects and display
-  getOrChangeAdminProjects(url) {
+  getOrChangeAdminProjects(url, cb = () => {}) {
     GET(url, {}, (err, json) => {
+      cb();
       if (err) {
         this.message(err.message);
         return;
@@ -611,9 +618,11 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       }
     });
   }
-  getProjectsList() {
+  getProjectsList(cb = () => {}) {
     if (this.state.org) {
-      this.getOrChangeAdminProjects(`/projects_list/${this.state.org}`);
+      this.getOrChangeAdminProjects(`/projects_list/${this.state.org}`, cb);
+    } else {
+      cb();
     }
   }
   onPermissionsDelete(val, ev) {
@@ -717,9 +726,10 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   }
   // Fetch all registered Farm-Platforms, and display. Not org-scoped - a platform is a many-to-many
   // relationship with orgs/projects, recorded per-mapping in api_farms (see getFarmsList).
-  getPlatformsList() {
+  getPlatformsList(cb = () => {}) {
     if (this.state.org) {
       GET(`/api/platforms/list`, {}, (err, json) => {
+        cb();
         if (err) {
           this.message(err.message);
           return;
@@ -733,6 +743,8 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
         this.replaceElement("platforms_list_display", this.platformsListDisplay());
         this.replaceElement("add_farm", this.collapsibleArea('add_farm', "Add Farm", this.farmRegisterForm));
       });
+    } else {
+      cb();
     }
   }
   onPlatformSelect(ev) {
@@ -802,9 +814,10 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     return el('div', {}, [el('h3', {textContent: "Register Platform"}), EL]);
   }
   // Fetch farm-to-project mappings registered for the selected organization, and display
-  getFarmsList() {
+  getFarmsList(cb = () => {}) {
     if (this.state.org) {
       GET(`/api/farms/list?org=${encodeURIComponent(this.state.org)}`, {}, (err, json) => {
+        cb();
         if (err) {
           this.message(err.message);
           return;
@@ -819,6 +832,8 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
         this.replaceElement("farm_node_actions", this.farmNodeActions());
         this.getDeviceActionSchema();
       });
+    } else {
+      cb();
     }
   }
   onFarmSelect(ev) {
@@ -907,13 +922,13 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   // server_config locally - this is the API tab, so it should exercise the same API a real
   // Farm-Platform would use. A farm can map to more than one project, so one request per project id,
   // joined into a single row set once all have replied.
-  getFarmNodesList() {
+  getFarmNodesList(cb = () => {}) {
     const org = this.state.org;
     const projectIds = this.selectedFarmProjectIds();
     if (!org || projectIds.length === 0) {
       this.state.farm_nodes_list = [];
-    this.state.enrolled_nodes = null;
       this.replaceElement("farm_nodes_table", this.farmNodesTable());
+      cb();
       return;
     }
     let remaining = projectIds.length;
@@ -936,6 +951,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
           });
         }
         if (--remaining === 0) {
+          cb();
           this.state.farm_nodes_list = allNodes;
           this.replaceElement("farm_nodes_table", this.farmNodesTable());
         }
@@ -999,15 +1015,17 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   }
   // Fetch the selected node's Device Schema so the Action section can list its actions - triggered
   // whenever the selected node changes.
-  getDeviceActionSchema() {
+  getDeviceActionSchema(cb = () => {}) {
     const device = this.selectedFarmNodeDevice();
     this.state.device_schema = null;
     this.state.selected_action = null;
     if (!device) {
       this.replaceElement("action_section", this.actionSection());
+      cb();
       return;
     }
     GET(`/api/devices/schema?device=${encodeURIComponent(device)}`, {}, (err, json) => {
+      cb();
       if (err) {
         this.message(err.message);
         return;
@@ -1169,17 +1187,21 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   }
   // Each of these lists is the result of one fetch made when the card opened - nothing pushes a
   // change, so the heading carries the way to ask again.
+  // refreshFn is given a callback for when its reply has arrived, which is what stops the spin.
   refreshableHeading(title, refreshFn) {
-    return el('h3', {}, [
-      el('span', {textContent: title}),
-      el('span', {class: 'pseudolink refresh', i8n: false, title: getString("Refresh"),
-        textContent: ' \u27f3', onclick: refreshFn.bind(this)}),
-    ]);
+    const iconEl = el('span', {class: 'pseudolink refresh', i8n: false, title: getString("Refresh"),
+      textContent: '\u27f3', onclick: () => {
+        if (iconEl.classList.contains('busy')) return;
+        iconEl.classList.add('busy');
+        refreshFn.call(this, () => iconEl.classList.remove('busy'));
+      }});
+    return el('h3', {}, [el('span', {textContent: title}), iconEl]);
   }
   // The organization's nodes are read out of server_config, so refreshing this table means fetching
   // /config.json again rather than re-rendering what is already here.
-  refreshNodesTable() {
+  refreshNodesTable(cb = () => {}) {
     GET("/config.json", {}, (err, json) => {
+      cb();
       if (err) { this.message(err.message); return; }
       configSet(json);
       this.replaceElement("nodes_table", this.nodesTable());

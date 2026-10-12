@@ -193,6 +193,8 @@ div.mqtt-text {
     }
 
 
+@keyframes fi-spin { to { transform: rotate(360deg); } }
+
 /* Related to authentication */
     .mqtt-admin {
         .pseudolink {
@@ -201,7 +203,9 @@ div.mqtt-text {
             cursor: pointer;
         }
         /* The \27f3 beside a heading: still a link, but underlining a glyph reads as a typo. */
-        .refresh { text-decoration: none; }
+        .refresh { text-decoration: none; display: inline-block; margin-left: 0.3em; }
+        /* Spins until the fetch it started replies - on a slow link a still glyph got clicked again and again. */
+        .refresh.busy { animation: fi-spin 1s linear infinite; cursor: progress; }
         /* An OTA row's glyphs: the padding is the whole hit area, so a mis-tap cannot reach delete. */
         .otaicon { text-decoration: none; padding: 0 0.3em; }
         .message {margin: 0.5em; font-weight: bold; font-size: x-large; }
