@@ -7,7 +7,7 @@
 
 import {EL, GET, HTMLElementExtended} from '/node_modules/html-element-extended/htmlelementextended.js';
 import mqtt from '/node_modules/mqtt/dist/mqtt.esm.js'; // https://www.npmjs.com/package/mqtt
-import { CssUrl, DELETE, POST, XXX, brokerHost, configSet, el, getString, getStringWith, hasCapability, mqttTempConnect, mqtt_subscribe, retainedPattern, locationParameterChange, mqtt_client, preferedLanguageSet, preferedLanguages, redirectToLogin, server_config } from './core.js';
+import { CssUrl, DELETE, POST, XXX, brokerHost, configSet, el, getString, getStringWith, hasCapability, mqttTempConnect, mqtt_subscribe, mqtt_unsubscribe, retainedPattern, locationParameterChange, mqtt_client, preferedLanguageSet, preferedLanguages, redirectToLogin, server_config } from './core.js';
 
 
 // The OTA upload is multipart, which POST() (JSON) cannot carry. Callback-style, like the rest.
@@ -1415,32 +1415,55 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     }
 
     onNodeProjectChange(nodeId, oldProjectId, selectElement, onChanged) {
-      // Handle project change for a node
       const newProjectId = selectElement.value;
       if (newProjectId === oldProjectId) {
         return; // No change
       }
+      const org = this.state.org;
+      const topic = `${org}/${oldProjectId}/${nodeId}/set/frugal_iot/project`;
+      console.log(`Publishing ${topic} = ${newProjectId}`);
+      // Not retained: a sleeping node still gets it, from its persistent session, when it wakes.
+      mqtt_client.publish(topic, newProjectId, {retain: false, qos: 1});
+      this.message(getStringWith("Asked %s to move", nodeId));
+      this.watchNodeMove(org, nodeId, oldProjectId, newProjectId, onChanged);
+      onChanged();
+    }
 
-      // Send MQTT message to update project
-      const topic = `${this.state.org}/${oldProjectId}/${nodeId}/set/frugal_iot/project`;
-      const message = newProjectId;
+    // The move is done when the node is heard at its new address - nothing else says so, because the
+    // node restarts and enrols afresh there, and the server tidies the old address away only then.
+    watchNodeMove(org, nodeId, fromProjectId, toProjectId, onChanged) {
+      const moves = this.state.nodeMoves || (this.state.nodeMoves = {});
+      if (moves[nodeId]) { mqtt_unsubscribe(moves[nodeId].watch); }
+      const watch = `${org}/${toProjectId}/${nodeId}/#`;
+      moves[nodeId] = {from: fromProjectId, to: toProjectId, watch};
+      mqtt_subscribe(watch, (topic, message, retained) => {
+        // A retained message is the broker's memory of an earlier stay in that project, not this node
+        if (retained || moves[nodeId]?.watch !== watch) { return; }
+        delete moves[nodeId];
+        mqtt_unsubscribe(watch);
+        this.moveNodeInConfig(org, nodeId, fromProjectId, toProjectId);
+        onChanged();
+      });
+    }
 
-      console.log(`Publishing ${topic} = ${message}`);
-      mqtt_client.publish(topic, message, {retain: false, qos: 1});
-      this.message(`${getString("Project changed to")} ${newProjectId} ${getString("for node")} ${nodeId}`);
-
-      // Refresh the table after a short delay
-      setTimeout(onChanged, 500);
+    // server_config is only fetched at startup, so it is told here what the server now believes.
+    moveNodeInConfig(org, nodeId, fromProjectId, toProjectId) {
+      const projects = this.projectsOf(org);
+      const from = projects[fromProjectId]?.nodes;
+      const to = projects[toProjectId] && (projects[toProjectId].nodes || (projects[toProjectId].nodes = {}));
+      if (!to) { return; }
+      to[nodeId] = {...(from?.[nodeId] || {}), lastseen: new Date().toISOString()};
+      if (from) { delete from[nodeId]; }
     }
 
     renderProjectIdCell(node, onChanged) {
-      // Create an editable cell for projectId that opens a dropdown on click
+      const move = this.state.nodeMoves?.[node.nodeId];
+      const pending = move && move.from === node.projectId;
       return el('td', {
         style: 'cursor: pointer; position: relative;',
-        title: 'Click to change project',
+        title: pending ? getStringWith("Waiting for %s to report", node.nodeId) : getString("Click to change project"),
         onclick: (e) => {
-          // Replace with dropdown
-          const dropdown = this.projectsDropdownForNode(this.state.org, node.projectId);
+          const dropdown = this.projectsDropdownForNode(this.state.org, pending ? move.to : node.projectId);
           dropdown.addEventListener('change', (changeEvent) => {
             this.onNodeProjectChange(node.nodeId, node.projectId, changeEvent.target, onChanged);
           });
@@ -1449,7 +1472,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
           // Close dropdown if focus lost
           dropdown.addEventListener('blur', onChanged);
         }
-      }, [node.projectId]);
+      }, [pending ? `${node.projectId} → ${move.to} …` : node.projectId]);
     }
 
    // Content of the OTA tab below the organization dropdown - only rendered once an org is selected

@@ -483,3 +483,33 @@ describe('the page', () => {
     page.remove();
   });
 });
+
+describe('moving a node to another project', () => {
+  test('shows pending until the node is heard live at its new address', () => {
+    const config = structuredClone(base);
+    config.organizations.dev.projects = {
+      lotus: { name: 'Lotus Ponds', nodes: { n1: { 'frugal_iot/name': 'Pond' } } },
+      developers: { name: 'Developers', nodes: {} },
+    };
+    mock.loadConfig({ ...config, user: { id: 2, name: 'test', permissions: [{ org: 'dev', capability: 'ADMIN' }] } });
+    const admin = document.createElement('mqtt-admin');
+    admin.setAttribute('section', 'admin');
+    document.body.append(admin);
+    let redrawn = 0;
+    admin.watchNodeMove('dev', 'n1', 'lotus', 'developers', () => redrawn++);
+    const cell = () => admin.renderProjectIdCell({ nodeId: 'n1', projectId: 'lotus' }, () => {}).textContent;
+    assert.match(cell(), /lotus → developers/);
+
+    // Left over from an earlier stay in that project - not this node arriving
+    core.mqtt_deliver('dev/developers/n1/frugal_iot/name', 'Pond', true);
+    assert.equal(redrawn, 0);
+    assert.ok(admin.projectsOf('dev').lotus.nodes.n1);
+
+    core.mqtt_deliver('dev/developers/n1/frugal_iot/name', 'Pond', false);
+    assert.equal(redrawn, 1);
+    assert.equal(admin.projectsOf('dev').lotus.nodes.n1, undefined);
+    assert.equal(admin.projectsOf('dev').developers.nodes.n1['frugal_iot/name'], 'Pond');
+    assert.equal(cell(), 'lotus');   // no longer pending - and the row itself is now in developers
+    admin.remove();
+  });
+});

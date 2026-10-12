@@ -208,6 +208,13 @@ function mqtt_deliver(topic, msg, retained) {
     }
   }
 }
+// Drop one subscription, made with mqtt_subscribe, that was only wanted for a while.
+function mqtt_unsubscribe(topic) {
+  mqtt_subscriptions = mqtt_subscriptions.filter((s) => s.topic !== topic);
+  if (mqtt_client && mqtt_client.connected) {
+    mqtt_client.unsubscribe(topic, (err) => { if (err) console.error(err); });
+  }
+}
 // Drop every subscription belonging to an organization - all its topics start with the organization id.
 // Called when switching organization, both to tell the broker (if still connected) and so that the
 // connection made for the new organization does not resubscribe to the old organization's topics.
@@ -581,6 +588,8 @@ EN:
   Pressure: Pressure
   Project: Project
   Project changed to: Project changed to
+  Asked %s to move: Asked %s to move
+  Waiting for %s to report: Waiting for %s to report
   Project ID: Project ID
   Project ID *: Project ID *
   Project Name: Project Name
@@ -891,6 +900,8 @@ FR:
   Pressure: Pression
   Project: Projet
   Project changed to: Projet changé en
+  Asked %s to move: Déplacement demandé à %s
+  Waiting for %s to report: En attente du rapport de %s
   Project ID: ID du projet
   Project ID *: ID du projet *
   Project Name: Nom du projet
@@ -1201,6 +1212,8 @@ HI:
   Pressure: दाब
   Project: परियोजना
   Project changed to: प्रोजेक्ट बदलकर किया गया
+  Asked %s to move: "%s को स्थानांतरित करने को कहा"
+  Waiting for %s to report: "%s की रिपोर्ट की प्रतीक्षा"
   Project ID: प्रोजेक्ट आईडी
   Project ID *: प्रोजेक्ट आईडी *
   Project Name: प्रोजेक्ट का नाम
@@ -1511,6 +1524,8 @@ ID:
   Pressure: Tekanan
   Project: Proyek
   Project changed to: Proyek diubah menjadi
+  Asked %s to move: Meminta %s pindah
+  Waiting for %s to report: Menunggu laporan %s
   Project ID: ID Proyek
   Project ID *: ID Proyek *
   Project Name: Nama Proyek
@@ -3332,6 +3347,7 @@ export {
   mqttTempConnect,
   mqtt_deliver,
   mqtt_subscribe,
+  mqtt_unsubscribe,
   mqtt_unsubscribe_organization,
   nextUniqueId,
   nowMs,
