@@ -384,11 +384,20 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
         this.compact(hyst, {}),
       ]) : null,
     ].filter(Boolean)) : null;
+    // Any other control - a display's inputs, Blinken's timings - gets a plain row per topic, or its
+    // section came out empty and was dropped, leaving nothing to wire (control_lcd_ht did exactly that)
+    const laidOut = ['now', 'greater', 'limit', 'hysteresis', 'hysterisis', 'out', 'manual'];
+    const others = Object.entries(t).filter(([leaf]) => !laidOut.includes(leaf)).map(([, mt]) => {
+      const widget = this.widgetForTopic(mt, '', mt.wireable ? { wiring: 'open' } : {});
+      this.state.elements.widgets.push({ row: { mt }, widget });
+      return this.field(mt.name, widget);
+    });
     return this.section(groupMt.state.name || groupId, [
       t.now ? this.field(getString('Input'), this.widgetForTopic(t.now, '', { wiring: 'open' })) : null,
       when ? this.field(getString('When'), when) : null,
       t.out ? this.field(getString('Output'), this.widgetForTopic(t.out, '', { wiring: 'open' })) : null,
       t.manual ? this.field(getString('Manual'), this.widgetForTopic(t.manual, '')) : null,
+      ...others,
     ]);
   }
   // A bare input with no label of its own, for the inline "when" row

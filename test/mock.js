@@ -132,6 +132,19 @@ export const scenarios = {
     }),
   },
 
+  'display-control': {
+    // A control that is not hysteresis-shaped: two inputs wired to another node, one output to the LCD
+    title: 'An LCD display control wired to another node',
+    messages: [
+      ...device('esp32-48ed20', 'LCD', { 'control_lcd_ht/temperature': '21.5', 'control_lcd_ht/humidity': '60' },
+        { ota: 'lcd_ht_supermini' }),
+      ...wiring('esp32-48ed20', 'control_lcd_ht', {
+        temperature: `${ORG}/${PROJECT}/esp32-784702/sht/temperature`,
+        humidity: `${ORG}/${PROJECT}/esp32-784702/sht/humidity`,
+      }),
+    ],
+  },
+
   'unknown-module': {
     // Nothing in modules.yaml declares 'quantumflux' - it must still reach the back of the card,
     // because that is what someone adding a module needs to see

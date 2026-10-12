@@ -237,6 +237,16 @@ describe('back mode', () => {
     card.remove();
   });
 
+  test('a control that is not a hysteresis still shows its topics to wire', () => {
+    const { card } = cardFor('display-control', 'esp32-48ed20', { mode: 'back', at: T0 });
+    const titles = [...card.querySelectorAll('.fi-section__title')].map((h) => h.textContent);
+    assert.ok(titles.includes('LCD SHT'), `no LCD section in ${titles}`);
+    for (const leaf of ['temperature', 'humidity', 'message']) {
+      assert.ok(card.querySelector(`[topic$="control_lcd_ht/${leaf}"]`), `no widget for ${leaf}`);
+    }
+    card.remove();
+  });
+
   test('nothing but Advanced is collapsed', () => {
     const { card } = cardFor('control-wired', 'esp8266-fb94bb', { mode: 'back', at: T0 });
     assert.equal(card.querySelectorAll('details').length, 1);
