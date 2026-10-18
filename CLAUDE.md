@@ -259,7 +259,9 @@ else — no `mqtt-wrapper`, no discovery tree, no `/config.json`. `standaloneTop
 the `mqtt-client` element instead. `test/embedded.test.js` guards this — it has broken twice
 unnoticed.
 
-Still not available on such a page: graph history (`addDataFrom` needs `server_config.logger.url`).
+Graph history has no `server_config.logger.url` to read on such a page, so `loggerUrl()` falls back
+to `/data` on the server the modules were loaded from. `/data` needs a login, so a page on another
+site gets dotted "no data" gaps instead of history.
 
 ### Looking up topics
 

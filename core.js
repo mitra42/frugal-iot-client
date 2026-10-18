@@ -66,6 +66,11 @@ function nextUniqueId() { return ++unique_id; }
 const RECEIVER_ATTRIBUTES = ['value','color','type','label','topic','graphable','wired','wiring'];
 let server_config;  // { user, organizations, logger, mqtt, server } - note loaded by MqttWrapper OR MqttAdmin
 
+// An embedded page loads no /config.json, so assume the logger is on the server these modules came from
+function loggerUrl() {
+  return server_config?.logger?.url ?? new URL('/data', import.meta.url).href;
+}
+
 // This structure defines each of the common Input/Output types included within a sensor or acctuator
 // NOTE BELOW COPIED TO SERVER config.d/schema on 20 Feb - append any changes since then
 
@@ -2331,7 +2336,7 @@ class MqttTopic {
   addDataFrom(filename, first, cb) {
     //TODO this location may change
     // noinspection JSUnresolvedReference
-    let filepath = `${server_config.logger.url}/${this.topicPath}/${filename}`;
+    let filepath = `${loggerUrl()}/${this.topicPath}/${filename}`;
     console.log("Adding from", filepath);
     //let self = this; // if needed in Promise
     fetch(filepath)

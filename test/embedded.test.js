@@ -47,4 +47,19 @@ describe('embedded widgets', () => {
     // Not delivering a message here: dataChanged() calls chart.update(), and Chart.js cannot
     // measure text without a canvas, which jsdom does not have.
   });
+
+  test('a graphdataset fetches history from the logger with no server config', (t, done) => {
+    document.body.innerHTML =
+      '<mqtt-graph><mqtt-graphdataset topic="dev/lotus/esp32-784702/sht/temperature" color="red" label="Office Temperature" min=0 max=50 type="float"></mqtt-graphdataset></mqtt-graph>';
+    const ds = document.querySelector('mqtt-graphdataset');
+    const realFetch = globalThis.fetch;
+    let asked;
+    globalThis.fetch = (url) => { asked = url; return Promise.resolve({ ok: false, status: 404, statusText: 'Not Found' }); };
+    ds.mt.addDataFrom('2026-10-18.csv', true, (err) => {
+      globalThis.fetch = realFetch;
+      assert.equal(err, null);
+      assert.match(asked, /\/data\/dev\/lotus\/esp32-784702\/sht\/temperature\/2026-10-18\.csv$/);
+      done();
+    });
+  });
 });
