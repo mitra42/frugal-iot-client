@@ -260,6 +260,15 @@ describe('controls and wiring', () => {
     assert.equal(nowMt.wiredTopic, nodeMt.groups.sht.topics.temperature);
   });
 
+  test('a wired path the node publishes on its read path is a parameter, not a value', () => {
+    const { projectMt } = mock.runScenario('control-wired');
+    const groupMt = projectMt.nodes['esp8266-fb94bb'].groups.controlhysteresis;
+    mock.deliver('dev/lotus/esp8266-fb94bb/controlhysteresis/out/wired', 'dev/lotus/esp8266-fb94bb/set/relay/on');
+    assert.equal(groupMt.state.out_wired, 'dev/lotus/esp8266-fb94bb/set/relay/on');
+    assert.equal(groupMt.topics.out.wired, 'dev/lotus/esp8266-fb94bb/set/relay/on');
+    assert.equal(typeof groupMt.summaryShort(), 'string');
+  });
+
   test('an unwired control has no wiredTopic', () => {
     const { projectMt } = mock.runScenario('control-unwired');
     const nowMt = projectMt.nodes['esp8266-fb94bb'].groups.controlhysteresis?.topics?.now;

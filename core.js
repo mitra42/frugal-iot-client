@@ -2186,7 +2186,9 @@ class MqttTopic {
     } else {
       // Headless path: update the data tree directly (also reached by detached MqttGraphDataset topics).
       // topicSetPath throws if nodeMt is null, so guard the startsWith call with nodeMt.
-      const isParam = this.nodeMt && topic.startsWith(this.topicSetPath + '/');
+      // The node publishes its own wired paths on the read path, the UX writes them on the set path.
+      const isParam = this.nodeMt
+        && (topic.startsWith(this.topicPath + '/') || topic.startsWith(this.topicSetPath + '/'));
       if (isParam) {
         // Parameter subtopic arriving (e.g. now/wired, temperature/max).
         if (topic.split('/').pop() === 'wired') this.setWired(message);
