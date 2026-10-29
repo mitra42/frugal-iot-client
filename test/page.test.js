@@ -79,9 +79,9 @@ describe('which admin cards a user gets', () => {
 
   test('each capability brings its own card, and no others', () => {
     withCapabilities('READ', 'OTAUPDATE');
-    assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section), ['info', 'ota']);
+    assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section), ['info', 'ota', 'otaupload']);
     withCapabilities('READ', 'OTAFLASH');
-    assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section), ['info', 'flash']);
+    assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section), ['info', 'ota', 'flash']);
     withCapabilities('READ', 'ADMIN');
     assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section),
       ['info', 'admin', 'projects', 'message', 'retained', 'nodes', 'bridges', 'api']);
@@ -91,9 +91,9 @@ describe('which admin cards a user gets', () => {
     // Neither implies the other - more people will have OTAFLASH, because it needs the device in
     // your hand, where an OTA push reaches every device at once
     withCapabilities('OTAFLASH');
-    assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section), ['info', 'flash']);
+    assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section), ['info', 'ota', 'flash']);
     withCapabilities('OTAUPDATE');
-    assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section), ['info', 'ota']);
+    assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section), ['info', 'ota', 'otaupload']);
   });
 
   test('a capability on another organization does not count', () => {
@@ -308,13 +308,15 @@ describe('uploading an OTA binary', () => {
     return Promise.resolve(fn(asked))
       .finally(() => { globalThis.fetch = real.fetch; globalThis.Request = real.Request; });
   }
-  // Opening the card reads the OTA list, so the stub has to be in place before it is built
+  // Opening the list card reads the OTA list, so the stub has to be in place before it is built.
+  // The list and the upload form are cards of their own; otaAdmin is the upload one.
   function otaCardAdmin() {
     const back = document.createElement('mqtt-projectback');
     back.setAttribute('organization', 'dev');
     document.body.append(back);
     back.state.elements.ota.querySelector('.fi-admincard__head').click();
-    return {back, otaAdmin: back.state.elements.ota.querySelector('mqtt-admin')};
+    back.state.elements.otaupload.querySelector('.fi-admincard__head').click();
+    return {back, otaAdmin: back.state.elements.otaupload.querySelector('mqtt-admin')};
   }
   const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 

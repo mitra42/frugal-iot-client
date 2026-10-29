@@ -735,7 +735,9 @@ const ADMIN_CARDS = [
   // looking at the project, and the natural home for more of the same later - bridge status and so
   // on. It also means the project's back is never empty, so the gear is always offered.
   { section: 'info',  title: 'Info',            capability: null, own: true },
-  { section: 'ota',   title: 'OTA',             capability: 'OTAUPDATE' },
+  // The list is for anyone who can push firmware or flash it; uploading and deleting are OTAUPDATE's.
+  { section: 'ota',   title: 'OTA',             capability: ['OTAUPDATE', 'OTAFLASH'] },
+  { section: 'otaupload', title: 'OTA Upload',  capability: 'OTAUPDATE' },
   { section: 'flash', title: 'Flash over USB',  capability: 'OTAFLASH' },
   { section: 'admin',    title: 'Permissions',      capability: 'ADMIN' },  // people
   { section: 'projects', title: 'Projects',         capability: 'ADMIN' },
@@ -747,7 +749,8 @@ const ADMIN_CARDS = [
 ];
 
 function adminCardsFor(org) {
-  return ADMIN_CARDS.filter((c) => !c.capability || hasCapability(org, c.capability));
+  return ADMIN_CARDS.filter((c) => !c.capability
+    || [].concat(c.capability).some((cap) => hasCapability(org, cap)));
 }
 
 class MqttProjectBack extends HTMLElementExtendedMinimum {

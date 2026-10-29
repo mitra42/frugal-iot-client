@@ -574,6 +574,7 @@ EN:
   "On PlatformIO The file is typically in ": "On PlatformIO The file is typically in "
   Organization: Organization
   OTA: OTA
+  OTA Upload: OTA Upload
   OTA binary uploaded: OTA binary uploaded
   OTA Key: OTA Key
   OTA Key or Device ID: OTA Key or Device ID
@@ -886,6 +887,7 @@ FR:
   "On PlatformIO The file is typically in ": "Sur PlatformIO, le fichier se trouve généralement dans "
   Organization: Organisation
   OTA: OTA
+  OTA Upload: Téléversement OTA
   OTA binary uploaded: Binaire OTA téléversé
   OTA Key: Clé OTA
   OTA Key or Device ID: Clé OTA ou ID de l’appareil
@@ -1198,6 +1200,7 @@ HI:
   "On PlatformIO The file is typically in ": "PlatformIO पर फ़ाइल सामान्यतः यहाँ होती है "
   Organization: संगठन
   OTA: ओटीए
+  OTA Upload: ओटीए अपलोड
   OTA binary uploaded: OTA बाइनरी अपलोड की गई
   OTA Key: OTA कुंजी
   OTA Key or Device ID: OTA कुंजी या डिवाइस आईडी
@@ -1510,6 +1513,7 @@ ID:
   "On PlatformIO The file is typically in ": "Di PlatformIO berkas biasanya ada di "
   Organization: Organisasi
   OTA: OTA
+  OTA Upload: Unggah OTA
   OTA binary uploaded: Biner OTA diunggah
   OTA Key: Kunci OTA
   OTA Key or Device ID: Kunci OTA atau ID Perangkat

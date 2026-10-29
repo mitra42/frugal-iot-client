@@ -73,7 +73,21 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   get otaOrgs() {
     return this.orgsByPerm("OTAUPDATE");
   }
+  // Who may see the firmware list: pushing it or flashing it both need to know what is there.
+  get otaListOrgs() {
+    return [...new Map([...this.orgsByPerm("OTAUPDATE"), ...this.orgsByPerm("OTAFLASH")])];
+  }
+  // The upload card is a separate element from the list, so the list hears about a new file by event
+  onOtaChanged(e) {
+    if (this.state.section === 'ota' && e.detail.org === this.state.org) this.getOtaFiles();
+  }
+  disconnectedCallback() {
+    document.removeEventListener('frugaliot:otachanged', this.onOtaChanged);
+    if (super.disconnectedCallback) super.disconnectedCallback();
+  }
   connectedCallback() {
+    this.onOtaChanged = this.onOtaChanged.bind(this);
+    document.addEventListener('frugaliot:otachanged', this.onOtaChanged);
     // TODO-22 security this will be replaced by a subset of config.yaml,
     //  that is public, but in the same format, so safe to build on this for now
     // This should always succeed because index.html would have redirected to login.html if not logged in
@@ -186,7 +200,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     });
   }
   getOtaFiles(cb = () => {}) {
-    if (this.state.org && this.otaOrgs.map(o => o[0]).includes(this.state.org)) {
+    if (this.state.org && this.otaListOrgs.map(o => o[0]).includes(this.state.org)) {
       this.getOrDeleteOtaFiles(`/ota_list/${this.state.org}`, cb);
     } else {
       cb();
@@ -223,7 +237,8 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     postFormData('/ota_update', new FormData(form), (err, message) => {
       this.message(err ? err.message : message, !err);
       if (!err) form.reset();
-      this.getOtaFiles(); // says more than the message does: the file is either listed or it is not
+      // The list is a card of its own, so it is told rather than called
+      document.dispatchEvent(new CustomEvent('frugaliot:otachanged', {detail: {org: this.state.org}}));
     });
   }
   otaFilesList() {
@@ -234,7 +249,9 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
           ? el('span', {class: 'pseudolink otaicon', title: getString("Flash this over USB"), textContent: '⚡', onclick: this.onOtaFlash.bind(this, f)})
           : null,
         // The basket alone deletes; the name beside it downloads, which is what a name invites.
-        el('span', {class: 'pseudolink otaicon', title: getString("Delete this firmware"), textContent: '🗑', onclick: this.onOtaDelete.bind(this,`${this.state.org}/${f}`)}),
+        hasCapability(this.state.org, 'OTAUPDATE')
+          ? el('span', {class: 'pseudolink otaicon', title: getString("Delete this firmware"), textContent: '🗑', onclick: this.onOtaDelete.bind(this,`${this.state.org}/${f}`)})
+          : null,
         el('a', {href: `/ota_get/${this.state.org}/${f}`, download: `${f.replace(/\//g, '-')}-firmware.bin`,
           title: getString("Download this firmware"), textContent: f, i8n: false}),
         el('br', {}),
@@ -1471,8 +1488,17 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       }, [pending ? `${node.projectId} → ${move.to} …` : node.projectId]);
     }
 
-   // Content of the OTA tab below the organization dropdown - only rendered once an org is selected
+   // Content of the OTA list card below the organization dropdown - only rendered once an org is selected
    otaRestContent() {
+     return el('div', {}, [
+       el('section', {}, [
+         this.refreshableHeading("Existing OTA Files", this.getOtaFiles),
+         this.state.elements.ota_files = this.otaFilesList(),
+       ]), // section ota
+     ]);
+   }
+   // Content of the OTA Upload card below the organization dropdown
+   otaUploadRestContent() {
      return el('div', {}, [
        el('form', {action: '/ota_update', method: "post", enctype: "multipart/form-data",
          onsubmit: this.onOtaUpload.bind(this)}, [
@@ -1505,10 +1531,6 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
            ]),
          el('button', {class: "submit", type: "submit", textContent: 'Upload'}),
        ]), //form
-       el('section', {}, [
-         this.refreshableHeading("Existing OTA Files", this.getOtaFiles),
-         this.state.elements.ota_files = this.otaFilesList(),
-       ]), // section ota
      ]);
    }
    // Content of the Admin tab below the organization dropdown - only rendered once an org is selected
@@ -1715,7 +1737,8 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
    // card, by setting section="ota" and so on.
    adminSections() {
      return [
-       { key: 'ota',   title: "OTA",   orgs: 'otaOrgs',   dropdown: 'otaorgsdropdown',   rest: 'ota_rest',   content: this.otaRestContent },
+       { key: 'ota',   title: "OTA",   orgs: 'otaListOrgs', dropdown: 'otaorgsdropdown',   rest: 'ota_rest',   content: this.otaRestContent },
+       { key: 'otaupload', title: "OTA Upload", orgs: 'otaOrgs', dropdown: 'otauploadorgsdropdown', rest: 'otaupload_rest', content: this.otaUploadRestContent },
        { key: 'admin',   title: "Admin",   orgs: 'adminOrgs', dropdown: 'adminorgsdropdown',   rest: 'admin_rest',   content: this.adminRestContent },
        { key: 'projects', title: "Projects", orgs: 'adminOrgs', dropdown: 'projectsorgsdropdown', rest: 'projects_rest', content: this.projectsRestContent },
        { key: 'message', title: "Message", orgs: 'adminOrgs', dropdown: 'messageorgsdropdown', rest: 'message_rest', content: this.messageRestContent },
