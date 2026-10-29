@@ -399,6 +399,28 @@ EN:
   Action: Action
   Action *: Action *
   Add: Add
+  Configure board: Configure board
+  Apply after flashing: Apply after flashing
+  Apply to board: Apply to board
+  Board ready: Board ready
+  No board answering: No board answering
+  Boards done: Boards done
+  WiFi networks: WiFi networks
+  Add network: Add network
+  Remove: Remove
+  No active project: No active project
+  Project name length: Project name must be 2 to 15 characters
+  Add a WiFi network: Add a WiFi network
+  WiFi network not valid: WiFi network not valid
+  Not understood: Not understood
+  Too long: Too long
+  No reply: No reply
+  Could not fetch the enrolment secret: Could not fetch the enrolment secret
+  WiFi connected: WiFi connected
+  WiFi not connected: WiFi not connected
+  MQTT connected: MQTT connected
+  MQTT not connected: MQTT not connected
+  Not enrolled: Not enrolled
   Add a bridge: Add a bridge
   Add another enrolment secret: Add another enrolment secret
   Added: Added
@@ -712,6 +734,28 @@ FR:
   Action: Action
   Action *: Action *
   Add: Ajouter
+  Configure board: Configurer la carte
+  Apply after flashing: Appliquer après le flashage
+  Apply to board: Appliquer à la carte
+  Board ready: Carte prête
+  No board answering: Aucune carte ne répond
+  Boards done: Cartes terminées
+  WiFi networks: Réseaux WiFi
+  Add network: Ajouter un réseau
+  Remove: Retirer
+  No active project: Aucun projet actif
+  Project name length: Le nom du projet doit faire 2 à 15 caractères
+  Add a WiFi network: Ajoutez un réseau WiFi
+  WiFi network not valid: Réseau WiFi non valide
+  Not understood: Non compris
+  Too long: Trop long
+  No reply: Pas de réponse
+  Could not fetch the enrolment secret: Impossible d'obtenir le secret d'enrôlement
+  WiFi connected: WiFi connecté
+  WiFi not connected: WiFi non connecté
+  MQTT connected: MQTT connecté
+  MQTT not connected: MQTT non connecté
+  Not enrolled: Non enrôlé
   Add a bridge: Ajouter une passerelle
   Add another enrolment secret: Ajouter un autre secret d'enrôlement
   Added: Ajouté
@@ -1025,6 +1069,28 @@ HI:
   Action: क्रिया
   Action *: क्रिया *
   Add: जोड़ें
+  Configure board: बोर्ड कॉन्फ़िगर करें
+  Apply after flashing: फ़्लैश के बाद लागू करें
+  Apply to board: बोर्ड पर लागू करें
+  Board ready: बोर्ड तैयार
+  No board answering: कोई बोर्ड जवाब नहीं दे रहा
+  Boards done: पूर्ण बोर्ड
+  WiFi networks: वाई-फ़ाई नेटवर्क
+  Add network: नेटवर्क जोड़ें
+  Remove: हटाएं
+  No active project: कोई सक्रिय परियोजना नहीं
+  Project name length: परियोजना का नाम 2 से 15 अक्षरों का होना चाहिए
+  Add a WiFi network: एक वाई-फ़ाई नेटवर्क जोड़ें
+  WiFi network not valid: वाई-फ़ाई नेटवर्क मान्य नहीं
+  Not understood: समझ नहीं आया
+  Too long: बहुत लंबा
+  No reply: कोई उत्तर नहीं
+  Could not fetch the enrolment secret: नामांकन गुप्त कुंजी नहीं मिल सकी
+  WiFi connected: वाई-फ़ाई जुड़ा
+  WiFi not connected: वाई-फ़ाई नहीं जुड़ा
+  MQTT connected: MQTT जुड़ा
+  MQTT not connected: MQTT नहीं जुड़ा
+  Not enrolled: नामांकित नहीं
   Add a bridge: ब्रिज जोड़ें
   Add another enrolment secret: एक और पंजीकरण सीक्रेट जोड़ें
   Added: जोड़ा गया
@@ -1338,6 +1404,28 @@ ID:
   Action: Aksi
   Action *: Aksi *
   Add: Tambah
+  Configure board: Konfigurasi papan
+  Apply after flashing: Terapkan setelah flash
+  Apply to board: Terapkan ke papan
+  Board ready: Papan siap
+  No board answering: Tidak ada papan yang menjawab
+  Boards done: Papan selesai
+  WiFi networks: Jaringan WiFi
+  Add network: Tambah jaringan
+  Remove: Hapus
+  No active project: Tidak ada proyek aktif
+  Project name length: Nama proyek harus 2 sampai 15 karakter
+  Add a WiFi network: Tambahkan jaringan WiFi
+  WiFi network not valid: Jaringan WiFi tidak valid
+  Not understood: Tidak dipahami
+  Too long: Terlalu panjang
+  No reply: Tidak ada balasan
+  Could not fetch the enrolment secret: Tidak dapat mengambil rahasia pendaftaran
+  WiFi connected: WiFi terhubung
+  WiFi not connected: WiFi tidak terhubung
+  MQTT connected: MQTT terhubung
+  MQTT not connected: MQTT tidak terhubung
+  Not enrolled: Belum terdaftar
   Add a bridge: Tambah jembatan
   Add another enrolment secret: Tambah rahasia pendaftaran lain
   Added: Ditambahkan

@@ -1759,7 +1759,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     * used at all; `el` omits an undefined attribute, so the two cases are distinguishable.
     */
    renderSection(key) {
-     if (key === 'flash') return el('div', {class: 'mqtt-admin'}, [el('mqtt-flash', {})]);
+     if (key === 'flash') return el('div', {class: 'mqtt-admin'}, [el('mqtt-flash', {org: this.state.org, project: this.getAttribute('project') || undefined})]);
      const section = this.adminSections().find((s) => s.key === key);
      if (!section) { XXX(["No such admin section", key]); return null; }
      if (!this[section.orgs].length) return null; // no permission for it

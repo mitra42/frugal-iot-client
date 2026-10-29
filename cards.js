@@ -792,7 +792,7 @@ class MqttProjectBack extends HTMLElementExtendedMinimum {
     const spec = ADMIN_CARDS.find((c) => c.section === section);
     if (open && !card.querySelector('mqtt-admin, .fi-infocard')) {
       // Info is ours; everything else is a section of the existing admin element, not redesigned (D-30)
-      card.append(spec.own ? this.renderInfo() : el('mqtt-admin', { section, org: this.state.organization }));
+      card.append(spec.own ? this.renderInfo() : el('mqtt-admin', { section, org: this.state.organization, project: this.projectMt && this.projectMt.project }));
     }
     card.classList.toggle('fi-admincard--open', open);
   }

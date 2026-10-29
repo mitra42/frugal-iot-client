@@ -560,7 +560,7 @@ an iframe, the *parent* page needs `allow="serial"` on the iframe.
 | 2 | Base bundles committed for C3/S2/S3; partition-table parsing; full provision in one `writeFlash`; all four refusal checks | none | built |
 | 3 | Read-back detection of provision vs. app-only, with the override button; serial boot log streamed after reset | none | built |
 | 4 | ⚡ on the OTA file list — flash a server-hosted binary | `/ota_get` route | built |
-| 5 | *(optional)* serial config hand-off, needs a firmware addition | none | not started |
+| 5 | *(optional)* serial config hand-off, needs a firmware addition - planned in CONFIG_PLAN.md | none | not started |
 
 ### The bootloader must come from the same framework as the firmware
 
@@ -761,6 +761,8 @@ failure into an explicit refusal. Needs `idf_ver` recorded per bootloader in `bo
 means capturing it when the bootloader is harvested.
 
 ### 2. Writing WiFi config does bring the littlefs machinery back — so don't do it that way
+
+*Worked out in CONFIG_PLAN.md: a `~`-prefixed line protocol over the serial port, applying a per-batch profile.*
 
 Pre-writing `/wifi/<ssid>` files means *building* a littlefs image, which reintroduces the whole
 generator problem: disk 2.1, `name_max` 64, `prog_size` 1, and no in-browser library that can produce

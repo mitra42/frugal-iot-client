@@ -303,3 +303,108 @@ describe('flashing over a board that is already laid out', () => {
     flash.remove();
   });
 });
+
+describe('configuring the node over the monitor’s port', () => {
+  // A node that speaks the protocol: says hello when the port opens, and answers like the firmware.
+  // `got` is every line written to it.
+  function nodePort({restart = false, enrolled = true} = {}) {
+    const port = {got: [], readable: null, writable: null};
+    let controller;
+    const say = (t) => controller.enqueue(new TextEncoder().encode(t));
+    port.open = async () => {
+      port.readable = new ReadableStream({start(c) { controller = c; say('boot noise\n~hello\t1\tesp32-abc123\tc3_pico\n'); }});
+      port.writable = new WritableStream({write(chunk) {
+        new TextDecoder().decode(chunk).split('\n').filter(Boolean).forEach((line) => {
+          port.got.push(line);
+          const [cmd, twig] = line.split('\t');
+          if (cmd === '~hello') say('~hello\t1\tesp32-abc123\tc3_pico\n');
+          else if (cmd === '~set') say(`~ok\t${twig}\n`);
+          else if (cmd === '~apply') say('~ok\tapply\n');
+          else if (cmd === '~status') say(`~status\t{"org":"dev","project":"lotus","connected":true,"mqtt":true,"enrolled":${enrolled},"restart":${restart}}\n`);
+        });
+      }});
+    };
+    port.close = async () => { port.readable = null; port.writable = null; };
+    port.setSignals = async () => {};
+    return port;
+  }
+  let realFetch;
+  beforeEach(() => {
+    realFetch = globalThis.fetch;
+    globalThis.fetch = async (url) => ({ok: true, json: async () => ({secrets: ['newest', 'older']}), url});
+  });
+  afterEach(() => { globalThis.fetch = realFetch; localStorage.clear(); });
+
+  async function ready(opts) {
+    const flash = document.createElement('mqtt-flash');
+    flash.setAttribute('org', 'dev');
+    flash.setAttribute('project', 'lotus');
+    document.body.append(flash);
+    flash.state.port = nodePort(opts);
+    flash.profileGet().wifi = [{ssid: 'Home Net', password: 'pw 1'}];
+    flash.monitorStart();
+    for (let i = 0; i < 200 && !flash.state.node; i++) await new Promise((r) => setTimeout(r, 5));
+    assert.ok(flash.state.node, 'the node should have been heard');
+    return flash;
+  }
+
+  test('hello makes the board ready, and the protocol line stays out of the log', async () => {
+    const flash = await ready();
+    assert.equal(flash.state.node.nodeid, 'esp32-abc123');
+    assert.match(flash.state.log.join('\n'), /boot noise/);
+    assert.ok(!flash.state.log.join('\n').includes('~hello'));
+    await flash.monitorStop();
+    flash.remove();
+  });
+
+  test('Apply sends the profile in order, using the newest secret, then applies', async () => {
+    const flash = await ready();
+    await flash.applyProfile();
+    const sent = flash.state.port.got.filter((l) => l.startsWith('~set') || l === '~apply');
+    assert.deepEqual(sent, [
+      '~set\tfrugal_iot/org\tdev', '~set\tfrugal_iot/project\tlotus', '~set\tmqtt/enrol_secret\tnewest',
+      ...(flash.profileGet().broker ? [`~set\tmqtt/hostname\t${flash.profileGet().broker}`] : []),
+      '~set\twifi/Home Net\tpw 1', '~apply']);
+    assert.ok(flash.state.apply.rows.every((r) => !r.error), JSON.stringify(flash.state.apply.rows));
+    assert.equal(flash.state.applied, 1, 'a board that came up enrolled counts as done');
+    assert.ok(!flash.state.log.join('\n').includes('newest'), 'the secret must not reach the log');
+    assert.equal(flash.profileGet().secret, '', 'nor stay in the profile');
+    await flash.monitorStop();
+    flash.remove();
+  });
+
+  test('without the secret it still applies the rest and says what is missing', async () => {
+    globalThis.fetch = async () => ({ok: false, status: 403});
+    const flash = await ready();
+    await flash.applyProfile();
+    assert.ok(!flash.state.port.got.some((l) => l.includes('enrol_secret')));
+    assert.ok(flash.state.apply.rows.some((r) => r.error), 'the missing secret should be shown');
+    assert.ok(flash.state.port.got.includes('~apply'));
+    await flash.monitorStop();
+    flash.remove();
+  });
+
+  test('a board flashed from here is applied on its first hello, once', async () => {
+    const flash = document.createElement('mqtt-flash');
+    flash.setAttribute('org', 'dev');
+    flash.setAttribute('project', 'lotus');
+    document.body.append(flash);
+    flash.state.port = nodePort();
+    flash.profileGet().wifi = [{ssid: 'Home', password: 'pw'}];
+    flash.state.applyAfterHello = true;
+    flash.monitorStart();
+    for (let i = 0; i < 400 && !flash.state.port.got.includes('~apply'); i++) await new Promise((r) => setTimeout(r, 5));
+    assert.ok(flash.state.port.got.includes('~apply'), 'it should have applied without a click');
+    assert.equal(flash.state.applyAfterHello, false);
+    await flash.monitorStop();
+    flash.remove();
+  });
+
+  test('a board that is only being watched is never applied to', async () => {
+    const flash = await ready();
+    await new Promise((r) => setTimeout(r, 50));
+    assert.ok(!flash.state.port.got.some((l) => l.startsWith('~set')), 'connecting must not configure');
+    await flash.monitorStop();
+    flash.remove();
+  });
+});

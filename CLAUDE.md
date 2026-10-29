@@ -15,6 +15,7 @@ it loadable on its own, and it is maintained by reaching the display elements **
 | `graph.js` | core, widgets | `mqtt-graph`, `mqtt-graphdataset` — pulls Chart.js |
 | `cards.js` | core | the card UI: `mqtt-devicecard`, `mqtt-devicegrid`, `mqtt-projectback`, `mqtt-dashboard`, the layout store |
 | `flash.js` | core | `mqtt-flash` — pulls esptool-js |
+| `nodeconfig.js` | none | the serial config protocol and the batch profile — no DOM, used by `flash.js` |
 | `admin.js` | core | `mqtt-admin` — one admin section, rendered per card by `cards.js` |
 | `login.js` | core | `mqtt-login` — sign in, register, forgot/reset password; light DOM |
 
@@ -38,7 +39,8 @@ Dashboards (e.g. `dashboard_example.html`) are thin HTML pages importing selecti
 `docs/CARDS_UX.md` is the design for the card UI — every decision is numbered (D-n) with its
 reasoning, deferred work is L-n, and it is the place to argue with a choice rather than re-deciding
 it in code. `docs/CARDS_PLAN.md` is how it was built, including the bugs found on the way.
-`docs/FLASH_PLAN.md` and `HEADLESS_PLAN.md` cover their own areas. Comments throughout the code cite
+`docs/FLASH_PLAN.md` and `HEADLESS_PLAN.md` cover their own areas; `docs/CONFIG_PLAN.md` plans configuring
+a node over USB (a profile applied to each board, serial transport into the node's existing `set/` path). Comments throughout the code cite
 these by bare filename (`see CARDS_UX.md 4.7`); they all live in `docs/` except `HEADLESS_PLAN.md`.
 
 ## Code style

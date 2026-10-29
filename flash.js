@@ -6,7 +6,9 @@
 
 import async from '/node_modules/async/dist/async.mjs'; // https://caolan.github.io/async/v3/docs.html
 import {HTMLElementExtended} from '/node_modules/html-element-extended/htmlelementextended.js';
-import { CssUrl, XXX, el, getString } from './core.js';
+import { CssUrl, XXX, brokerHost, el, getString, server_config } from './core.js';
+import { LineRouter, ErrorStrings, parseReply, profileCommands, profileNew, profileProblems,
+  setLine } from './nodeconfig.js';
 
 const BaseUrl = './base';
 const PartitionTableOffset = 0x8000;
@@ -24,6 +26,15 @@ const FlashBaudRates = [921600, 460800, 230400, 115200];
 // frugal-iot's SERIAL_BAUD defaults to 460800 under PlatformIO, 115200 from the Arduino IDE;
 // 74880 is the ESP8266 ROM's own boot-message rate
 const MonitorBaudRates = [460800, 115200, 921600, 74880];
+// How long a board gets to answer a ~set, and how often and how many times we ask whether the node
+// firmware speaks the protocol at all - an older build never answers
+const ConfigReplyMs = 3000;
+const HelloPollMs = 2000;
+const HelloTries = 15;
+// A node restarting after ~apply, and then joining WiFi, MQTT and enrolling, takes this long
+const RestartWaitMs = 25000;
+const ConnectWaitMs = 40000;
+const ProfileKey = 'frugaliot:nodeprofile';
 const BootLogMs = 25000; // startSerial() waits 5s before printing, then WiFi/captive portal follows
 // How often the monitor tries the port again while it is gone - a deep sleep is measured in
 // seconds to minutes, so there is nothing to gain from trying harder than this
@@ -113,8 +124,11 @@ class MqttFlash extends HTMLElementExtended {
   constructor(props) {
     super(props);
     this.state = {elements: {}, log: [], app: null, device: null, busy: false,
-      baudrate: FlashBaudRates[0], monitorBaudrate: MonitorBaudRates[0], monitorRetryMs: MonitorRetryMs};
+      baudrate: FlashBaudRates[0], monitorBaudrate: MonitorBaudRates[0], monitorRetryMs: MonitorRetryMs,
+      node: null, autoApply: true, applied: 0};
   }
+  get org() { return this.getAttribute('org') || ''; }
+  get project() { return this.getAttribute('project') || ''; }
   get supported() { return 'serial' in navigator; }
   // esploader goes null after flashing, so a second flash needs a reconnect rather than a stale loader
   get ready() {
@@ -448,6 +462,9 @@ class MqttFlash extends HTMLElementExtended {
       this.logLine("Flash complete - resetting. Reconnect the board if you want to flash again.");
       await esploader.after("hard_reset");
       dev.flashed = true;
+      // A board whose config was just erased - or that never had any - is the one a forgotten Apply
+      // would leave unconfigured; one that kept its config is left alone
+      this.state.applyAfterHello = this.state.autoApply && (dev.provision || !dev.hasConfig);
     } finally {
       await this.transportRelease(); // a failed flash must still free the port
     }
@@ -579,12 +596,18 @@ class MqttFlash extends HTMLElementExtended {
     this.logLine(`---- monitor (${this.state.monitorBaudrate} baud) ----`);
     let reader = null;
     let quiet = true;
+    let stopHelloPoll = null;
+    const router = new LineRouter((line) => this.onProtocolLine(line), (text) => this.logWrite(text));
     try {
       if (firstPass) await this.bootReset(port); // a reconnect must not reset a board that just woke
       if (!port.readable) throw new Error("port has no readable stream");
       const decoder = new TextDecoder();
       reader = port.readable.getReader();
       this.state.monitorReader = reader;
+      this.state.monitorPort = port;
+      this.state.node = null; // whatever is on the port now has yet to say hello
+      this.configRender();
+      stopHelloPoll = this.helloPoll();
       const quietUntil = Date.now() + BootLogMs;
       while (this.state.monitoring) {
         // On the first pass silence is worth reporting - it usually means the wrong speed - and
@@ -596,12 +619,14 @@ class MqttFlash extends HTMLElementExtended {
         if (chunk === 'timeout' || chunk.done) break;
         if (chunk.value && chunk.value.length) {
           quiet = false;
-          this.logWrite(decoder.decode(chunk.value, {stream: true}));
+          router.feed(decoder.decode(chunk.value, {stream: true}));
         }
       }
     } catch (e) {
       this.logLine(`(stream ended: ${e.message})`);
     } finally {
+      if (stopHelloPoll) stopHelloPoll();
+      this.state.monitorPort = null;
       if (reader) {
         try { await reader.cancel(); } catch (e) { XXX(`monitor reader cancel: ${e.message}`); }
         try { reader.releaseLock(); } catch (e) { XXX(`monitor reader release: ${e.message}`); }
@@ -611,6 +636,210 @@ class MqttFlash extends HTMLElementExtended {
         this.logLine("(no output yet - check the monitor speed and that the build defines ANY_DEBUG. Still listening: a board on native USB drops the port when it sleeps and is picked up again when it wakes.)");
       }
     }
+  }
+
+  // ---- configuring the node over the same port ----
+  async sendRaw(text) {
+    const port = this.state.monitorPort;
+    if (!port || !port.writable) throw new Error("port not open for writing");
+    const writer = port.writable.getWriter();
+    try { await writer.write(new TextEncoder().encode(text)); } finally { writer.releaseLock(); }
+  }
+  // A node on older firmware never answers, so this stops asking after HelloTries and says so
+  helloPoll() {
+    let tries = 0;
+    const timer = setInterval(() => {
+      if (this.state.node) { clearInterval(timer); return; }
+      if (++tries > HelloTries) {
+        clearInterval(timer);
+        this.logLine("(no answer to ~hello - this firmware may not support configuring over USB)");
+        return;
+      }
+      this.sendRaw("~hello\n").catch((e) => XXX(`hello: ${e.message}`));
+    }, HelloPollMs);
+    return () => clearInterval(timer);
+  }
+  onProtocolLine(line) {
+    const reply = parseReply(line);
+    if (reply.cmd === 'hello') {
+      this.state.node = {nodeid: reply.fields[1], otakey: reply.fields[2]};
+      this.logLine(`Board ${this.state.node.nodeid} (${this.state.node.otakey}) is listening`);
+      this.configRender();
+      if (this.state.applyAfterHello) {
+        this.state.applyAfterHello = false;
+        if (!this.waiting('hello')) this.applyProfile();
+      }
+    }
+    const waiter = this.state.waiter;
+    if (waiter && (reply.cmd === waiter.key
+        || ((reply.cmd === 'ok' || reply.cmd === 'err') && reply.fields[0] === waiter.key))) {
+      waiter.resolve(reply);
+    }
+  }
+  waiting(key) { return this.state.waiter && this.state.waiter.key === key; }
+  // Resolves with the reply, or null if the board said nothing in time. One command at a time.
+  async command(line, key, ms = ConfigReplyMs) {
+    const reply = new Promise((resolve) => { this.state.waiter = {key, resolve}; });
+    await this.sendRaw(line + '\n');
+    const got = await withTimeout(reply, ms, null);
+    this.state.waiter = null;
+    return got;
+  }
+  pause(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
+  // Re-fetched each time rather than kept: it is the one value here that authorises enrolment
+  async secretFetch() {
+    const res = await fetch(`/enrolment_secret/${encodeURIComponent(this.org)}`);
+    if (!res.ok) throw new Error(`${res.status}`);
+    const json = await res.json();
+    return (json.secrets && json.secrets[0]) || ''; // the newest is first
+  }
+  // True once WiFi, MQTT and enrolment have all come up, or the time is out
+  async statusUntilUp(ms) {
+    const until = Date.now() + ms;
+    let status = null;
+    for (;;) {
+      const reply = this.state.monitorPort && await this.command('~status', 'status').catch(() => null);
+      if (reply) {
+        try { status = JSON.parse(reply.fields[0]); } catch (e) { XXX(`status json: ${e.message}`); }
+        this.state.apply.status = status;
+        this.configRender();
+      }
+      if ((status && status.connected && status.mqtt && status.enrolled) || Date.now() > until) return status;
+      await this.pause(2000);
+    }
+  }
+  async applyProfile() {
+    if (this.state.applying || !this.state.node) return;
+    const profile = this.profileGet();
+    const problems = profileProblems(profile);
+    this.state.apply = {rows: [], problems, status: null};
+    if (problems.length) { this.configRender(); return; }
+    this.state.applying = true;
+    this.configRender();
+    const rows = this.state.apply.rows;
+    try {
+      try {
+        profile.secret = await this.secretFetch();
+      } catch (e) {
+        profile.secret = '';
+        rows.push({label: "Enrolment secret", error: "Could not fetch the enrolment secret"});
+      }
+      for (const c of profileCommands(profile)) {
+        const reply = await this.command(setLine(c.twig, c.value), c.twig);
+        const label = c.secret ? c.twig : `${c.twig} ${c.value}`.trim();
+        rows.push(reply && reply.cmd === 'ok' ? {label}
+          : {label, error: reply ? (ErrorStrings[reply.fields[1]] || reply.fields[1]) : "No reply"});
+        this.configRender();
+      }
+      profile.secret = '';
+      await this.pause(300); // the sets are queued on the node and applied by its main loop
+      const status = await this.command('~status', 'status');
+      const restarts = status && JSON.parse(status.fields[0]).restart;
+      const applied = await this.command('~apply', 'apply');
+      if (!applied) rows.push({label: "apply", error: "No reply"});
+      if (restarts) {
+        this.state.node = null;
+        await this.command('~hello', 'hello', RestartWaitMs).catch(() => null); // the new boot says hello itself
+      }
+      const final = await this.statusUntilUp(ConnectWaitMs);
+      if (!rows.some((r) => r.error) && final && final.enrolled) this.state.applied++;
+    } catch (e) {
+      rows.push({label: "apply", error: e.message, raw: true});
+    } finally {
+      this.state.applying = false;
+      this.configRender();
+    }
+  }
+
+  // ---- the profile ----
+  // Org and project follow the card's attributes; the rest is the admin's, remembered in this browser
+  profileGet() {
+    if (!this.state.profile) {
+      const saved = this.profileLoad();
+      this.state.profile = profileNew(this.org, this.project,
+        saved.broker || brokerHost(server_config && server_config.mqtt && server_config.mqtt.broker));
+      if (saved.wifi && saved.wifi.length) this.state.profile.wifi = saved.wifi;
+    }
+    this.state.profile.org = this.org;
+    this.state.profile.project = this.project;
+    return this.state.profile;
+  }
+  profileLoad() {
+    try { return JSON.parse(localStorage.getItem(ProfileKey)) || {}; } catch (e) { return {}; }
+  }
+  profileSave() {
+    const p = this.profileGet(); // the secret is never in what is kept
+    try { localStorage.setItem(ProfileKey, JSON.stringify({broker: p.broker, wifi: p.wifi})); } catch (e) { XXX(`profile save: ${e.message}`); }
+  }
+  // el() would put an oninput function in state and never wire it, hence addEventListener
+  profileInput(value, onInput, attrs = {}) {
+    const input = el('input', {type: 'text', value, i8n: false, ...attrs});
+    input.addEventListener('input', () => { onInput(input.value); this.profileSave(); });
+    return input;
+  }
+  editorLines() {
+    const p = this.profileGet();
+    const lines = [
+      el('p', {}, [el('span', {textContent: "Organization"}), el('span', {i8n: false, textContent: ` ${p.org || '-'}`})]),
+      el('p', {}, [el('span', {textContent: "Project"}), el('span', {i8n: false, textContent: ` ${p.project || '-'}`})]),
+      el('label', {textContent: "Broker"}),
+      this.profileInput(p.broker, (v) => { p.broker = v; }),
+      el('h5', {textContent: "WiFi networks"}),
+    ];
+    p.wifi.forEach((w, i) => {
+      lines.push(el('div', {class: 'flash-wifi'}, [
+        this.profileInput(w.ssid, (v) => { w.ssid = v; }, {placeholder: getString("SSID")}),
+        this.profileInput(w.password, (v) => { w.password = v; }, {placeholder: getString("Password")}),
+        el('button', {type: 'button', textContent: "Remove", onclick: () => {
+          p.wifi.splice(i, 1);
+          this.profileSave();
+          this.editorRender();
+        }}),
+      ]));
+    });
+    lines.push(el('button', {type: 'button', textContent: "Add network", onclick: () => {
+      p.wifi.push({ssid: '', password: ''});
+      this.editorRender();
+    }}));
+    return lines;
+  }
+  editorRender() {
+    const editor = this.state.elements.editor;
+    if (editor) editor.replaceChildren(...this.editorLines());
+  }
+  configLines() {
+    const lines = [];
+    const node = this.state.node;
+    lines.push(el('p', {}, [
+      el('span', {textContent: node ? "Board ready" : "No board answering"}),
+      el('span', {i8n: false, textContent: node ? ` ${node.nodeid}` : ''}),
+    ]));
+    const ap = this.state.apply;
+    if (ap) {
+      (ap.problems || []).forEach((k) => lines.push(el('p', {class: 'error', textContent: k})));
+      ap.rows.forEach((r) => lines.push(el('p', {class: r.error ? 'error' : ''}, [
+        el('span', {i8n: false, textContent: `${r.error ? '✗' : '✓'} ${r.label}`}),
+        r.error ? el('span', {i8n: r.raw ? false : true, textContent: ` ${r.error}`}) : null,
+      ])));
+      const st = ap.status;
+      if (st) {
+        lines.push(el('p', {}, [
+          el('span', {textContent: st.connected ? "WiFi connected" : "WiFi not connected"}),
+          el('span', {textContent: st.mqtt ? "MQTT connected" : "MQTT not connected"}),
+          el('span', {textContent: st.enrolled ? "Enrolled" : "Not enrolled"}),
+        ]));
+      }
+    }
+    if (this.state.applied) {
+      lines.push(el('p', {}, [el('span', {textContent: "Boards done"}), el('span', {i8n: false, textContent: ` ${this.state.applied}`})]));
+    }
+    return lines;
+  }
+  configRender() {
+    const config = this.state.elements.config;
+    if (config) config.replaceChildren(...this.configLines());
+    const apply = this.state.elements.applyButton;
+    if (apply) apply.disabled = !this.state.node || this.state.applying || !!profileProblems(this.profileGet()).length;
   }
 
   // ---- render ----
@@ -710,6 +939,16 @@ class MqttFlash extends HTMLElementExtended {
         this.state.elements.monitorButton = el('button', {class: 'submit', type: 'button',
           textContent: "Monitor", onclick: this.onMonitor.bind(this)}),
         this.state.elements.status = el('div', {class: 'flash-status'}, this.statusLines()),
+        el('h4', {textContent: "Configure board"}),
+        this.state.elements.editor = el('div', {class: 'flash-profile'}, this.editorLines()),
+        el('label', {}, [
+          el('input', {type: 'checkbox', checked: this.state.autoApply,
+            onchange: (ev) => { this.state.autoApply = ev.target.checked; }}),
+          el('span', {textContent: "Apply after flashing"}),
+        ]),
+        this.state.elements.applyButton = el('button', {class: 'submit', type: 'button', disabled: true,
+          textContent: "Apply to board", onclick: () => this.applyProfile()}),
+        this.state.elements.config = el('div', {class: 'flash-config'}, this.configLines()),
         this.state.elements.progress = el('progress', {max: 100, value: 0}),
         this.state.elements.log = el('pre', {class: 'flash-log', i8n: false}),
       ]),
