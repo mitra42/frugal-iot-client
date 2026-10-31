@@ -106,6 +106,22 @@ function bytesInclude(haystack, needle) {
 function imageChipId(bytes) {
   return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint16(12, true);
 }
+// esp_app_desc_t sits right after the 24-byte image header and the first 8-byte segment header
+const AppDescOffset = 0x20;
+const AppDescMagic = 0xabcd5432;
+function cString(bytes, start, length) {
+  const field = bytes.subarray(start, start + length);
+  const end = field.indexOf(0);
+  return new TextDecoder().decode(end < 0 ? field : field.subarray(0, end));
+}
+// Null for an image with no descriptor (ESP8266, or not an ESP-IDF app) - nothing can be said about it
+function appDescription(bytes) {
+  if (bytes.length < AppDescOffset + 128) return null;
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  if (view.getUint32(AppDescOffset, true) !== AppDescMagic) return null;
+  const at = (offset, length) => cString(bytes, AppDescOffset + offset, length);
+  return {version: at(16, 32), projectName: at(48, 32), time: at(80, 16), date: at(96, 16), idfVer: at(112, 32)};
+}
 function bytesToHex(bytes, count) {
   return Array.from(bytes.subarray(0, count)).map((b) => b.toString(16).padStart(2, '0')).join(' ');
 }
@@ -228,6 +244,7 @@ class MqttFlash extends HTMLElementExtended {
     file.arrayBuffer().then((buf) => {
       this.state.app = {name: file.name, bytes: new Uint8Array(buf)};
       this.logLine(`Selected ${file.name} (${bytesToSizeString(this.state.app.bytes.length)})`);
+      this.logAppDescription();
       this.statusRender();
     });
   }
@@ -240,6 +257,7 @@ class MqttFlash extends HTMLElementExtended {
       .then((buf) => {
         this.state.app = {name: `${path}/firmware.bin`, bytes: new Uint8Array(buf)};
         this.logLine(`Selected ${this.state.app.name} (${bytesToSizeString(this.state.app.bytes.length)})`);
+        this.logAppDescription();
         this.statusRender();
       })
       .catch((e) => { this.logLine(`Error: ${e.message}`); this.statusRender(); });
@@ -297,8 +315,8 @@ class MqttFlash extends HTMLElementExtended {
       return;
     }
     const scheme = boards.schemeByChipAndSize[`${dev.chipName}-${dev.flashSize}`];
-    const bootloaderPath = boards.bootloaderByChip[dev.chipName];
-    if (!scheme || !bootloaderPath) {
+    const bootloaders = boards.bootloadersByChip[dev.chipName];
+    if (!scheme || !bootloaders) {
       dev.refusal = `No base bundle for ${dev.chipName} ${dev.flashSize}`;
       this.logLine(`Unsupported board: ${dev.refusal}`);
       return;
@@ -306,7 +324,8 @@ class MqttFlash extends HTMLElementExtended {
     dev.scheme = scheme;
     const partUrl = (p) => `${BaseUrl}/${p}?v=${boards.version}`; // busts the immutable cache
     dev.base = {
-      bootloader: {url: partUrl(bootloaderPath), address: this.state.esploader.chip.BOOTLOADER_FLASH_OFFSET},
+      bootloaders: bootloaders.map((b) => ({idfVer: b.idfVer, core: b.core, url: partUrl(b.path)})),
+      bootloaderAddress: this.state.esploader.chip.BOOTLOADER_FLASH_OFFSET,
       partitions: {url: partUrl(boards.partitionsByScheme[scheme]), address: boards.partitionTableOffset},
       otadata: {url: partUrl(boards.otadata), address: null}, // from the partition table below
     };
@@ -411,6 +430,28 @@ class MqttFlash extends HTMLElementExtended {
       .catch((e) => { this.state.error = e.message; this.logLine(`Error: ${e.message}`); })
       .then(() => { this.state.busy = false; this.statusRender(); });
   }
+  // A bootloader from another IDF release than the app is what left LittleFS unable to mount. An
+  // image with no descriptor gets the first, which is the default toolchain's.
+  bootloaderFor(desc) {
+    const options = this.state.device.base.bootloaders;
+    if (!desc) return options[0];
+    const match = options.find((b) => b.idfVer === desc.idfVer);
+    if (!match) {
+      const idfParts = (v) => (/(\d+)\.(\d+)\.(\d+)/.exec(v) || []).slice(1).map(Number);
+      const compare = (x, y) => { const [a, b] = [idfParts(x), idfParts(y)]; const i = a.findIndex((n, j) => n !== b[j]); return i < 0 ? 0 : a[i] - b[i]; };
+      const have = options.map((b) => `${b.idfVer} (core ${b.core})`).join(', ');
+      const lowest = options.map((b) => b.idfVer).reduce((x, y) => compare(x, y) <= 0 ? x : y);
+      const advice = compare(desc.idfVer, lowest) < 0
+        ? "Update the Arduino IDE (or PlatformIO platform) and rebuild"
+        : "It is newer than this flasher knows - update the flasher's bootloaders";
+      throw new Error(`${this.state.app.name} was built with ESP-IDF ${desc.idfVer}, and there is no bootloader for that release (have ${have}). ${advice}, or update without provisioning`);
+    }
+    return match;
+  }
+  logAppDescription() {
+    const desc = appDescription(this.state.app.bytes);
+    if (desc) this.logLine(`Built with ESP-IDF ${desc.idfVer} (${desc.projectName}, ${desc.date})`);
+  }
   // Refusals rather than warnings - a bad combination here means a board that will not boot
   appCheck() {
     const dev = this.state.device;
@@ -423,6 +464,8 @@ class MqttFlash extends HTMLElementExtended {
       if (chipId !== this.state.esploader.chip.IMAGE_CHIP_ID) {
         throw new Error(`${this.state.app.name} was built for chip id ${chipId}, but this board is ${dev.chipName} (chip id ${this.state.esploader.chip.IMAGE_CHIP_ID})`);
       }
+      // Only a provision writes a bootloader - an app-only update keeps the board's own
+      if (dev.provision) this.bootloaderFor(appDescription(bytes));
       // Not provisioned automatically: that erases the board's configuration, so it is the user's call
       if (dev.provision && bytes.length > dev.base.appSize) {
         throw new Error(`${this.state.app.name} is ${bytesToSizeString(bytes.length)}, larger than the ${bytesToSizeString(dev.base.appSize)} app partition of ${dev.scheme}`);
@@ -442,13 +485,15 @@ class MqttFlash extends HTMLElementExtended {
     const dev = this.state.device;
     const files = [];
     if (dev.provision && !dev.wholeImage) {
+      const chosen = this.bootloaderFor(appDescription(this.state.app.bytes));
+      this.logLine(`Bootloader: ESP-IDF ${chosen.idfVer} (core ${chosen.core})`);
       const [bootloader, partitions, otadata] = await Promise.all(
-        [dev.base.bootloader, dev.base.partitions, dev.base.otadata].map((p) => fetchBytes(p.url)));
+        [chosen, dev.base.partitions, dev.base.otadata].map((p) => fetchBytes(p.url)));
       // otadata goes wherever the table we are about to write says, not at a hardcoded offset
       const baseParts = partitionsParse(partitions);
       const otadataPart = partitionOtadata(baseParts);
       if (!otadataPart) throw new Error(`${dev.base.partitions.url} has no otadata partition`);
-      files.push({data: bootloader, address: dev.base.bootloader.address});
+      files.push({data: bootloader, address: dev.base.bootloaderAddress});
       files.push({data: partitions, address: dev.base.partitions.address});
       files.push({data: otadata, address: otadataPart.offset});
       dev.verifyAddress = dev.base.partitions.address; // read back below to confirm the write landed

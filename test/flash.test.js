@@ -314,6 +314,106 @@ describe('flashing over a board that is already laid out', () => {
   });
 });
 
+describe('matching the app to the bootloader it would be provisioned with', () => {
+  const readBase = (p) => new Uint8Array(readFileSync(new URL(`../base/${p}`, import.meta.url)));
+  const boards = JSON.parse(readFileSync(new URL('../base/boards.json', import.meta.url), 'utf8'));
+  // A C3 image with the descriptor ESP-IDF puts at 0x20
+  function described(idfVer, size = 0x1000) {
+    const b = new Uint8Array(size);
+    b[0] = 0xe9; b[12] = 5;
+    new DataView(b.buffer).setUint32(0x20, 0xabcd5432, true);
+    const put = (offset, text) => b.set(new TextEncoder().encode(text), 0x20 + offset);
+    put(16, '43a8f6d'); put(48, 'arduino-lib-builder'); put(96, 'Jun  2 2026'); put(112, idfVer);
+    return b;
+  }
+  const url = (b) => `./base/${b.path}`;
+  function flashFor(provision) {
+    const flash = document.createElement('mqtt-flash');
+    flash.state.device = {chipName: 'ESP32-C3', provision, scheme: 'min_spiffs', base: {
+      bootloaders: boards.bootloadersByChip['ESP32-C3'].map((b) => ({idfVer: b.idfVer, core: b.core, url: url(b)})),
+      bootloaderAddress: 0, appSize: 0x1e0000}, onDeviceAppSize: 0x1e0000};
+    flash.state.esploader = {chip: {IMAGE_CHIP_ID: 5}};
+    return flash;
+  }
+
+  test('boards.json records the IDF release each bootloader really contains', () => {
+    for (const [chip, options] of Object.entries(boards.bootloadersByChip)) {
+      for (const b of options) {
+        const text = Buffer.from(readBase(b.path)).toString('latin1');
+        assert.ok(text.includes(b.idfVer), `${chip} ${b.path} does not contain ${b.idfVer}`);
+      }
+    }
+  });
+
+  test('every chip offers the same IDF releases, so a board is not supported by only one', () => {
+    const sets = Object.values(boards.bootloadersByChip).map((o) => o.map((b) => b.idfVer).join());
+    assert.equal(new Set(sets).size, 1, sets.join(' | '));
+  });
+
+  test('the bootloader is chosen by the app’s IDF release', () => {
+    const flash = flashFor(true);
+    flash.state.app = {name: 'x.bin'};
+    assert.equal(flash.bootloaderFor({idfVer: 'v5.5.4'}).core, '3.3.9');
+    assert.equal(flash.bootloaderFor({idfVer: 'v5.5.5'}).core, '3.3.12');
+  });
+
+  test('an app from a release with no bootloader is refused when it would be provisioned', () => {
+    const flash = flashFor(true);
+    flash.state.app = {name: 'old.bin', bytes: described('v5.3.2-282-gcfea4f7c98-dirty')};
+    assert.throws(() => flash.appCheck(), /ESP-IDF v5\.3\.2.*no bootloader.*v5\.5\.4.*v5\.5\.5/);
+  });
+
+  test('an older IDE is told to update, a newer one is told the flasher is behind', () => {
+    const flash = flashFor(true);
+    flash.state.app = {name: 'x.bin'};
+    assert.throws(() => flash.bootloaderFor({idfVer: 'v5.3.2-282-gcfea4f7c98-dirty'}), /Update the Arduino IDE/);
+    assert.throws(() => flash.bootloaderFor({idfVer: 'v5.5.6'}), /newer than this flasher knows/);
+    assert.throws(() => flash.bootloaderFor({idfVer: 'v5.10.0'}), /newer than this flasher knows/, 'compared as numbers, not text');
+  });
+
+  test('both shipped toolchains are accepted', () => {
+    for (const v of ['v5.5.4', 'v5.5.5']) {
+      const flash = flashFor(true);
+      flash.state.app = {name: 'firmware.bin', bytes: described(v)};
+      flash.appCheck();
+    }
+  });
+
+  test('an app-only update keeps the board’s own bootloader, so the release does not matter', () => {
+    const flash = flashFor(false);
+    flash.state.app = {name: 'old.bin', bytes: described('v5.3.2')};
+    flash.appCheck();
+  });
+
+  test('an image with no descriptor is not refused on a guess, and gets the default bootloader', () => {
+    const flash = flashFor(true);
+    const bytes = new Uint8Array(0x1000); bytes[0] = 0xe9; bytes[12] = 5;
+    flash.state.app = {name: 'firmware.bin', bytes};
+    flash.appCheck();
+    assert.equal(flash.bootloaderFor(null).idfVer, 'v5.5.4');
+  });
+
+  test('provisioning writes the bootloader that matches the app', async () => {
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = async (u) => {
+      const bytes = readBase(String(u).replace(/^\.\/base\//, ''));
+      return {ok: true, arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)};
+    };
+    try {
+      for (const [v, path] of [['v5.5.4', 'bootloader/v5.5.4/esp32c3.bin'], ['v5.5.5', 'bootloader/v5.5.5/esp32c3.bin']]) {
+        const flash = flashFor(true);
+        flash.state.device.base.partitions = {url: './base/partitions/min_spiffs.bin', address: 0x8000};
+        flash.state.device.base.otadata = {url: './base/boot_app0.bin'};
+        flash.state.device.appAddress = 0x10000;
+        flash.state.app = {name: 'firmware.bin', bytes: described(v)};
+        const files = await flash.fileArrayBuild();
+        assert.deepEqual(files[0].data, readBase(path), `${v} should write ${path}`);
+        assert.equal(files[0].address, 0);
+      }
+    } finally { globalThis.fetch = realFetch; }
+  });
+});
+
 describe('configuring the node over the monitor’s port', () => {
   // A node that speaks the protocol: says hello when the port opens, and answers like the firmware.
   // `got` is every line written to it.

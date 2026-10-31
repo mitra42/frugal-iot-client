@@ -336,10 +336,11 @@ a single key:
     "ESP32-S3-8MB": "default_8MB",
     "ESP32-S3-16MB": "default_16MB"
   },
-  "bootloaderByChip": {
-    "ESP32-C3": "bootloader/esp32c3.bin",
-    "ESP32-S2": "bootloader/esp32s2.bin",
-    "ESP32-S3": "bootloader/esp32s3.bin"
+  "bootloadersByChip": {
+    "ESP32-C3": [
+      {"idfVer": "v5.5.4", "core": "3.3.9", "path": "bootloader/v5.5.4/esp32c3.bin"},
+      {"idfVer": "v5.5.5", "core": "3.3.12", "path": "bootloader/v5.5.5/esp32c3.bin"}
+    ]
   },
   "otadata": "boot_app0.bin",
   "coreVersion": "esp32-3.3.11",
@@ -383,7 +384,7 @@ Since the boards belong to users of this project, document the harvest path so a
 support without touching the client code:
 
 1. Build the firmware for the board.
-2. If the **chip** is new, copy `bootloader.bin` to `base/bootloader/<chip>.bin`.
+2. If the **chip** is new, add its bootloaders to `base/bootloader/<idfVer>/` and to `bootloadersByChip` — one per IDF release, tagged with the `v5.x` string inside it.
 3. If the **flash size** is new, copy the core's stock CSV for it — the one the board's PlatformIO
    env uses — and commit both it and the generated `.bin` to `base/partitions/`.
 4. Add one `"<CHIP>-<SIZE>": "<scheme>"` line to `schemeByChipAndSize`.
@@ -572,13 +573,19 @@ platform-espressif32, so:
 
 ```bash
 esptool --chip esp32c3 elf2image --flash-mode dio --flash-freq 80m --flash-size 4MB \
-  -o base/bootloader/esp32c3.bin \
+  -o base/bootloader/v5.5.4/esp32c3.bin \
   ~/.platformio/packages/framework-arduinoespressif32-libs/esp32c3/bin/bootloader_qio_80m.elf
 ```
 
 Note it is the **`qio_80m` ELF with the header patched to DIO** — that is what pioarduino does, and the
 result is byte-identical to `.pio/build/<env>/bootloader.bin`. The Arduino IDE core's `dio_80m` ELF
-produces a *different* binary (18688 vs 19520 bytes) which does not work.
+produces a *different* binary (18688 vs 19520 bytes) which does not work **with pioarduino firmware**.
+
+That difference is the build *variant*, not the release: from the **same** 3.3.12 libs, `qio_80m`
+patched to DIO is 19536 bytes and `dio_80m` is 18688 (C3; S2 and S3 likewise, ~18000 bytes differing).
+So the Arduino core's `dio_80m` ELF is not used at all. pioarduino and the Arduino core ship the same
+libs for a given IDF release, so one `qio_80m`-patched bootloader per release serves both; `v5.5.5`
+was built from the Arduino core's 3.3.12 libs, which is what pioarduino 3.3.12 would also produce.
 
 **The symptom is deeply misleading.** With a mismatched bootloader the board boots, the app runs, and
 sensors, WiFi scanning and MQTT queuing all work — but LittleFS fails:
@@ -740,25 +747,38 @@ Still untested:
 
 ## Next steps
 
-### 1. Arduino-IDE-built firmware probably needs a different bootloader
+### 1. Arduino-IDE-built firmware needs a different bootloader — DONE, untested on a board
 
-Almost certainly yes — the Arduino IDE core's `dio_80m` ELF (18688 bytes) is a different binary from
-pioarduino's `qio_80m`-with-DIO-header (19520 bytes), and that mismatch is exactly what broke
-LittleFS. We currently ship only the pioarduino one.
+A bootloader from another IDF release than the app is what broke LittleFS (or so it looked — see the
+variant note under "The bootloader must come from the same framework"). So there is one bootloader
+per IDF release for C3, S2 and S3 (`v5.5.4`, `v5.5.5`), and the flasher **reads the release out of the
+app image** to choose: every ESP-IDF app carries an `esp_app_desc_t` at `0x20` (magic `0xABCD5432`)
+with `version`, `project_name`, `time`, `date` and `idf_ver`.
 
-Better than a warning comment on the page: **read the framework out of the app image.** Every ESP-IDF
-app carries an `esp_app_desc_t` at offset `0x20` (24-byte image header + 8-byte segment header), magic
-`0xABCD5432`, with `version`, `project_name`, `time`, `date` and `idf_ver` as fixed-width strings.
-The current `firmware.bin` reports:
+- `appDescription()` parses it, and selecting a file logs `Built with ESP-IDF v5.5.4 (…)`.
+- `boards.json` `bootloadersByChip` lists each bootloader with the `idfVer` string inside it; a test
+  keeps the tags true to the binaries.
+- `bootloaderFor()` picks the one whose `idfVer` equals the app's, and **refuses to provision** if
+  none does. An older release is told to update the Arduino IDE or PlatformIO platform; a newer one is
+  told the flasher is behind. An image with no descriptor (ESP8266) gets the first. App-only updates
+  write no bootloader, so they are never checked.
 
-```
-idf_ver: v5.5.4    project_name: arduino-lib-builder    date: Jun 2 2026
-```
+Not yet tried on a board: provisioning with a v5.5.5 bootloader (from either toolchain), and the S2/S3
+ones (step 6 applies to them too).
 
-So the flasher can parse the selected firmware, display what built it, and either pick a matching
-bootloader or refuse when it doesn't match the one on offer — turning an invisible, badly-misleading
-failure into an explicit refusal. Needs `idf_ver` recorded per bootloader in `boards.json`, which
-means capturing it when the bootloader is harvested.
+**Release check:** `npm run check:bootloaders`, run by frugal-iot-demo's `scripts/release.zsh` (stage 1,
+with `--update`; `--no-fetch` there makes it `--offline`). We do not develop in the Arduino IDE, so a
+new core can go unnoticed — and firmware built with it is refused until its bootloader is shipped. It
+finds what each toolchain would install now — the Arduino core from its package index, and for
+PlatformIO the core named in the body of pioarduino's moving `stable` release, which is the zip
+`platformio.ini` installs (not the official `espressif32`, which lacks boards we need) — and checks
+that the IDF it is built on (from pioarduino's release titles) has a bootloader here. `--update`
+brings an out-of-date toolchain up first (`arduino-cli core upgrade`; for pioarduino an uninstall and reinstall of the zip, plus its two framework packages, because `pio` treats a URL as an unchanging version and reports it up to date);
+`--update=arduino` does only that one. Then each installed toolchain's bootloader, rebuilt from its
+`qio_80m` ELF, must match the one shipped for its IDF release (the build date and trailing checksum
+are ignored — two builds of one release differ only there), the newest installed must have an entry
+at all, and no two entries may share a release. A toolchain not installed is skipped (`--strict`
+fails instead). It compares against installed ELFs, not a reference build.
 
 ### 2. Writing WiFi config does bring the littlefs machinery back — so don't do it that way
 

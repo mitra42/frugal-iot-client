@@ -34,6 +34,7 @@
     "url": "git+https://github.com/mitra42/frugal-iot-client.git"
   },
   "scripts": {
+    "check:bootloaders": "node scripts/check-bootloaders.js",
     "fixtures": "node test/fixtures/regenerate.js",
     "link:hee": "ln -sfn ../../html-element-extended node_modules/html-element-extended && ls -ld node_modules/html-element-extended",
     "test": "node --test test/*.test.js",
