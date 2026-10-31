@@ -182,18 +182,28 @@ describe('the serial monitor', () => {
     flash.remove();
   });
 
-  test('does not reset the board it reconnects to', async () => {
-    // The first pass pulses RTS to catch the boot log from the start; doing that on a reconnect
-    // would restart a board that had just woken from sleep
+  test('starting the monitor, or reconnecting it, never resets the board', async () => {
+    // It used to pulse RTS on the first pass to catch the boot log, which restarted a board that was
+    // in the middle of something. Resetting is its own button now.
     const flash = monitoring([
       {chunks: ['boot\n'], end: 'error'},
       {chunks: ['awake\n']},
     ]);
     await until(flash, () => log(flash).includes('awake'), 'no reconnect');
-    const afterFirst = flash.state.port.signals;
     await flash.monitorStop();
-    assert.ok(afterFirst > 0, 'the first pass should have reset the board');
-    assert.equal(flash.state.port.signals, afterFirst, 'the reconnect should not have');
+    assert.equal(flash.state.port.signals, 0);
+    flash.remove();
+  });
+
+  test('Reset board resets it, and only while the monitor is running', async () => {
+    const flash = monitoring([{chunks: ['running\n']}]);
+    await until(flash, () => flash.state.monitorPort, 'the monitor did not open');
+    flash.onReset();
+    await until(flash, () => flash.state.port.signals > 0, 'it did not reset');
+    await flash.monitorStop();
+    const after = flash.state.port.signals;
+    flash.onReset(); // nothing is listening, so there is nothing to reset
+    assert.equal(flash.state.port.signals, after);
     flash.remove();
   });
 
@@ -400,11 +410,68 @@ describe('configuring the node over the monitor’s port', () => {
     flash.remove();
   });
 
+  test('removing the card closes the port, so the next card can connect', async () => {
+    // The project\u2019s back is rebuilt on some events, taking the card with it
+    const flash = await ready();
+    flash.remove();
+    for (let i = 0; i < 200 && flash.state.port.writable; i++) await new Promise((r) => setTimeout(r, 5));
+    assert.equal(flash.state.port.writable, null, 'the port is still open');
+    assert.ok(!flash.state.monitoring);
+  });
+
   test('a board that is only being watched is never applied to', async () => {
     const flash = await ready();
     await new Promise((r) => setTimeout(r, 50));
     assert.ok(!flash.state.port.got.some((l) => l.startsWith('~set')), 'connecting must not configure');
     await flash.monitorStop();
+    flash.remove();
+  });
+});
+
+describe('the log', () => {
+  function logged() {
+    const flash = document.createElement('mqtt-flash');
+    document.body.append(flash);
+    return {flash, pre: flash.state.elements.log};
+  }
+  test('new lines are appended to the same text node, so a selection survives them', () => {
+    const {flash, pre} = logged();
+    flash.logLine('first');
+    const node = pre.firstChild;
+    flash.logLine('second');
+    flash.logWrite('3rd');
+    flash.logWrite('+more\n');
+    assert.equal(pre.firstChild, node, 'the text was replaced - that is what dropped the selection');
+    assert.equal(pre.textContent, 'first\nsecond3rd+more\n'); // logWrite continues the last line
+    flash.remove();
+  });
+  test('it does not drag the view to the bottom when the reader has scrolled up', () => {
+    const {flash, pre} = logged();
+    flash.logLine('a');
+    // jsdom has no layout: describe a log scrolled well above its end
+    Object.defineProperty(pre, 'scrollHeight', {value: 1000, configurable: true});
+    Object.defineProperty(pre, 'clientHeight', {value: 100, configurable: true});
+    pre.scrollTop = 200;
+    flash.logLine('b');
+    assert.equal(pre.scrollTop, 200);
+    pre.scrollTop = 900; // now at the end, so it should follow
+    flash.logLine('c');
+    assert.equal(pre.scrollTop, 1000);
+    flash.remove();
+  });
+  test('a trim waits while text is being selected, then catches up', async () => {
+    const {flash, pre} = logged();
+    flash.state.log = Array.from({length: 1999}, (_, i) => `line ${i}`);
+    flash.logLine('x'); // 2000 - at the limit, no trim yet
+    const node = pre.firstChild;
+    let selecting = true;
+    flash.logSelecting = () => selecting;
+    flash.logLine('y'); // 2001: trimmed, which would replace the text
+    assert.equal(pre.firstChild, node, 'it replaced the text under a selection');
+    selecting = false;
+    for (let i = 0; i < 200 && pre.firstChild === node; i++) await new Promise((r) => setTimeout(r, 10));
+    assert.notEqual(pre.firstChild, node, 'it never caught up');
+    assert.ok(pre.textContent.endsWith('y'));
     flash.remove();
   });
 });

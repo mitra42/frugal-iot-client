@@ -422,6 +422,26 @@ describe('the page', () => {
     page.remove();
   });
 
+  test('the back knows the project, and keeps its open card when devices arrive', () => {
+    // topicschanged fires for every node, group and topic. Each used to rebuild the back, which closed
+    // the open card - and a Flash card closing under a running monitor leaves the port held
+    withCapabilities('OTAFLASH');
+    const page = document.createElement('mqtt-dashboard');
+    document.body.append(page);
+    const { projectMt } = mock.runScenario('one-device');
+    document.dispatchEvent(new CustomEvent('frugaliot:projectchanged',
+      { detail: { projectMt, organization: 'dev', project: 'lotus' } }));
+    page.querySelector('.fi-header__gear .fi-btn').click();
+    const back = page.querySelector('mqtt-projectback');
+    assert.equal(back.getAttribute('project'), 'lotus');
+    back.toggle('flash');
+    assert.equal(back.state.elements.flash.querySelector('mqtt-admin').getAttribute('project'), 'lotus');
+    document.dispatchEvent(new CustomEvent('frugaliot:topicschanged', { detail: { project: projectMt } }));
+    assert.equal(page.querySelector('mqtt-projectback'), back, 'the back was rebuilt');
+    assert.ok(back.state.elements.flash.classList.contains('fi-admincard--open'), 'the open card closed');
+    page.remove();
+  });
+
   test('a reader gets the gear too, because Info is always behind it', () => {
     // D-29 said omit the gear when the back would be empty. Info is ungated, so the back is never
     // empty and the gear is always offered - the guard stays, it simply no longer triggers.

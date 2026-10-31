@@ -35,6 +35,11 @@ const HelloTries = 15;
 const RestartWaitMs = 25000;
 const ConnectWaitMs = 40000;
 const ProfileKey = 'frugaliot:nodeprofile';
+// The log is trimmed in chunks, not a line at a time: a trim replaces the text, which drops a
+// selection, so it should be rare
+const LogLinesMax = 2000;
+const LogLinesKeep = 1500;
+const LogDeferMs = 500;
 const BootLogMs = 25000; // startSerial() waits 5s before printing, then WiFi/captive portal follows
 // How often the monitor tries the port again while it is gone - a deep sleep is measured in
 // seconds to minutes, so there is nothing to gain from trying harder than this
@@ -127,6 +132,14 @@ class MqttFlash extends HTMLElementExtended {
       baudrate: FlashBaudRates[0], monitorBaudrate: MonitorBaudRates[0], monitorRetryMs: MonitorRetryMs,
       node: null, autoApply: true, applied: 0};
   }
+  // Removed while it holds the port - the card is rebuilt, or the page navigates - and the next
+  // Connect would find it open. The monitor closes its port on stop; esptool's transport is released.
+  disconnectedCallback() {
+    this.monitorStop();
+    this.transportRelease();
+    clearTimeout(this.state.logTimer);
+    if (super.disconnectedCallback) super.disconnectedCallback();
+  }
   get org() { return this.getAttribute('org') || ''; }
   get project() { return this.getAttribute('project') || ''; }
   get supported() { return 'serial' in navigator; }
@@ -154,12 +167,39 @@ class MqttFlash extends HTMLElementExtended {
 
   // ---- logging ----
   logTrim() {
-    if (this.state.log.length > 400) this.state.log.splice(0, this.state.log.length - 400);
+    if (this.state.log.length > LogLinesMax) this.state.log.splice(0, this.state.log.length - LogLinesKeep);
+    this.logRender();
+  }
+  // Someone is selecting text in the log. shadowRoot.getSelection is Chrome's; document's sees only the host
+  logSelecting(pre) {
+    const sel = (this.shadowRoot && this.shadowRoot.getSelection) ? this.shadowRoot.getSelection() : document.getSelection();
+    return !!sel && !sel.isCollapsed && (pre.contains(sel.anchorNode) || sel.anchorNode === this);
+  }
+  /*
+   * Appends to the text node rather than replacing it - replacing drops a selection and moves the
+   * scroll, which made the log impossible to copy from while it was running. Only a trim or a clear
+   * has to replace, and that waits for the selection to be let go. It follows the bottom only if it
+   * was already there, so scrolling up to read stays put.
+   */
+  logRender() {
     const pre = this.state.elements.log;
-    if (pre) {
-      pre.textContent = this.state.log.join('\n');
-      pre.scrollTop = pre.scrollHeight;
+    if (!pre) return;
+    const text = this.state.log.join('\n');
+    const shown = this.state.logShown || '';
+    if (text === shown) return;
+    const atBottom = pre.scrollHeight - pre.scrollTop - pre.clientHeight < 8;
+    if (pre.lastChild && text.startsWith(shown)) {
+      pre.lastChild.appendData(text.slice(shown.length));
+    } else if (this.logSelecting(pre)) {
+      if (!this.state.logTimer) {
+        this.state.logTimer = setTimeout(() => { this.state.logTimer = null; this.logRender(); }, LogDeferMs);
+      }
+      return;
+    } else {
+      pre.textContent = text;
     }
+    this.state.logShown = text;
+    if (atBottom) pre.scrollTop = pre.scrollHeight;
   }
   logLine(text) {
     this.state.log.push(String(text));
@@ -471,8 +511,8 @@ class MqttFlash extends HTMLElementExtended {
     this.monitorStart(); // not awaited - it now runs until stopped
   }
   // DTR/RTS drive EN and IO0 on boards with the usual auto-reset circuit - RTS left asserted holds
-  // the chip in reset and it prints nothing at all. Releasing both then pulsing RTS restarts it, so
-  // the log is captured from the beginning rather than from wherever esptool's reset left off.
+  // the chip in reset and it prints nothing at all. Releasing both then pulsing RTS restarts it.
+  // Only on request: starting a monitor must not restart a board that is doing something.
   async bootReset(port) {
     if (!port.setSignals) return;
     try {
@@ -591,6 +631,12 @@ class MqttFlash extends HTMLElementExtended {
       .then((port) => { this.state.port = port; return this.monitorStart(); })
       .catch((e) => { this.state.error = e.message; this.logLine(`Error: ${e.message}`); this.statusRender(); });
   }
+  onReset() {
+    const port = this.state.monitorPort;
+    if (!port) return;
+    this.logLine("---- reset ----");
+    this.bootReset(port);
+  }
   // Takes an open port and always closes it, so monitorRun can open it again
   async monitorStream(port, firstPass) {
     this.logLine(`---- monitor (${this.state.monitorBaudrate} baud) ----`);
@@ -599,13 +645,13 @@ class MqttFlash extends HTMLElementExtended {
     let stopHelloPoll = null;
     const router = new LineRouter((line) => this.onProtocolLine(line), (text) => this.logWrite(text));
     try {
-      if (firstPass) await this.bootReset(port); // a reconnect must not reset a board that just woke
       if (!port.readable) throw new Error("port has no readable stream");
       const decoder = new TextDecoder();
       reader = port.readable.getReader();
       this.state.monitorReader = reader;
       this.state.monitorPort = port;
       this.state.node = null; // whatever is on the port now has yet to say hello
+      this.state.helloGaveUp = false;
       this.configRender();
       stopHelloPoll = this.helloPoll();
       const quietUntil = Date.now() + BootLogMs;
@@ -652,7 +698,9 @@ class MqttFlash extends HTMLElementExtended {
       if (this.state.node) { clearInterval(timer); return; }
       if (++tries > HelloTries) {
         clearInterval(timer);
+        this.state.helloGaveUp = true;
         this.logLine("(no answer to ~hello - this firmware may not support configuring over USB)");
+        this.configRender();
         return;
       }
       this.sendRaw("~hello\n").catch((e) => XXX(`hello: ${e.message}`));
@@ -811,7 +859,9 @@ class MqttFlash extends HTMLElementExtended {
     const lines = [];
     const node = this.state.node;
     lines.push(el('p', {}, [
-      el('span', {textContent: node ? "Board ready" : "No board answering"}),
+      el('span', {textContent: node ? "Board ready"
+        : !this.state.monitoring ? "Start the monitor to configure"
+        : this.state.helloGaveUp ? "Board not answering - old firmware?" : "Waiting for the board"}),
       el('span', {i8n: false, textContent: node ? ` ${node.nodeid}` : ''}),
     ]));
     const ap = this.state.apply;
@@ -904,6 +954,8 @@ class MqttFlash extends HTMLElementExtended {
     if (flashButton) flashButton.disabled = !this.ready;
     const connectButton = this.state.elements.connectButton;
     if (connectButton) connectButton.disabled = this.state.busy;
+    const resetButton = this.state.elements.resetButton;
+    if (resetButton) resetButton.disabled = !this.state.monitoring;
     const monitorButton = this.state.elements.monitorButton;
     if (monitorButton) {
       monitorButton.textContent = getString(this.state.monitoring ? "Stop monitor" : "Monitor");
@@ -920,6 +972,7 @@ class MqttFlash extends HTMLElementExtended {
         ]),
       ];
     }
+    this.state.logShown = ''; // the log element below is new and empty
     return [
       el('link', {rel: 'stylesheet', href: CssUrl}),
       el('div', {class: 'mqtt-flash'}, [
@@ -938,6 +991,8 @@ class MqttFlash extends HTMLElementExtended {
           textContent: "Flash", onclick: this.onFlash.bind(this)}),
         this.state.elements.monitorButton = el('button', {class: 'submit', type: 'button',
           textContent: "Monitor", onclick: this.onMonitor.bind(this)}),
+        this.state.elements.resetButton = el('button', {class: 'submit', type: 'button', disabled: true,
+          textContent: "Reset board", onclick: this.onReset.bind(this)}),
         this.state.elements.status = el('div', {class: 'flash-status'}, this.statusLines()),
         el('h4', {textContent: "Configure board"}),
         this.state.elements.editor = el('div', {class: 'flash-profile'}, this.editorLines()),

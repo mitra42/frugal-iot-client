@@ -792,7 +792,7 @@ class MqttProjectBack extends HTMLElementExtendedMinimum {
     const spec = ADMIN_CARDS.find((c) => c.section === section);
     if (open && !card.querySelector('mqtt-admin, .fi-infocard')) {
       // Info is ours; everything else is a section of the existing admin element, not redesigned (D-30)
-      card.append(spec.own ? this.renderInfo() : el('mqtt-admin', { section, org: this.state.organization, project: this.projectMt && this.projectMt.project }));
+      card.append(spec.own ? this.renderInfo() : el('mqtt-admin', { section, org: this.state.organization, project: this.getAttribute('project') || undefined }));
     }
     card.classList.toggle('fi-admincard--open', open);
   }
@@ -877,8 +877,12 @@ class MqttDashboard extends HTMLElementExtendedMinimum {
     this.refreshBody();
   }
   onProjectChanged(e) {
+    const before = [this.state.projectMt, this.state.organization];
     if (e.detail && e.detail.projectMt) this.state.projectMt = e.detail.projectMt;
     if (e.detail && e.detail.organization) this.state.organization = e.detail.organization;
+    // topicschanged fires for every node, group and topic that arrives. The back does not show any of
+    // them, and rebuilding it closes whichever admin card is open - and with it a flasher that holds a port
+    if (this.state.mode === 'back' && before[0] === this.state.projectMt && before[1] === this.state.organization) return;
     this.refreshBody();
   }
 
@@ -932,7 +936,7 @@ class MqttDashboard extends HTMLElementExtendedMinimum {
 
   renderBody() {
     if (this.state.mode === 'back') {
-      return el('mqtt-projectback', { organization: this.state.organization });
+      return el('mqtt-projectback', { organization: this.state.organization, project: this.projectMt && this.projectMt.project });
     }
     if (!this.projectMt) {
       return this.emptyState(getString('Choose a project to see its devices'));

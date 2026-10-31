@@ -399,11 +399,14 @@ EN:
   Action: Action
   Action *: Action *
   Add: Add
+  Reset board: Reset board
+  Start the monitor to configure: Start the monitor to configure
+  Board not answering - old firmware?: Board not answering - old firmware?
+  Waiting for the board: Waiting for the board
   Configure board: Configure board
   Apply after flashing: Apply after flashing
   Apply to board: Apply to board
   Board ready: Board ready
-  No board answering: No board answering
   Boards done: Boards done
   WiFi networks: WiFi networks
   Add network: Add network
@@ -734,11 +737,14 @@ FR:
   Action: Action
   Action *: Action *
   Add: Ajouter
+  Reset board: Réinitialiser la carte
+  Start the monitor to configure: Démarrez le moniteur pour configurer
+  Board not answering - old firmware?: La carte ne répond pas - ancien firmware ?
+  Waiting for the board: En attente de la carte
   Configure board: Configurer la carte
   Apply after flashing: Appliquer après le flashage
   Apply to board: Appliquer à la carte
   Board ready: Carte prête
-  No board answering: Aucune carte ne répond
   Boards done: Cartes terminées
   WiFi networks: Réseaux WiFi
   Add network: Ajouter un réseau
@@ -1069,11 +1075,14 @@ HI:
   Action: क्रिया
   Action *: क्रिया *
   Add: जोड़ें
+  Reset board: बोर्ड रीसेट करें
+  Start the monitor to configure: कॉन्फ़िगर करने के लिए मॉनिटर शुरू करें
+  Board not answering - old firmware?: बोर्ड जवाब नहीं दे रहा - पुराना फ़र्मवेयर?
+  Waiting for the board: बोर्ड की प्रतीक्षा
   Configure board: बोर्ड कॉन्फ़िगर करें
   Apply after flashing: फ़्लैश के बाद लागू करें
   Apply to board: बोर्ड पर लागू करें
   Board ready: बोर्ड तैयार
-  No board answering: कोई बोर्ड जवाब नहीं दे रहा
   Boards done: पूर्ण बोर्ड
   WiFi networks: वाई-फ़ाई नेटवर्क
   Add network: नेटवर्क जोड़ें
@@ -1404,11 +1413,14 @@ ID:
   Action: Aksi
   Action *: Aksi *
   Add: Tambah
+  Reset board: Setel ulang papan
+  Start the monitor to configure: Mulai monitor untuk mengonfigurasi
+  Board not answering - old firmware?: Papan tidak menjawab - firmware lama?
+  Waiting for the board: Menunggu papan
   Configure board: Konfigurasi papan
   Apply after flashing: Terapkan setelah flash
   Apply to board: Terapkan ke papan
   Board ready: Papan siap
-  No board answering: Tidak ada papan yang menjawab
   Boards done: Papan selesai
   WiFi networks: Jaringan WiFi
   Add network: Tambah jaringan
