@@ -207,6 +207,34 @@ describe('the serial monitor', () => {
     flash.remove();
   });
 
+  test('Clear log empties the log, and Copy log puts what is there on the clipboard', async () => {
+    const flash = monitoring([{chunks: ['one\ntwo\n']}]);
+    await until(flash, () => log(flash).includes('two'), 'nothing was logged');
+    const button = (text) => [...flash.shadowRoot.querySelectorAll('button')].find((b) => b.textContent === text);
+    let copied = null;
+    Object.defineProperty(navigator, 'clipboard', {value: {writeText: async (t) => { copied = t; }}, configurable: true});
+    const shown = log(flash);
+    button('Copy log').click();
+    assert.equal(copied, shown);
+    button('Clear log').click();
+    assert.equal(flash.state.log.length, 0);
+    assert.equal(flash.state.elements.log.textContent, '', 'the displayed log should be cleared too');
+    await flash.monitorStop();
+    flash.remove();
+    delete navigator.clipboard;
+  });
+
+  test('Copy log with nothing in the log copies nothing', () => {
+    const flash = monitoring([]);
+    let copied = null;
+    Object.defineProperty(navigator, 'clipboard', {value: {writeText: async (t) => { copied = t; }}, configurable: true});
+    flash.state.log = [];
+    flash.onCopyLog();
+    assert.equal(copied, null);
+    flash.remove();
+    delete navigator.clipboard;
+  });
+
   test('says the port is gone once, not once per attempt', async () => {
     const flash = monitoring([{fail: 'No such port'}]);
     await until(flash, () => log(flash).includes('could not open port'), 'nothing was said');

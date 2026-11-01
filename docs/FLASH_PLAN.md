@@ -809,9 +809,12 @@ settling on the serial line format (a `topicTwig value` pair per line is enough,
 partial line is never applied) and whether the node echoes each accepted setting so the flasher can
 confirm rather than assume.
 
-### 3. Monitor needs Clear and Copy buttons
+### 3. Monitor needs Clear and Copy buttons — DONE
 
-The log is hard to work with once long. Two buttons beside Monitor, two new strings in four languages.
+"Clear log" and "Copy log" sit beside Monitor and Reset board. Clear empties the log and the displayed
+text; Copy writes the whole log (not just the selection) to the clipboard, and does nothing on an empty
+log or a page with no clipboard (plain http). Neither says anything on success — a one-line "Copied"
+would be a third string if it turns out to be missed. Not looked at in a browser.
 
 ### 4. `fs.cpp` reports a scary failure that isn't one
 

@@ -400,6 +400,8 @@ EN:
   Action *: Action *
   Add: Add
   Reset board: Reset board
+  Clear log: Clear log
+  Copy log: Copy log
   Start the monitor to configure: Start the monitor to configure
   Board not answering - old firmware?: Board not answering - old firmware?
   Waiting for the board: Waiting for the board
@@ -738,6 +740,8 @@ FR:
   Action *: Action *
   Add: Ajouter
   Reset board: Réinitialiser la carte
+  Clear log: Effacer le journal
+  Copy log: Copier le journal
   Start the monitor to configure: Démarrez le moniteur pour configurer
   Board not answering - old firmware?: La carte ne répond pas - ancien firmware ?
   Waiting for the board: En attente de la carte
@@ -1076,6 +1080,8 @@ HI:
   Action *: क्रिया *
   Add: जोड़ें
   Reset board: बोर्ड रीसेट करें
+  Clear log: लॉग साफ़ करें
+  Copy log: लॉग कॉपी करें
   Start the monitor to configure: कॉन्फ़िगर करने के लिए मॉनिटर शुरू करें
   Board not answering - old firmware?: बोर्ड जवाब नहीं दे रहा - पुराना फ़र्मवेयर?
   Waiting for the board: बोर्ड की प्रतीक्षा
@@ -1414,6 +1420,8 @@ ID:
   Action *: Aksi *
   Add: Tambah
   Reset board: Setel ulang papan
+  Clear log: Hapus log
+  Copy log: Salin log
   Start the monitor to configure: Mulai monitor untuk mengonfigurasi
   Board not answering - old firmware?: Papan tidak menjawab - firmware lama?
   Waiting for the board: Menunggu papan

@@ -229,6 +229,16 @@ class MqttFlash extends HTMLElementExtended {
     lines.forEach((l) => this.state.log.push(l));
     this.logTrim();
   }
+  onClearLog() {
+    this.state.log = [];
+    this.logRender();
+  }
+  // Clipboard needs a secure context - a page served over plain http gets none, and that is not worth a message
+  onCopyLog() {
+    const text = this.state.log.join('\n');
+    if (!text || !navigator.clipboard) return;
+    navigator.clipboard.writeText(text).catch((e) => XXX(`copy: ${e.message}`));
+  }
   get terminal() {
     return {
       clean: () => { this.state.log = []; this.logTrim(); },
@@ -1038,6 +1048,8 @@ class MqttFlash extends HTMLElementExtended {
           textContent: "Monitor", onclick: this.onMonitor.bind(this)}),
         this.state.elements.resetButton = el('button', {class: 'submit', type: 'button', disabled: true,
           textContent: "Reset board", onclick: this.onReset.bind(this)}),
+        el('button', {class: 'submit', type: 'button', textContent: "Clear log", onclick: this.onClearLog.bind(this)}),
+        el('button', {class: 'submit', type: 'button', textContent: "Copy log", onclick: this.onCopyLog.bind(this)}),
         this.state.elements.status = el('div', {class: 'flash-status'}, this.statusLines()),
         el('h4', {textContent: "Configure board"}),
         this.state.elements.editor = el('div', {class: 'flash-profile'}, this.editorLines()),
