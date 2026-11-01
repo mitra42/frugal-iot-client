@@ -102,6 +102,9 @@ function bytesInclude(haystack, needle) {
   }
   return false;
 }
+// The ids esptool uses in an image header, so a refusal can say which chip the image is for
+const ImageChipNames = {0: 'ESP32', 2: 'ESP32-S2', 5: 'ESP32-C3', 9: 'ESP32-S3', 12: 'ESP32-C2', 13: 'ESP32-C6',
+  16: 'ESP32-H2', 18: 'ESP32-P4', 20: 'ESP32-C61', 23: 'ESP32-C5'};
 // ESP32 image header holds chip_id at byte 12; ESP8266 images have no such field
 function imageChipId(bytes) {
   return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint16(12, true);
@@ -466,13 +469,16 @@ class MqttFlash extends HTMLElementExtended {
   appCheck() {
     const dev = this.state.device;
     const bytes = this.state.app.bytes;
+    // Flash is normally disabled for these, but nothing else stops a call that gets here
+    if (dev.refusal) throw new Error(dev.refusal);
     if (bytes[0] !== ImageMagic) {
       throw new Error(`${this.state.app.name} is not an ESP firmware image (first byte 0x${bytes[0].toString(16)}, expected 0xe9)`);
     }
     if (!dev.wholeImage) {
       const chipId = imageChipId(bytes);
       if (chipId !== this.state.esploader.chip.IMAGE_CHIP_ID) {
-        throw new Error(`${this.state.app.name} was built for chip id ${chipId}, but this board is ${dev.chipName} (chip id ${this.state.esploader.chip.IMAGE_CHIP_ID})`);
+        const builtFor = ImageChipNames[chipId] ? `${ImageChipNames[chipId]} (chip id ${chipId})` : `chip id ${chipId}`;
+        throw new Error(`${this.state.app.name} was built for ${builtFor}, but this board is ${dev.chipName} - nothing was written`);
       }
       // Only a provision writes a bootloader - an app-only update keeps the board's own
       if (dev.provision) this.bootloaderFor(appDescription(bytes));

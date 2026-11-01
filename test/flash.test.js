@@ -268,13 +268,13 @@ describe('flashing over a board that is already laid out', () => {
   const boards = JSON.parse(readFileSync(new URL('../base/boards.json', import.meta.url), 'utf8'));
   let writes;
   // An 8MB S3 whose flash holds `table` at 0x8000, a bootloader, and an erased filesystem
-  function fakeS3(table) {
+  function fakeS3(table, capacity = 0x17) {
     return async () => ({
       Transport: class { async disconnect() {} },
       ESPLoader: class {
         constructor() { this.chip = {CHIP_NAME: 'ESP32-S3', BOOTLOADER_FLASH_OFFSET: 0, IMAGE_CHIP_ID: 9}; }
         async main() { return 'ESP32-S3'; }
-        async readFlashId() { return 0x17 << 16; }
+        async readFlashId() { return capacity << 16; }
         async readFlash(offset, length) {
           const block = new Uint8Array(length).fill(0xff);
           if (offset === 0) block[0] = 0xe9;
@@ -286,10 +286,10 @@ describe('flashing over a board that is already laid out', () => {
       },
     });
   }
-  async function connected(table) {
+  async function connected(table, capacity) {
     const flash = document.createElement('mqtt-flash');
     document.body.append(flash);
-    flash.esptoolImport = fakeS3(table);
+    flash.esptoolImport = fakeS3(table, capacity);
     flash.state.boards = boards;
     flash.monitorStart = () => {};
     await flash.connectAndInspect({});
@@ -338,6 +338,57 @@ describe('flashing over a board that is already laid out', () => {
     const flash = await connected(table);
     assert.equal(flash.state.device.provision, true);
     assert.deepEqual(flash.state.device.provisionReasons, ['app partition not at 0x10000']);
+    flash.remove();
+  });
+
+  // Nothing here was exercised until now - every other test used an image that matched its board
+  test('an image built for another chip is refused, by name, before anything is written', async () => {
+    const flash = await connected(readBase('partitions/min_spiffs.bin'));
+    const c3 = image(0x1000); c3[12] = 5;
+    flash.state.app = {name: 'c3-firmware.bin', bytes: c3};
+    await assert.rejects(flash.flash(), /c3-firmware\.bin was built for ESP32-C3 \(chip id 5\), but this board is ESP32-S3 - nothing was written/);
+    assert.deepEqual(writes, []);
+    flash.remove();
+  });
+
+  test('a wrong-chip image is refused when provisioning too, not after the bootloader is written', async () => {
+    const table = readBase('partitions/min_spiffs.bin').slice();
+    new DataView(table.buffer).setUint32(2 * 32 + 4, 0x20000, true); // forces a provision
+    const flash = await connected(table);
+    assert.equal(flash.state.device.provision, true);
+    const s2 = image(0x1000); s2[12] = 2;
+    flash.state.app = {name: 's2.bin', bytes: s2};
+    await assert.rejects(flash.flash(), /built for ESP32-S2.*this board is ESP32-S3/);
+    assert.deepEqual(writes, []);
+    flash.remove();
+  });
+
+  test('a chip id it has no name for is still refused, by number', async () => {
+    const flash = await connected(readBase('partitions/min_spiffs.bin'));
+    const odd = image(0x1000); odd[12] = 99;
+    flash.state.app = {name: 'odd.bin', bytes: odd};
+    await assert.rejects(flash.flash(), /built for chip id 99, but this board is ESP32-S3/);
+    assert.deepEqual(writes, []);
+    flash.remove();
+  });
+
+  test('an image too big for the partition it would be provisioned into is refused', async () => {
+    const table = readBase('partitions/min_spiffs.bin').slice();
+    new DataView(table.buffer).setUint32(2 * 32 + 4, 0x20000, true);
+    const flash = await connected(table);
+    flash.state.app = {name: 'huge.bin', bytes: image(flash.state.device.base.appSize + 1)};
+    await assert.rejects(flash.flash(), /huge\.bin is .*larger than the .* app partition of default_8MB/);
+    assert.deepEqual(writes, []);
+    flash.remove();
+  });
+
+  test('a chip and flash size with no base bundle is refused, and Flash stays unavailable', async () => {
+    const flash = await connected(readBase('partitions/min_spiffs.bin'), 0x15); // 2MB S3
+    assert.equal(flash.state.device.refusal, 'No base bundle for ESP32-S3 2MB');
+    flash.state.app = {name: 'firmware.bin', bytes: image(0x1000)};
+    assert.equal(flash.ready, false);
+    await assert.rejects(flash.flash(), /No base bundle for ESP32-S3 2MB/, 'a direct call must not reach a missing base');
+    assert.deepEqual(writes, []);
     flash.remove();
   });
 });

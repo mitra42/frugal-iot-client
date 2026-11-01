@@ -816,14 +816,20 @@ text; Copy writes the whole log (not just the selection) to the clipboard, and d
 log or a page with no clipboard (plain http). Neither says anything on success — a one-line "Copied"
 would be a third string if it turns out to be missed. Not looked at in a browser.
 
-### 4. `fs.cpp` reports a scary failure that isn't one
+### 4. `fs.cpp` reports a scary failure that isn't one — DONE, not seen on a board
 
-On a freshly provisioned board the normal path prints `Corrupted dir pair`, `mount failed (-84)` and a
-`disableCore0WDT` error before quietly succeeding — and `"initialization done."` is gated behind
-`SYSTEM_LITTLEFS_DEBUG`, so an ordinary build shows only the alarming half. Worth fixing in
-`System_LittleFS::pre_setup`: suppress the component's log level around `begin(true)` (e.g.
-`esp_log_level_set("esp_littlefs", ESP_LOG_NONE)`, restoring afterwards) and print one clear line for
-each outcome, with the failure case *not* gated behind a debug flag. Firmware repo change.
+Most of it was already fixed in the firmware (`ce5e1f6`): the mount and format outcomes print
+unconditionally, and a real failure says so rather than hiding behind `SYSTEM_LITTLEFS_DEBUG`. What
+remained was the component's own error output on the ordinary first-boot path — `Corrupted dir pair`,
+`mount failed (-84)`, a watchdog complaint from format. `System_LittleFS::pre_setup` now sets the
+ESP32 log level to none across the first mount and the format, restores it (`CONFIG_LOG_DEFAULT_LEVEL`,
+as the core's own `LittleFSFS::format()` does) before saying anything, and prints
+`LittleFS would not mount (normal on a first boot) - formatting`. Only the failure case lets the
+component speak again, by retrying the mount once so its error is visible. ESP8266 is untouched.
+
+Firmware repo, branch `flasher`. Compiles for `c3_pico` and `d1_mini`. **Unverified:** that the lines
+really vanish — they were last seen on core 3.3.9, and the 3.3.12 core's `format()` already quiets
+some of them itself — so the first fresh provision on 3.3.12 shows whether anything is left.
 
 ### 5. ESP8266 end to end
 
@@ -837,16 +843,23 @@ Generated with the C3 recipe but never checked against a reference build. The ch
 settled the C3: build the firmware for an S2/S3 env and compare `.pio/build/<env>/bootloader.bin`
 against `base/bootloader/esp32s{2,3}.bin`.
 
-### 7. Auto-detect chip type and refuse a binary built for the wrong chip
+### 7. Auto-detect chip type and refuse a binary built for the wrong chip — DONE
 
-Partly built already: `appCheck()` compares the app image's `chip_id` (u16 at byte 12) against
-`esploader.chip.IMAGE_CHIP_ID` and throws on mismatch. But it has never been exercised — every test so
-far used a correctly matched C3 image — so it needs a deliberate wrong-chip attempt to confirm the
-refusal fires, reads clearly, and leaves the board untouched. Also worth checking whether esptool-js
-rejects it independently, so we know whether our check is the only guard or a second one.
+`appCheck()` compares the app image's `chip_id` (u16 at byte 12) with `esploader.chip.IMAGE_CHIP_ID`
+and throws, now naming both chips: `c3-firmware.bin was built for ESP32-C3 (chip id 5), but this board
+is ESP32-S3 - nothing was written` (an id with no name is given by number). Tested through `flash()`
+against a fake loader, for an app-only update and for a provision, asserting **no write at all** — so
+the bootloader is not laid down before the refusal. A test fails if the check is removed.
 
-Two related refusals in the same code path are likewise untested: an app larger than the app
-partition, and a `<chip>-<flashsize>` combination absent from `boards.json`.
+**esptool-js is not a second guard.** It looks at an image only when it is written at the bootloader
+offset, and there it merely warns on a chip-id mismatch or skips its flash-parameter patching
+(`_updateImageFlashParams`); an app at `0x10000` is never inspected. Our check is the only one.
+
+The two related refusals are tested the same way: an app larger than the partition it would be
+provisioned into (`... larger than the ... app partition of default_8MB`), and a `<chip>-<flashsize>`
+absent from `boards.json` (`No base bundle for ESP32-S3 2MB`). The latter also had a gap: `flash()`
+called directly, with no base built, would have thrown a `TypeError`; `appCheck()` now raises the
+refusal first. Not tried on real hardware — a deliberately wrong binary on a board.
 
 ### The ⚡ across two cards
 
