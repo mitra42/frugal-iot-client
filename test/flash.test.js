@@ -493,6 +493,102 @@ describe('matching the app to the bootloader it would be provisioned with', () =
   });
 });
 
+describe('the flasher panel', () => {
+  const memoryStore = () => ({data: null, async get() { return this.data; }, async put(app) { this.data = {name: app.name, bytes: app.bytes}; }});
+  const image = (size = 0x1000) => { const b = new Uint8Array(size); b[0] = 0xe9; return b; };
+  function panel(store = memoryStore()) {
+    const flash = document.createElement('mqtt-flash');
+    flash.appStore = store;
+    document.body.append(flash);
+    return flash;
+  }
+  const statusText = (flash) => flash.state.elements.status.textContent;
+  const settle = () => new Promise((r) => setTimeout(r, 0));
+
+  test('says what is missing while Flash is disabled', () => {
+    const flash = panel();
+    assert.match(statusText(flash), /Choose a firmware file to flash/);
+    assert.match(statusText(flash), /Connect a board to flash/);
+    flash.state.app = {name: 'f.bin', bytes: image()};
+    flash.statusRender();
+    assert.doesNotMatch(statusText(flash), /Choose a firmware file/);
+    assert.match(statusText(flash), /Connect a board to flash/);
+    flash.remove();
+  });
+
+  test('the button says it erases, when it will', () => {
+    const flash = panel();
+    const button = flash.state.elements.flashButton;
+    assert.equal(button.textContent, 'Flash');
+    flash.state.device = {chipName: 'ESP32-C3', description: 'ESP32-C3', flashSize: '4MB', provision: true, scheme: 'min_spiffs'};
+    flash.statusRender();
+    assert.equal(button.textContent, 'Erase and flash');
+    assert.ok(button.classList.contains('destructive'));
+    assert.ok(flash.state.elements.status.querySelector('p.destructive'), 'the warning should read as destructive');
+    flash.state.device.provision = false;
+    flash.statusRender();
+    assert.equal(button.textContent, 'Flash');
+    assert.ok(!button.classList.contains('destructive'));
+    flash.remove();
+  });
+
+  test('a chosen file is kept, and comes back marked after a reload', async () => {
+    const store = memoryStore();
+    const first = panel(store);
+    const input = first.shadowRoot.querySelector('#flashfile');
+    const bytes = image(0x2000);
+    Object.defineProperty(input, 'files', {value: [{name: 'chosen.bin', arrayBuffer: async () => bytes.buffer}]});
+    input.dispatchEvent(new window.Event('change'));
+    await settle();
+    assert.equal(store.data.name, 'chosen.bin');
+    first.remove();
+
+    const second = panel(store); // a reload
+    await settle();
+    assert.equal(second.state.app.name, 'chosen.bin');
+    assert.equal(second.state.app.bytes.length, 0x2000);
+    assert.match(statusText(second), /chosen\.bin.*kept from last session/);
+    second.remove();
+  });
+
+  test('what was kept does not replace a file already chosen', async () => {
+    const store = memoryStore();
+    store.data = {name: 'old.bin', bytes: image()};
+    const flash = document.createElement('mqtt-flash');
+    flash.appStore = store;
+    flash.state.app = {name: 'new.bin', bytes: image()};
+    document.body.append(flash);
+    await settle();
+    assert.equal(flash.state.app.name, 'new.bin');
+    flash.remove();
+  });
+
+  test('without IndexedDB nothing is kept, and nothing breaks', async () => {
+    const flash = document.createElement('mqtt-flash'); // the real store, in a DOM with no IndexedDB
+    document.body.append(flash);
+    await settle();
+    assert.equal(flash.state.app, null);
+    await flash.appStore.put({name: 'x.bin', bytes: image()});
+    flash.remove();
+  });
+
+  test('controls follow the order they are used in', () => {
+    const flash = panel();
+    const nodes = [...flash.shadowRoot.querySelector('.mqtt-flash').children];
+    const at = (match) => nodes.findIndex((n) => match(n));
+    const button = (text) => at((n) => n.tagName === 'BUTTON' && n.textContent === text);
+    const order = [
+      at((n) => n.id === 'flashfile'), button('Connect board'), button('Flash'),
+      at((n) => n.classList.contains('flash-status')), at((n) => n.tagName === 'PROGRESS'),
+      button('Monitor'), button('Reset board'), at((n) => n.classList.contains('flash-log')),
+      at((n) => n.tagName === 'H4' && n.textContent === 'Configure board'),
+    ];
+    assert.ok(order.every((i) => i >= 0), `a control is missing: ${order}`);
+    assert.deepEqual(order, [...order].sort((a, b) => a - b), 'the controls are out of order');
+    flash.remove();
+  });
+});
+
 describe('configuring the node over the monitor’s port', () => {
   // A node that speaks the protocol: says hello when the port opens, and answers like the firmware.
   // `got` is every line written to it.

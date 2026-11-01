@@ -567,7 +567,10 @@ EN:
   Never seen: Never seen
   New here?: New here?
   New password: New password
-  No board connected: No board connected
+  Connect a board to flash: Connect a board to flash
+  Choose a firmware file to flash: Choose a firmware file to flash
+  Erase and flash: Erase and flash
+  kept from last session: kept from last session
   No farms registered for this organization yet.: No farms registered for this organization yet.
   No nodes found for this farm's project(s).: No nodes found for this farm's project(s).
   No nodes found for this organization: No nodes found for this organization
@@ -907,7 +910,10 @@ FR:
   Never seen: Jamais vu
   New here?: Nouveau ici ?
   New password: Nouveau mot de passe
-  No board connected: Aucune carte connectée
+  Connect a board to flash: Connectez une carte pour flasher
+  Choose a firmware file to flash: Choisissez un fichier micrologiciel à flasher
+  Erase and flash: Effacer et flasher
+  kept from last session: conservé de la dernière session
   No farms registered for this organization yet.: Aucune ferme enregistrée pour cette organisation pour l'instant.
   No nodes found for this farm's project(s).: Aucun nœud trouvé pour le(s) projet(s) de cette ferme.
   No nodes found for this organization: Aucun nœud trouvé pour cette organisation
@@ -1247,7 +1253,10 @@ HI:
   Never seen: कभी नहीं देखा
   New here?: यहाँ नए हैं?
   New password: नया पासवर्ड
-  No board connected: कोई बोर्ड कनेक्ट नहीं है
+  Connect a board to flash: फ़्लैश करने के लिए बोर्ड कनेक्ट करें
+  Choose a firmware file to flash: फ़्लैश करने के लिए फ़र्मवेयर फ़ाइल चुनें
+  Erase and flash: मिटाएँ और फ़्लैश करें
+  kept from last session: पिछले सत्र से रखा गया
   No farms registered for this organization yet.: इस संगठन के लिए अभी तक कोई फार्म पंजीकृत नहीं है।
   No nodes found for this farm's project(s).: इस फार्म के प्रोजेक्ट (प्रोजेक्ट्स) के लिए कोई नोड नहीं मिला।
   No nodes found for this organization: इस संगठन के लिए कोई नोड नहीं मिला
@@ -1587,7 +1596,10 @@ ID:
   Never seen: Belum pernah terlihat
   New here?: Baru di sini?
   New password: Kata sandi baru
-  No board connected: Tidak ada papan terhubung
+  Connect a board to flash: Hubungkan papan untuk flash
+  Choose a firmware file to flash: Pilih berkas firmware untuk di-flash
+  Erase and flash: Hapus dan flash
+  kept from last session: disimpan dari sesi terakhir
   No farms registered for this organization yet.: Belum ada farm yang terdaftar untuk organisasi ini.
   No nodes found for this farm's project(s).: Tidak ada node ditemukan untuk proyek farm ini.
   No nodes found for this organization: Tidak ada node ditemukan untuk organisasi ini

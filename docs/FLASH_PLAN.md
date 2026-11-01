@@ -870,17 +870,25 @@ the Flash card, scrolls to it, and calls `flashRemote()` on its `mqtt-admin`, wh
 thing that can see the `mqtt-flash` in its own shadow root. The bolt is left out entirely without
 OTAFLASH, since there is then no Flash card for it to open.
 
-### 8. UI polish
+### 8. UI polish — DONE, not looked at in a browser
 
-Nothing structural — the flow works but is a little unintuitive. Known rough edges:
+- **Why Flash is grey is now said.** The status area gains "Choose a firmware file to flash" and
+  "Connect a board to flash" (one or both), replacing "No board connected". The reasons that already
+  had a line — an unsupported board, "Reconnect the board to flash again" — are unchanged.
+- **The destructive case reads as destructive.** The full-provision warning is a red box rather than
+  orange text, and the button itself says **Erase and flash** (red) instead of **Flash**, since the
+  button is what gets clicked.
+- **A reload no longer loses the firmware.** The chosen file — local or from the OTA card — is kept in
+  IndexedDB (localStorage is too small for an image) and restored on the next load, logged and shown as
+  "kept from last session" so a stale file cannot be flashed without it being said. It never replaces
+  a file already chosen, and with no IndexedDB (a private window, quota) nothing is kept and nothing
+  breaks. `appStore` is a seam so tests use an in-memory store.
+- **Controls follow how they are used:** firmware file, Connect, Flash and its speed; the status and
+  progress straight beneath them (they sat below the monitor controls, far from Flash); then Monitor,
+  Reset, its speed, Clear and Copy with the log they act on; then Configure board.
 
-- `Flash` is disabled until *both* a board and a firmware are chosen, with no hint saying so; the
-  reason should be visible rather than inferred from a grey button.
-- Provision vs app-only is auto-detected and reported in prose, but the destructive case deserves to
-  read as clearly destructive.
-- A hard reload silently clears the chosen firmware, which is surprising mid-session.
-- Ordering of the controls (file, speed, monitor speed, Connect, Flash, Monitor) has grown by
-  accretion rather than by how it is actually used.
+Four new strings in four languages. Still open in the same spirit: the log sits between Flash and
+Configure, which suits "flash, then watch it boot" but pushes Configure further down the page.
 
 ---
 

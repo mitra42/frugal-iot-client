@@ -224,6 +224,10 @@ div.mqtt-text {
     }
     .warning { color: #b35c00; font-weight: bold; }
     .error { color: #b30000; font-weight: bold; }
+    .hint { color: #555; }
+    /* Erases the board's configuration - not to be mistaken for the orange of an ordinary warning */
+    p.destructive { color: #b30000; font-weight: bold; border: 2px solid #b30000; padding: 0.3em 0.5em; background: #fdecec; }
+    button.destructive { background: #b30000; color: white; }
     .flash-log {
         background: #f4f4f4;
         border: 1px solid #ccc;

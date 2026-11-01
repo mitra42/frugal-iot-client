@@ -144,12 +144,49 @@ async function fetchJson(url) {
   if (!res.ok) throw new Error(`${url} ${res.status}`);
   return res.json();
 }
+// The chosen firmware outlives a reload in IndexedDB - localStorage is too small for an image. Every
+// failure (no IndexedDB, a private window, quota) is just "nothing kept": it is a convenience.
+const appStore = {
+  open: () => new Promise((resolve, reject) => {
+    const req = indexedDB.open('frugaliot-flash', 1);
+    req.onupgradeneeded = () => req.result.createObjectStore('app');
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  }),
+  async request(mode, use) {
+    if (typeof indexedDB === 'undefined') return null;
+    try {
+      const db = await this.open();
+      return await new Promise((resolve, reject) => {
+        const req = use(db.transaction('app', mode).objectStore('app'));
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => reject(req.error);
+      });
+    } catch (e) { return null; }
+  },
+  get() { return this.request('readonly', (store) => store.get('last')); },
+  put(app) { return this.request('readwrite', (store) => store.put({name: app.name, bytes: app.bytes}, 'last')); },
+};
 class MqttFlash extends HTMLElementExtended {
   constructor(props) {
     super(props);
+    this.appStore = appStore; // a seam for tests
     this.state = {elements: {}, log: [], app: null, device: null, busy: false,
       baudrate: FlashBaudRates[0], monitorBaudrate: MonitorBaudRates[0], monitorRetryMs: MonitorRetryMs,
       node: null, autoApply: true, applied: 0};
+  }
+  connectedCallback() {
+    super.connectedCallback();
+    this.appRestore();
+  }
+  // Marked as kept, so a firmware from yesterday cannot be flashed without it being said
+  async appRestore() {
+    const kept = await this.appStore.get();
+    if (!kept || this.state.app) return;
+    this.state.app = {name: kept.name, bytes: kept.bytes, kept: true};
+    this.logLine(`Kept from last session: ${kept.name} (${bytesToSizeString(kept.bytes.length)})`);
+    this.logAppDescription();
+    this.statusRender();
   }
   // Removed while it holds the port - the card is rebuilt, or the page navigates - and the next
   // Connect would find it open. The monitor closes its port on stop; esptool's transport is released.
@@ -256,6 +293,7 @@ class MqttFlash extends HTMLElementExtended {
     if (!file) return;
     file.arrayBuffer().then((buf) => {
       this.state.app = {name: file.name, bytes: new Uint8Array(buf)};
+      this.appStore.put(this.state.app);
       this.logLine(`Selected ${file.name} (${bytesToSizeString(this.state.app.bytes.length)})`);
       this.logAppDescription();
       this.statusRender();
@@ -269,6 +307,7 @@ class MqttFlash extends HTMLElementExtended {
       .then((res) => { if (!res.ok) throw new Error(`${url} ${res.status}`); return res.arrayBuffer(); })
       .then((buf) => {
         this.state.app = {name: `${path}/firmware.bin`, bytes: new Uint8Array(buf)};
+        this.appStore.put(this.state.app);
         this.logLine(`Selected ${this.state.app.name} (${bytesToSizeString(this.state.app.bytes.length)})`);
         this.logAppDescription();
         this.statusRender();
@@ -968,9 +1007,12 @@ class MqttFlash extends HTMLElementExtended {
     lines.push(el('p', {}, [
       el('span', {textContent: "Firmware"}),
       el('span', {i8n: false, textContent: app ? ` ${app.name} (${bytesToSizeString(app.bytes.length)})` : " -"}),
+      ...(app && app.kept ? [el('span', {i8n: false, textContent: " - "}), el('span', {textContent: "kept from last session"})] : []),
     ]));
+    // Flash is a grey button until both exist, which says nothing about which is missing
+    if (!app) lines.push(el('p', {class: 'hint', textContent: "Choose a firmware file to flash"}));
     if (!dev) {
-      lines.push(el('p', {textContent: "No board connected"}));
+      lines.push(el('p', {class: 'hint', textContent: "Connect a board to flash"}));
       return lines;
     }
     lines.push(el('p', {}, [
@@ -998,7 +1040,7 @@ class MqttFlash extends HTMLElementExtended {
       lines.push(el('p', {class: 'warning', textContent: "Could not read the board - assuming it is already provisioned"}));
     }
     if (dev.provision) {
-      lines.push(el('p', {class: 'warning', textContent: "Full provision - all configuration on the board will be erased"}));
+      lines.push(el('p', {class: 'destructive', textContent: "Full provision - all configuration on the board will be erased"}));
     } else {
       lines.push(el('p', {textContent: dev.hasConfig
         ? "Updating the app only - the existing configuration will be preserved"
@@ -1012,7 +1054,13 @@ class MqttFlash extends HTMLElementExtended {
     const status = this.state.elements.status;
     if (status) status.replaceChildren(...this.statusLines());
     const flashButton = this.state.elements.flashButton;
-    if (flashButton) flashButton.disabled = !this.ready;
+    if (flashButton) {
+      flashButton.disabled = !this.ready;
+      // The button is what gets clicked, so it says what it will do
+      const erases = this.state.device && this.state.device.provision;
+      flashButton.textContent = getString(erases ? "Erase and flash" : "Flash");
+      flashButton.classList.toggle('destructive', !!erases);
+    }
     const connectButton = this.state.elements.connectButton;
     if (connectButton) connectButton.disabled = this.state.busy;
     const resetButton = this.state.elements.resetButton;
@@ -1040,23 +1088,25 @@ class MqttFlash extends HTMLElementExtended {
         el('h4', {textContent: "Flash over USB"}),
         el('label', {for: 'flashfile', textContent: "Firmware file"}),
         el('input', {id: 'flashfile', type: 'file', accept: '.bin', onchange: this.onLocalFile.bind(this)}),
-        el('label', {for: 'flashbaud', textContent: "Speed"}),
-        el('select', {id: 'flashbaud', onchange: (ev) => { this.state.baudrate = Number(ev.target.value); }},
-          FlashBaudRates.map((b) => el('option', {i8n: false, value: b, textContent: String(b)}))),
-        el('label', {for: 'monitorbaud', textContent: "Monitor speed"}),
-        el('select', {id: 'monitorbaud', onchange: (ev) => { this.state.monitorBaudrate = Number(ev.target.value); }},
-          MonitorBaudRates.map((b) => el('option', {i8n: false, value: b, textContent: String(b)}))),
         this.state.elements.connectButton = el('button', {class: 'submit', type: 'button',
           textContent: "Connect board", onclick: this.onConnect.bind(this)}),
         this.state.elements.flashButton = el('button', {class: 'submit', type: 'button', disabled: true,
           textContent: "Flash", onclick: this.onFlash.bind(this)}),
+        el('label', {for: 'flashbaud', textContent: "Speed"}),
+        el('select', {id: 'flashbaud', onchange: (ev) => { this.state.baudrate = Number(ev.target.value); }},
+          FlashBaudRates.map((b) => el('option', {i8n: false, value: b, textContent: String(b)}))),
+        this.state.elements.status = el('div', {class: 'flash-status'}, this.statusLines()),
+        this.state.elements.progress = el('progress', {max: 100, value: 0}),
         this.state.elements.monitorButton = el('button', {class: 'submit', type: 'button',
           textContent: "Monitor", onclick: this.onMonitor.bind(this)}),
         this.state.elements.resetButton = el('button', {class: 'submit', type: 'button', disabled: true,
           textContent: "Reset board", onclick: this.onReset.bind(this)}),
+        el('label', {for: 'monitorbaud', textContent: "Monitor speed"}),
+        el('select', {id: 'monitorbaud', onchange: (ev) => { this.state.monitorBaudrate = Number(ev.target.value); }},
+          MonitorBaudRates.map((b) => el('option', {i8n: false, value: b, textContent: String(b)}))),
         el('button', {class: 'submit', type: 'button', textContent: "Clear log", onclick: this.onClearLog.bind(this)}),
         el('button', {class: 'submit', type: 'button', textContent: "Copy log", onclick: this.onCopyLog.bind(this)}),
-        this.state.elements.status = el('div', {class: 'flash-status'}, this.statusLines()),
+        this.state.elements.log = el('pre', {class: 'flash-log', i8n: false}),
         el('h4', {textContent: "Configure board"}),
         this.state.elements.editor = el('div', {class: 'flash-profile'}, this.editorLines()),
         el('label', {}, [
@@ -1067,8 +1117,6 @@ class MqttFlash extends HTMLElementExtended {
         this.state.elements.applyButton = el('button', {class: 'submit', type: 'button', disabled: true,
           textContent: "Apply to board", onclick: () => this.applyProfile()}),
         this.state.elements.config = el('div', {class: 'flash-config'}, this.configLines()),
-        this.state.elements.progress = el('progress', {max: 100, value: 0}),
-        this.state.elements.log = el('pre', {class: 'flash-log', i8n: false}),
       ]),
     ];
   }
