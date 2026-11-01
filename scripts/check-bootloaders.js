@@ -45,9 +45,9 @@ const read = (path) => (existsSync(path) ? JSON.parse(readFileSync(path, 'utf8')
 // chip's ELF is. Arduino keeps every version it has installed; pioarduino keeps one.
 const TOOLCHAINS = {
   pioarduino: {
-    installed: (chip) => {
+    installed: (chip, variant) => {
       const version = (read(join(pioPackages, 'framework-arduinoespressif32/package.json')) || {}).version;
-      const elf = join(pioPackages, 'framework-arduinoespressif32-libs', chip, 'bin/bootloader_qio_80m.elf');
+      const elf = join(pioPackages, 'framework-arduinoespressif32-libs', chip, `bin/bootloader_${variant}.elf`);
       return version && existsSync(elf) ? [{ version, elf }] : [];
     },
     coreVersions: () => [(read(join(pioPackages, 'framework-arduinoespressif32/package.json')) || {}).version].filter(Boolean),
@@ -62,11 +62,11 @@ const TOOLCHAINS = {
     },
   },
   'Arduino IDE': {
-    installed: (chip) => {
+    installed: (chip, variant) => {
       const dir = join(arduinoRoot, 'packages/esp32/tools', `${chip}-libs`);
       if (!existsSync(dir)) return [];
       return readdirSync(dir).sort(byVersion)
-        .map((version) => ({ version, elf: join(dir, version, 'bin/bootloader_qio_80m.elf') }))
+        .map((version) => ({ version, elf: join(dir, version, `bin/bootloader_${variant}.elf`) }))
         .filter((i) => existsSync(i.elf));
     },
     coreVersions: () => {
@@ -144,6 +144,8 @@ function rebuild(chip, elf) {
 
 function checkChip(chipName, options) {
   const chip = chipName.toLowerCase().replace('-', '');
+  // Follows the board's flash mode, as PlatformIO's does - see boards.json
+  const variant = (boards.bootloaderVariantByChip || {})[chipName] || 'qio_80m';
   for (const entry of options) {
     const label = `${chipName} ${entry.core} ${entry.idfVer}`;
     const shipped = readFileSync(new URL(entry.path, base));
@@ -152,7 +154,7 @@ function checkChip(chipName, options) {
   const idfs = options.map((b) => b.idfVer);
   if (new Set(idfs).size !== idfs.length) say(false, `${chipName}: two entries share an ESP-IDF release (${idfs.join(', ')}) - the flasher picks by release and could not tell them apart`);
   for (const [name, t] of Object.entries(TOOLCHAINS)) {
-    const installs = t.installed(chip);
+    const installs = t.installed(chip, variant);
     if (!installs.length) { say(null, `${chipName} ${name}: not installed, so not compared`); continue; }
     installs.forEach((inst, i) => {
       const built = rebuild(chip, inst.elf);

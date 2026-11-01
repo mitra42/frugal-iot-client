@@ -583,9 +583,16 @@ produces a *different* binary (18688 vs 19520 bytes) which does not work **with 
 
 That difference is the build *variant*, not the release: from the **same** 3.3.12 libs, `qio_80m`
 patched to DIO is 19536 bytes and `dio_80m` is 18688 (C3; S2 and S3 likewise, ~18000 bytes differing).
-So the Arduino core's `dio_80m` ELF is not used at all. pioarduino and the Arduino core ship the same
-libs for a given IDF release, so one `qio_80m`-patched bootloader per release serves both; `v5.5.5`
-was built from the Arduino core's 3.3.12 libs, which is what pioarduino 3.3.12 would also produce.
+pioarduino and the Arduino core ship the same libs for a given IDF release, so one bootloader per
+release serves both toolchains.
+
+**Which variant follows the board, not the chip.** PlatformIO picks the ELF by the board definition's
+`flash_mode` and always writes a DIO header: `qio` boards (`lolin_c3_mini`, `nologo_esp32c3_super_mini`,
+`lilygo-t3-s3`, `heltec_wifi_lora_32_V3`) get `qio_80m`, `dio` boards (`lolin_s2_mini`) get `dio_80m`.
+`boards.json` `bootloaderVariantByChip` records the exception — S2 is `dio_80m` — and everything else
+is `qio_80m`. We ship what PlatformIO builds for *our* boards, since that is what the firmware has been
+run with. A chip with boards of both kinds would need the variant chosen per board, which the flasher
+cannot know from the chip id.
 
 **The symptom is deeply misleading.** With a mismatched bootloader the board boots, the app runs, and
 sensors, WiFi scanning and MQTT queuing all work — but LittleFS fails:
@@ -747,6 +754,8 @@ Still untested:
 
 ## Next steps
 
+Everything below that still needs a board is collected, in the order to do it, in `FLASH_BOARD_TEST.md`.
+
 ### 1. Arduino-IDE-built firmware needs a different bootloader — DONE, untested on a board
 
 A bootloader from another IDF release than the app is what broke LittleFS (or so it looked — see the
@@ -837,11 +846,20 @@ Single whole image at `0x0`, no base bundle. Note it cannot format its own files
 `ESPFS.begin()` takes no format-on-fail argument — so this is the one case that may genuinely need the
 pre-formatted blank image described above.
 
-### 6. S2 and S3 bootloaders
+### 6. S2 and S3 bootloaders — v5.5.5 verified, v5.5.4 not
 
-Generated with the C3 recipe but never checked against a reference build. The check is exactly what
-settled the C3: build the firmware for an S2/S3 env and compare `.pio/build/<env>/bootloader.bin`
-against `base/bootloader/esp32s{2,3}.bin`.
+Checked the way the C3 was: built `s2_mini` and `lilygo_t3_s3_sx127x` with pioarduino 3.3.12 and
+compared `.pio/build/<env>/bootloader.bin` with `base/bootloader/v5.5.5/`.
+
+- **S3:** byte-identical, as shipped.
+- **S2:** *not* identical — the real build is 19744 bytes (the `dio_80m` ELF, because `lolin_s2_mini` is a
+  `dio` board) against our 20976 (`qio_80m`). The shipped S2 `v5.5.5` is now the `dio_80m` build and is
+  byte-identical to the real one. See "Which variant follows the board".
+- **v5.5.4 S2 and S3** (from pioarduino 3.3.9) cannot be re-checked: updating PlatformIO removed those
+  libs. They were built the `qio_80m` way, so the S2 one is probably the wrong variant. They only matter
+  for firmware built before that update; downloading the 3.3.9 libs would settle it, or drop them.
+
+Not run on a board: whether the S2 bootloader actually boots and mounts LittleFS.
 
 ### 7. Auto-detect chip type and refuse a binary built for the wrong chip — DONE
 
