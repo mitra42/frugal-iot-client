@@ -509,6 +509,317 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       ]),
     ]);
   }
+  /*
+   * Where this organization's readings are forwarded, besides the CSV files - OpenSearch, Google
+   * Sheets. What can be added, and the fields each takes, comes from the server (GET /forwarders),
+   * so a new type or field there needs nothing here. The server never sends a secret back: a
+   * stored one is shown as "set", and leaving it blank when changing a forwarder keeps it.
+   *
+   * Changes take effect at once - the server tells the logger, which stops the old forwarders and
+   * starts the new without a restart. Ones from the organization's configuration file are listed
+   * so the picture is complete, but can only be changed by editing that file.
+   */
+  getForwarders(cb = () => {}) {
+    if (!this.state.org) { cb(); return; }
+    GET(`/forwarders/${this.state.org}`, {}, (err, json) => {
+      cb();
+      if (err) { this.message(err.message); return; }
+      this.state.forwarders = json; // { types, forwarders: [...], fromFile: [...] }
+      this.replaceElement("forwarders_list", this.forwardersList());
+      this.replaceElement("forwarder_form", this.forwarderForm());
+    });
+  }
+  // One line saying where a forwarder sends, without anything secret
+  forwarderSummary(f) {
+    const c = f.config || {};
+    if (f.type === 'opensearch') return c.node || '';
+    if (f.type === 'gsheet') {
+      const n = (c.topics || []).length;
+      return `${c.sheet ? c.sheet + ', ' : ''}${getStringWith('every %s s', c.intervalSeconds)}, ${getStringWith('%s topics', n)}`;
+    }
+    return c.node || c.url || '';
+  }
+  forwardersList() {
+    const data = this.state.forwarders;
+    if (!data) return el('p', {textContent: "Loading..."});
+    const typeLabel = (t) => (data.types[t] && data.types[t].label) || t;
+    const rows = [...data.forwarders, ...data.fromFile];
+    if (!rows.length) {
+      return el('p', {textContent:
+        "This organization forwards its readings nowhere. They are still recorded in the CSV files " +
+        "and charted in Grafana - add a forwarder to send them somewhere as well."});
+    }
+    return el('table', {class: 'nodestates'}, [
+      el('tr', {}, [
+        el('th', {textContent: "Name"}), el('th', {textContent: "Type"}),
+        el('th', {textContent: "Sends to"}), el('th', {textContent: "State"}), el('th', {textContent: ""}),
+      ]),
+      ...rows.map((f) => el('tr', {}, [
+        el('td', {i8n: false, textContent: f.name}),
+        el('td', {i8n: false, textContent: typeLabel(f.type)}),
+        el('td', {i8n: false, textContent: this.forwarderSummary(f)}),
+        el('td', {i8n: false, textContent: f.source === 'file' ? getString("From the file")
+          : f.enabled ? getString("On") : getString("Off")}),
+        el('td', {}, f.source === 'file' ? [] : [
+          el('button', {type: 'button', textContent: "Edit", onclick: () => this.onForwarderEdit(f)}),
+          el('button', {type: 'button', textContent: "Delete", onclick: () => this.onForwarderDelete(f)}),
+        ]),
+      ])),
+    ]);
+  }
+  onForwarderEdit(f) {
+    this.state.forwarder_form = { id: f.id, type: f.type, row: f };
+    this.replaceElement("forwarder_form", this.forwarderForm());
+  }
+  onForwarderDelete(f) {
+    if (!window.confirm(getStringWith('Delete "%s"?', f.name) + "\n\n" +
+      getString("Readings stop being sent to it straight away. Nothing already sent is removed from there."))) return;
+    POST(`/forwarders/${this.state.org}/delete`, { id: f.id }, (err, json) => {
+      if (err) { this.message(err.message); return; }
+      this.message(json.applied === false ? getString("Deleted, but the logger could not be told - it will take effect at the next restart") : "");
+      this.getForwarders();
+    });
+  }
+  // The inputs for one type's fields. `row` is the forwarder being changed, if any.
+  forwarderFields(def, row) {
+    const config = (row && row.config) || {};
+    const secretsSet = (row && row.secretsSet) || [];
+    this.state.forwarder_inputs = {};
+    return def.fields.map((fd) => {
+      let input;
+      if (fd.kind === 'boolean') {
+        input = el('input', {i8n: false, type: 'checkbox', checked: !!config[fd.key]});
+      } else if (fd.kind === 'topics') {
+        // A textarea's starting text is its content - it has no value attribute
+        input = el('textarea', {i8n: false, rows: 4, cols: 50, textContent: (config[fd.key] || []).join('\n')});
+      } else {
+        input = el('input', {i8n: false, size: 50,
+          type: fd.secret ? 'password' : fd.kind === 'int' ? 'number' : 'text',
+          autocomplete: 'off',
+          value: fd.secret ? '' : (config[fd.key] === undefined ? '' : String(config[fd.key])),
+          placeholder: fd.secret && secretsSet.includes(fd.key) ? getString("set - leave blank to keep it") : ''});
+      }
+      this.state.forwarder_inputs[fd.key] = input;
+      return el('p', {}, [
+        el('label', {}, [el('span', {textContent: fd.label + (fd.required ? ' *' : '')}), el('br', {}), input]),
+        fd.help ? el('br', {}) : null,
+        fd.help ? el('small', {textContent: fd.help}) : null,
+      ]);
+    });
+  }
+  // What the inputs hold, in the form the server takes. Blank means "not set".
+  forwarderConfigFromInputs(def) {
+    const config = {};
+    for (const fd of def.fields) {
+      const input = this.state.forwarder_inputs[fd.key];
+      if (!input) continue;
+      if (fd.kind === 'boolean') { config[fd.key] = !!input.checked; continue; }
+      const v = (input.value || '').trim();
+      if (fd.kind === 'topics') config[fd.key] = v.split('\n').map((t) => t.trim()).filter(Boolean);
+      else if (v !== '') config[fd.key] = fd.kind === 'int' ? Number(v) : v;
+    }
+    return config;
+  }
+  onForwarderTypeChange(e) {
+    this.state.forwarder_form = { type: e.target.value };
+    this.replaceElement("forwarder_form", this.forwarderForm());
+  }
+  onForwarderSave() {
+    const form = this.state.forwarder_form;
+    const def = this.state.forwarders.types[form.type];
+    const name = (this.state.elements.forwarder_name.value || '').trim();
+    if (!name) { this.message(getString("Give it a name first")); return; }
+    POST(`/forwarders/${this.state.org}`, {
+      id: form.id, type: form.type, name,
+      enabled: this.state.elements.forwarder_enabled.checked,
+      config: this.forwarderConfigFromInputs(def),
+    }, (err, json) => {
+      if (err) { this.message(err.message); return; }
+      this.state.forwarder_form = null;
+      this.message(json.applied === false
+        ? getString("Saved, but the logger could not be told - it will take effect at the next restart") : "");
+      this.getForwarders();
+    });
+  }
+  forwarderForm() {
+    const data = this.state.forwarders;
+    if (!data) return el('span', {});
+    const form = this.state.forwarder_form;
+    if (!form) {
+      return el('button', {class: 'submit', type: 'button', textContent: "+ Add a forwarder", onclick: () => {
+        this.state.forwarder_form = { type: Object.keys(data.types)[0] };
+        this.replaceElement("forwarder_form", this.forwarderForm());
+      }});
+    }
+    const def = data.types[form.type];
+    const row = form.row;
+    return el('div', {class: 'forwarder-form'}, [
+      el('h4', {textContent: row ? "Change this forwarder" : "Add a forwarder"}),
+      row ? el('p', {i8n: false, textContent: def.label})
+        : el('p', {}, [
+          el('label', {}, [el('span', {textContent: "Type"}), el('br', {}),
+            el('select', {onchange: this.onForwarderTypeChange.bind(this)},
+              Object.entries(data.types).map(([k, t]) =>
+                el('option', {i8n: false, value: k, textContent: t.label, selected: k === form.type}))),
+          ]),
+        ]),
+      el('p', {textContent: def.help}),
+      el('p', {}, [el('label', {}, [el('span', {textContent: "Name"}), el('br', {}),
+        this.state.elements.forwarder_name = el('input', {i8n: false, type: 'text', size: 30,
+          value: row ? row.name : '', placeholder: def.label})])]),
+      ...this.forwarderFields(def, row),
+      el('p', {}, [el('label', {}, [
+        this.state.elements.forwarder_enabled = el('input', {i8n: false, type: 'checkbox', checked: row ? row.enabled : true}),
+        el('span', {textContent: " Send readings"})])]),
+      el('button', {class: 'submit', type: 'button', textContent: "Save", onclick: this.onForwarderSave.bind(this)}),
+      el('button', {type: 'button', textContent: "Cancel", onclick: () => {
+        this.state.forwarder_form = null;
+        this.replaceElement("forwarder_form", this.forwarderForm());
+      }}),
+    ]);
+  }
+  forwardersRestContent() {
+    return el('div', {}, [
+      this.refreshableHeading("Forwarders", this.getForwarders),
+      el('p', {textContent:
+        "Readings are always recorded in the CSV files, and charted in Grafana from them. A forwarder " +
+        "also sends each reading, as it is logged, somewhere else - OpenSearch to search and browse " +
+        "them, or Google Sheets to add a row of values every so often. Changes apply straight away."}),
+      this.state.elements.forwarders_list = this.forwardersList(),
+      el('section', {}, [this.state.elements.forwarder_form = this.forwarderForm()]),
+    ]);
+  }
+  /*
+   * Letting Grafana read this organization's readings. A token is what Grafana presents to the
+   * server, so the one thing an administrator has to do is make one and tell Grafana about it - which
+   * this card makes as short as it can: the token is shown once with a data source file that already
+   * holds it, and the starter dashboard comes with this server and organization filled in.
+   *
+   * A token is read-only and for this organization only. The server keeps only a hash of it, so it
+   * cannot be shown again - making one with the same name replaces it, which is how to recover.
+   */
+  getGrafanaTokens(cb = () => {}) {
+    if (!this.state.org) { cb(); return; }
+    GET(`/grafana_token/${this.state.org}`, {}, (err, json) => {
+      cb();
+      if (err) { this.message(err.message); return; }
+      this.state.grafana_tokens = json; // [{ name, created_at, last_used }]
+      this.replaceElement("grafana_list", this.grafanaList());
+    });
+  }
+  grafanaList() {
+    const tokens = this.state.grafana_tokens;
+    if (!tokens || !tokens.length) {
+      return el('p', {textContent: "No Grafana has been given access to this organization yet."});
+    }
+    return el('table', {class: 'nodestates'}, [
+      el('tr', {}, [
+        el('th', {textContent: "Name"}), el('th', {textContent: "Made"}),
+        el('th', {textContent: "Last used"}), el('th', {textContent: ""}),
+      ]),
+      ...tokens.map((t) => el('tr', {}, [
+        el('td', {i8n: false, textContent: t.name}),
+        el('td', {i8n: false, textContent: this.formatLastSeen(new Date(t.created_at).toISOString())}),
+        el('td', {i8n: false, textContent: t.last_used
+          ? this.formatLastSeen(new Date(t.last_used).toISOString()) : getString("Never")}),
+        el('td', {}, [el('button', {type: 'button', textContent: "Revoke", onclick: () => this.onGrafanaRevoke(t)})]),
+      ])),
+    ]);
+  }
+  onGrafanaTokenAdd() {
+    const name = (this.state.elements.grafana_name.value || '').trim();
+    if (!name) { this.message(getString("Give it a name first")); return; }
+    if (this.state.grafana_tokens && this.state.grafana_tokens.some((t) => t.name === name)
+        && !window.confirm(getStringWith('"%s" already exists.', name) + "\n\n" +
+          getString("Making it again replaces its token, and the Grafana using the old one stops working until it is given the new one."))) return;
+    POST(`/grafana_token/${this.state.org}`, { name }, (err, json) => {
+      if (err) { this.message(err.message); return; }
+      this.state.grafana_new = json;  // { org, name, token } - shown once, below
+      this.getGrafanaTokens();
+      this.replaceElement("grafana_new", this.grafanaNewDetails());
+    });
+  }
+  onGrafanaRevoke(t) {
+    if (!window.confirm(getStringWith('Revoke "%s"?', t.name) + "\n\n" +
+      getString("The Grafana using it stops being able to read this organization straight away."))) return;
+    POST(`/grafana_token/${this.state.org}/revoke`, { name: t.name }, (err) => {
+      if (err) { this.message(err.message); return; }
+      if (this.state.grafana_new && this.state.grafana_new.name === t.name) this.state.grafana_new = null;
+      this.getGrafanaTokens();
+      this.replaceElement("grafana_new", this.grafanaNewDetails());
+    });
+  }
+  // What Grafana's provisioning reads to create the data source - the same settings as adding it by
+  // hand. The values are quoted (JSON strings are valid YAML) so nothing in a name can break the file.
+  grafanaDataSourceYaml(org, origin, token) {
+    return [
+      `# Frugal IoT data source for Grafana - organization ${JSON.stringify(org)}. Contains a token: keep it private.`,
+      '# Put this in Grafana\'s provisioning/datasources folder and restart Grafana, or enter the same',
+      '# values by hand: Connections > Data sources > Add > Infinity, Authentication: Bearer Token.',
+      'apiVersion: 1',
+      'datasources:',
+      `  - name: ${JSON.stringify(`Frugal IoT ${org}`)}`,
+      '    type: yesoreyeram-infinity-datasource',
+      `    uid: ${JSON.stringify(`frugaliot-${org}`)}`,
+      '    access: proxy',
+      '    jsonData:',
+      '      auth_method: bearerToken',
+      '      allowedHosts:',
+      `        - ${JSON.stringify(origin)}`,
+      '    secureJsonData:',
+      `      bearerToken: ${JSON.stringify(token)}`,
+      '',
+    ].join('\n');
+  }
+  grafanaNewDetails() {
+    const n = this.state.grafana_new;
+    if (!n) return el('span', {});
+    const origin = window.location.origin;
+    return el('div', {class: 'grafana-new'}, [
+      el('h4', {textContent: "Copy this now - it is not shown again"}),
+      el('table', {class: 'nodestates'}, [
+        el('tr', {}, [el('th', {textContent: "Token"}), el('td', {i8n: false, textContent: n.token})]),
+        el('tr', {}, [el('th', {textContent: "Allowed host"}), el('td', {i8n: false, textContent: origin})]),
+      ]),
+      el('p', {textContent:
+        "In Grafana, add a data source of type Infinity, with Authentication set to Bearer Token and " +
+        "the token above, and the allowed host above. Or let this do it:"}),
+      el('p', {}, [el('a', {class: 'grafana-datasource-download', download: `frugaliot-${n.org}-datasource.yaml`,
+        href: 'data:text/yaml;charset=utf-8,' + encodeURIComponent(this.grafanaDataSourceYaml(n.org, origin, n.token)),
+        textContent: "Download the data source file"})]),
+    ]);
+  }
+  grafanaRestContent() {
+    const org = this.state.org;
+    return el('div', {}, [
+      this.refreshableHeading("Grafana", this.getGrafanaTokens),
+      el('p', {textContent:
+        "Grafana can chart this organization's readings straight from the server - every reading ever " +
+        "recorded, with nothing to export first. To set it up: install the Infinity plugin in Grafana, " +
+        "make a token here, give Grafana the data source, then import the dashboard. A token lets one " +
+        "Grafana read this organization, and nothing else."}),
+      this.state.elements.grafana_list = this.grafanaList(),
+      el('section', {}, [
+        el('h3', {textContent: "Give a Grafana access"}),
+        el('p', {textContent: "Name it for whoever or wherever it is, so it can be revoked on its own."}),
+        el('div', {}, [
+          this.state.elements.grafana_name = el('input', {i8n: false, type: 'text', size: 24, placeholder: 'my-grafana'}),
+          el('button', {textContent: "Make a token", onclick: this.onGrafanaTokenAdd.bind(this)}),
+        ]),
+        this.state.elements.grafana_new = this.grafanaNewDetails(),
+      ]),
+      el('section', {}, [
+        el('h3', {textContent: "The starter dashboard"}),
+        el('p', {textContent:
+          "A chart with a list of every topic to pick from. In Grafana choose Dashboards, New, Import, " +
+          "upload this file, and pick the data source above when it asks."}),
+        el('p', {}, [el('a', {class: 'grafana-dashboard-download',
+          download: `frugaliot-${org}-dashboard.json`,
+          href: `/grafana_token/${org}/dashboard?server=${encodeURIComponent(window.location.origin)}`,
+          textContent: "Download the dashboard"})]),
+      ]),
+    ]);
+  }
   onNodeReset(project, nodeid) {
     // Destructive and not obvious: forgetting a node that is running is safe (it notices its
     // credential being refused and enrols again) but it does cost that node a few minutes offline.
@@ -1233,6 +1544,10 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     this.state.ota_files = [];
     this.state.people_list = [];
     this.state.projects_list = [];
+    this.state.forwarders = null;
+    this.state.forwarder_form = null;
+    this.state.grafana_tokens = [];
+    this.state.grafana_new = null;
     this.state.platforms_list = [];
     this.state.farms_list = [];
     this.state.farm_nodes_list = [];
@@ -1242,7 +1557,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     // Which tabs do their own network fetch, and so need one again for a new organization. Only
     // Dashboard does not (mqtt-wrapper handles it). "Nodes" is in the list because it now fetches
     // the enrolled-node list as well as reading server_config:
-    this.state.sectionsNeedingLoad = new Set(['OTA', 'Admin', 'Projects', 'Nodes', 'Bridges', 'API']);
+    this.state.sectionsNeedingLoad = new Set(['OTA', 'Admin', 'Projects', 'Nodes', 'Bridges', 'Forwarders', 'Grafana', 'API']);
     this.loadSectionIfNeeded(this.state.activeSectionTitle);
     // Only a card created without an organization has a dropdown of its own; replaceElement does
     // nothing for an element this rendering never made. Fine too if this.state.org is undefined.
@@ -1282,6 +1597,10 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       this.getEnrolledNodes();
     } else if (title === 'Bridges') {
       this.getBridges();
+    } else if (title === 'Forwarders') {
+      this.getForwarders();
+    } else if (title === 'Grafana') {
+      this.getGrafanaTokens();
     } else if (title === 'API') {
       this.getPlatformsList();
       this.getFarmsList();
@@ -1745,6 +2064,8 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
        { key: 'retained', title: "Retained", orgs: 'adminOrgs', dropdown: 'retainedorgsdropdown', rest: 'retained_rest', content: this.retainedRestContent },
        { key: 'nodes', title: "Nodes", orgs: 'adminOrgs', dropdown: 'nodesorgsdropdown', rest: 'nodes_rest', content: this.nodesRestContent },
        { key: 'bridges', title: "Bridges", orgs: 'adminOrgs', dropdown: 'bridgesorgsdropdown', rest: 'bridges_rest', content: this.bridgesRestContent },
+       { key: 'grafana', title: "Grafana", orgs: 'adminOrgs', dropdown: 'grafanaorgsdropdown', rest: 'grafana_rest', content: this.grafanaRestContent },
+       { key: 'forwarders', title: "Forwarders", orgs: 'adminOrgs', dropdown: 'forwardersorgsdropdown', rest: 'forwarders_rest', content: this.forwardersRestContent },
        { key: 'api',   title: "API",   orgs: 'adminOrgs', dropdown: 'apiorgsdropdown',   rest: 'api_rest',   content: this.apiRestContent },
      ];
    }
