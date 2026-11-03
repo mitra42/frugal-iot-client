@@ -28,7 +28,7 @@ const STORED = { source: 'db', id: 7, type: 'opensearch', name: 'Search', enable
 const FROM_FILE = { source: 'file', index: 0, type: 'gsheet', name: 'From the configuration file (#1)', enabled: true,
   config: { sheet: 'S1', intervalSeconds: 300, topics: ['a/b/c/d/e'] } };
 
-let realFetch, RealRequest, calls, listing;
+let realFetch, RealRequest, calls, listing, jobState;
 const json = (body, status = 200) => Promise.resolve({
   ok: status < 400, status, headers: { get: () => 'application/json' },
   json: async () => body, text: async () => JSON.stringify(body),
@@ -43,6 +43,7 @@ beforeEach(() => {
   mock.loadConfig({ ...base, user: { id: 2, name: 'test', permissions: [{ org: 'dev', capability: 'ADMIN' }, { org: 'dev', capability: 'READ' }] } });
   calls = [];
   listing = { types: TYPES, forwarders: [STORED], fromFile: [FROM_FILE] };
+  jobState = { running: false };
   realFetch = globalThis.fetch;
   // A browser resolves "/forwarders/dev" against the page; Node's Request insists on a full URL
   RealRequest = globalThis.Request;
@@ -54,7 +55,7 @@ beforeEach(() => {
     const path = new URL(url, 'http://localhost').pathname;
     const method = (init && init.method) || req.method || 'GET';
     calls.push({ method, path, body: init && init.body ? JSON.parse(init.body) : undefined });
-    if (method === 'GET') return json(listing);
+    if (method === 'GET') return json(path.includes('/backfill/') ? jobState : listing);
     if (path.endsWith('/delete')) return json({ deleted: true, applied: true });
     return json({ id: 8, applied: true }, path.includes('bad') ? 400 : 200);
   };
@@ -80,7 +81,7 @@ describe('the Forwarders card', () => {
     assert.match(rows[0].textContent, /Search/);
     assert.match(rows[0].textContent, /OpenSearch/);
     assert.match(rows[0].textContent, /https:\/\/localhost:9200/);
-    assert.equal(rows[0].querySelectorAll('button').length, 2);        // Edit, Delete
+    assert.equal(rows[0].querySelectorAll('button').length, 3);        // Edit, Delete, Send earlier readings
     assert.match(rows[1].textContent, /From the file/);
     assert.equal(rows[1].querySelectorAll('button').length, 0);        // read-only
   });
@@ -165,6 +166,40 @@ describe('the Forwarders card', () => {
     [...root(admin).querySelectorAll('button')].find((b) => b.textContent === 'Save').click();
     await tick();
     assert.equal(calls.find((c) => c.method === 'POST').body.enabled, false);
+  });
+
+  test('is worded as active/paused, not as sending', async () => {
+    const admin = await card();
+    admin.onForwarderEdit(STORED);
+    assert.match(text(admin), /Active \(untick to pause/);
+  });
+
+  test('earlier readings: only an active OpenSearch forwarder offers it', async () => {
+    listing = { types: TYPES, forwarders: [STORED, { ...STORED, id: 9, enabled: false }, { ...STORED, id: 10, type: 'gsheet' }], fromFile: [] };
+    const admin = await card();
+    assert.equal(root(admin).querySelectorAll('button.forwarder-backfill').length, 1);
+  });
+
+  test('earlier readings: starts from the chosen day and shows how far it got', async () => {
+    const admin = await card();
+    root(admin).querySelector('button.forwarder-backfill').click();
+    admin.state.elements.backfill_since.value = '2026-09-01';
+    admin.state.elements.backfill_dry.checked = true;
+    jobState = { running: false, startedAt: 1, dryRun: true, sent: 1234 };
+    root(admin).querySelector('button.backfill-start').click();
+    await tick(); await tick();
+    const post = calls.find((c) => c.method === 'POST');
+    assert.deepEqual(post, { method: 'POST', path: '/forwarders/dev/backfill', body: { id: 7, since: '2026-09-01', dryRun: true } });
+    assert.match(root(admin).querySelector('.backfill-status').textContent, /Would send 1234 readings/);
+  });
+
+  test('earlier readings: a failure is shown', async () => {
+    const admin = await card();
+    admin.onBackfillOpen(STORED);
+    jobState = { running: false, startedAt: 1, sent: 5, error: 'No data/dev' };
+    admin.backfillPoll();
+    await tick();
+    assert.match(root(admin).querySelector('.backfill-status').textContent, /Stopped: No data\/dev/);
   });
 
   test('deleting asks first, and sends the id', async () => {

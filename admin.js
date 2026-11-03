@@ -567,6 +567,9 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
         el('td', {}, f.source === 'file' ? [] : [
           el('button', {type: 'button', textContent: "Edit", onclick: () => this.onForwarderEdit(f)}),
           el('button', {type: 'button', textContent: "Delete", onclick: () => this.onForwarderDelete(f)}),
+          ...(f.enabled && f.type.startsWith('opensearch') ? [
+            el('button', {type: 'button', class: 'forwarder-backfill', textContent: "Send earlier readings...", onclick: () => this.onBackfillOpen(f)}),
+          ] : []),
         ]),
       ])),
     ]);
@@ -677,12 +680,69 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       ...this.forwarderFields(def, row),
       el('p', {}, [el('label', {}, [
         this.state.elements.forwarder_enabled = el('input', {i8n: false, type: 'checkbox', checked: row ? row.enabled : true}),
-        el('span', {textContent: " Send readings"})])]),
+        el('span', {textContent: " Active (untick to pause; the settings are kept)"})])]),
       el('button', {class: 'submit', type: 'button', textContent: "Save", onclick: this.onForwarderSave.bind(this)}),
       el('button', {type: 'button', textContent: "Cancel", onclick: () => {
         this.state.forwarder_form = null;
         this.replaceElement("forwarder_form", this.forwarderForm());
       }}),
+    ]);
+  }
+  /*
+   * Sending an OpenSearch forwarder the readings already recorded, from a day on. The server does it in
+   * the background and this asks every couple of seconds how far it has got.
+   */
+  onBackfillOpen(f) {
+    this.state.backfill = { f };
+    this.replaceElement("forwarder_backfill", this.backfillPanel());
+  }
+  onBackfillStart() {
+    const b = this.state.backfill;
+    const since = this.state.elements.backfill_since.value;
+    const dryRun = this.state.elements.backfill_dry.checked;
+    POST(`/forwarders/${this.state.org}/backfill`, { id: b.f.id, since: since || undefined, dryRun }, (err) => {
+      if (err) { this.message(err.message); return; }
+      this.message("");
+      this.backfillPoll();
+    });
+  }
+  backfillPoll() {
+    const b = this.state.backfill;
+    if (!b) return;
+    GET(`/forwarders/${this.state.org}/backfill/${b.f.id}`, {}, (err, json) => {
+      if (err) { this.message(err.message); return; }
+      b.job = json;
+      this.replaceElement("forwarder_backfill", this.backfillPanel());
+      if (json.running) { clearTimeout(b.timer); b.timer = setTimeout(() => this.backfillPoll(), 2000); }
+    });
+  }
+  backfillStatus(job) {
+    if (!job || (!job.running && !job.startedAt)) return '';
+    if (job.running) return getStringWith('Sending... %s readings so far', job.sent);
+    if (job.error) return getStringWith('Stopped: %s', job.error);
+    return getStringWith(job.dryRun ? 'Would send %s readings' : 'Sent %s readings', job.sent);
+  }
+  backfillPanel() {
+    const b = this.state.backfill;
+    if (!b) return el('span', {});
+    const running = b.job && b.job.running;
+    return el('div', {class: 'forwarder-form'}, [
+      el('h4', {i8n: false, textContent: b.f.name}),
+      el('p', {textContent:
+        "Sends the readings already recorded in the CSV files, which this forwarder did not see because it " +
+        "was off or OpenSearch was down. It is safe to repeat: a reading already there is replaced, not doubled."}),
+      el('p', {}, [el('label', {}, [el('span', {textContent: "From this day on (leave empty for everything)"}), el('br', {}),
+        this.state.elements.backfill_since = el('input', {i8n: false, type: 'date'})])]),
+      el('p', {}, [el('label', {}, [
+        this.state.elements.backfill_dry = el('input', {i8n: false, type: 'checkbox'}),
+        el('span', {textContent: " Only count them, send nothing"})])]),
+      el('button', {class: 'submit backfill-start', type: 'button', textContent: "Start", disabled: !!running, onclick: this.onBackfillStart.bind(this)}),
+      el('button', {type: 'button', textContent: "Close", onclick: () => {
+        clearTimeout(b.timer);
+        this.state.backfill = null;
+        this.replaceElement("forwarder_backfill", this.backfillPanel());
+      }}),
+      el('p', {class: 'backfill-status', i8n: false, textContent: this.backfillStatus(b.job)}),
     ]);
   }
   forwardersRestContent() {
@@ -694,6 +754,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
         "them, or Google Sheets to add a row of values every so often. Changes apply straight away."}),
       this.state.elements.forwarders_list = this.forwardersList(),
       el('section', {}, [this.state.elements.forwarder_form = this.forwarderForm()]),
+      el('section', {}, [this.state.elements.forwarder_backfill = this.backfillPanel()]),
     ]);
   }
   /*
@@ -779,6 +840,27 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       '',
     ].join('\n');
   }
+  // A button that puts `text` on the clipboard. Where the browser will not (no secure context), the text
+  // is left selected so it can be copied by hand.
+  copyButton(text, getTarget) {
+    const btn = el('button', {type: 'button', class: 'copy-button', textContent: "Copy"});
+    btn.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(text);
+        btn.textContent = getString("Copied");
+      } catch (err) {
+        const target = getTarget && getTarget();
+        if (target && window.getSelection) {
+          const range = document.createRange();
+          range.selectNodeContents(target);
+          window.getSelection().removeAllRanges();
+          window.getSelection().addRange(range);
+        }
+        btn.textContent = getString("Press Ctrl-C or Cmd-C to copy");
+      }
+    };
+    return btn;
+  }
   grafanaNewDetails() {
     const n = this.state.grafana_new;
     if (!n) return el('span', {});
@@ -786,7 +868,10 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     return el('div', {class: 'grafana-new'}, [
       el('h4', {textContent: "Copy this now - it is not shown again"}),
       el('table', {class: 'nodestates'}, [
-        el('tr', {}, [el('th', {textContent: "Token"}), el('td', {i8n: false, textContent: n.token})]),
+        el('tr', {}, [el('th', {textContent: "Token"}), (() => {
+          const td = el('td', {i8n: false, textContent: n.token});
+          return el('td', {}, [td, this.copyButton(n.token, () => td)]);
+        })()]),
         el('tr', {}, [el('th', {textContent: "Allowed host"}), el('td', {i8n: false, textContent: origin})]),
       ]),
       el('p', {textContent:
@@ -864,9 +949,13 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       el('h4', {textContent: "Copy this now - it is not shown again"}),
       el('p', {textContent:
         "Put these lines in the configuration file of the OpenSearch Dashboards on your computer " +
-        "(opensearch_dashboards.yml), then restart it. The last-but-one line gives your organization " +
-        "its own place to keep saved dashboards."}),
-      el('pre', {class: 'opensearch-config', i8n: false, textContent: n.config}),
+        "(opensearch_dashboards.yml), then restart it. Nothing is asked for when you open it: the login " +
+        "is in the file. The password is not kept anywhere you can read it, so if you lose this, " +
+        "press the button below to make a new one and paste the lines in again."}),
+      (() => {
+        const pre = el('pre', {class: 'opensearch-config', i8n: false, textContent: n.config});
+        return el('div', {}, [pre, this.copyButton(n.config, () => pre)]);
+      })(),
     ]);
   }
   openSearchRestContent() {
@@ -1640,6 +1729,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     this.state.projects_list = [];
     this.state.forwarders = null;
     this.state.forwarder_form = null;
+    if (this.state.backfill) { clearTimeout(this.state.backfill.timer); this.state.backfill = null; }
     this.state.grafana_tokens = [];
     this.state.grafana_new = null;
     this.state.opensearch_access = null;
