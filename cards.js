@@ -745,7 +745,10 @@ const ADMIN_CARDS = [
   { section: 'retained', title: 'Retained messages', capability: 'ADMIN' },
   { section: 'nodes',   title: 'Nodes',            capability: 'ADMIN' },
   { section: 'bridges', title: 'Bridges',          capability: 'ADMIN' },
-  { section: 'grafana', title: 'Grafana',          capability: 'ADMIN' },
+  // READ, not ADMIN: a token shows only what its maker may read, so anyone who can read can make one
+  { section: 'grafana', title: 'Grafana',          capability: 'READ' },
+  // READ: each person makes their own login. The server needs it for the whole organization, and says so.
+  { section: 'opensearch', title: 'OpenSearch',    capability: 'READ' },
   { section: 'forwarders', title: 'Forwarders',    capability: 'ADMIN' },
   { section: 'api',   title: 'API',             capability: 'ADMIN' },
 ];

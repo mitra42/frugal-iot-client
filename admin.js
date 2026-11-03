@@ -70,6 +70,10 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   get adminOrgs() {
     return this.orgsByPerm("ADMIN");
   }
+  // Anyone who can read an organization, for the card whose tokens only ever show what they could see
+  get readOrgs() {
+    return this.orgsByPerm("READ");
+  }
   get otaOrgs() {
     return this.orgsByPerm("OTAUPDATE");
   }
@@ -664,6 +668,9 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
           ]),
         ]),
       el('p', {textContent: def.help}),
+      // Fixed links the server describes the type with - e.g. the Apps Script to copy for Google Sheets
+      ...(def.links || []).filter((l) => /^https:\/\//.test(l.url)).map((l) =>
+        el('p', {}, [el('a', {class: 'forwarder-link', href: l.url, target: '_blank', rel: 'noopener', textContent: l.label})])),
       el('p', {}, [el('label', {}, [el('span', {textContent: "Name"}), el('br', {}),
         this.state.elements.forwarder_name = el('input', {i8n: false, type: 'text', size: 30,
           value: row ? row.name : '', placeholder: def.label})])]),
@@ -703,7 +710,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     GET(`/grafana_token/${this.state.org}`, {}, (err, json) => {
       cb();
       if (err) { this.message(err.message); return; }
-      this.state.grafana_tokens = json; // [{ name, created_at, last_used }]
+      this.state.grafana_tokens = json; // [{ name, created_at, last_used, mine }] - yours, or all of them for an administrator
       this.replaceElement("grafana_list", this.grafanaList());
     });
   }
@@ -715,13 +722,14 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     return el('table', {class: 'nodestates'}, [
       el('tr', {}, [
         el('th', {textContent: "Name"}), el('th', {textContent: "Made"}),
-        el('th', {textContent: "Last used"}), el('th', {textContent: ""}),
+        el('th', {textContent: "Last used"}), el('th', {textContent: "Whose"}), el('th', {textContent: ""}),
       ]),
       ...tokens.map((t) => el('tr', {}, [
         el('td', {i8n: false, textContent: t.name}),
         el('td', {i8n: false, textContent: this.formatLastSeen(new Date(t.created_at).toISOString())}),
         el('td', {i8n: false, textContent: t.last_used
           ? this.formatLastSeen(new Date(t.last_used).toISOString()) : getString("Never")}),
+        el('td', {textContent: t.mine ? "Yours" : "Another user's"}),
         el('td', {}, [el('button', {type: 'button', textContent: "Revoke", onclick: () => this.onGrafanaRevoke(t)})]),
       ])),
     ]);
@@ -789,6 +797,91 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
         textContent: "Download the data source file"})]),
     ]);
   }
+  /*
+   * A login to this server's OpenSearch for OpenSearch Dashboards running on the organization's own
+   * computer. The server makes it (and a role that limits it to this organization) and shows the
+   * password once, with the lines to put in Dashboards' configuration.
+   */
+  getOpenSearchAccess(cb = () => {}) {
+    if (!this.state.org) { cb(); return; }
+    GET(`/opensearch_access/${this.state.org}`, {}, (err, json) => {
+      cb();
+      if (err) { this.message(err.message); return; }
+      this.state.opensearch_access = json; // { available, reason?, exists, hosts, username, index }
+      this.replaceElement("opensearch_status", this.openSearchStatus());
+    });
+  }
+  openSearchStatus() {
+    const a = this.state.opensearch_access;
+    if (!a) return el('span', {});
+    if (!a.available) return el('p', {class: 'opensearch-unavailable', textContent: a.reason});
+    return el('div', {}, [
+      el('p', {textContent: a.exists
+        ? getStringWith("You have a login: %s. Making another replaces its password, and your Dashboards stops working until it is given the new one.", a.username)
+        : "You have no login yet."}),
+      el('div', {}, [
+        el('button', {type: 'button', class: 'opensearch-make', textContent: a.exists ? "Replace the password" : "Make a login",
+          onclick: this.onOpenSearchMake.bind(this)}),
+        a.exists ? el('button', {type: 'button', class: 'opensearch-revoke', textContent: "Remove my login",
+          onclick: () => this.onOpenSearchRevoke()}) : null,
+      ]),
+      // An administrator of the whole organization also sees everyone's, to remove one - someone who
+      // has left, say, since OpenSearch does not notice a change in who may read
+      a.all && a.all.length ? el('section', {class: 'opensearch-all'}, [
+        el('h3', {textContent: "Everyone's logins"}),
+        el('table', {class: 'nodestates'}, a.all.map((u) => el('tr', {}, [
+          el('td', {i8n: false, textContent: u}),
+          el('td', {}, [el('button', {type: 'button', textContent: "Remove", onclick: () => this.onOpenSearchRevoke(u)})]),
+        ]))),
+      ]) : null,
+    ]);
+  }
+  onOpenSearchMake() {
+    const a = this.state.opensearch_access;
+    if (a && a.exists && !window.confirm(getString("Replace the password?") + "\n\n" +
+      getString("The Dashboards using the old one stops working until it is given the new one."))) return;
+    POST(`/opensearch_access/${this.state.org}`, {}, (err, json) => {
+      if (err) { this.message(err.message); return; }
+      this.state.opensearch_new = json; // { username, password, index, hosts, config } - shown once
+      this.getOpenSearchAccess();
+      this.replaceElement("opensearch_new", this.openSearchNewDetails());
+    });
+  }
+  onOpenSearchRevoke(username) {
+    if (!window.confirm(getString("Remove the login?") + "\n\n" +
+      getString("Dashboards using it stops being able to read this organization straight away."))) return;
+    POST(`/opensearch_access/${this.state.org}/revoke`, username ? { username } : {}, (err) => {
+      if (err) { this.message(err.message); return; }
+      this.state.opensearch_new = null;
+      this.getOpenSearchAccess();
+      this.replaceElement("opensearch_new", this.openSearchNewDetails());
+    });
+  }
+  openSearchNewDetails() {
+    const n = this.state.opensearch_new;
+    if (!n) return el('span', {});
+    return el('div', {class: 'opensearch-new'}, [
+      el('h4', {textContent: "Copy this now - it is not shown again"}),
+      el('p', {textContent:
+        "Put these lines in the configuration file of the OpenSearch Dashboards on your computer " +
+        "(opensearch_dashboards.yml), then restart it. The last-but-one line gives your organization " +
+        "its own place to keep saved dashboards."}),
+      el('pre', {class: 'opensearch-config', i8n: false, textContent: n.config}),
+    ]);
+  }
+  openSearchRestContent() {
+    return el('div', {}, [
+      this.refreshableHeading("OpenSearch Dashboards", this.getOpenSearchAccess),
+      el('p', {textContent:
+        "OpenSearch Dashboards is a program you run on your own computer to search and chart this " +
+        "organization's readings, which this server keeps in OpenSearch. It needs a login, made here, " +
+        "that is yours. It can read this organization's readings and nothing else, and the people of an " +
+        "organization share its saved dashboards. It needs permission to read the whole organization; " +
+        "if you can read only some projects, use the Grafana card instead."}),
+      this.state.elements.opensearch_status = this.openSearchStatus(),
+      this.state.elements.opensearch_new = this.openSearchNewDetails(),
+    ]);
+  }
   grafanaRestContent() {
     const org = this.state.org;
     return el('div', {}, [
@@ -796,8 +889,9 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       el('p', {textContent:
         "Grafana can chart this organization's readings straight from the server - every reading ever " +
         "recorded, with nothing to export first. To set it up: install the Infinity plugin in Grafana, " +
-        "make a token here, give Grafana the data source, then import the dashboard. A token lets one " +
-        "Grafana read this organization, and nothing else."}),
+        "make a token here, give Grafana the data source, then import the dashboard. A token is yours: " +
+        "it lets one Grafana read what you can read in this organization, and stops working if your " +
+        "access to it does."}),
       this.state.elements.grafana_list = this.grafanaList(),
       el('section', {}, [
         el('h3', {textContent: "Give a Grafana access"}),
@@ -1548,6 +1642,8 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     this.state.forwarder_form = null;
     this.state.grafana_tokens = [];
     this.state.grafana_new = null;
+    this.state.opensearch_access = null;
+    this.state.opensearch_new = null;
     this.state.platforms_list = [];
     this.state.farms_list = [];
     this.state.farm_nodes_list = [];
@@ -1557,7 +1653,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     // Which tabs do their own network fetch, and so need one again for a new organization. Only
     // Dashboard does not (mqtt-wrapper handles it). "Nodes" is in the list because it now fetches
     // the enrolled-node list as well as reading server_config:
-    this.state.sectionsNeedingLoad = new Set(['OTA', 'Admin', 'Projects', 'Nodes', 'Bridges', 'Forwarders', 'Grafana', 'API']);
+    this.state.sectionsNeedingLoad = new Set(['OTA', 'Admin', 'Projects', 'Nodes', 'Bridges', 'Forwarders', 'Grafana', 'OpenSearch', 'API']);
     this.loadSectionIfNeeded(this.state.activeSectionTitle);
     // Only a card created without an organization has a dropdown of its own; replaceElement does
     // nothing for an element this rendering never made. Fine too if this.state.org is undefined.
@@ -1601,6 +1697,8 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       this.getForwarders();
     } else if (title === 'Grafana') {
       this.getGrafanaTokens();
+    } else if (title === 'OpenSearch') {
+      this.getOpenSearchAccess();
     } else if (title === 'API') {
       this.getPlatformsList();
       this.getFarmsList();
@@ -2064,7 +2162,8 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
        { key: 'retained', title: "Retained", orgs: 'adminOrgs', dropdown: 'retainedorgsdropdown', rest: 'retained_rest', content: this.retainedRestContent },
        { key: 'nodes', title: "Nodes", orgs: 'adminOrgs', dropdown: 'nodesorgsdropdown', rest: 'nodes_rest', content: this.nodesRestContent },
        { key: 'bridges', title: "Bridges", orgs: 'adminOrgs', dropdown: 'bridgesorgsdropdown', rest: 'bridges_rest', content: this.bridgesRestContent },
-       { key: 'grafana', title: "Grafana", orgs: 'adminOrgs', dropdown: 'grafanaorgsdropdown', rest: 'grafana_rest', content: this.grafanaRestContent },
+       { key: 'grafana', title: "Grafana", orgs: 'readOrgs', dropdown: 'grafanaorgsdropdown', rest: 'grafana_rest', content: this.grafanaRestContent },
+       { key: 'opensearch', title: "OpenSearch", orgs: 'readOrgs', dropdown: 'opensearchorgsdropdown', rest: 'opensearch_rest', content: this.openSearchRestContent },
        { key: 'forwarders', title: "Forwarders", orgs: 'adminOrgs', dropdown: 'forwardersorgsdropdown', rest: 'forwarders_rest', content: this.forwardersRestContent },
        { key: 'api',   title: "API",   orgs: 'adminOrgs', dropdown: 'apiorgsdropdown',   rest: 'api_rest',   content: this.apiRestContent },
      ];

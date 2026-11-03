@@ -17,7 +17,9 @@ const TYPES = {
     { key: 'topics', label: 'Only these topics', kind: 'topics' },
     { key: 'flushSeconds', label: 'Send every (seconds)', kind: 'int' },
   ] },
-  gsheet: { label: 'Google Sheets', help: 'Appends rows', fields: [
+  gsheet: { label: 'Google Sheets', help: 'Appends rows', links: [
+    { label: 'The Apps Script to copy', url: 'https://raw.githubusercontent.com/x/y/main/gsheet_app' },
+    { label: 'Not https', url: 'javascript:alert(1)' }], fields: [
     { key: 'url', label: 'Web app URL', kind: 'url', required: true, secret: true },
   ] },
 };
@@ -38,7 +40,7 @@ before(async () => {
   await import('../admin.js');
 });
 beforeEach(() => {
-  mock.loadConfig({ ...base, user: { id: 2, name: 'test', permissions: [{ org: 'dev', capability: 'ADMIN' }] } });
+  mock.loadConfig({ ...base, user: { id: 2, name: 'test', permissions: [{ org: 'dev', capability: 'ADMIN' }, { org: 'dev', capability: 'READ' }] } });
   calls = [];
   listing = { types: TYPES, forwarders: [STORED], fromFile: [FROM_FILE] };
   realFetch = globalThis.fetch;
@@ -97,6 +99,19 @@ describe('the Forwarders card', () => {
       assert.ok(labels.some((l) => l.includes(want)), `no field "${want}"`);
     }
     assert.equal(root(admin).querySelector('input[type=password]') !== null, true, 'a secret must be a password box');
+  });
+
+  test('shows the links a type comes with, https only, opening in a new tab', async () => {
+    const admin = await card();
+    [...root(admin).querySelectorAll('button')].find((b) => /Add a forwarder/.test(b.textContent)).click();
+    const sel = root(admin).querySelector('.forwarder-form select');
+    sel.value = 'gsheet';
+    sel.dispatchEvent(new window.Event('change'));
+    const links = [...root(admin).querySelectorAll('.forwarder-form a.forwarder-link')];
+    assert.equal(links.length, 1);
+    assert.equal(links[0].getAttribute('href'), 'https://raw.githubusercontent.com/x/y/main/gsheet_app');
+    assert.equal(links[0].getAttribute('target'), '_blank');
+    assert.match(links[0].getAttribute('rel'), /noopener/);
   });
 
   test('sends what was typed, as the server takes it, and leaves blanks out', async () => {
@@ -196,7 +211,7 @@ describe('the Grafana card', () => {
   });
 
   test('lists tokens by name, with no token value anywhere', async () => {
-    const admin = await grafanaCard([{ name: 'home', created_at: Date.now() - 86400000, last_used: null }]);
+    const admin = await grafanaCard([{ name: 'home', created_at: Date.now() - 86400000, last_used: null, mine: true }]);
     const row = admin.shadowRoot.querySelectorAll('table.nodestates tr')[1];
     assert.match(row.textContent, /home/);
     assert.match(row.textContent, /Never/);
@@ -240,5 +255,72 @@ describe('the Grafana card', () => {
     assert.match(asked, /Revoke "home"\?/);
     assert.deepEqual(calls.find((c) => c.method === 'POST'),
       { method: 'POST', path: '/grafana_token/dev/revoke', body: { name: 'home' } });
+  });
+});
+
+describe('the OpenSearch Dashboards card', () => {
+  async function accessCard(state) {
+    listing = state;
+    const admin = document.createElement('mqtt-admin');
+    admin.setAttribute('section', 'opensearch');
+    document.body.append(admin);
+    admin.getOpenSearchAccess();
+    await tick();
+    return admin;
+  }
+  const press = (admin, cls) => admin.shadowRoot.querySelector(`button.${cls}`).click();
+
+  test('says what is missing when the server has no OpenSearch of its own', async () => {
+    const admin = await accessCard({ available: false, reason: 'This server has no OpenSearch of its own set up' });
+    assert.match(admin.shadowRoot.querySelector('.opensearch-unavailable').textContent, /no OpenSearch of its own/);
+    assert.equal(admin.shadowRoot.querySelector('button.opensearch-make'), null);
+  });
+
+  test('offers to make a login when there is none, and to replace or remove it when there is', async () => {
+    let admin = await accessCard({ available: true, exists: false, username: 'frugaliot_dev' });
+    assert.equal(admin.shadowRoot.querySelector('button.opensearch-make').textContent, 'Make a login');
+    assert.equal(admin.shadowRoot.querySelector('button.opensearch-revoke'), null);
+    document.body.innerHTML = '';
+    admin = await accessCard({ available: true, exists: true, username: 'frugaliot_dev' });
+    assert.equal(admin.shadowRoot.querySelector('button.opensearch-make').textContent, 'Replace the password');
+    assert.ok(admin.shadowRoot.querySelector('button.opensearch-revoke'));
+  });
+
+  test('making a login shows the lines to use, once, and sends nothing but the request', async () => {
+    const admin = await accessCard({ available: true, exists: false, username: 'frugaliot_dev' });
+    const config = 'opensearch.username: "frugaliot_dev"\nopensearch.password: "PW123"';
+    globalThis.fetch = (req, init) => {
+      const path = new URL(typeof req === 'string' ? req : req.url, 'http://localhost').pathname;
+      calls.push({ method: (init && init.method) || 'GET', path, body: init && init.body ? JSON.parse(init.body) : undefined });
+      return json((init && init.method === 'POST') ? { username: 'frugaliot_dev', password: 'PW123', config } : { available: true, exists: true, username: 'frugaliot_dev' });
+    };
+    press(admin, 'opensearch-make');
+    await tick();
+    assert.deepEqual(calls.find((c) => c.method === 'POST'), { method: 'POST', path: '/opensearch_access/dev', body: {} });
+    assert.equal(admin.shadowRoot.querySelector('pre.opensearch-config').textContent, config);
+  });
+
+  test('an administrator sees everyone\'s logins and can remove one by name', async () => {
+    const admin = await accessCard({ available: true, exists: true, username: 'frugaliot_dev_mitra', all: ['mitra', 'sam'] });
+    const rows = admin.shadowRoot.querySelectorAll('.opensearch-all tr');
+    assert.equal(rows.length, 2);
+    const realConfirm = globalThis.window.confirm;
+    globalThis.window.confirm = () => true;
+    rows[1].querySelector('button').click();
+    await tick();
+    globalThis.window.confirm = realConfirm;
+    assert.deepEqual(calls.find((c) => c.method === 'POST'), { method: 'POST', path: '/opensearch_access/dev/revoke', body: { username: 'sam' } });
+  });
+
+  test('removing your own sends no name, and asks first', async () => {
+    const admin = await accessCard({ available: true, exists: true, username: 'frugaliot_dev' });
+    let asked;
+    const realConfirm = globalThis.window.confirm;
+    globalThis.window.confirm = (q) => { asked = q; return false; };
+    press(admin, 'opensearch-revoke');
+    await tick();
+    globalThis.window.confirm = realConfirm;
+    assert.match(asked, /Remove the login/);
+    assert.equal(calls.filter((c) => c.method === 'POST').length, 0);
   });
 });

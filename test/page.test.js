@@ -71,20 +71,25 @@ describe('a permission naming an organization that is not in the config', () => 
 });
 
 describe('which admin cards a user gets', () => {
-  test('a reader gets Info and nothing else', () => {
+  test('a reader gets Info, Grafana and OpenSearch, nothing else', () => {
     // Info needs no capability: connection details are reference information, and having one card
     // that everyone gets is also what stops the project's back ever opening onto nothing
-    assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section), ['info']);
+    assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section), ['info', 'grafana', 'opensearch']);
   });
 
   test('each capability brings its own card, and no others', () => {
     withCapabilities('READ', 'OTAUPDATE');
-    assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section), ['info', 'ota', 'otaupload']);
+    assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section), ['info', 'ota', 'otaupload', 'grafana', 'opensearch']);
     withCapabilities('READ', 'OTAFLASH');
-    assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section), ['info', 'ota', 'flash']);
+    assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section), ['info', 'ota', 'flash', 'grafana', 'opensearch']);
     withCapabilities('READ', 'ADMIN');
     assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section),
-      ['info', 'admin', 'projects', 'message', 'retained', 'nodes', 'bridges', 'grafana', 'forwarders', 'api']);
+      ['info', 'admin', 'projects', 'message', 'retained', 'nodes', 'bridges', 'grafana', 'opensearch', 'forwarders', 'api']);
+  });
+
+  test('someone who can only read gets the Grafana card, because a token shows only what they can read', () => {
+    withCapabilities('READ');
+    assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section), ['info', 'grafana', 'opensearch']);
   });
 
   test('flashing and pushing an OTA binary are separate capabilities', () => {
@@ -108,7 +113,7 @@ describe('the project back', () => {
     const back = document.createElement('mqtt-projectback');
     back.setAttribute('organization', 'dev');
     document.body.append(back);
-    assert.equal(back.querySelectorAll('.fi-admincard').length, 10);
+    assert.equal(back.querySelectorAll('.fi-admincard').length, 11);
     back.remove();
   });
 
@@ -164,12 +169,12 @@ describe('the project back', () => {
     back.remove();
   });
 
-  test('a reader gets Info and no admin cards', () => {
+  test('a reader gets Info and Grafana, and no admin cards', () => {
     const back = document.createElement('mqtt-projectback');
     back.setAttribute('organization', 'dev');
     document.body.append(back);
     const titles = [...back.querySelectorAll('.fi-admincard__head')].map((h) => h.textContent);
-    assert.deepEqual(titles, ['Info']);
+    assert.deepEqual(titles, ['Info', 'Grafana', 'OpenSearch']);
     back.remove();
   });
 
@@ -222,13 +227,13 @@ describe('the project back', () => {
   });
 
   test('each card holds the existing admin element, not a reimplementation', () => {
-    withCapabilities('ADMIN');
+    withCapabilities('READ', 'ADMIN');
     const back = document.createElement('mqtt-projectback');
     back.setAttribute('organization', 'dev');
     document.body.append(back);
     back.querySelectorAll('.fi-admincard__head').forEach((h) => h.click());
     const sections = [...back.querySelectorAll('mqtt-admin')].map((a) => a.getAttribute('section'));
-    assert.deepEqual(sections, ['admin', 'projects', 'message', 'retained', 'nodes', 'bridges', 'grafana', 'forwarders', 'api']);
+    assert.deepEqual(sections, ['admin', 'projects', 'message', 'retained', 'nodes', 'bridges', 'grafana', 'opensearch', 'forwarders', 'api']);
     back.remove();
   });
 });
