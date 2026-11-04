@@ -405,6 +405,7 @@ EN:
   Start the monitor to configure: Start the monitor to configure
   Board not answering - old firmware?: Board not answering - old firmware?
   Waiting for the board: Waiting for the board
+  Board was already configured - its settings were kept. Apply to board changes them: Board was already configured - its settings were kept. Apply to board changes them
   Configure board: Configure board
   Apply after flashing: Apply after flashing
   Apply to board: Apply to board
@@ -748,6 +749,7 @@ FR:
   Start the monitor to configure: Démarrez le moniteur pour configurer
   Board not answering - old firmware?: La carte ne répond pas - ancien firmware ?
   Waiting for the board: En attente de la carte
+  Board was already configured - its settings were kept. Apply to board changes them: La carte était déjà configurée - ses réglages sont conservés. « Appliquer à la carte » les modifie
   Configure board: Configurer la carte
   Apply after flashing: Appliquer après le flashage
   Apply to board: Appliquer à la carte
@@ -1091,6 +1093,7 @@ HI:
   Start the monitor to configure: कॉन्फ़िगर करने के लिए मॉनिटर शुरू करें
   Board not answering - old firmware?: बोर्ड जवाब नहीं दे रहा - पुराना फ़र्मवेयर?
   Waiting for the board: बोर्ड की प्रतीक्षा
+  Board was already configured - its settings were kept. Apply to board changes them: बोर्ड पहले से कॉन्फ़िगर था - उसकी सेटिंग रखी गईं। इन्हें बदलने के लिए बोर्ड पर लागू करें दबाएँ
   Configure board: बोर्ड कॉन्फ़िगर करें
   Apply after flashing: फ़्लैश के बाद लागू करें
   Apply to board: बोर्ड पर लागू करें
@@ -1434,6 +1437,7 @@ ID:
   Start the monitor to configure: Mulai monitor untuk mengonfigurasi
   Board not answering - old firmware?: Papan tidak menjawab - firmware lama?
   Waiting for the board: Menunggu papan
+  Board was already configured - its settings were kept. Apply to board changes them: Papan sudah dikonfigurasi - pengaturannya dipertahankan. Terapkan ke papan untuk mengubahnya
   Configure board: Konfigurasi papan
   Apply after flashing: Terapkan setelah flash
   Apply to board: Terapkan ke papan

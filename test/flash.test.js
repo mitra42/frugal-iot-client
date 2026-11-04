@@ -267,12 +267,14 @@ describe('flashing over a board that is already laid out', () => {
   const readBase = (p) => new Uint8Array(readFileSync(new URL(`../base/${p}`, import.meta.url)));
   const boards = JSON.parse(readFileSync(new URL('../base/boards.json', import.meta.url), 'utf8'));
   let writes;
+  let afterModes;
+  let loaderOptions;
   // An 8MB S3 whose flash holds `table` at 0x8000, a bootloader, and an erased filesystem
   function fakeS3(table, capacity = 0x17) {
     return async () => ({
       Transport: class { async disconnect() {} },
       ESPLoader: class {
-        constructor() { this.chip = {CHIP_NAME: 'ESP32-S3', BOOTLOADER_FLASH_OFFSET: 0, IMAGE_CHIP_ID: 9}; }
+        constructor(options) { loaderOptions = options; this.chip = {CHIP_NAME: 'ESP32-S3', BOOTLOADER_FLASH_OFFSET: 0, IMAGE_CHIP_ID: 9}; }
         async main() { return 'ESP32-S3'; }
         async readFlashId() { return capacity << 16; }
         async readFlash(offset, length) {
@@ -282,7 +284,7 @@ describe('flashing over a board that is already laid out', () => {
           return block;
         }
         async writeFlash({fileArray}) { writes.push(...fileArray.map((f) => f.address)); }
-        async after() {}
+        async after(mode) { afterModes.push(mode); }
       },
     });
   }
@@ -305,7 +307,7 @@ describe('flashing over a board that is already laid out', () => {
     };
   });
   after(() => { globalThis.fetch = realFetch; });
-  beforeEach(() => { writes = []; });
+  beforeEach(() => { writes = []; afterModes = []; });
 
   test('a board on a bigger app slot than our scheme is updated app-only, keeping its config', async () => {
     const flash = await connected(readBase('partitions/default_8MB.bin'));
@@ -316,11 +318,52 @@ describe('flashing over a board that is already laid out', () => {
     flash.remove();
   });
 
+  test('a flash over a configured board says its settings were kept, and a provision does not', async () => {
+    const kept = await connected(readBase('partitions/default_8MB.bin'));
+    kept.state.app = {name: 'firmware.bin', bytes: image(0x200000)};
+    kept.state.device.hasConfig = true; // the fake board's filesystem is blank, which is the other case
+    await kept.flash();
+    assert.equal(kept.state.keptConfig, true);
+    assert.equal(kept.state.applyAfterHello, false);
+    assert.match(kept.state.log.join('\n'), /already configured - its settings were kept/);
+    kept.state.node = {nodeid: 'n', otakey: 'k'};
+    kept.configRender();
+    assert.match(kept.state.elements.config.textContent, /already configured/);
+    kept.state.apply = {rows: [], problems: [], status: null}; // an apply has run: the rows speak now
+    kept.configRender();
+    assert.doesNotMatch(kept.state.elements.config.textContent, /already configured/);
+    kept.remove();
+    const table = readBase('partitions/min_spiffs.bin').slice();
+    new DataView(table.buffer).setUint32(2 * 32 + 4, 0x20000, true); // forces a provision
+    const fresh = await connected(table);
+    fresh.state.app = {name: 'firmware.bin', bytes: image(0x1000)};
+    await fresh.flash();
+    assert.equal(fresh.state.keptConfig, false);
+    assert.equal(fresh.state.applyAfterHello, true);
+    assert.ok(!fresh.state.log.join('\n').includes('settings were kept'));
+    fresh.remove();
+  });
+
   test('an app-only write resets otadata where the board says, so it boots app0 and not an older app1', async () => {
     const flash = await connected(readBase('partitions/min_spiffs.bin'));
     flash.state.app = {name: 'firmware.bin', bytes: image(0x1000)};
     await flash.flash();
     assert.ok(writes.includes(0xe000), 'otadata should have been written');
+    flash.remove();
+  });
+
+  test('the serial buffer is raised above WebSerial\u2019s 255-byte default', async () => {
+    const flash = await connected(readBase('partitions/min_spiffs.bin'));
+    assert.ok(loaderOptions.serialOptions.bufferSize >= 65536, 'a native-USB chip overruns the default');
+    flash.remove();
+  });
+
+  test('esptool does not reset the board - the monitor does, once, after the port is reopened', async () => {
+    const flash = await connected(readBase('partitions/min_spiffs.bin'));
+    flash.state.app = {name: 'firmware.bin', bytes: image(0x1000)};
+    await flash.flash();
+    assert.deepEqual(afterModes, ['no_reset_stub']);
+    assert.equal(flash.state.resetOnOpen, true);
     flash.remove();
   });
 
@@ -349,6 +392,61 @@ describe('flashing over a board that is already laid out', () => {
     await assert.rejects(flash.flash(), /c3-firmware\.bin was built for ESP32-C3 \(chip id 5\), but this board is ESP32-S3 - nothing was written/);
     assert.deepEqual(writes, []);
     flash.remove();
+  });
+
+  test('choosing another firmware replaces the verdict on the last one, and checks the new one at once', async () => {
+    const flash = await connected(readBase('partitions/min_spiffs.bin'));
+    const choose = (name, bytes) => { flash.state.app = {name, bytes}; flash.appChosen(); };
+    const c3 = image(0x1000); c3[12] = 5;
+    choose('c3.bin', c3);
+    assert.match(flash.state.error, /c3\.bin was built for ESP32-C3/);
+    choose('good.bin', image(0x1000));
+    assert.equal(flash.state.error, null, 'the old file\'s error must not outlive it');
+    const s2 = image(0x1000); s2[12] = 2;
+    choose('s2.bin', s2);
+    assert.match(flash.state.error, /s2\.bin was built for ESP32-S2/);
+    assert.deepEqual(writes, []);
+    flash.remove();
+  });
+
+  test('connecting a board checks the firmware already chosen, and a lost board clears the verdict', async () => {
+    const flash = await connected(readBase('partitions/min_spiffs.bin'));
+    const c3 = image(0x1000); c3[12] = 5;
+    flash.state.app = {name: 'c3.bin', bytes: c3};
+    flash.state.busy = false;
+    flash.verdictRefresh(); // what the end of Connect runs
+    assert.match(flash.state.error, /c3\.bin was built for ESP32-C3/);
+    flash.state.esploader = null; // the board is gone
+    flash.verdictRefresh();
+    assert.equal(flash.state.error, null);
+    flash.state.esploader = {chip: {}}; flash.state.app = null; // a board, no file
+    flash.verdictRefresh();
+    assert.equal(flash.state.error, null);
+    flash.remove();
+  });
+
+  test('connecting a board forgets the ticks from the one before', async () => {
+    const flash = await connected(readBase('partitions/min_spiffs.bin'));
+    flash.state.apply = {rows: [{label: 'frugal_iot/org dev'}], problems: [], status: null};
+    await flash.connectAndInspect({});
+    assert.equal(flash.state.apply, null);
+    flash.remove();
+  });
+
+  test('the Connect button itself checks the firmware chosen before it', async () => {
+    const flash = document.createElement('mqtt-flash');
+    document.body.append(flash);
+    flash.esptoolImport = fakeS3(readBase('partitions/min_spiffs.bin'));
+    flash.state.boards = boards;
+    flash.monitorStart = () => {};
+    Object.defineProperty(navigator, 'serial', {value: {requestPort: async () => ({})}, configurable: true});
+    const c3 = image(0x1000); c3[12] = 5;
+    flash.state.app = {name: 'c3.bin', bytes: c3};
+    flash.state.elements.connectButton.click();
+    await flash.state.connectDone;
+    assert.match(flash.state.error, /c3\.bin was built for ESP32-C3/);
+    flash.remove();
+    delete navigator.serial;
   });
 
   test('a wrong-chip image is refused when provisioning too, not after the bootloader is written', async () => {
@@ -521,10 +619,19 @@ describe('the flasher panel', () => {
     const button = flash.state.elements.flashButton;
     assert.equal(button.textContent, 'Flash');
     flash.state.device = {chipName: 'ESP32-C3', description: 'ESP32-C3', flashSize: '4MB', provision: true, scheme: 'min_spiffs'};
+    flash.state.esploader = {};
     flash.statusRender();
     assert.equal(button.textContent, 'Erase and flash');
     assert.ok(button.classList.contains('destructive'));
     assert.ok(flash.state.elements.status.querySelector('p.destructive'), 'the warning should read as destructive');
+    flash.state.esploader = null; // released after a flash: nothing is connected, so nothing is about to be erased
+    flash.statusRender();
+    assert.equal(button.textContent, 'Flash');
+    assert.ok(!button.classList.contains('destructive'));
+    assert.ok(button.disabled);
+    assert.ok(!flash.state.elements.status.querySelector('p.destructive'), 'a stale warning is shown about a board no longer connected');
+    assert.match(flash.state.elements.status.textContent, /Reconnect the board to flash again/);
+    flash.state.esploader = {};
     flash.state.device.provision = false;
     flash.statusRender();
     assert.equal(button.textContent, 'Flash');
@@ -592,7 +699,8 @@ describe('the flasher panel', () => {
 describe('configuring the node over the monitor’s port', () => {
   // A node that speaks the protocol: says hello when the port opens, and answers like the firmware.
   // `got` is every line written to it.
-  function nodePort({restart = false, enrolled = true} = {}) {
+  function nodePort({restart = false, enrolled = true, dropFirstSet = false} = {}) {
+    let dropping = dropFirstSet;
     const port = {got: [], readable: null, writable: null};
     let controller;
     const say = (t) => controller.enqueue(new TextEncoder().encode(t));
@@ -603,7 +711,7 @@ describe('configuring the node over the monitor’s port', () => {
           port.got.push(line);
           const [cmd, twig] = line.split('\t');
           if (cmd === '~hello') say('~hello\t1\tesp32-abc123\tc3_pico\n');
-          else if (cmd === '~set') say(`~ok\t${twig}\n`);
+          else if (cmd === '~set') { if (dropping) dropping = false; else say(`~ok\t${twig}\n`); }
           else if (cmd === '~apply') say('~ok\tapply\n');
           else if (cmd === '~status') say(`~status\t{"org":"dev","project":"lotus","connected":true,"mqtt":true,"enrolled":${enrolled},"restart":${restart}}\n`);
         });
@@ -654,6 +762,62 @@ describe('configuring the node over the monitor’s port', () => {
     assert.equal(flash.state.applied, 1, 'a board that came up enrolled counts as done');
     assert.ok(!flash.state.log.join('\n').includes('newest'), 'the secret must not reach the log');
     assert.equal(flash.profileGet().secret, '', 'nor stay in the profile');
+    await flash.monitorStop();
+    flash.remove();
+  });
+
+  test('a set the board did not answer is sent once more', async () => {
+    const flash = await ready({dropFirstSet: true});
+    await flash.applyProfile();
+    assert.equal(flash.state.port.got.filter((l) => l === '~set\tfrugal_iot/org\tdev').length, 2);
+    assert.ok(flash.state.apply.rows.every((r) => !r.error), JSON.stringify(flash.state.apply.rows));
+    await flash.monitorStop();
+    flash.remove();
+  });
+
+  test('the ticks from one connection are not kept for the next', async () => {
+    const flash = await ready();
+    await flash.applyProfile();
+    assert.ok(flash.state.apply.rows.length);
+    await flash.monitorStop();
+    flash.monitorStart();
+    for (let i = 0; i < 200 && flash.state.apply; i++) await new Promise((r) => setTimeout(r, 5));
+    assert.equal(flash.state.apply, null, 'a reopened port may be a reset board');
+    await flash.monitorStop();
+    flash.remove();
+  });
+
+  test('the monitor started after a flash resets the board once, and only then', async () => {
+    const flash = document.createElement('mqtt-flash');
+    document.body.append(flash);
+    const port = nodePort();
+    const signals = [];
+    port.setSignals = async (s) => { signals.push(s); };
+    flash.state.port = port;
+    flash.state.resetOnOpen = true;
+    flash.monitorStart();
+    for (let i = 0; i < 200 && signals.length < 2; i++) await new Promise((r) => setTimeout(r, 5));
+    assert.deepEqual(signals, [{dataTerminalReady: false, requestToSend: true}, {dataTerminalReady: false, requestToSend: false}]);
+    await flash.monitorStop();
+    flash.monitorStart(); // an ordinary start must not restart a board that is busy
+    await new Promise((r) => setTimeout(r, 150));
+    assert.equal(signals.length, 2);
+    await flash.monitorStop();
+    flash.remove();
+  });
+
+  test('a flashed board that says hello again is applied again, until one apply succeeds', async () => {
+    const flash = await ready();
+    let calls = 0;
+    flash.applyProfile = async () => { calls++; };
+    flash.state.applyAfterHello = true;
+    flash.onProtocolLine('~hello\t1\tesp32-abc123\tc3_pico');
+    flash.onProtocolLine('~hello\t1\tesp32-abc123\tc3_pico'); // reset after a freeze
+    assert.equal(calls, 2);
+    flash.state.autoApply = false;
+    flash.onProtocolLine('~hello\t1\tesp32-abc123\tc3_pico');
+    assert.equal(calls, 2, 'unticking Apply after flashing must stop it');
+    assert.match(flash.state.log.join('\n'), /Apply after flashing is off/);
     await flash.monitorStop();
     flash.remove();
   });

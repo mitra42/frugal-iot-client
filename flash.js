@@ -29,6 +29,7 @@ const MonitorBaudRates = [460800, 115200, 921600, 74880];
 // How long a board gets to answer a ~set, and how often and how many times we ask whether the node
 // firmware speaks the protocol at all - an older build never answers
 const ConfigReplyMs = 3000;
+const KeptConfigText = "Board was already configured - its settings were kept. Apply to board changes them";
 const HelloPollMs = 2000;
 const HelloTries = 15;
 // A node restarting after ~apply, and then joining WiFi, MQTT and enrolling, takes this long
@@ -47,6 +48,9 @@ const MonitorRetryMs = 1000;
 // esptool-js's readFlash waits FLASH_READ_TIMEOUT (100s) for its first packet, which stalls Connect
 // on any board that does not answer the stub's read command
 const FlashReadMs = 8000;
+// WebSerial's receive buffer defaults to 255 bytes, which a native-USB chip overruns - it sends a 4KB read at USB speed, not the
+// baud rate - and the dropped bytes surface as a stalled or garbled packet
+const SerialBufferBytes = 1 << 20;
 // How long to wait for the port to close before saying it did not - esptool-js's disconnect() waits
 // on the streams unlocking with no deadline of its own
 const TransportReleaseMs = 5000;
@@ -185,7 +189,7 @@ class MqttFlash extends HTMLElementExtended {
     if (!kept || this.state.app) return;
     this.state.app = {name: kept.name, bytes: kept.bytes, kept: true};
     this.logLine(`Kept from last session: ${kept.name} (${bytesToSizeString(kept.bytes.length)})`);
-    this.logAppDescription();
+    this.appChosen();
     this.statusRender();
   }
   // Removed while it holds the port - the card is rebuilt, or the page navigates - and the next
@@ -300,7 +304,7 @@ class MqttFlash extends HTMLElementExtended {
       this.state.app = {name: file.name, bytes: new Uint8Array(buf)};
       this.appStore.put(this.state.app);
       this.logLine(`Selected ${file.name} (${bytesToSizeString(this.state.app.bytes.length)})`);
-      this.logAppDescription();
+      this.appChosen();
       this.statusRender();
     });
   }
@@ -314,7 +318,7 @@ class MqttFlash extends HTMLElementExtended {
         this.state.app = {name: `${path}/firmware.bin`, bytes: new Uint8Array(buf)};
         this.appStore.put(this.state.app);
         this.logLine(`Selected ${this.state.app.name} (${bytesToSizeString(this.state.app.bytes.length)})`);
-        this.logAppDescription();
+        this.appChosen();
         this.statusRender();
       })
       .catch((e) => { this.logLine(`Error: ${e.message}`); this.statusRender(); });
@@ -334,21 +338,32 @@ class MqttFlash extends HTMLElementExtended {
         this.state.device = null;
         return this.transportRelease(); // otherwise a half-open port stays locked
       })
-      .then(() => { this.state.busy = false; this.statusRender(); });
+      .then(() => { this.state.busy = false; this.verdictRefresh(); this.statusRender(); });
+  }
+  // Ticks said what was set on the board that was there; a new connection may be a different board, or the same one reset
+  applyForget() {
+    if (this.state.applying) return;
+    this.state.apply = null;
+    this.configRender();
   }
   // A seam: the real thing is 214KB of esptool-js and wants a board on the other end of a port
   esptoolImport() { return import('esptool-js'); }
   async connectAndInspect(port) {
+    this.state.keptConfig = false;
+    this.applyForget();
     await this.monitorStop();      // the monitor holds the port open, so esptool cannot have it
     await this.transportRelease(); // clicking Connect twice must not stack transports on one port
     const {ESPLoader, Transport} = await this.esptoolImport(); // not loaded until first use
     const transport = new Transport(port, true);
-    const esploader = new ESPLoader({transport, baudrate: this.state.baudrate, terminal: this.terminal});
+    const esploader = new ESPLoader({transport, baudrate: this.state.baudrate, terminal: this.terminal,
+      serialOptions: {bufferSize: SerialBufferBytes}});
     // Recorded before main(), which opens the port: a failure after that has to be releasable, or
     // the retry meets a port this element no longer knows it holds
     this.state.port = port;
     this.state.transport = transport;
     this.state.esploader = esploader;
+    // A read that gives up must really stop: one left waiting steals the reply to the next command
+    esploader.FLASH_READ_TIMEOUT = FlashReadMs;
     const description = await esploader.main(); // returns the description, not the chip name
     const chipName = esploader.chip.CHIP_NAME;
     const flashIdCapacity = (await esploader.readFlashId()) >> 16 & 0xff;
@@ -401,8 +416,11 @@ class MqttFlash extends HTMLElementExtended {
   async readFlashBounded(offset, length) {
     const read = this.state.esploader.readFlash(offset, length)
       .catch((e) => { this.logLine(`(read of 0x${offset.toString(16)} failed: ${e.message})`); return null; });
-    const bytes = await withTimeout(read, FlashReadMs, null);
-    if (!bytes) this.logLine(`(could not read 0x${offset.toString(16)} - skipping inspection)`);
+    const bytes = await withTimeout(read, FlashReadMs * 2, null);
+    if (!bytes) {
+      this.state.transport.flushInput?.(); // the stub may still be sending
+      this.logLine(`(could not read 0x${offset.toString(16)} - skipping inspection)`);
+    }
     return bytes;
   }
   async deviceInspect() {
@@ -505,6 +523,17 @@ class MqttFlash extends HTMLElementExtended {
     }
     return match;
   }
+  appChosen() {
+    this.logAppDescription();
+    this.verdictRefresh();
+  }
+  // The verdict is about this file on this board, so it is redone when either changes, and is
+  // blank until both are there - an error left from the last pairing would be about neither
+  verdictRefresh() {
+    this.state.error = null;
+    if (!this.state.app || !this.state.device || !this.state.esploader || this.state.busy) return;
+    try { this.appCheck(); } catch (e) { this.state.error = e.message; this.logLine(`Error: ${e.message}`); }
+  }
   logAppDescription() {
     const desc = appDescription(this.state.app.bytes);
     if (desc) this.logLine(`Built with ESP-IDF ${desc.idfVer} (${desc.projectName}, ${desc.date})`);
@@ -605,14 +634,23 @@ class MqttFlash extends HTMLElementExtended {
         }
       }
       this.logLine("Flash complete - resetting. Reconnect the board if you want to flash again.");
-      await esploader.after("hard_reset");
+      // Not reset here: the monitor resets the board once, after reopening the port. A reset now would be
+      // followed by a second as the port reopens, and the first boot is when the filesystem is formatted
+      await esploader.after("no_reset_stub");
       dev.flashed = true;
       // A board whose config was just erased - or that never had any - is the one a forgotten Apply
       // would leave unconfigured; one that kept its config is left alone
-      this.state.applyAfterHello = this.state.autoApply && (dev.provision || !dev.hasConfig);
+      const configured = !dev.provision && dev.hasConfig;
+      this.state.applyAfterHello = this.state.autoApply && !configured;
+      // Said, not just skipped: otherwise a board that is simply left as it was looks like an apply that failed
+      this.state.keptConfig = configured;
+      if (configured) this.logLine(KeptConfigText);
     } finally {
       await this.transportRelease(); // a failed flash must still free the port
     }
+    // Reopening the port toggles DTR/RTS, which on an auto-reset board can leave the chip waiting in
+    // its bootloader - so the one reset comes after the reopen, and also catches the boot log
+    this.state.resetOnOpen = true;
     this.monitorStart(); // not awaited - it now runs until stopped
   }
   // DTR/RTS drive EN and IO0 on boards with the usual auto-reset circuit - RTS left asserted holds
@@ -709,7 +747,7 @@ class MqttFlash extends HTMLElementExtended {
   }
   async monitorOpen(port) {
     try {
-      await port.open({baudRate: this.state.monitorBaudrate});
+      await port.open({baudRate: this.state.monitorBaudrate, bufferSize: SerialBufferBytes});
       return null;
     } catch (e) {
       return e.message;
@@ -756,8 +794,13 @@ class MqttFlash extends HTMLElementExtended {
       this.state.monitorReader = reader;
       this.state.monitorPort = port;
       this.state.node = null; // whatever is on the port now has yet to say hello
+      this.applyForget();
       this.state.helloGaveUp = false;
       this.configRender();
+      if (this.state.resetOnOpen) {
+        this.state.resetOnOpen = false;
+        await this.bootReset(port);
+      }
       stopHelloPoll = this.helloPoll();
       const quietUntil = Date.now() + BootLogMs;
       while (this.state.monitoring) {
@@ -818,9 +861,11 @@ class MqttFlash extends HTMLElementExtended {
       this.state.node = {nodeid: reply.fields[1], otakey: reply.fields[2]};
       this.logLine(`Board ${this.state.node.nodeid} (${this.state.node.otakey}) is listening`);
       this.configRender();
-      if (this.state.applyAfterHello) {
-        this.state.applyAfterHello = false;
-        if (!this.waiting('hello')) this.applyProfile();
+      this.state.hellos = (this.state.hellos || 0) + 1;
+      // Stays set until an apply succeeds - a board that froze or was reset mid-apply says hello again
+      if (this.state.applyAfterHello && !this.state.applying && !this.waiting('hello')) {
+        this.logLine(this.state.autoApply ? "Applying the profile to the board" : "Apply after flashing is off - the profile was not applied");
+        if (this.state.autoApply) this.applyProfile();
       }
     }
     const waiter = this.state.waiter;
@@ -861,8 +906,9 @@ class MqttFlash extends HTMLElementExtended {
       await this.pause(2000);
     }
   }
-  async applyProfile() {
+  async applyProfile(again = false) {
     if (this.state.applying || !this.state.node) return;
+    const hellosAtStart = this.state.hellos;
     const profile = this.profileGet();
     const problems = profileProblems(profile);
     this.state.apply = {rows: [], problems, status: null};
@@ -878,7 +924,9 @@ class MqttFlash extends HTMLElementExtended {
         rows.push({label: "Enrolment secret", error: "Could not fetch the enrolment secret"});
       }
       for (const c of profileCommands(profile)) {
-        const reply = await this.command(setLine(c.twig, c.value), c.twig);
+        // The first line after a boot can be lost while the node is still starting; a set repeats harmlessly
+        const reply = await this.command(setLine(c.twig, c.value), c.twig)
+          || await this.command(setLine(c.twig, c.value), c.twig);
         const label = c.secret ? c.twig : `${c.twig} ${c.value}`.trim();
         rows.push(reply && reply.cmd === 'ok' ? {label}
           : {label, error: reply ? (ErrorStrings[reply.fields[1]] || reply.fields[1]) : "No reply"});
@@ -895,12 +943,17 @@ class MqttFlash extends HTMLElementExtended {
         await this.command('~hello', 'hello', RestartWaitMs).catch(() => null); // the new boot says hello itself
       }
       const final = await this.statusUntilUp(ConnectWaitMs);
-      if (!rows.some((r) => r.error) && final && final.enrolled) this.state.applied++;
+      if (!rows.some((r) => r.error) && final && final.enrolled) { this.state.applied++; this.state.applyAfterHello = false; }
     } catch (e) {
       rows.push({label: "apply", error: e.message, raw: true});
     } finally {
       this.state.applying = false;
       this.configRender();
+    }
+    // A hello that arrived mid-apply was ignored, and it means the board restarted under us
+    if (this.state.applyAfterHello && this.state.autoApply && !again && this.state.node
+        && this.state.hellos !== hellosAtStart) {
+      await this.applyProfile(true);
     }
   }
 
@@ -969,6 +1022,9 @@ class MqttFlash extends HTMLElementExtended {
         : this.state.helloGaveUp ? "Board not answering - old firmware?" : "Waiting for the board"}),
       el('span', {i8n: false, textContent: node ? ` ${node.nodeid}` : ''}),
     ]));
+    if (node && this.state.keptConfig && !this.state.apply) {
+      lines.push(el('p', {class: 'hint', textContent: KeptConfigText}));
+    }
     const ap = this.state.apply;
     if (ap) {
       (ap.problems || []).forEach((k) => lines.push(el('p', {class: 'error', textContent: k})));
@@ -980,7 +1036,9 @@ class MqttFlash extends HTMLElementExtended {
       if (st) {
         lines.push(el('p', {}, [
           el('span', {textContent: st.connected ? "WiFi connected" : "WiFi not connected"}),
+          el('span', {i8n: false, textContent: " · "}),
           el('span', {textContent: st.mqtt ? "MQTT connected" : "MQTT not connected"}),
+          el('span', {i8n: false, textContent: " · "}),
           el('span', {textContent: st.enrolled ? "Enrolled" : "Not enrolled"}),
         ]));
       }
@@ -1006,9 +1064,6 @@ class MqttFlash extends HTMLElementExtended {
       lines.push(el('p', {class: 'error', i8n: false, textContent: this.state.error}));
     }
     // The loader is released after any flash attempt, so say why the Flash button is disabled
-    if (dev && !this.state.esploader) {
-      lines.push(el('p', {textContent: "Reconnect the board to flash again"}));
-    }
     lines.push(el('p', {}, [
       el('span', {textContent: "Firmware"}),
       el('span', {i8n: false, textContent: app ? ` ${app.name} (${bytesToSizeString(app.bytes.length)})` : " -"}),
@@ -1018,6 +1073,11 @@ class MqttFlash extends HTMLElementExtended {
     if (!app) lines.push(el('p', {class: 'hint', textContent: "Choose a firmware file to flash"}));
     if (!dev) {
       lines.push(el('p', {class: 'hint', textContent: "Connect a board to flash"}));
+      return lines;
+    }
+    // What was read from the board before the flash is not true of it now, so none of it is shown
+    if (!this.state.esploader) {
+      lines.push(el('p', {class: 'hint', textContent: "Reconnect the board to flash again"}));
       return lines;
     }
     lines.push(el('p', {}, [
@@ -1062,7 +1122,7 @@ class MqttFlash extends HTMLElementExtended {
     if (flashButton) {
       flashButton.disabled = !this.ready;
       // The button is what gets clicked, so it says what it will do
-      const erases = this.state.device && this.state.device.provision;
+      const erases = this.state.device && this.state.esploader && this.state.device.provision;
       flashButton.textContent = getString(erases ? "Erase and flash" : "Flash");
       flashButton.classList.toggle('destructive', !!erases);
     }

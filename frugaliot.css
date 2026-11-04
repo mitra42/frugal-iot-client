@@ -228,6 +228,8 @@ div.mqtt-text {
     /* Erases the board's configuration - not to be mistaken for the orange of an ordinary warning */
     p.destructive { color: #b30000; font-weight: bold; border: 2px solid #b30000; padding: 0.3em 0.5em; background: #fdecec; }
     button.destructive { background: #b30000; color: white; }
+    /* Red says "will erase"; a button that cannot be clicked must not look as if it can */
+    button.destructive:disabled { background: #ccc; color: #777; }
     .flash-log {
         background: #f4f4f4;
         border: 1px solid #ccc;
