@@ -239,6 +239,8 @@ div.mqtt-text {
     }
     progress { width: 100%; }
     button { margin-right: 0.5em; }
+    button.icon-button { padding: 0.2em 0.4em; }
+    button.icon-button img { width: 1.2em; height: 1.2em; vertical-align: middle; }
 }
 
 

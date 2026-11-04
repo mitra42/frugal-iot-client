@@ -210,7 +210,7 @@ describe('the serial monitor', () => {
   test('Clear log empties the log, and Copy log puts what is there on the clipboard', async () => {
     const flash = monitoring([{chunks: ['one\ntwo\n']}]);
     await until(flash, () => log(flash).includes('two'), 'nothing was logged');
-    const button = (text) => [...flash.shadowRoot.querySelectorAll('button')].find((b) => b.textContent === text);
+    const button = (name) => flash.shadowRoot.querySelector(`button[aria-label="${name}"]`);
     let copied = null;
     Object.defineProperty(navigator, 'clipboard', {value: {writeText: async (t) => { copied = t; }}, configurable: true});
     const shown = log(flash);

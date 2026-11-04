@@ -6,7 +6,7 @@
 
 import async from '/node_modules/async/dist/async.mjs'; // https://caolan.github.io/async/v3/docs.html
 import {HTMLElementExtended} from '/node_modules/html-element-extended/htmlelementextended.js';
-import { CssUrl, XXX, brokerHost, el, getString, server_config } from './core.js';
+import { CssUrl, ImagesUrl, XXX, brokerHost, el, getString, server_config } from './core.js';
 import { LineRouter, ErrorStrings, parseReply, profileCommands, profileNew, profileProblems,
   setLine } from './nodeconfig.js';
 
@@ -268,6 +268,11 @@ class MqttFlash extends HTMLElementExtended {
     this.state.log[this.state.log.length - 1] += lines.shift();
     lines.forEach((l) => this.state.log.push(l));
     this.logTrim();
+  }
+  iconButton(file, label, onclick) {
+    const name = getString(label);
+    return el('button', {class: 'submit icon-button', type: 'button', title: name, 'aria-label': name, onclick},
+      [el('img', {src: `${ImagesUrl}${file}`, alt: '', i8n: false})]);
   }
   onClearLog() {
     this.state.log = [];
@@ -1104,8 +1109,8 @@ class MqttFlash extends HTMLElementExtended {
         el('label', {for: 'monitorbaud', textContent: "Monitor speed"}),
         el('select', {id: 'monitorbaud', onchange: (ev) => { this.state.monitorBaudrate = Number(ev.target.value); }},
           MonitorBaudRates.map((b) => el('option', {i8n: false, value: b, textContent: String(b)}))),
-        el('button', {class: 'submit', type: 'button', textContent: "Clear log", onclick: this.onClearLog.bind(this)}),
-        el('button', {class: 'submit', type: 'button', textContent: "Copy log", onclick: this.onCopyLog.bind(this)}),
+        this.iconButton('icon_trash.svg', "Clear log", this.onClearLog.bind(this)),
+        this.iconButton('icon_copy.svg', "Copy log", this.onCopyLog.bind(this)),
         this.state.elements.log = el('pre', {class: 'flash-log', i8n: false}),
         el('h4', {textContent: "Configure board"}),
         this.state.elements.editor = el('div', {class: 'flash-profile'}, this.editorLines()),
