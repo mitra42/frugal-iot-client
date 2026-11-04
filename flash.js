@@ -29,6 +29,7 @@ const MonitorBaudRates = [460800, 115200, 921600, 74880];
 // How long a board gets to answer a ~set, and how often and how many times we ask whether the node
 // firmware speaks the protocol at all - an older build never answers
 const ConfigReplyMs = 3000;
+const EspressifUsbVendor = 0x303a;
 const KeptConfigText = "Board was already configured - its settings were kept. Apply to board changes them";
 const HelloPollMs = 2000;
 const HelloTries = 15;
@@ -48,8 +49,9 @@ const MonitorRetryMs = 1000;
 // esptool-js's readFlash waits FLASH_READ_TIMEOUT (100s) for its first packet, which stalls Connect
 // on any board that does not answer the stub's read command
 const FlashReadMs = 8000;
-// WebSerial's receive buffer defaults to 255 bytes, which a native-USB chip overruns - it sends a 4KB read at USB speed, not the
-// baud rate - and the dropped bytes surface as a stalled or garbled packet
+// The monitor's receive buffer: WebSerial's 255-byte default drops a burst of boot output from a native-USB chip
+const SerialTraceLines = 40;
+const ReadPacketBytes = 256;
 const SerialBufferBytes = 1 << 20;
 // How long to wait for the port to close before saying it did not - esptool-js's disconnect() waits
 // on the streams unlocking with no deadline of its own
@@ -136,6 +138,30 @@ function bytesToSizeString(n) {
   return n >= 1048576 ? `${(n / 1048576).toFixed(2)}MB` : `${Math.round(n / 1024)}KB`;
 }
 // GET() parses JSON, so it cannot fetch a firmware image
+/*
+ * esptool-js asks the stub for 4KB packets, up to 1024 unacknowledged. Chrome can drop the tail of such a
+ * burst from a native-USB chip, and the stub then waits forever for an ack that never comes. Asking for
+ * one small packet at a time leaves no burst to drop.
+ */
+function steppedReads(ESPLoader) {
+  return class extends ESPLoader {
+    async readFlash(addr, size, onPacketReceived = null) {
+      const int = (n) => this._intToByteArray(n);
+      const args = [int(addr), int(size), int(ReadPacketBytes), int(1)].reduce((a, b) => this._appendArray(a, b));
+      const res = await this.checkCommand("read flash", this.ESP_READ_FLASH, args);
+      if (res != 0) throw new Error(`Failed to read memory: ${res}`);
+      let resp = new Uint8Array(0);
+      while (resp.length < size) {
+        const packet = await this.transport.read(this.FLASH_READ_TIMEOUT);
+        resp = this._appendArray(resp, packet);
+        await this.transport.write(int(resp.length));
+        if (onPacketReceived) onPacketReceived(packet, resp.length, size);
+      }
+      await this.transport.read(this.FLASH_READ_TIMEOUT); // the stub's MD5 of what it sent
+      return resp;
+    }
+  };
+}
 async function fetchBytes(url) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`${url} ${res.status}`);
@@ -182,6 +208,11 @@ class MqttFlash extends HTMLElementExtended {
   connectedCallback() {
     super.connectedCallback();
     this.appRestore();
+    // Tells a board that reset or dropped off USB apart from one that stopped answering
+    this.onSerialDisconnect = (ev) => {
+      if (ev.target === this.state.port) this.logLine(`(USB device disconnected${this.state.esploader ? ' while esptool held it' : ''})`);
+    };
+    navigator.serial?.addEventListener?.('disconnect', this.onSerialDisconnect);
   }
   // Marked as kept, so a firmware from yesterday cannot be flashed without it being said
   async appRestore() {
@@ -195,6 +226,7 @@ class MqttFlash extends HTMLElementExtended {
   // Removed while it holds the port - the card is rebuilt, or the page navigates - and the next
   // Connect would find it open. The monitor closes its port on stop; esptool's transport is released.
   disconnectedCallback() {
+    navigator.serial?.removeEventListener?.('disconnect', this.onSerialDisconnect);
     this.monitorStop();
     this.transportRelease();
     clearTimeout(this.state.logTimer);
@@ -347,24 +379,44 @@ class MqttFlash extends HTMLElementExtended {
     this.configRender();
   }
   // A seam: the real thing is 214KB of esptool-js and wants a board on the other end of a port
-  esptoolImport() { return import('esptool-js'); }
+  esptoolImport() { return import('esptool-js').then((lib) => ({...lib, ESPLoader: steppedReads(lib.ESPLoader)})); }
   async connectAndInspect(port) {
     this.state.keptConfig = false;
     this.applyForget();
     await this.monitorStop();      // the monitor holds the port open, so esptool cannot have it
     await this.transportRelease(); // clicking Connect twice must not stack transports on one port
     const {ESPLoader, Transport} = await this.esptoolImport(); // not loaded until first use
-    const transport = new Transport(port, true);
-    const esploader = new ESPLoader({transport, baudrate: this.state.baudrate, terminal: this.terminal,
-      serialOptions: {bufferSize: SerialBufferBytes}});
-    // Recorded before main(), which opens the port: a failure after that has to be releasable, or
-    // the retry meets a port this element no longer knows it holds
+    // ?flashtrace: esptool's byte trace runs to megabytes, so only its tail is kept, for traceDump to log
+    const tracing = new URLSearchParams(location.search).has('flashtrace');
+    const transport = new Transport(port, tracing);
+    this.state.serialTrace = [];
+    if (tracing) {
+      const t0 = Date.now();
+      transport.trace = (m) => {
+        const lines = String(m).split('\n');
+        this.state.serialTrace.push(`${Date.now() - t0}ms ${lines.slice(0, 2).join(' | ').slice(0, 140)}${lines.length > 2 ? ` (+${lines.length - 2} lines)` : ''}`);
+        if (this.state.serialTrace.length > SerialTraceLines) this.state.serialTrace.shift();
+      };
+    }
+    const usbInfo = port.getInfo ? port.getInfo() : {};
+    const nativeUsb = usbInfo.usbVendorId === EspressifUsbVendor;
+    // Built as Espressif's own esptool-js page builds it - the S2 on native USB, which that page flashes,
+    // went silent after its first read here with a fixed 115200 and a larger receive buffer
+    const esploader = new ESPLoader({transport, baudrate: this.state.baudrate, terminal: this.terminal});
+    // Recorded before main(), which opens the port: a failure after that has to be releasable
     this.state.port = port;
     this.state.transport = transport;
     this.state.esploader = esploader;
     // A read that gives up must really stop: one left waiting steals the reply to the next command
     esploader.FLASH_READ_TIMEOUT = FlashReadMs;
-    const description = await esploader.main(); // returns the description, not the chip name
+    let description;
+    try {
+      description = await esploader.main(); // returns the description, not the chip name
+    } catch (e) {
+      if (!nativeUsb) throw e;
+      // A failed sync restarts a native-USB board as a new device the page has no permission for: only the picker can reach it
+      throw new Error(`${e.message} - the board may have restarted: click Connect again and pick it`, {cause: e});
+    }
     const chipName = esploader.chip.CHIP_NAME;
     const flashIdCapacity = (await esploader.readFlashId()) >> 16 & 0xff;
     const flashSizeGuessed = !DetectedFlashSizes[flashIdCapacity];
@@ -411,23 +463,22 @@ class MqttFlash extends HTMLElementExtended {
     dev.onDeviceAppSize = AppPartitionSizeMin;
     await this.deviceInspect();
   }
+  traceDump() {
+    const lines = this.state.serialTrace || [];
+    if (!lines.length) return;
+    this.logLine(`--- last ${lines.length} serial trace lines ---`);
+    lines.forEach((l) => this.logLine(l));
+    this.logLine('--- end of trace ---');
+    this.state.serialTrace = [];
+  }
   // Returns null rather than stalling, so a board that will not answer the stub's read command does
   // not hold up Connect for 100s per read
-  // An S2 on its own USB (product id 2) loses bytes from the middle of a read's 4KB frames, though the stub sent them
-  // intact - and everything after a bad read is garbage, so it is not attempted. Writes do not rely on it.
-  get readsUnreliable() {
-    const esploader = this.state.esploader;
-    return !!esploader && esploader.chip.CHIP_NAME === "ESP32-S2" && this.state.transport?.getPid?.() === 2;
-  }
   async readFlashBounded(offset, length) {
-    if (this.readsUnreliable) {
-      this.logLine(`(not reading 0x${offset.toString(16)}: this board's USB link drops data on flash reads)`);
-      return null;
-    }
     const read = this.state.esploader.readFlash(offset, length)
       .catch((e) => { this.logLine(`(read of 0x${offset.toString(16)} failed: ${e.message})`); return null; });
     const bytes = await withTimeout(read, FlashReadMs * 2, null);
     if (!bytes) {
+      this.traceDump();
       this.state.transport.flushInput?.(); // the stub may still be sending
       this.logLine(`(could not read 0x${offset.toString(16)} - skipping inspection)`);
     }
@@ -512,7 +563,7 @@ class MqttFlash extends HTMLElementExtended {
     this.flash()
       // Surfaced in the status area as well as the log - flashing releases the loader either way, so
       // the Flash button stays disabled and the reason has to be visible
-      .catch((e) => { this.state.error = e.message; this.logLine(`Error: ${e.message}`); })
+      .catch((e) => { this.state.error = e.message; this.logLine(`Error: ${e.message}`); this.traceDump(); })
       .then(() => { this.state.busy = false; this.statusRender(); });
   }
   // A bootloader from another IDF release than the app is what left LittleFS unable to mount. An
@@ -610,6 +661,7 @@ class MqttFlash extends HTMLElementExtended {
     const fileArray = await this.fileArrayBuild();
     fileArray.forEach((f) => this.logLine(`Will write ${bytesToSizeString(f.data.length)} at 0x${f.address.toString(16)}`));
     if (this.state.elements.progress) this.state.elements.progress.value = 0;
+    let restarted = false;
     try {
       await esploader.writeFlash({
         fileArray,
@@ -644,9 +696,10 @@ class MqttFlash extends HTMLElementExtended {
         }
       }
       this.logLine("Flash complete - resetting. Reconnect the board if you want to flash again.");
-      // Not reset here: the monitor resets the board once, after reopening the port. A reset now would be
+      // Otherwise not reset here: the monitor resets the board once, after reopening the port. A reset now would be
       // followed by a second as the port reopens, and the first boot is when the filesystem is formatted
-      await esploader.after("no_reset_stub");
+      restarted = await this.usbOtgReset(esploader);
+      if (!restarted) await esploader.after("no_reset_stub");
       dev.flashed = true;
       // A board whose config was just erased - or that never had any - is the one a forgotten Apply
       // would leave unconfigured; one that kept its config is left alone
@@ -660,8 +713,31 @@ class MqttFlash extends HTMLElementExtended {
     }
     // Reopening the port toggles DTR/RTS, which on an auto-reset board can leave the chip waiting in
     // its bootloader - so the one reset comes after the reopen, and also catches the boot log
-    this.state.resetOnOpen = true;
+    this.state.resetOnOpen = !restarted;
+    // The app is a different USB device from the loader, and the page may have no permission for it yet
+    this.state.stalePort = restarted ? this.state.port : null;
     this.monitorStart(); // not awaited - it now runs until stopped
+  }
+  /*
+   * An S2 on native USB ignores the DTR/RTS reset the monitor uses, so - as esptool-py does - its RTC
+   * watchdog restarts it. Not when the loader was entered by the app over USB rather than by holding
+   * IO0: that is latched, and a restart would only land back in the loader.
+   */
+  async usbOtgReset(esploader) {
+    const chip = esploader.chip;
+    if (!chip.RTC_CNTL_WDT_WKEY || !(await esploader.usesUsbOtg())) return false;
+    const strap = await esploader.readReg(chip.GPIO_STRAP_REG);
+    const forced = await esploader.readReg(chip.RTC_CNTL_OPTION1_REG);
+    if ((strap & chip.GPIO_STRAP_SPI_BOOT_MASK) || (forced & chip.RTC_CNTL_FORCE_DOWNLOAD_BOOT_MASK)) {
+      this.logLine("Press the board's RESET button to start the new firmware");
+      return false;
+    }
+    this.logLine("Restarting the board with its watchdog");
+    await esploader.writeReg(chip.RTC_CNTL_WDTWPROTECT_REG, chip.RTC_CNTL_WDT_WKEY); // unlock
+    await esploader.writeReg(chip.RTC_CNTL_WDTCONFIG1_REG, 2000);                     // timeout
+    await esploader.writeReg(chip.RTC_CNTL_WDTCONFIG0_REG, ((1 << 31) | (5 << 28) | (1 << 8) | 2) >>> 0); // enable, reset the system
+    await esploader.writeReg(chip.RTC_CNTL_WDTWPROTECT_REG, 0).catch(() => {}); // the reset may beat the reply
+    return true;
   }
   // DTR/RTS drive EN and IO0 on boards with the usual auto-reset circuit - RTS left asserted holds
   // the chip in reset and it prints nothing at all. Releasing both then pulsing RTS restarts it.
@@ -711,11 +787,13 @@ class MqttFlash extends HTMLElementExtended {
         if (waiting) this.logLine("---- port back ----");
         waiting = false;
         port = this.state.port = opened; // Connect and Flash must use the live one too
+        if (opened !== this.state.stalePort) this.state.stalePort = null; // the loader's port can open in the moment before the restart
         await this.monitorStream(port, !streamed); // only the first pass resets the board
         streamed = true;
       } else if (!waiting) {
         waiting = true;
         this.logLine(streamed ? `(port gone - waiting for the board: ${err})` : `(could not open port: ${err})`);
+        if (this.state.stalePort) this.logLine("If the board does not reappear: Stop, then Monitor, and pick it");
       }
       if (this.state.monitoring) await this.monitorWait(this.state.monitorRetryMs);
     }
@@ -748,9 +826,11 @@ class MqttFlash extends HTMLElementExtended {
      * has no vendor id either, there is nothing to match on and only it is retried: the user picked
      * it themselves, and a port like that does not re-enumerate anyway.
      */
+    // Just restarted out of the loader, a native-USB board is the app's own device: same vendor, another product
+    const anyProduct = !!this.state.stalePort && info.usbVendorId === EspressifUsbVendor;
     const sameDevice = info.usbVendorId ? granted.filter((p) => {
       const i = p.getInfo ? p.getInfo() : {};
-      return i.usbVendorId === info.usbVendorId && i.usbProductId === info.usbProductId
+      return i.usbVendorId === info.usbVendorId && (anyProduct || i.usbProductId === info.usbProductId)
         && !i.bluetoothServiceClassId;
     }) : [];
     return [...sameDevice, port].filter((p, i, all) => p && all.indexOf(p) === i);
@@ -774,14 +854,14 @@ class MqttFlash extends HTMLElementExtended {
   }
   onMonitor() {
     if (this.state.monitoring) { this.monitorStop(); return; }
-    if (this.state.port) {
+    if (this.state.port && !this.state.stalePort) {
       // esptool still holds the port after Connect and it cannot be opened twice, so hand it over
       this.transportRelease().then(() => this.monitorStart());
       return;
     }
     const portPromise = navigator.serial.requestPort(); // inside the gesture, before any await
     portPromise
-      .then((port) => { this.state.port = port; return this.monitorStart(); })
+      .then((port) => { this.state.port = port; this.state.stalePort = null; return this.monitorStart(); })
       .catch((e) => { this.state.error = e.message; this.logLine(`Error: ${e.message}`); this.statusRender(); });
   }
   onReset() {

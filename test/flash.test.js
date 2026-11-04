@@ -76,6 +76,63 @@ describe('connecting to a board', () => {
   });
 });
 
+describe('restarting an S2 on native USB after a flash', () => {
+  const chip = {RTC_CNTL_WDT_WKEY: 0x50d83aa1, RTC_CNTL_WDTWPROTECT_REG: 0xac, RTC_CNTL_WDTCONFIG0_REG: 0x94,
+    RTC_CNTL_WDTCONFIG1_REG: 0x98, GPIO_STRAP_REG: 0x38, GPIO_STRAP_SPI_BOOT_MASK: 1 << 3,
+    RTC_CNTL_OPTION1_REG: 0x128, RTC_CNTL_FORCE_DOWNLOAD_BOOT_MASK: 1};
+  function loader({otg = true, strap = 0, forced = 0} = {}) {
+    const regs = {[chip.GPIO_STRAP_REG]: strap, [chip.RTC_CNTL_OPTION1_REG]: forced};
+    const writes = [];
+    return {chip, writes, async usesUsbOtg() { return otg; }, async readReg(a) { return regs[a]; },
+      async writeReg(a, v) { writes.push([a, v]); }};
+  }
+  function element() {
+    const flash = document.createElement('mqtt-flash');
+    document.body.append(flash);
+    return flash;
+  }
+
+  test('a board put in its loader by holding IO0 is restarted by its watchdog, armed then locked', async () => {
+    const flash = element();
+    const l = loader();
+    assert.equal(await flash.usbOtgReset(l), true);
+    assert.deepEqual(l.writes.map(([a]) => a), [0xac, 0x98, 0x94, 0xac]);
+    assert.equal(l.writes[0][1], chip.RTC_CNTL_WDT_WKEY, 'unlocked first');
+    assert.equal(l.writes[3][1], 0, 'locked again');
+    flash.remove();
+  });
+
+  test('a loader entered from the app over USB is not restarted - it would come back to the loader', async () => {
+    const flash = element();
+    const l = loader({forced: 1});
+    assert.equal(await flash.usbOtgReset(l), false);
+    assert.deepEqual(l.writes, []);
+    assert.match(flash.state.log.join('\n'), /RESET button/);
+    flash.remove();
+  });
+
+  test('a board on a USB-serial chip is left to the monitor\u2019s DTR/RTS reset', async () => {
+    const flash = element();
+    const l = loader({otg: false});
+    assert.equal(await flash.usbOtgReset(l), false);
+    assert.deepEqual(l.writes, []);
+    assert.doesNotMatch(flash.state.log.join('\n'), /RESET button/);
+    flash.remove();
+  });
+
+  test('the monitor looks for the app\u2019s own USB device, which is another product from the loader\u2019s', async () => {
+    const flash = element();
+    const loaderPort = {getInfo: () => ({usbVendorId: 0x303a, usbProductId: 0x2})};
+    const appPort = {getInfo: () => ({usbVendorId: 0x303a, usbProductId: 0x80c2})};
+    const otherVendor = {getInfo: () => ({usbVendorId: 0x1a86, usbProductId: 0x7523})};
+    Object.defineProperty(navigator, 'serial', {value: {getPorts: async () => [appPort, otherVendor]}, configurable: true});
+    assert.deepEqual(await flash.monitorCandidates(loaderPort), [loaderPort], 'not before a restart');
+    flash.state.stalePort = loaderPort;
+    assert.deepEqual(await flash.monitorCandidates(loaderPort), [appPort, loaderPort]);
+    flash.remove();
+  });
+});
+
 /*
  * The monitor across a deep sleep. A board on native USB takes the port with it when it sleeps, so
  * the stream ends and the port cannot be opened again until it wakes - which is the normal case for
@@ -142,6 +199,24 @@ describe('the serial monitor', () => {
     await until(flash, () => log(flash).includes('back from the dead'), 'it did not find the new port');
     await flash.monitorStop();
     assert.equal(flash.state.port, replugged, 'and Connect should now use the live one');
+    flash.remove();
+  });
+
+  test('after a watchdog restart, finds the app\u2019s device even though the loader\u2019s port opened first', async () => {
+    // The loader's port is still there for a moment after the watchdog is set, and opening it must not end the search
+    const app = fakePort([{chunks: ['app booting\n']}], {usbVendorId: 0x303a, usbProductId: 0x80c2});
+    const flash = document.createElement('mqtt-flash');
+    document.body.append(flash);
+    flash.state.monitorRetryMs = 5;
+    flash.state.port = fakePort([{chunks: [], end: 'error'}], {usbVendorId: 0x303a, usbProductId: 0x2});
+    flash.state.stalePort = flash.state.port;
+    let searches = 0; // the app's device enumerates only after the restart
+    Object.defineProperty(navigator, 'serial', {value: {getPorts: async () => (searches++ ? [app] : [])}, configurable: true});
+    flash.monitorStart();
+    await until(flash, () => log(flash).includes('app booting'), 'it did not move to the app\u2019s device');
+    await flash.monitorStop();
+    assert.equal(flash.state.port, app);
+    assert.equal(flash.state.stalePort, null, 'found, so Monitor need not ask for a port');
     flash.remove();
   });
 
@@ -352,24 +427,77 @@ describe('flashing over a board that is already laid out', () => {
     flash.remove();
   });
 
-  test('the serial buffer is raised above WebSerial\u2019s 255-byte default', async () => {
-    const flash = await connected(readBase('partitions/min_spiffs.bin'));
-    assert.ok(loaderOptions.serialOptions.bufferSize >= 65536, 'a native-USB chip overruns the default');
+  test('a connect that fails to sync is tried once, and the error is the library\u2019s own', async () => {
+    const flash = document.createElement('mqtt-flash');
+    document.body.append(flash);
+    flash.monitorStart = () => {};
+    let mains = 0;
+    const real = fakeS3(readBase('partitions/min_spiffs.bin'));
+    flash.esptoolImport = async () => {
+      const lib = await real();
+      // esptool-js's errors have a read-only message
+      lib.ESPLoader = class extends lib.ESPLoader { async main() { mains++; throw Object.defineProperty(new Error(), 'message', {get: () => 'no sync'}); } };
+      return lib;
+    };
+    await assert.rejects(flash.connectAndInspect({}), (e) => e.message === 'no sync');
+    assert.equal(mains, 1);
     flash.remove();
   });
 
-  test('an S2 on native USB is never read back, since its reads lose data', async () => {
-    const flash = await connected(readBase('partitions/min_spiffs.bin'));
-    let reads = 0;
-    flash.state.esploader.readFlash = async () => { reads++; return new Uint8Array(4096); };
-    flash.state.esploader.chip.CHIP_NAME = 'ESP32-S2';
-    flash.state.transport = {getPid: () => 2, async disconnect() {}};
-    assert.equal(await flash.readFlashBounded(0x8000, 4096), null);
-    assert.equal(reads, 0, 'a bad read poisons what follows, so none is attempted');
-    flash.state.transport = {getPid: () => 0x1001, async disconnect() {}}; // an S2 behind a UART bridge or the like reads as before
-    assert.ok(await flash.readFlashBounded(0x8000, 4096));
-    assert.equal(reads, 1);
+  test('a native-USB board stops after one failed try and says to pick it again', async () => {
+    const flash = document.createElement('mqtt-flash');
+    document.body.append(flash);
+    flash.monitorStart = () => {};
+    let mains = 0;
+    const real = fakeS3(readBase('partitions/min_spiffs.bin'));
+    flash.esptoolImport = async () => {
+      const lib = await real();
+      lib.ESPLoader = class extends lib.ESPLoader { async main() { mains++; throw new Error('no sync'); } };
+      return lib;
+    };
+    await assert.rejects(flash.connectAndInspect({getInfo: () => ({usbVendorId: 0x303a, usbProductId: 2})}), /click Connect again/);
+    assert.equal(mains, 1);
     flash.remove();
+  });
+
+  test('the loader is built as Espressif\u2019s page builds it, at the chosen speed with no serial options', async () => {
+    const flash = await connected(readBase('partitions/min_spiffs.bin'));
+    assert.equal(loaderOptions.baudrate, flash.state.baudrate);
+    assert.equal(loaderOptions.serialOptions, undefined, 'a native-USB S2 went silent with a larger buffer');
+    flash.remove();
+  });
+
+  test('flash is read one small packet at a time, each acknowledged before the next is sent', async () => {
+    const flash = document.createElement('mqtt-flash');
+    const {ESPLoader} = await flash.esptoolImport(); // the real library, as the page loads it
+    const flashBytes = Uint8Array.from({length: 4096}, (_, i) => i * 7);
+    const acks = [];
+    let sent = 0;
+    let md5Sent = false;
+    const transport = {
+      getInfo: () => 'fake',
+      async read() {
+        if (sent > (acks.at(-1) || 0)) throw new Error('asked for a packet before acknowledging the last');
+        if (sent >= flashBytes.length) { md5Sent = true; return new Uint8Array(16); }
+        const packet = flashBytes.slice(sent, sent + args.packet);
+        sent += packet.length;
+        return packet;
+      },
+      async write(bytes) { acks.push(new DataView(bytes.buffer).getUint32(0, true)); },
+    };
+    const loader = new ESPLoader({transport, baudrate: 115200, terminal: {clean() {}, writeLine() {}, write() {}}});
+    const args = {};
+    loader.checkCommand = async (desc, op, data) => {
+      const v = new DataView(data.buffer);
+      Object.assign(args, {op, packet: v.getUint32(8, true), unacked: v.getUint32(12, true)});
+      return 0;
+    };
+    const got = await loader.readFlash(0x8000, 4096);
+    assert.equal(args.op, loader.ESP_READ_FLASH);
+    assert.equal(args.unacked, 1, 'one packet in flight - a burst is what Chrome dropped');
+    assert.ok(args.packet <= 256, 'a small packet, not esptool-js\u2019s 4KB');
+    assert.deepEqual(got, flashBytes);
+    assert.ok(md5Sent, 'the stub\u2019s MD5 must be read, or it answers the next command');
   });
 
   test('esptool does not reset the board - the monitor does, once, after the port is reopened', async () => {
