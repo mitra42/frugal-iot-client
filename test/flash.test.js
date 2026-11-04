@@ -358,6 +358,20 @@ describe('flashing over a board that is already laid out', () => {
     flash.remove();
   });
 
+  test('an S2 on native USB is never read back, since its reads lose data', async () => {
+    const flash = await connected(readBase('partitions/min_spiffs.bin'));
+    let reads = 0;
+    flash.state.esploader.readFlash = async () => { reads++; return new Uint8Array(4096); };
+    flash.state.esploader.chip.CHIP_NAME = 'ESP32-S2';
+    flash.state.transport = {getPid: () => 2, async disconnect() {}};
+    assert.equal(await flash.readFlashBounded(0x8000, 4096), null);
+    assert.equal(reads, 0, 'a bad read poisons what follows, so none is attempted');
+    flash.state.transport = {getPid: () => 0x1001, async disconnect() {}}; // an S2 behind a UART bridge or the like reads as before
+    assert.ok(await flash.readFlashBounded(0x8000, 4096));
+    assert.equal(reads, 1);
+    flash.remove();
+  });
+
   test('esptool does not reset the board - the monitor does, once, after the port is reopened', async () => {
     const flash = await connected(readBase('partitions/min_spiffs.bin'));
     flash.state.app = {name: 'firmware.bin', bytes: image(0x1000)};

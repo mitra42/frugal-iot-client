@@ -413,7 +413,17 @@ class MqttFlash extends HTMLElementExtended {
   }
   // Returns null rather than stalling, so a board that will not answer the stub's read command does
   // not hold up Connect for 100s per read
+  // An S2 on its own USB (product id 2) loses bytes from the middle of a read's 4KB frames, though the stub sent them
+  // intact - and everything after a bad read is garbage, so it is not attempted. Writes do not rely on it.
+  get readsUnreliable() {
+    const esploader = this.state.esploader;
+    return !!esploader && esploader.chip.CHIP_NAME === "ESP32-S2" && this.state.transport?.getPid?.() === 2;
+  }
   async readFlashBounded(offset, length) {
+    if (this.readsUnreliable) {
+      this.logLine(`(not reading 0x${offset.toString(16)}: this board's USB link drops data on flash reads)`);
+      return null;
+    }
     const read = this.state.esploader.readFlash(offset, length)
       .catch((e) => { this.logLine(`(read of 0x${offset.toString(16)} failed: ${e.message})`); return null; });
     const bytes = await withTimeout(read, FlashReadMs * 2, null);
