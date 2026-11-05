@@ -139,12 +139,21 @@ function bytesToSizeString(n) {
 }
 // GET() parses JSON, so it cannot fetch a firmware image
 /*
- * esptool-js asks the stub for 4KB packets, up to 1024 unacknowledged. Chrome can drop the tail of such a
- * burst from a native-USB chip, and the stub then waits forever for an ack that never comes. Asking for
- * one small packet at a time leaves no burst to drop.
+ * Two corrections to esptool-js. Its readFlash asks the stub for 4KB packets, up to 1024 unacknowledged;
+ * Chrome can drop the tail of such a burst from a native-USB chip, and the stub then waits forever for an
+ * ack that never comes, so one small packet is asked for at a time. And its ESP8266 target says "no such
+ * register" with a 0 where runSpiflashCommand tests for null, which garbles every SPI command - the flash
+ * ID reads as 0 and the size cannot be detected.
  */
 function steppedReads(ESPLoader) {
   return class extends ESPLoader {
+    async runSpiflashCommand(...args) {
+      if (this.chip.CHIP_NAME === "ESP8266" && !this.chip.SPI_MOSI_DLEN_OFFS) {
+        this.chip.SPI_MOSI_DLEN_OFFS = null;
+        this.chip.SPI_MISO_DLEN_OFFS = null;
+      }
+      return super.runSpiflashCommand(...args);
+    }
     async readFlash(addr, size, onPacketReceived = null) {
       const int = (n) => this._intToByteArray(n);
       const args = [int(addr), int(size), int(ReadPacketBytes), int(1)].reduce((a, b) => this._appendArray(a, b));
@@ -418,10 +427,17 @@ class MqttFlash extends HTMLElementExtended {
       throw new Error(`${e.message} - the board may have restarted: click Connect again and pick it`, {cause: e});
     }
     const chipName = esploader.chip.CHIP_NAME;
-    const flashIdCapacity = (await esploader.readFlashId()) >> 16 & 0xff;
+    const flashId = await esploader.readFlashId();
+    const flashIdCapacity = flashId >> 16 & 0xff;
     const flashSizeGuessed = !DetectedFlashSizes[flashIdCapacity];
     const flashSize = DetectedFlashSizes[flashIdCapacity] || await esploader.detectFlashSize();
     this.state.device = {chipName, description, flashSize, flashSizeGuessed};
+    if (!flashSize) {
+      // There is no size to write the image for, so this is not something to confirm past
+      this.state.device.refusal = `the flash chip did not answer (flash ID 0x${flashId.toString(16)}) - nothing can be written`;
+      this.logLine(`Unsupported board: ${this.state.device.refusal}`);
+      return;
+    }
     if (flashSizeGuessed) {
       this.logLine(`WARNING: flash size not recognised (capacity byte 0x${flashIdCapacity.toString(16)}), assuming ${flashSize}`);
       if (chipName === "ESP32-S3") this.logLine("On an S3 this is the signature of octal (OPI) flash, which cannot be flashed from a browser.");
@@ -591,9 +607,13 @@ class MqttFlash extends HTMLElementExtended {
   // The verdict is about this file on this board, so it is redone when either changes, and is
   // blank until both are there - an error left from the last pairing would be about neither
   verdictRefresh() {
+    const was = this.state.error;
     this.state.error = null;
     if (!this.state.app || !this.state.device || !this.state.esploader || this.state.busy) return;
-    try { this.appCheck(); } catch (e) { this.state.error = e.message; this.logLine(`Error: ${e.message}`); }
+    try { this.appCheck(); } catch (e) {
+      this.state.error = e.message;
+      if (e.message !== was) this.logLine(`Error: ${e.message}`); // it is rechecked on every change, but said once
+    }
   }
   logAppDescription() {
     const desc = appDescription(this.state.app.bytes);

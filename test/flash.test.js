@@ -42,6 +42,44 @@ beforeEach(() => {
 });
 afterEach(() => { delete navigator.serial; });
 
+describe('an ESP8266', () => {
+  test('its flash ID is read with the ESP8266\u2019s own SPI registers', async () => {
+    const flash = document.createElement('mqtt-flash');
+    const {ESPLoader} = await flash.esptoolImport();
+    const {ESP8266ROM} = await import('esptool-js/lib/targets/esp8266.js');
+    const loader = new ESPLoader({transport: {getInfo: () => 'fake'}, baudrate: 115200, terminal: {clean() {}, writeLine() {}, write() {}}});
+    loader.chip = new ESP8266ROM();
+    const writes = [];
+    loader.readReg = async () => 0;
+    loader.writeReg = async (a, v) => { writes.push([a, v]); };
+    await loader.readFlashId();
+    const base = loader.chip.SPI_REG_BASE;
+    // The ESP32 path writes the data lengths at base + 0 - on an ESP8266 that is the command register
+    assert.deepEqual(writes.filter(([a]) => a === base).map(([, v]) => v), [1 << 18], 'only the "go" bit in SPI_CMD');
+    assert.ok(writes.some(([a, v]) => a === base + loader.chip.SPI_USR1_OFFS && v === (23 << 8)), '24 bits read back, set in USR1');
+  });
+
+  test('a flash chip that does not answer is refused, not left to a confirmation box', async () => {
+    const flash = document.createElement('mqtt-flash');
+    document.body.append(flash);
+    flash.state.boards = {wholeImageChips: ['ESP8266']};
+    flash.esptoolImport = async () => ({
+      Transport: class { async disconnect() {} },
+      ESPLoader: class {
+        constructor() { this.chip = {CHIP_NAME: 'ESP8266', BOOTLOADER_FLASH_OFFSET: 0}; }
+        async main() { return 'ESP8266EX'; }
+        async readFlashId() { return 0; }
+        async detectFlashSize() { return undefined; }
+      },
+    });
+    await flash.connectAndInspect({});
+    assert.match(flash.state.device.refusal, /flash chip did not answer/);
+    flash.state.app = {name: 'firmware.bin', bytes: new Uint8Array([0xe9, 0, 0, 0])};
+    assert.equal(flash.ready, false, 'Flash should not be offered');
+    flash.remove();
+  });
+});
+
 describe('connecting to a board', () => {
   test('a failure still closes the port, so Connect can be clicked again', async () => {
     // It could not before: the transport was recorded only after main() succeeded, so the release
