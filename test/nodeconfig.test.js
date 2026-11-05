@@ -76,6 +76,6 @@ describe('the profile', () => {
   test('refuses what the node would mis-file', () => {
     // A slash in an SSID would be read as a path by the node, which keys the network by its twig
     assert.deepEqual(profileProblems({...profile(), wifi: [{ssid: 'a/b', password: ''}]}), ["WiFi network not valid"]);
-    assert.deepEqual(profileProblems({...profile(), project: 'x'}), ["Project name length"]);
+    assert.deepEqual(profileProblems({...profile(), project: 'x'}), ["Project name must be 2 to 15 characters"]);
   });
 });

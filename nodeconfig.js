@@ -76,7 +76,7 @@ export function profileNew(org, project, broker) {
 export function profileProblems(p) {
   const problems = [];
   if (!p.org || !p.project) problems.push("No active project");
-  else if (p.project.length < ProjectMin || p.project.length > ProjectMax) problems.push("Project name length");
+  else if (p.project.length < ProjectMin || p.project.length > ProjectMax) problems.push("Project name must be 2 to 15 characters");
   const networks = p.wifi.filter((w) => w.ssid);
   if (!networks.length) problems.push("Add a WiFi network");
   if (networks.some((w) => w.ssid.includes('/') || w.ssid.length > SsidMax || w.password.length > PasswordMax)) {

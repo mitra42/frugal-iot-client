@@ -130,7 +130,9 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     }
     if (name === "lang") {
       if (value.includes(',')) {
-        preferedLanguages = (value.split(',')).map(v => v.toUpperCase());
+        // preferedLanguages is an imported binding, so it cannot be assigned; preferedLanguageSet
+        // unshifts, so feed them in reverse to end up in the order given.
+        value.split(',').reverse().forEach((v) => preferedLanguageSet(v.trim().toUpperCase()));
       } else if (!value) {
         preferedLanguageSet('EN');
         locationParameterChange("lang", preferedLanguages.join(','));

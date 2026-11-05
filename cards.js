@@ -28,6 +28,7 @@ import { el, getString, hasCapability, ImagesUrl, isEditableTarget, relativeTime
 
 // Shape as well as colour, so status survives sunlight and colour blindness
 const STATUS_MARK = { live: '●', stale: '◌', offline: '○', never: '·' };
+const STATUS_TEXT = { live: 'Live', stale: 'Not reported recently', offline: 'Offline', never: 'Never seen' };
 // How often a card re-reads its own status and age. Nothing arrives to prompt it when a device
 // stops reporting, which is exactly when the card most needs to change.
 const STATUS_TICK_MS = 10000;
@@ -121,7 +122,7 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
     e.card.className = `fi-card fi-card--${this.mode} fi-status-${nodeMt.status}`;
     if (e.status) {
       e.status.textContent = STATUS_MARK[nodeMt.status];
-      e.status.setAttribute('title', getString(nodeMt.status));
+      e.status.setAttribute('title', getString(STATUS_TEXT[nodeMt.status]));
     }
     if (e.name) e.name.textContent = nodeMt.usableName;
     if (e.meta) e.meta.replaceChildren(...this.renderMeta());
@@ -373,7 +374,7 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
   // for direction, limit and hysteresis (D-19).
   renderControlSection(groupId, groupMt) {
     const t = groupMt.topics;
-    const hyst = t.hysteresis || t.hysterisis;
+    const hyst = t.hysteresis;
     const when = [t.greater, t.limit, hyst].some(Boolean) ? el('div', { class: 'fi-when' }, [
       t.greater ? this.compact(t.greater, { labels: '<,>' }) : null,
       t.limit ? this.compact(t.limit, {}) : null,
@@ -386,7 +387,7 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
     ].filter(Boolean)) : null;
     // Any other control - a display's inputs, Blinken's timings - gets a plain row per topic, or its
     // section came out empty and was dropped, leaving nothing to wire (control_lcd_ht did exactly that)
-    const laidOut = ['now', 'greater', 'limit', 'hysteresis', 'hysterisis', 'out', 'manual'];
+    const laidOut = ['now', 'greater', 'limit', 'hysteresis', 'out', 'manual'];
     const others = Object.entries(t).filter(([leaf]) => !laidOut.includes(leaf)).map(([, mt]) => {
       const widget = this.widgetForTopic(mt, '', mt.wireable ? { wiring: 'open' } : {});
       this.state.elements.widgets.push({ row: { mt }, widget });
@@ -507,7 +508,7 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
     return el('div', { class: 'fi-card__head' }, [
       this.state.elements.status = el('span', {
         class: 'fi-status', i8n: false,
-        textContent: STATUS_MARK[nodeMt.status], title: getString(nodeMt.status),
+        textContent: STATUS_MARK[nodeMt.status], title: getString(STATUS_TEXT[nodeMt.status]),
       }),
       this.state.elements.name = el('span', { class: 'fi-card__name', i8n: false, textContent: nodeMt.usableName }),
       this.state.elements.meta = el('span', { class: 'fi-card__meta' }, this.renderMeta()),

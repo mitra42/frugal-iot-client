@@ -415,7 +415,7 @@ EN:
   Add network: Add network
   Remove: Remove
   No active project: No active project
-  Project name length: Project name must be 2 to 15 characters
+  Project name must be 2 to 15 characters: Project name must be 2 to 15 characters
   Add a WiFi network: Add a WiFi network
   WiFi network not valid: WiFi network not valid
   Not understood: Not understood
@@ -531,8 +531,6 @@ EN:
   Humidity control: Humidity control
   Hysteresis: Hysteresis
   hysteresis: hysteresis
-  Hysterisis: Hysteresis
-  hysterisis: hysteresis
   I have a code: I have a code
   id: id
   If that account exists we have emailed a reset code: If that account exists we have emailed a reset code
@@ -551,7 +549,7 @@ EN:
   LED: LED
   Limit: Limit
   List: List
-  live: Live
+  Live: Live
   Load Cell: Load Cell
   Loading schema...: Loading schema...
   Log out: Log out
@@ -564,7 +562,6 @@ EN:
   Move down: Move down
   Move up: Move up
   Name: Name
-  never: Never seen
   Never seen: Never seen
   New here?: New here?
   New password: New password
@@ -600,6 +597,7 @@ EN:
   now: now
   Off: Off
   offline: offline
+  Offline: Offline
   On: On
   "On ArduinoIDE the file is typically in ": "On ArduinoIDE the file is typically in "
   "On PlatformIO The file is typically in ": "On PlatformIO The file is typically in "
@@ -684,7 +682,7 @@ EN:
   Sonoff switch: Sonoff switch
   Speed: Speed
   SSID: SSID
-  stale: Not reported recently
+  Not reported recently: Not reported recently
   Status: Status
   Stop monitor: Stop monitor
   Stopped, and its credential removed. Click to clear.: Stopped, and its credential removed. Click to clear.
@@ -759,7 +757,7 @@ FR:
   Add network: Ajouter un réseau
   Remove: Retirer
   No active project: Aucun projet actif
-  Project name length: Le nom du projet doit faire 2 à 15 caractères
+  Project name must be 2 to 15 characters: Le nom du projet doit faire 2 à 15 caractères
   Add a WiFi network: Ajoutez un réseau WiFi
   WiFi network not valid: Réseau WiFi non valide
   Not understood: Non compris
@@ -875,8 +873,6 @@ FR:
   Humidity control: Contrôle de l'humidité
   Hysteresis: Hystérésis
   hysteresis: hystérésis
-  Hysterisis: Hystérésis
-  hysterisis: hystérésis
   I have a code: J'ai un code
   id: id
   If that account exists we have emailed a reset code: Si ce compte existe, nous avons envoyé un code de réinitialisation par e-mail
@@ -895,7 +891,7 @@ FR:
   LED: LED
   Limit: Limite
   List: Lister
-  live: En ligne
+  Live: En ligne
   Load Cell: Cellule de charge
   Loading schema...: Chargement du schéma...
   Log out: Se déconnecter
@@ -908,7 +904,6 @@ FR:
   Move down: Descendre
   Move up: Monter
   Name: Nom 
-  never: Jamais vu
   Never seen: Jamais vu
   New here?: Nouveau ici ?
   New password: Nouveau mot de passe
@@ -944,6 +939,7 @@ FR:
   now: maintenant
   Off: Éteint
   offline: hors ligne
+  Offline: Hors ligne
   On: Allumé
   "On ArduinoIDE the file is typically in ": "Sur ArduinoIDE, le fichier se trouve généralement dans "
   "On PlatformIO The file is typically in ": "Sur PlatformIO, le fichier se trouve généralement dans "
@@ -1028,7 +1024,7 @@ FR:
   Sonoff switch: Interrupteur Sonoff
   Speed: Vitesse
   SSID: SSID
-  stale: Pas de nouvelles récentes
+  Not reported recently: Pas de nouvelles récentes
   Status: État
   Stop monitor: Arrêter moniteur
   Stopped, and its credential removed. Click to clear.: Arrêté, et son identifiant supprimé. Cliquez pour annuler.
@@ -1103,7 +1099,7 @@ HI:
   Add network: नेटवर्क जोड़ें
   Remove: हटाएं
   No active project: कोई सक्रिय परियोजना नहीं
-  Project name length: परियोजना का नाम 2 से 15 अक्षरों का होना चाहिए
+  Project name must be 2 to 15 characters: परियोजना का नाम 2 से 15 अक्षरों का होना चाहिए
   Add a WiFi network: एक वाई-फ़ाई नेटवर्क जोड़ें
   WiFi network not valid: वाई-फ़ाई नेटवर्क मान्य नहीं
   Not understood: समझ नहीं आया
@@ -1219,8 +1215,6 @@ HI:
   Humidity control: आर्द्रता नियंत्रण
   Hysteresis: हिस्टेरिसिस
   hysteresis: हिस्टेरेसिस
-  Hysterisis: हिस्टेरिसिस
-  hysterisis: हिस्टेरेसिस
   I have a code: मेरे पास कोड है
   id: आईडी
   If that account exists we have emailed a reset code: यदि वह खाता मौजूद है, तो हमने रीसेट कोड ईमेल कर दिया है
@@ -1239,7 +1233,7 @@ HI:
   LED: एलईडी
   Limit: सीमा
   List: सूची
-  live: चालू
+  Live: चालू
   Load Cell: लोड सेल
   Loading schema...: स्कीमा लोड हो रहा है...
   Log out: लॉग आउट
@@ -1252,7 +1246,6 @@ HI:
   Move down: नीचे ले जाएँ
   Move up: ऊपर ले जाएँ
   Name: नाम
-  never: कभी नहीं देखा
   Never seen: कभी नहीं देखा
   New here?: यहाँ नए हैं?
   New password: नया पासवर्ड
@@ -1288,6 +1281,7 @@ HI:
   now: अभी
   Off: बंद
   offline: ऑफ़लाइन
+  Offline: ऑफ़लाइन
   On: चालू
   "On ArduinoIDE the file is typically in ": "ArduinoIDE पर फ़ाइल सामान्यतः यहाँ होती है "
   "On PlatformIO The file is typically in ": "PlatformIO पर फ़ाइल सामान्यतः यहाँ होती है "
@@ -1372,7 +1366,7 @@ HI:
   Sonoff switch: सोनऑफ स्विच
   Speed: गति
   SSID: SSID
-  stale: हाल में रिपोर्ट नहीं
+  Not reported recently: हाल में रिपोर्ट नहीं
   Status: स्थिति
   Stop monitor: मॉनिटर बंद करें
   Stopped, and its credential removed. Click to clear.: रोका गया, और इसका क्रेडेंशियल हटा दिया गया। हटाने के लिए क्लिक करें।
@@ -1447,7 +1441,7 @@ ID:
   Add network: Tambah jaringan
   Remove: Hapus
   No active project: Tidak ada proyek aktif
-  Project name length: Nama proyek harus 2 sampai 15 karakter
+  Project name must be 2 to 15 characters: Nama proyek harus 2 sampai 15 karakter
   Add a WiFi network: Tambahkan jaringan WiFi
   WiFi network not valid: Jaringan WiFi tidak valid
   Not understood: Tidak dipahami
@@ -1563,8 +1557,6 @@ ID:
   Humidity control: Kontrol kelembapan
   Hysteresis: Histeresis
   hysteresis: histeresis
-  Hysterisis: Histeresis
-  hysterisis: histeresis
   I have a code: Saya punya kode
   id: id
   If that account exists we have emailed a reset code: Jika akun itu ada, kami telah mengirim kode reset lewat email
@@ -1583,7 +1575,7 @@ ID:
   LED: LED
   Limit: Batas
   List: Daftar
-  live: Aktif
+  Live: Aktif
   Load Cell: Sel Beban
   Loading schema...: Memuat skema...
   Log out: Keluar
@@ -1596,7 +1588,6 @@ ID:
   Move down: Turunkan
   Move up: Naikkan
   Name: Nama
-  never: Belum pernah terlihat
   Never seen: Belum pernah terlihat
   New here?: Baru di sini?
   New password: Kata sandi baru
@@ -1632,6 +1623,7 @@ ID:
   now: sekarang
   Off: Mati
   offline: offline
+  Offline: Offline
   On: Hidup
   "On ArduinoIDE the file is typically in ": "Di ArduinoIDE berkas biasanya ada di "
   "On PlatformIO The file is typically in ": "Di PlatformIO berkas biasanya ada di "
@@ -1716,7 +1708,7 @@ ID:
   Sonoff switch: Saklar Sonoff
   Speed: Kecepatan
   SSID: SSID
-  stale: Belum melapor baru-baru ini
+  Not reported recently: Belum melapor baru-baru ini
   Status: Status
   Stop monitor: Hentikan monitor
   Stopped, and its credential removed. Click to clear.: Dihentikan, dan kredensialnya dihapus. Klik untuk membatalkan.
@@ -2604,7 +2596,7 @@ class MqttTopicGroupControlHysteresis extends MqttTopicGroup {
     return wired && projMt && projMt.findTopic(wired) && projMt.findTopic(wired).usableName || val;
   }
   summaryText() {
-    let hysteresis = this.state.hysteresis || this.state.hysterisis || 0
+    let hysteresis = this.state.hysteresis || 0
     // "out", not "on": a control's output leaf is "out" (Control_Hysteresis publishes an OUTbool
     // named "out"), and no control module declares an "on" - that is an actuator's leaf. Reading
     // "on" here meant this symbol was always "?".
@@ -2634,7 +2626,6 @@ const topicGroupClasses = {
   relay: MqttTopicGroupRelay,                        // wants its name beside the tick
   ota: MqttTopicGroupOta,                            // a key, not a reading
   controlhysteresis: MqttTopicGroupControlHysteresis, // a rule, not a list of values
-  controlhysterisis: MqttTopicGroupControlHysteresis, // TODO-legacy-hysterisis
 };
 
 // Project-level data node in the topic tree. Receives discovery messages and creates nodes.
@@ -2705,7 +2696,7 @@ class MqttTopicNode extends MqttTopic {
     }
     if (["frugal_iot/project"].some(s => s === twig || twig.includes(s + "/"))) return false;
     if (["frugal_iot/device_name"].some(s => s === twig || twig.includes(s + "/"))) return false;
-    if (["wifistrength", "climate/temp_now", "climate/temp_out", "climate/temp_hysteresis", "climate/temp_setpoint", "climate/temperature", "climate/humidity", "controlhysterisis/auto", "frugal-iot/reboot", "buttons", "messages", "now/now"].some(s => s === twig || twig.includes(s + "/"))) {
+    if (["wifistrength", "climate/temp_now", "climate/temp_out", "climate/temp_setpoint", "climate/temperature", "climate/humidity","frugal-iot/reboot", "buttons", "messages", "now/now"].some(s => s === twig || twig.includes(s + "/"))) {
       XXY(["legacy twig will go away after reboot", twig]);
       return false;
     }
@@ -2724,7 +2715,7 @@ class MqttTopicNode extends MqttTopic {
       let t = server_config.schema.topics[leaf];
       const guessName = leaf.replace("_", " ");
       if (
-        (!t && ["_now", "_setpoint", "_limit", "_hysteresis", "_hysterisis", "_hyst"].some(suffix => leaf.endsWith(suffix)))
+        (!t && ["_now", "_setpoint", "_limit", "_hysteresis","_hyst"].some(suffix => leaf.endsWith(suffix)))
         || (t && groupId.startsWith("control") && t.type === "float")
       ) {
         t = expandTopicTemplate('controlfloat', {leaf, name: guessName});

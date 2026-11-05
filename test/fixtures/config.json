@@ -376,39 +376,7 @@
      {
       "leaf": "hysteresis",
       "leaf_from": "controlfloat",
-      "name": "Hysterisis",
-      "max": 100,
-      "wireable": false
-     },
-     {
-      "leaf": "out",
-      "leaf_from": "controlouttoggle",
-      "name": "Out"
-     }
-    ]
-   },
-   "controlhysterisis": {
-    "name": "Control",
-    "topics": [
-     {
-      "leaf": "now",
-      "leaf_from": "controlfloat",
-      "name": "Now"
-     },
-     {
-      "leaf": "greater",
-      "leaf_from": "controlintoggle",
-      "name": "Greater Than"
-     },
-     {
-      "leaf": "limit",
-      "leaf_from": "controlfloat",
-      "name": "Limit"
-     },
-     {
-      "leaf": "hysterisis",
-      "leaf_from": "controlfloat",
-      "name": "Hysterisis",
+      "name": "Hysteresis",
       "max": 100,
       "wireable": false
      },

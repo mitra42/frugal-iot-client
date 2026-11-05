@@ -349,7 +349,7 @@ ID:
     const outMt     = topics.find(t => t.leaf === 'out');
     const greaterMt = topics.find(t => t.leaf === 'greater');
     const limitMt   = topics.find(t => t.leaf === 'limit');
-    const hystMt    = topics.find(t => t.leaf === 'hysteresis' || t.leaf === 'hysterisis');
+    const hystMt    = topics.find(t => t.leaf === 'hysteresis');
 
     // Sensor is what 'now' is wired to; fall back to the local 'now' reading if unwired
     const sensorMt   = (nowMt && nowMt.wiredTopic) || nowMt;
