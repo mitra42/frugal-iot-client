@@ -180,9 +180,9 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
   renderMoveButtons() {
     if (!this.state.movable) return [];
     return [
-      el('button', { class: 'fi-btn fi-btn--move', title: getString('Move up'), i8n: false, textContent: '▲',
+      el('button', { class: 'fi-btn fi-btn--move', title: 'Move up', textContent: '▲',
         onclick: (e) => { e.stopPropagation(); this.requestMove(-1); } }),
-      el('button', { class: 'fi-btn fi-btn--move', title: getString('Move down'), i8n: false, textContent: '▼',
+      el('button', { class: 'fi-btn fi-btn--move', title: 'Move down', textContent: '▼',
         onclick: (e) => { e.stopPropagation(); this.requestMove(1); } }),
     ];
   }
@@ -359,14 +359,14 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
     const battery = nodeMt.battery;
     const wifi = health && [health.topics.wifibars, health.topics.wifissid]
       .map((mt) => mt && mt.formatted).filter(Boolean).join(' ');
-    return this.section(getString('Device'), [
-      fi && fi.topics.name ? this.field(getString('Name'), this.widgetForTopic(fi.topics.name, '')) : null,
-      fi && fi.topics.description ? this.field(getString('Description'), this.widgetForTopic(fi.topics.description, '')) : null,
-      this.field(getString('Node ID'), nodeMt.nodeId),
-      this.field(getString('Last seen'), this.ageText),
-      battery ? this.field(getString('Battery'), `${battery.mt.formatted} (${battery.percent}%)`) : null,
-      wifi ? this.field(getString('WiFi'), wifi) : null,
-      ota && ota.topics.key ? this.field(getString('OTA Key'), ota.topics.key.state.value) : null,
+    return this.section('Device', [
+      fi && fi.topics.name ? this.field('Name', this.widgetForTopic(fi.topics.name, '')) : null,
+      fi && fi.topics.description ? this.field('Description', this.widgetForTopic(fi.topics.description, '')) : null,
+      this.field('Node ID', nodeMt.nodeId),
+      this.field('Last seen', this.ageText),
+      battery ? this.field('Battery', `${battery.mt.formatted} (${battery.percent}%)`) : null,
+      wifi ? this.field('WiFi', wifi) : null,
+      ota && ota.topics.key ? this.field('OTA Key', ota.topics.key.state.value) : null,
     ]);
   }
 
@@ -394,10 +394,10 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
       return this.field(mt.name, widget);
     });
     return this.section(groupMt.state.name || groupId, [
-      t.now ? this.field(getString('Input'), this.widgetForTopic(t.now, '', { wiring: 'open' })) : null,
-      when ? this.field(getString('When'), when) : null,
-      t.out ? this.field(getString('Output'), this.widgetForTopic(t.out, '', { wiring: 'open' })) : null,
-      t.manual ? this.field(getString('Manual'), this.widgetForTopic(t.manual, '')) : null,
+      t.now ? this.field('Input', this.widgetForTopic(t.now, '', { wiring: 'open' })) : null,
+      when ? this.field('When', when) : null,
+      t.out ? this.field('Output', this.widgetForTopic(t.out, '', { wiring: 'open' })) : null,
+      t.manual ? this.field('Manual', this.widgetForTopic(t.manual, '')) : null,
       ...others,
     ]);
   }
@@ -430,7 +430,7 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
   renderUnrecognisedSection() {
     const unknown = this.nodeMt.unrecognisedTopics;
     if (!unknown.length) return null;
-    return this.section(getString('Not in the schema'),
+    return this.section('Not in the schema',
       unknown.map((u) => this.field(u.twig, String(u.value))));
   }
 
@@ -439,9 +439,9 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
     const nodeMt = this.nodeMt;
     return el('details', { class: 'fi-advanced' }, [
       el('summary', { textContent: getString('Advanced') }),
-      this.field(getString('Topic'), nodeMt.topicPath),
-      this.field(getString('OTA Key'), nodeMt.otaKey),
-      this.field(getString('Reporting every'), nodeMt.expectedInterval
+      this.field('Topic', nodeMt.topicPath),
+      this.field('OTA Key', nodeMt.otaKey),
+      this.field('Reporting every', nodeMt.expectedInterval
         ? `${Math.round(nodeMt.expectedInterval / 1000)}s` : getString('Unknown')),
     ]);
   }
@@ -474,9 +474,9 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
   graphIcon(mt) {
     if (!mt.graphable) return null;
     return el('button', {
-      class: 'fi-graphbtn', type: 'button', title: getString('Graph'), i8n: false,
+      class: 'fi-graphbtn', type: 'button', title: 'Graph',
       onclick: (e) => { e.stopPropagation(); mt.createGraph(); },
-    }, [el('img', { class: 'fi-graphbtn__icon', src: `${ImagesUrl}icon_graph.svg`, alt: getString('Graph'), i8n: false })]);
+    }, [el('img', { class: 'fi-graphbtn__icon', src: `${ImagesUrl}icon_graph.svg`, alt: 'Graph' })]);
   }
 
   // Battery and last-seen, small and grey, always present. Battery feeds the status strip rather
@@ -507,8 +507,8 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
     const nodeMt = this.nodeMt;
     return el('div', { class: 'fi-card__head' }, [
       this.state.elements.status = el('span', {
-        class: 'fi-status', i8n: false,
-        textContent: STATUS_MARK[nodeMt.status], title: getString(STATUS_TEXT[nodeMt.status]),
+        class: 'fi-status',
+        textContent: STATUS_MARK[nodeMt.status], title: STATUS_TEXT[nodeMt.status],
       }),
       this.state.elements.name = el('span', { class: 'fi-card__name', i8n: false, textContent: nodeMt.usableName }),
       this.state.elements.meta = el('span', { class: 'fi-card__meta' }, this.renderMeta()),
@@ -516,14 +516,14 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
       ...((this.mode === 'summary') ? [] : [
         // No gear on the back - that is where the gear goes, so it would do nothing
         (this.mode === 'front') ? el('button', {
-          class: 'fi-btn', title: getString('Settings'), i8n: false, textContent: '⚙',
+          class: 'fi-btn', title: 'Settings', textContent: '⚙',
           onclick: (e) => { e.stopPropagation(); this.mode = 'back'; },
         }) : null,
         // A close mark, not a chevron - "⌄" reads as "there is more below", the opposite of what it
         // does. It returns to wherever you came from: the front from the back, the summary from the
         // front.
         el('button', {
-          class: 'fi-btn fi-btn--close', title: getString('Collapse'), i8n: false, textContent: '✕',
+          class: 'fi-btn fi-btn--close', title: 'Collapse', textContent: '✕',
           onclick: (e) => { e.stopPropagation(); this.mode = (this.mode === 'back') ? 'front' : 'summary'; },
         }),
       ].filter(Boolean)),
@@ -809,9 +809,9 @@ class MqttProjectBack extends HTMLElementExtendedMinimum {
     const mqttConfig = (server_config && server_config.mqtt) || {};
     const client = document.querySelector('mqtt-client');
     return el('div', { class: 'fi-infocard' }, [
-      this.infoField(getString('Broker'), mqttConfig.broker),
-      this.infoField(getString('Organization'), this.state.organization),
-      this.infoField(getString('Status'), client && client.state && client.state.status),
+      this.infoField('Broker', mqttConfig.broker),
+      this.infoField('Organization', this.state.organization),
+      this.infoField('Status', client && client.state && client.state.status),
     ].filter(Boolean));
   }
   infoField(label, value) {
@@ -900,7 +900,7 @@ class MqttDashboard extends HTMLElementExtendedMinimum {
     return [
       el('header', { class: 'fi-header' }, [
         // Back to the project's main site, using the icon its own header uses
-        el('a', { class: 'fi-brand', href: '/', title: getString('Frugal IoT project') }, [
+        el('a', { class: 'fi-brand', href: '/', title: 'Frugal IoT project' }, [
           el('img', { src: '/images/icon-192x192.png', alt: 'Frugal IoT', i8n: false }),
           el('span', { class: 'fi-header__title', textContent: 'Frugal IoT', i8n: false }),
         ]),
@@ -914,8 +914,7 @@ class MqttDashboard extends HTMLElementExtendedMinimum {
         this.state.elements.gear = el('span', { class: 'fi-header__gear' }),
         // There was no way to log out at all before. It matters more now that a permissions change
         // ends the session, so people come back to the login page and need to be able to get there.
-        el('a', { class: 'fi-btn fi-header__logout', href: '/logout', title: getString('Log out'),
-          i8n: false, textContent: '⏻' }),
+        el('a', { class: 'fi-btn fi-header__logout', href: '/logout', title: 'Log out', textContent: '⏻' }),
         // Forces the organization and project selectors onto a second row when the header is
         // narrow - see .fi-header__break. Nothing to look at, so it is hidden from assistive tech.
         el('span', { class: 'fi-header__break', 'aria-hidden': 'true' }),
@@ -934,7 +933,7 @@ class MqttDashboard extends HTMLElementExtendedMinimum {
     e.body.replaceChildren(this.renderBody());
     // The gear only appears if turning the project over would show something (D-29)
     e.gear.replaceChildren(...(this.canAdminister ? [el('button', {
-      class: 'fi-btn', title: getString('Settings'), i8n: false,
+      class: 'fi-btn', title: 'Settings',
       textContent: (this.state.mode === 'back') ? '✕' : '⚙',
       onclick: () => { this.state.mode = (this.state.mode === 'back') ? 'front' : 'back'; this.refreshBody(); },
     })] : []));
@@ -945,10 +944,10 @@ class MqttDashboard extends HTMLElementExtendedMinimum {
       return el('mqtt-projectback', { organization: this.state.organization, project: this.projectMt && this.projectMt.project });
     }
     if (!this.projectMt) {
-      return this.emptyState(getString('Choose a project to see its devices'));
+      return this.emptyState('Choose a project to see its devices');
     }
     if (!Object.keys(this.projectMt.nodes).length) {
-      return this.emptyState(getString('Waiting for devices'));
+      return this.emptyState('Waiting for devices');
     }
     const grid = el('mqtt-devicegrid', {});
     grid.mt = this.projectMt;

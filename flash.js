@@ -316,7 +316,7 @@ class MqttFlash extends HTMLElementExtended {
   }
   iconButton(file, label, onclick) {
     const name = getString(label);
-    return el('button', {class: 'submit icon-button', type: 'button', title: name, 'aria-label': name, onclick},
+    return el('button', {class: 'submit icon-button', type: 'button', title: name, 'aria-label': name, onclick, i8n: false},
       [el('img', {src: `${ImagesUrl}${file}`, alt: '', i8n: false})]);
   }
   onClearLog() {

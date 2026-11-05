@@ -1,0 +1,434 @@
+# French
+'"%s" already exists.': « %s » existe déjà.
+"+ matches one level, # matches the rest. Look before deleting.": "+ correspond à un niveau, # au reste. Regardez avant de supprimer."
+(Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): (Max 4 Mo, .bin uniquement, généralement frugal-iot.ino.bin ou firmware.bin)
+A bridge relays a Pi's readings to this server, so its nodes appear here too, while the Pi carries on recording and serving on its own whenever the link is down. "Bridge" is the broker's live view of the relay; "Last check-in" is when that Pi last collected this organization's logins, which it does over HTTP - so a Pi can be checking in while its bridge is down, and the two together say which half is broken.: Une passerelle relaie les mesures d'un Pi vers ce serveur, de sorte que ses nœuds apparaissent ici aussi, tandis que le Pi continue d'enregistrer et de servir de son côté chaque fois que le lien est coupé. « Passerelle » est la vue en direct du relais par le courtier ; « Dernier contact » indique quand ce Pi a récupéré pour la dernière fois les comptes de cette organisation, ce qu'il fait en HTTP - un Pi peut donc prendre contact alors que sa passerelle est coupée, et les deux ensemble disent quelle moitié est en panne.
+Action: Action
+Action *: Action *
+Add: Ajouter
+Reset board: Réinitialiser la carte
+Clear log: Effacer le journal
+Copy log: Copier le journal
+Start the monitor to configure: Démarrez le moniteur pour configurer
+Board not answering - old firmware?: La carte ne répond pas - ancien firmware ?
+Waiting for the board: En attente de la carte
+Board was already configured - its settings were kept. Apply to board changes them: La carte était déjà configurée - ses réglages sont conservés. « Appliquer à la carte » les modifie
+Configure board: Configurer la carte
+Apply after flashing: Appliquer après le flashage
+Apply to board: Appliquer à la carte
+Board ready: Carte prête
+Boards done: Cartes terminées
+WiFi networks: Réseaux WiFi
+Add network: Ajouter un réseau
+Remove: Retirer
+No active project: Aucun projet actif
+Project name must be 2 to 15 characters: Le nom du projet doit faire 2 à 15 caractères
+Add a WiFi network: Ajoutez un réseau WiFi
+WiFi network not valid: Réseau WiFi non valide
+Not understood: Non compris
+Too long: Trop long
+No reply: Pas de réponse
+Could not fetch the enrolment secret: Impossible d'obtenir le secret d'enrôlement
+WiFi connected: WiFi connecté
+WiFi not connected: WiFi non connecté
+MQTT connected: MQTT connecté
+MQTT not connected: MQTT non connecté
+Not enrolled: Non enrôlé
+Add a bridge: Ajouter une passerelle
+Add another enrolment secret: Ajouter un autre secret d'enrôlement
+Added: Ajouté
+Adding it again issues a new broker password and a new replica token, and the ones that Pi is using now stop working. It will stay disconnected until you put the new ones into its configuration and restart its broker.: Le refaire émet un nouveau mot de passe de courtier et un nouveau jeton de réplique, et ceux que ce Pi utilise actuellement cessent de fonctionner. Il restera déconnecté jusqu'à ce que vous mettiez les nouveaux dans sa configuration et redémarriez son courtier.
+Admin: Admin
+Advanced: Avancé
+All: Tous
+Already have an account?: Vous avez déjà un compte ?
+"And these two, if you are not building against the production server:": "Et ces deux-ci, si vous ne compilez pas pour le serveur de production :"
+Any node flashed with it that has not enrolled yet will be refused and will need reflashing. Nodes that have already enrolled are unaffected - they never present it again.: Tout nœud flashé avec lui qui ne s'est pas encore enrôlé sera refusé et devra être reflashé. Les nœuds déjà enrôlés ne sont pas affectés - ils ne le présentent plus jamais.
+API: API
+Approved: Approuvé
+AQI: IQA  
+AQI500: IQA500  
+Asked and was refused. Click to let it enrol.: A demandé et a été refusé. Cliquez pour l'autoriser à s'enrôler.
+Auth Token: Jeton d'authentification
+Back to sign in: Retour à la connexion
+Base URL: URL de base
+Battery: Batterie
+Board: Carte
+Bridge: Passerelle
+Bridged Pis: Pi reliés par passerelle
+Bridges: Passerelles
+Brightness: Luminosité  
+Broker: Courtier
+Broker account: Compte du courtier
+Broker password: Mot de passe du courtier
+Built in LED: LED intégrée
+buttons: boutons
+Choose a project to see its devices: Choisissez un projet pour voir ses appareils
+Click to change project: Cliquez pour changer de projet
+Click to sort: Cliquez pour trier
+Climate: Climat
+close: fermer
+Collapse: Réduire
+Color: Couleur  
+"Compiled into firmware and used to request broker credential. Add a second one to change it: both are accepted, so nodes already flashed keep working until you withdraw the old one.": "Compilé dans le micrologiciel et utilisé pour demander l'identifiant de broker. Ajoutez-en un second pour le changer : les deux sont acceptés, donc les nœuds déjà flashés continuent de fonctionner jusqu'à ce que vous retiriez l'ancien."
+Connect board: Connecter la carte
+connected: connecté
+connecting: connexion
+Control: Contrôle
+Cookie Name: Nom du cookie
+Copy these now - they are not shown again: Copiez-les maintenant - ils ne seront plus affichés
+Could not read the board - assuming it is already provisioned: Impossible de lire la carte - on suppose qu'elle est déjà provisionnée
+Create an account: Créer un compte
+Dashboard: Tableau de bord
+Data: Données
+Delete these: Supprimer ceux-ci
+Delete this firmware: Supprimer ce micrologiciel
+Denied: Refusé
+Deny %s?: Refuser %s ?
+Description: Description
+Device: Appareil
+Display carousel: Carrousel d'affichage
+DOWN: HORS SERVICE
+Download this firmware: Télécharger ce micrologiciel
+Done: Fait
+ds18b20: ds18b20
+e.g. LiteFarm: par ex. LiteFarm
+eCO2: eCO2
+Email: Email
+Enrol URL: URL d'enrôlement
+Enrolled: Enrôlé
+Enrolled nodes: Nœuds enrôlés
+Enrolment secret: Secret d'enrôlement
+ENS AHT: ENS AHT  
+Enter the code we emailed you, then choose a new password.: Saisissez le code que nous vous avons envoyé par e-mail, puis choisissez un nouveau mot de passe.
+Enter topic: Entrez le sujet
+Enter value: Entrez la valeur
+Existing OTA Files: Fichiers OTA existants
+Failed: Échec
+Farm ID *: ID de la ferme *
+Farm registered: Ferme enregistrée
+Farms: Fermes
+File: Fichier
+Firmware: Micrologiciel
+Firmware file: Fichier micrologiciel
+Flash: Flasher
+Flash over USB: Flasher par USB
+Flash size was not detected reliably - flash anyway: Taille de la mémoire flash non détectée de façon fiable - flasher quand même
+Flash this over USB: Flasher ceci par USB
+Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer: Le flashage nécessite l'API Web Serial - utilisez Chrome, Edge ou Opera sur un ordinateur de bureau
+for node: pour le nœud
+Forget: Oublier
+Forget %s?: Oublier %s ?
+Forget this node, so it is issued a new credential: Oublier ce nœud, pour qu'un nouvel identifiant lui soit délivré
+Forgot password?: Mot de passe oublié ?
+From: De
+Frugal IoT project: Projet Frugal IoT
+Frugal-IoT Username *: Nom d'utilisateur Frugal-IoT *
+Full provision - all configuration on the board will be erased: Provisionnement complet - toute la configuration de la carte sera effacée
+Gas Resistance: Résistance du gaz
+Give the Pi a short name - it becomes its broker account and cannot be changed later without reconfiguring that Pi. Lower-case letters, digits and hyphens.: Donnez au Pi un nom court - il devient son compte de courtier et ne peut plus être changé ensuite sans reconfigurer ce Pi. Lettres minuscules, chiffres et traits d'union.
+Give the Pi a short name first: Donnez d'abord un nom court au Pi
+Graph: Graphique
+Greater Than: Supérieur à
+Has its own broker credential. Click to deny it.: Possède son propre identifiant de broker. Cliquez pour le refuser.
+heating: chauffage
+humidifier: humidificateur
+Humidity: Humidité
+humidity: humidité
+Humidity control: Contrôle de l'humidité
+Hysteresis: Hystérésis
+hysteresis: hystérésis
+I have a code: J'ai un code
+id: id
+If that account exists we have emailed a reset code: Si ce compte existe, nous avons envoyé un code de réinitialisation par e-mail
+If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': Si ce répertoire est invisible dans le sélecteur de fichiers, copiez le fichier ailleurs OU créez un alias vers le répertoire .pio sans point au début.
+Incorrect username or password: Nom d'utilisateur ou mot de passe incorrect
+Info: Infos
+Input: Entrée
+It will be issued a new broker credential the next time it asks. A node that is running will be offline for a minute or two while it notices; a node whose filesystem was erased needs this before it can rejoin at all.: Un nouvel identifiant de courtier lui sera délivré la prochaine fois qu'il le demandera. Un nœud en fonctionnement sera hors ligne une minute ou deux le temps qu'il s'en aperçoive ; un nœud dont le système de fichiers a été effacé en a besoin pour pouvoir rejoindre.
+Its broker account is deleted, so it stops being able to publish or subscribe, and it cannot enrol again until you clear this. Use it for a node sending bad readings.: Son compte de courtier est supprimé, il ne peut donc plus publier ni s'abonner, et il ne peut pas s'enrôler de nouveau tant que vous n'avez pas annulé ceci. À utiliser pour un nœud qui envoie de mauvaises mesures.
+Its next request will be accepted. Click to deny it.: Sa prochaine demande sera acceptée. Cliquez pour le refuser.
+Key: Clé
+Last asked: Dernière demande
+Last check-in: Dernier contact
+Last Seen: Dernière activité
+Last seen: Vu pour la dernière fois
+LED: LED
+Limit: Limite
+List: Lister
+Live: En ligne
+Load Cell: Cellule de charge
+Loading schema...: Chargement du schéma...
+Log out: Se déconnecter
+Lower-case letters and numbers only, no spaces or punctuation: Lettres minuscules et chiffres uniquement, sans espaces ni ponctuation
+Lux: Lux
+Manual: Manuel
+Message: Message
+Monitor: Moniteur
+Monitor speed: Vitesse du moniteur
+Move down: Descendre
+Move up: Monter
+Name: Nom 
+Never seen: Jamais vu
+New here?: Nouveau ici ?
+New password: Nouveau mot de passe
+Connect a board to flash: Connectez une carte pour flasher
+Choose a firmware file to flash: Choisissez un fichier micrologiciel à flasher
+Erase and flash: Effacer et flasher
+kept from last session: conservé de la dernière session
+No farms registered for this organization yet.: Aucune ferme enregistrée pour cette organisation pour l'instant.
+No nodes found for this farm's project(s).: Aucun nœud trouvé pour le(s) projet(s) de cette ferme.
+No nodes found for this organization: Aucun nœud trouvé pour cette organisation
+No nodes have enrolled yet, and none have asked and been rejected.: Aucun nœud ne s'est encore enrôlé, et aucun n'a été refusé.
+No organization: Aucune organisation
+No organization selected: Aucune organisation sélectionnée
+No OTA files uploaded yet.: Aucun fichier OTA téléversé pour l'instant.
+No Pi bridges to this server for this organization. A bridge relays a Pi's readings here while the Pi carries on working on its own - see INSTALLATION.md step 11.: Aucune passerelle Pi vers ce serveur pour cette organisation. Une passerelle relaie ici les mesures d'un Pi pendant que celui-ci continue de fonctionner de son côté - voir INSTALLATION.md étape 11.
+No platforms registered yet.: Aucune plateforme enregistrée pour l'instant.
+No projects added for this organization yet.: Aucun projet ajouté pour cette organisation pour l'instant.
+No projects to display until organization selected: Aucun projet à afficher tant qu'une organisation n'est sélectionnée
+No state received from the broker yet: Aucun état reçu du courtier pour l'instant
+Nobody added for this organization yet.: Personne n'a encore été ajouté pour cette organisation.
+Node: Nœud
+Node Actions: Actions du nœud
+Node ID: ID du nœud
+Node Name: Nom du nœud  
+Nodes: Nœuds
+Nodes in Farm: Nœuds dans la ferme
+Nodes in Organization: Nœuds dans l'organisation
+Nodes that have obtained broker credentials on first connection. Forget reissues a new credential at next connection and is needed if memory has been erased. Refused nodes are listed - click Approve to allow (on next retry, typically 30 minutes).: Nœuds ayant obtenu leur identifiant de broker à la première connexion. Oublier en délivre un nouveau à la prochaine connexion, nécessaire si la mémoire a été effacée. Les nœuds refusés sont listés - cliquez sur Approuver pour autoriser (à la prochaine tentative, généralement 30 minutes).
+Not in the schema: Absent du schéma
+Not selected: Non sélectionné
+Note this is your organization - not the organizations whose devices you want to access.: Ceci est votre organisation - pas les organisations dont vous voulez accéder aux appareils.
+Now: Maintenant
+now: maintenant
+Off: Éteint
+offline: hors ligne
+Offline: Hors ligne
+On: Allumé
+"On ArduinoIDE the file is typically in ": "Sur ArduinoIDE, le fichier se trouve généralement dans "
+"On PlatformIO The file is typically in ": "Sur PlatformIO, le fichier se trouve généralement dans "
+Organization: Organisation
+OTA: OTA
+OTA Upload: Téléversement OTA
+OTA binary uploaded: Binaire OTA téléversé
+OTA Key: Clé OTA
+OTA Key or Device ID: Clé OTA ou ID de l’appareil
+Out: Sortie
+out: sortie
+Output: Sortie
+Password: Mot de passe
+Password reset - please sign in: Mot de passe réinitialisé - veuillez vous connecter
+Password reset is not available on this server: La réinitialisation du mot de passe n'est pas disponible sur ce serveur
+Pattern: Motif
+Permissions: Autorisations
+Phone or Whatsapp: Téléphone ou Whatsapp
+Platform *: Plateforme *
+Platform Name *: Nom de la plateforme *
+Platform registered: Plateforme enregistrée
+Please login: Veuillez vous connecter
+Pressure: Pression
+Project: Projet
+Project changed to: Projet changé en
+Asked %s to move: Déplacement demandé à %s
+Waiting for %s to report: En attente du rapport de %s
+Project ID: ID du projet
+Project ID *: ID du projet *
+Project Name: Nom du projet
+Projects: Projets
+Property: Propriété
+Provision instead (erases config): Provisionner plutôt (effacer la configuration)
+Publish Message: Publier un message
+"Published to ": "Publié sur "
+"Put this in platformio-secrets-local.ini, which is not committed:": "Mettez ceci dans platformio-secrets-local.ini, qui n'est pas commité :"
+QoS: QoS
+reconnect: reconnecter
+Reconnect the board to flash again: Reconnectez la carte pour flasher à nouveau
+Register: Registre
+Register a platform above before adding a farm.: Enregistrez une plateforme ci-dessus avant d'ajouter une ferme.
+Register Farm: Enregistrer la ferme
+Refresh: Actualiser
+Register Platform: Enregistrer la plateforme
+Registered Platforms: Plateformes enregistrées
+Registration failed: L'inscription a échoué
+Registration successful - please login: Inscription réussie - veuillez vous connecter
+Relay: Relais
+Replica token: Jeton de réplique
+Reporting every: Transmet toutes les
+Reset code: Code de réinitialisation
+Reset password: Réinitialiser le mot de passe
+Retain: Conserver
+Retained: Conservés
+Retained messages: Messages conservés
+Run this on the Pi, in the directory the server is installed in. Replace the placeholder with this server's fully-qualified name - the one on its certificate, which you can check by opening https:// that name in a browser. It will then ask for the broker password and for the replica token, in that order, so have both of the values below to hand.: Exécutez ceci sur le Pi, dans le répertoire où le serveur est installé. Remplacez l'espace réservé par le nom pleinement qualifié de ce serveur - celui qui figure sur son certificat, que vous pouvez vérifier en ouvrant https:// ce nom dans un navigateur. Il demandera ensuite le mot de passe du courtier puis le jeton de réplique, dans cet ordre, alors ayez les deux valeurs ci-dessous sous la main.
+Schema: Schéma
+Select: Sélectionner
+Select a farm above to see its nodes.: Sélectionnez une ferme ci-dessus pour voir ses nœuds.
+Select a node above to see actions.: Sélectionnez un nœud ci-dessus pour voir les actions.
+Select a node above to send an action.: Sélectionnez un nœud ci-dessus pour envoyer une action.
+Select an organization to continue.: Sélectionnez une organisation pour continuer.
+Send: Envoyer
+SEND: ENVOYER
+Send another code: Envoyer un autre code
+Send reset code: Envoyer le code
+sent: envoyé
+server: serveur
+set: défini
+Setpoint: consigne
+Settings: Réglages
+Show enrolment secrets: Afficher les secrets d'enrôlement
+SHT: SHT
+SHT30: SHT30
+Sign In: Se connecter
+Sign in: Se connecter
+Site: Site
+Soil: Sol
+Soil Moisture: Humidité du sol
+Soil Temperature: Température du sol
+Sonoff R2 switch: Interrupteur Sonoff R2
+Sonoff switch: Interrupteur Sonoff
+Speed: Vitesse
+SSID: SSID
+Not reported recently: Pas de nouvelles récentes
+Status: État
+Stop monitor: Arrêter moniteur
+Stopped, and its credential removed. Click to clear.: Arrêté, et son identifiant supprimé. Cliquez pour annuler.
+Submit: Soumettre
+System: Système
+Temperature: Température
+temperature: température
+That code is not valid or has expired: Ce code n'est pas valide ou a expiré
+The broker reports this bridge connected: Le courtier signale cette passerelle comme connectée
+The broker reports this bridge not connected: Le courtier signale cette passerelle comme non connectée
+This field has no invocation URL (forms[0].href) in its schema: Ce champ n'a pas d'URL d'invocation (forms[0].href) dans son schéma
+This node has no actions in its schema.: Ce nœud n'a aucune action dans son schéma.
+This node has no actions or writable properties in its schema.: Ce nœud n'a aucune action ni propriété modifiable dans son schéma.
+This organization has no enrolment secret, so no new node can enrol. Add one.: Cette organisation n'a aucun secret d'enrôlement, donc aucun nouveau nœud ne peut s'enrôler. Ajoutez-en un.
+Time On (s): Durée active (s)
+To: À
+Too many attempts - please wait a few minutes: Trop de tentatives - veuillez patienter quelques minutes
+Topic: Sujet
+Topic and Value are required: Le sujet et la valeur sont requis
+TVOC: COVT  
+'Two credentials for two different connections: the password is what the MQTT bridge logs in with on port 8883, and the token is what lets that Pi pull this organization''s logins over HTTPS, so the same people can log in there too. The token can be skipped - press Enter at its prompt - and added later by doing this again. Neither is asked for on the command line, so that neither ends up in the Pi''s shell history.': 'Deux identifiants pour deux connexions différentes : le mot de passe est celui avec lequel la passerelle MQTT se connecte sur le port 8883, et le jeton est ce qui permet à ce Pi de récupérer les comptes de cette organisation en HTTPS, afin que les mêmes personnes puissent aussi s''y connecter. Le jeton peut être omis - appuyez sur Entrée à son invite - et ajouté plus tard en refaisant ceci. Ni l''un ni l''autre n''est demandé sur la ligne de commande, afin qu''aucun ne se retrouve dans l''historique du shell du Pi.'
+Unable to find node: Impossible de trouver le nœud
+Unable to find project: Impossible de trouver le projet
+Unauthorized: Non autorisé
+undefined: indéfini
+Unknown: Inconnu
+Unsupported board: Carte non prise en charge
+Unused: Inutilisé
+Up: Actif
+Updating the app only: Mise à jour de l'application uniquement
+Updating the app only - the existing configuration will be preserved: Mise à jour de l'application uniquement - la configuration existante sera conservée
+Upload: Téléverser
+Upload finished - check the list below: Téléversement terminé - vérifiez la liste ci-dessous
+Uploading: Téléversement
+Username: Nom de User
+Username or email: Nom d'utilisateur ou e-mail
+Value: Valeur
+Value *: Valeur *
+Voltage: Tension
+Waiting: En attente
+Waiting for devices: En attente des appareils
+We will email you a code and a link to choose a new password.: Nous vous enverrons par e-mail un code et un lien pour choisir un nouveau mot de passe.
+When: Quand
+WiFi: WiFi
+Withdraw this enrolment secret?: Retirer ce secret d'enrôlement ?
+Withdrawn: Retiré
+Yes: Oui
+You do not have permission for this organization: Vous n'avez pas la permission pour cette organisation
+Forwarders: Transferts
+Grafana: Grafana
+OpenSearch: OpenSearch
+OpenSearch Dashboards: OpenSearch Dashboards
+every %s s: toutes les %s s
+'%s topics': '%s sujets'
+From the file: Depuis le fichier
+Delete "%s"?: Supprimer « %s » ?
+Readings stop being sent to it straight away. Nothing already sent is removed from there.: Les mesures cessent de lui être envoyées immédiatement. Rien de ce qui a déjà été envoyé n'y est supprimé.
+Deleted, but the logger could not be told - it will take effect at the next restart: Supprimé, mais l'enregistreur n'a pas pu être prévenu - cela prendra effet au prochain redémarrage
+set - leave blank to keep it: défini - laisser vide pour le conserver
+Give it a name first: Donnez-lui d'abord un nom
+Saved, but the logger could not be told - it will take effect at the next restart: Enregistré, mais l'enregistreur n'a pas pu être prévenu - cela prendra effet au prochain redémarrage
+Sending... %s readings so far: Envoi... %s mesures jusqu'ici
+'Stopped: %s': 'Arrêté : %s'
+Never: Jamais
+Making it again replaces its token, and the Grafana using the old one stops working until it is given the new one.: Le recréer remplace son jeton, et le Grafana qui utilise l'ancien cesse de fonctionner jusqu'à ce qu'il reçoive le nouveau.
+Revoke "%s"?: Révoquer « %s » ?
+The Grafana using it stops being able to read this organization straight away.: Le Grafana qui l'utilise ne peut plus lire cette organisation, immédiatement.
+Copied: Copié
+Press Ctrl-C or Cmd-C to copy: Appuyez sur Ctrl-C ou Cmd-C pour copier
+'You have a login: %s. Making another replaces its password, and your Dashboards stops working until it is given the new one.': 'Vous avez un identifiant : %s. En créer un autre remplace son mot de passe, et votre Dashboards cesse de fonctionner jusqu''à ce qu''il reçoive le nouveau.'
+Replace the password?: Remplacer le mot de passe ?
+The Dashboards using the old one stops working until it is given the new one.: Le Dashboards qui utilise l'ancien cesse de fonctionner jusqu'à ce qu'il reçoive le nouveau.
+Remove the login?: Supprimer l'identifiant ?
+Dashboards using it stops being able to read this organization straight away.: Le Dashboards qui l'utilise ne peut plus lire cette organisation, immédiatement.
+Loading...: Chargement...
+This organization forwards its readings nowhere. They are still recorded in the CSV files and charted in Grafana - add a forwarder to send them somewhere as well.: Cette organisation ne transfère ses mesures nulle part. Elles sont toujours enregistrées dans les fichiers CSV et tracées dans Grafana - ajoutez un transfert pour les envoyer aussi ailleurs.
+Type: Type
+Sends to: Envoie vers
+State: État
+Edit: Modifier
+Delete: Supprimer
+Send earlier readings...: Envoyer les mesures antérieures...
+Save: Enregistrer
+Cancel: Annuler
+From this day on (leave empty for everything): À partir de ce jour (laisser vide pour tout)
+Start: Démarrer
+Close: Fermer
+Readings are always recorded in the CSV files, and charted in Grafana from them. A forwarder also sends each reading, as it is logged, somewhere else - OpenSearch to search and browse them, or Google Sheets to add a row of values every so often. Changes apply straight away.: Les mesures sont toujours enregistrées dans les fichiers CSV, et tracées dans Grafana à partir de ceux-ci. Un transfert envoie aussi chaque mesure, au moment où elle est enregistrée, ailleurs - vers OpenSearch pour les rechercher et les parcourir, ou vers Google Sheets pour ajouter une ligne de valeurs de temps en temps. Les changements s'appliquent immédiatement.
+No Grafana has been given access to this organization yet.: Aucun Grafana n'a encore reçu l'accès à cette organisation.
+Made: Créé
+Last used: Dernière utilisation
+Whose: À qui
+Revoke: Révoquer
+Copy: Copier
+Copy this now - it is not shown again: Copiez-le maintenant - il ne sera plus affiché
+Token: Jeton
+Allowed host: Hôte autorisé
+Remove my login: Supprimer mon identifiant
+Everyone's logins: Les identifiants de chacun
+OpenSearch Dashboards is a program you run on your own computer to search and chart this organization's readings, which this server keeps in OpenSearch. It needs a login, made here, that is yours. It can read this organization's readings and nothing else, and the people of an organization share its saved dashboards. It needs permission to read the whole organization; if you can read only some projects, use the Grafana card instead.: OpenSearch Dashboards est un programme que vous exécutez sur votre propre ordinateur pour rechercher et tracer les mesures de cette organisation, que ce serveur conserve dans OpenSearch. Il a besoin d'un identifiant, créé ici, qui vous est propre. Il peut lire les mesures de cette organisation et rien d'autre, et les membres d'une organisation partagent ses tableaux de bord enregistrés. Il faut l'autorisation de lire toute l'organisation ; si vous ne pouvez lire que certains projets, utilisez plutôt la carte Grafana.
+Give a Grafana access: Donner l'accès à un Grafana
+Name it for whoever or wherever it is, so it can be revoked on its own.: Nommez-le d'après qui ou où il se trouve, pour pouvoir le révoquer seul.
+Make a token: Créer un jeton
+The starter dashboard: Le tableau de bord de départ
+A chart with a list of every topic to pick from. In Grafana choose Dashboards, New, Import, upload this file, and pick the data source above when it asks.: Un graphique avec la liste de tous les sujets parmi lesquels choisir. Dans Grafana, choisissez Dashboards, New, Import, téléversez ce fichier, et choisissez la source de données ci-dessus quand il le demande.
+Add a forwarder: Ajouter un transfert
+Change this forwarder: Modifier ce transfert
+Active (untick to pause; the settings are kept): Actif (décocher pour suspendre ; les réglages sont conservés)
+Would send %s readings: Enverrait %s mesures
+Sent %s readings: '%s mesures envoyées'
+'Sends the readings already recorded in the CSV files, which this forwarder did not see because it was off or OpenSearch was down. It is safe to repeat: a reading already there is replaced, not doubled.': 'Envoie les mesures déjà enregistrées dans les fichiers CSV, que ce transfert n''a pas vues parce qu''il était arrêté ou qu''OpenSearch était indisponible. On peut recommencer sans risque : une mesure déjà présente est remplacée, pas dupliquée.'
+Only count them, send nothing: Seulement les compter, ne rien envoyer
+Yours: À vous
+Another user's: À un autre utilisateur
+'In Grafana, add a data source of type Infinity, with Authentication set to Bearer Token and the token above, and the allowed host above. Or let this do it:': 'Dans Grafana, ajoutez une source de données de type Infinity, avec Authentication réglé sur Bearer Token et le jeton ci-dessus, ainsi que l''hôte autorisé ci-dessus. Ou laissez ceci le faire :'
+Download the data source file: Télécharger le fichier de source de données
+You have no login yet.: Vous n'avez pas encore d'identifiant.
+Replace the password: Remplacer le mot de passe
+Make a login: Créer un identifiant
+'Put these lines in the configuration file of the OpenSearch Dashboards on your computer (opensearch_dashboards.yml), then restart it. Nothing is asked for when you open it: the login is in the file. The password is not kept anywhere you can read it, so if you lose this, press the button below to make a new one and paste the lines in again.': 'Mettez ces lignes dans le fichier de configuration d''OpenSearch Dashboards sur votre ordinateur (opensearch_dashboards.yml), puis redémarrez-le. Rien ne vous est demandé à l''ouverture : l''identifiant est dans le fichier. Le mot de passe n''est conservé nulle part où vous pourriez le lire ; si vous le perdez, appuyez sur le bouton ci-dessous pour en créer un nouveau et collez à nouveau les lignes.'
+'Grafana can chart this organization''s readings straight from the server - every reading ever recorded, with nothing to export first. To set it up: install the Infinity plugin in Grafana, make a token here, give Grafana the data source, then import the dashboard. A token is yours: it lets one Grafana read what you can read in this organization, and stops working if your access to it does.': 'Grafana peut tracer les mesures de cette organisation directement depuis le serveur - toutes les mesures jamais enregistrées, sans rien exporter d''abord. Pour le configurer : installez le plugin Infinity dans Grafana, créez un jeton ici, donnez à Grafana la source de données, puis importez le tableau de bord. Un jeton est à vous : il permet à un Grafana de lire ce que vous pouvez lire dans cette organisation, et cesse de fonctionner si votre accès cesse.'
+Download the dashboard: Télécharger le tableau de bord
+Forgotten: Oublié
+Failed - approve: Échoué - approuver
+Choose an organization first, so there is a broker connection to publish on: Choisissez d'abord une organisation, pour avoir une connexion au courtier sur laquelle publier
+Add Farm: Ajouter une ferme
+No broker credentials for this organization: Aucun identifiant de courtier pour cette organisation
+Listening on %s ...: Écoute sur %s ...
+'Could not connect: %s': 'Connexion impossible : %s'
+'Could not subscribe: %s': 'Abonnement impossible : %s'
+Nothing retained matches that pattern: Aucun message conservé ne correspond à ce motif
+Deleting %s ...: Suppression de %s ...
+'Could not delete: %s': 'Suppression impossible : %s'
+Deleted %s: '%s supprimés'
+If one comes back, a node is still publishing it.: S'il en revient un, c'est qu'un nœud le publie encore.
+Add Project: Ajouter un projet
+Add Platform: Ajouter une plateforme
+', %s failed': ', %s en échec'
+This server has no OpenSearch of its own set up (config.d/opensearch.yaml): Ce serveur n'a pas d'OpenSearch configuré (config.d/opensearch.yaml)
+This server has not said where OpenSearch can be reached from outside (config.d/opensearch.yaml, "public"): Ce serveur n'a pas indiqué où OpenSearch est joignable de l'extérieur (config.d/opensearch.yaml, "public")
+OpenSearch logins need an organization id of lower-case letters and digits only: Les identifiants OpenSearch exigent un identifiant d'organisation composé uniquement de minuscules et de chiffres
+OpenSearch did not answer: OpenSearch n'a pas répondu

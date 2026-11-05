@@ -3,6 +3,7 @@
 import { registerHooks } from 'node:module';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { resolve as resolvePath, dirname } from 'node:path';
+import { readFile } from 'node:fs/promises';
 import { JSDOM } from 'jsdom';
 
 const projectRoot = resolvePath(dirname(fileURLToPath(import.meta.url)), '..');
@@ -51,5 +52,16 @@ try {
 } catch (e) {
   Object.defineProperty(globalThis, 'localStorage', { value: memoryStorage(), configurable: true, writable: true });
 }
+
+// Node's fetch has no file: scheme, and core.js fetches its language file relative to itself.
+const networkFetch = globalThis.fetch;
+globalThis.fetch = async (input, init) => {
+  if (!String(input).startsWith('file:')) return networkFetch(input, init);
+  try {
+    return new Response(await readFile(new URL(String(input))), { status: 200 });
+  } catch (err) {
+    return new Response(String(err), { status: 404 });
+  }
+};
 
 export { dom, memoryStorage };

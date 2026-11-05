@@ -1,0 +1,435 @@
+# The catalogue of every key - never loaded, since a key is its own English text.
+# Copy it to start a new language, and add a new string here and to every other file.
+'"%s" already exists.': '"%s" already exists.'
+"+ matches one level, # matches the rest. Look before deleting.": "+ matches one level, # matches the rest. Look before deleting."
+(Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): (Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin)
+A bridge relays a Pi's readings to this server, so its nodes appear here too, while the Pi carries on recording and serving on its own whenever the link is down. "Bridge" is the broker's live view of the relay; "Last check-in" is when that Pi last collected this organization's logins, which it does over HTTP - so a Pi can be checking in while its bridge is down, and the two together say which half is broken.: A bridge relays a Pi's readings to this server, so its nodes appear here too, while the Pi carries on recording and serving on its own whenever the link is down. "Bridge" is the broker's live view of the relay; "Last check-in" is when that Pi last collected this organization's logins, which it does over HTTP - so a Pi can be checking in while its bridge is down, and the two together say which half is broken.
+Action: Action
+Action *: Action *
+Add: Add
+Reset board: Reset board
+Clear log: Clear log
+Copy log: Copy log
+Start the monitor to configure: Start the monitor to configure
+Board not answering - old firmware?: Board not answering - old firmware?
+Waiting for the board: Waiting for the board
+Board was already configured - its settings were kept. Apply to board changes them: Board was already configured - its settings were kept. Apply to board changes them
+Configure board: Configure board
+Apply after flashing: Apply after flashing
+Apply to board: Apply to board
+Board ready: Board ready
+Boards done: Boards done
+WiFi networks: WiFi networks
+Add network: Add network
+Remove: Remove
+No active project: No active project
+Project name must be 2 to 15 characters: Project name must be 2 to 15 characters
+Add a WiFi network: Add a WiFi network
+WiFi network not valid: WiFi network not valid
+Not understood: Not understood
+Too long: Too long
+No reply: No reply
+Could not fetch the enrolment secret: Could not fetch the enrolment secret
+WiFi connected: WiFi connected
+WiFi not connected: WiFi not connected
+MQTT connected: MQTT connected
+MQTT not connected: MQTT not connected
+Not enrolled: Not enrolled
+Add a bridge: Add a bridge
+Add another enrolment secret: Add another enrolment secret
+Added: Added
+Adding it again issues a new broker password and a new replica token, and the ones that Pi is using now stop working. It will stay disconnected until you put the new ones into its configuration and restart its broker.: Adding it again issues a new broker password and a new replica token, and the ones that Pi is using now stop working. It will stay disconnected until you put the new ones into its configuration and restart its broker.
+Admin: Admin
+Advanced: Advanced
+All: All
+Already have an account?: Already have an account?
+"And these two, if you are not building against the production server:": "And these two, if you are not building against the production server:"
+Any node flashed with it that has not enrolled yet will be refused and will need reflashing. Nodes that have already enrolled are unaffected - they never present it again.: Any node flashed with it that has not enrolled yet will be refused and will need reflashing. Nodes that have already enrolled are unaffected - they never present it again.
+API: API
+Approved: Approved
+AQI: AQI
+AQI500: AQI500
+Asked and was refused. Click to let it enrol.: Asked and was refused. Click to let it enrol.
+Auth Token: Auth Token
+Back to sign in: Back to sign in
+Base URL: Base URL
+Battery: Battery
+Board: Board
+Bridge: Bridge
+Bridged Pis: Bridged Pis
+Bridges: Bridges
+Brightness: Brightness
+Broker: Broker
+Broker account: Broker account
+Broker password: Broker password
+Built in LED: Built in LED
+buttons: buttons
+Choose a project to see its devices: Choose a project to see its devices
+Click to change project: Click to change project
+Click to sort: Click to sort
+Climate: Climate
+close: close
+Collapse: Collapse
+Color:  Color
+"Compiled into firmware and used to request broker credential. Add a second one to change it: both are accepted, so nodes already flashed keep working until you withdraw the old one.": "Compiled into firmware and used to request broker credential. Add a second one to change it: both are accepted, so nodes already flashed keep working until you withdraw the old one."
+Connect board: Connect board
+connected: connected
+connecting: connecting
+Control: Control
+Cookie Name: Cookie Name
+Copy these now - they are not shown again: Copy these now - they are not shown again
+Could not read the board - assuming it is already provisioned: Could not read the board - assuming it is already provisioned
+Create an account: Create an account
+Dashboard: Dashboard
+Data: Data
+Delete these: Delete these
+Delete this firmware: Delete this firmware
+Denied: Denied
+Deny %s?: Deny %s?
+Description: Description
+Device: Device
+Display carousel: Display carousel
+DOWN: DOWN
+Download this firmware: Download this firmware
+Done: Done
+ds18b20: ds18b20
+e.g. LiteFarm: e.g. LiteFarm
+eCO2: eCO2
+Email: Email
+Enrol URL: Enrol URL
+Enrolled: Enrolled
+Enrolled nodes: Enrolled nodes
+Enrolment secret: Enrolment secret
+ENS AHT: ENS AHT
+Enter the code we emailed you, then choose a new password.: Enter the code we emailed you, then choose a new password.
+Enter topic: Enter topic
+Enter value: Enter value
+Existing OTA Files: Existing OTA Files
+Failed: Failed
+Farm ID *: Farm ID *
+Farm registered: Farm registered
+Farms: Farms
+File: File
+Firmware: Firmware
+Firmware file: Firmware file
+Flash: Flash
+Flash over USB: Flash over USB
+Flash size was not detected reliably - flash anyway: Flash size was not detected reliably - flash anyway
+Flash this over USB: Flash this over USB
+Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer: Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer
+for node: for node
+Forget: Forget
+Forget %s?: Forget %s?
+Forget this node, so it is issued a new credential: Forget this node, so it is issued a new credential
+Forgot password?: Forgot password?
+From: From
+Frugal IoT project: Frugal IoT project
+Frugal-IoT Username *: Frugal-IoT Username *
+Full provision - all configuration on the board will be erased: Full provision - all configuration on the board will be erased
+Gas Resistance: Gas Resistance
+Give the Pi a short name - it becomes its broker account and cannot be changed later without reconfiguring that Pi. Lower-case letters, digits and hyphens.: Give the Pi a short name - it becomes its broker account and cannot be changed later without reconfiguring that Pi. Lower-case letters, digits and hyphens.
+Give the Pi a short name first: Give the Pi a short name first
+Graph: Graph
+Greater Than: Greater Than
+Has its own broker credential. Click to deny it.: Has its own broker credential. Click to deny it.
+heating: heating
+humidifier: humidifier
+Humidity: Humidity
+humidity: humidity
+Humidity control: Humidity control
+Hysteresis: Hysteresis
+hysteresis: hysteresis
+I have a code: I have a code
+id: id
+If that account exists we have emailed a reset code: If that account exists we have emailed a reset code
+If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.'
+Incorrect username or password: Incorrect username or password
+Info: Info
+Input: Input
+It will be issued a new broker credential the next time it asks. A node that is running will be offline for a minute or two while it notices; a node whose filesystem was erased needs this before it can rejoin at all.: It will be issued a new broker credential the next time it asks. A node that is running will be offline for a minute or two while it notices; a node whose filesystem was erased needs this before it can rejoin at all.
+Its broker account is deleted, so it stops being able to publish or subscribe, and it cannot enrol again until you clear this. Use it for a node sending bad readings.: Its broker account is deleted, so it stops being able to publish or subscribe, and it cannot enrol again until you clear this. Use it for a node sending bad readings.
+Its next request will be accepted. Click to deny it.: Its next request will be accepted. Click to deny it.
+Key: Key
+Last asked: Last asked
+Last check-in: Last check-in
+Last Seen: Last Seen
+Last seen: Last seen
+LED: LED
+Limit: Limit
+List: List
+Live: Live
+Load Cell: Load Cell
+Loading schema...: Loading schema...
+Log out: Log out
+Lower-case letters and numbers only, no spaces or punctuation: Lower-case letters and numbers only, no spaces or punctuation
+Lux: Lux
+Manual: Manual
+Message: Message
+Monitor: Monitor
+Monitor speed: Monitor speed
+Move down: Move down
+Move up: Move up
+Name: Name
+Never seen: Never seen
+New here?: New here?
+New password: New password
+Connect a board to flash: Connect a board to flash
+Choose a firmware file to flash: Choose a firmware file to flash
+Erase and flash: Erase and flash
+kept from last session: kept from last session
+No farms registered for this organization yet.: No farms registered for this organization yet.
+No nodes found for this farm's project(s).: No nodes found for this farm's project(s).
+No nodes found for this organization: No nodes found for this organization
+No nodes have enrolled yet, and none have asked and been rejected.: No nodes have enrolled yet, and none have asked and been rejected.
+No organization: No organization
+No organization selected: No organization selected
+No OTA files uploaded yet.: No OTA files uploaded yet.
+No Pi bridges to this server for this organization. A bridge relays a Pi's readings here while the Pi carries on working on its own - see INSTALLATION.md step 11.: No Pi bridges to this server for this organization. A bridge relays a Pi's readings here while the Pi carries on working on its own - see INSTALLATION.md step 11.
+No platforms registered yet.: No platforms registered yet.
+No projects added for this organization yet.: No projects added for this organization yet.
+No projects to display until organization selected: No projects to display until organization selected
+No state received from the broker yet: No state received from the broker yet
+Nobody added for this organization yet.: Nobody added for this organization yet.
+Node: Node
+Node Actions: Node Actions
+Node ID:  Node ID
+Node Name:  Node Name
+Nodes: Nodes
+Nodes in Farm: Nodes in Farm
+Nodes in Organization: Nodes in Organization
+Nodes that have obtained broker credentials on first connection. Forget reissues a new credential at next connection and is needed if memory has been erased. Refused nodes are listed - click Approve to allow (on next retry, typically 30 minutes).: Nodes that have obtained broker credentials on first connection. Forget reissues a new credential at next connection and is needed if memory has been erased. Refused nodes are listed - click Approve to allow (on next retry, typically 30 minutes).
+Not in the schema: Not in the schema
+Not selected: Not selected
+Note this is your organization - not the organizations whose devices you want to access.: Note this is your organization - not the organizations whose devices you want to access.
+Now: Now
+now: now
+Off: Off
+offline: offline
+Offline: Offline
+On: On
+"On ArduinoIDE the file is typically in ": "On ArduinoIDE the file is typically in "
+"On PlatformIO The file is typically in ": "On PlatformIO The file is typically in "
+Organization: Organization
+OTA: OTA
+OTA Upload: OTA Upload
+OTA binary uploaded: OTA binary uploaded
+OTA Key: OTA Key
+OTA Key or Device ID: OTA Key or Device ID
+Out: Out
+out: out
+Output: Output
+Password: Password
+Password reset - please sign in: Password reset - please sign in
+Password reset is not available on this server: Password reset is not available on this server
+Pattern: Pattern
+Permissions: Permissions
+Phone or Whatsapp: Phone or Whatsapp
+Platform *: Platform *
+Platform Name *: Platform Name *
+Platform registered: Platform registered
+Please login: Please login
+Pressure: Pressure
+Project: Project
+Project changed to: Project changed to
+Asked %s to move: Asked %s to move
+Waiting for %s to report: Waiting for %s to report
+Project ID: Project ID
+Project ID *: Project ID *
+Project Name: Project Name
+Projects: Projects
+Property: Property
+Provision instead (erases config): Provision instead (erases config)
+Publish Message: Publish Message
+"Published to ": "Published to "
+"Put this in platformio-secrets-local.ini, which is not committed:": "Put this in platformio-secrets-local.ini, which is not committed:"
+QoS: QoS
+reconnect: reconnect
+Reconnect the board to flash again: Reconnect the board to flash again
+Register: Register
+Register a platform above before adding a farm.: Register a platform above before adding a farm.
+Register Farm: Register Farm
+Refresh: Refresh
+Register Platform: Register Platform
+Registered Platforms: Registered Platforms
+Registration failed: Registration failed
+Registration successful - please login: Registration successful - please login
+Relay: Relay
+Replica token: Replica token
+Reporting every: Reporting every
+Reset code: Reset code
+Reset password: Reset password
+Retain: Retain
+Retained: Retained
+Retained messages: Retained messages
+Run this on the Pi, in the directory the server is installed in. Replace the placeholder with this server's fully-qualified name - the one on its certificate, which you can check by opening https:// that name in a browser. It will then ask for the broker password and for the replica token, in that order, so have both of the values below to hand.: Run this on the Pi, in the directory the server is installed in. Replace the placeholder with this server's fully-qualified name - the one on its certificate, which you can check by opening https:// that name in a browser. It will then ask for the broker password and for the replica token, in that order, so have both of the values below to hand.
+Schema: Schema
+Select: Select
+Select a farm above to see its nodes.: Select a farm above to see its nodes.
+Select a node above to see actions.: Select a node above to see actions.
+Select a node above to send an action.: Select a node above to send an action.
+Select an organization to continue.: Select an organization to continue.
+Send: Send
+SEND: SEND
+Send another code: Send another code
+Send reset code: Send reset code
+sent: sent
+server: server
+set: set
+Setpoint: Setpoint
+Settings: Settings
+Show enrolment secrets: Show enrolment secrets
+SHT: SHT
+SHT30: SHT30
+Sign In: Sign In
+Sign in: Sign in
+Site: Site
+Soil: Soil
+Soil Moisture: Soil Moisture
+Soil Temperature: Soil Temperature
+Sonoff R2 switch: Sonoff R2 switch
+Sonoff switch: Sonoff switch
+Speed: Speed
+SSID: SSID
+Not reported recently: Not reported recently
+Status: Status
+Stop monitor: Stop monitor
+Stopped, and its credential removed. Click to clear.: Stopped, and its credential removed. Click to clear.
+Submit: Submit
+System: System
+Temperature: Temperature
+temperature: temperature
+That code is not valid or has expired: That code is not valid or has expired
+The broker reports this bridge connected: The broker reports this bridge connected
+The broker reports this bridge not connected: The broker reports this bridge not connected
+This field has no invocation URL (forms[0].href) in its schema: This field has no invocation URL (forms[0].href) in its schema
+This node has no actions in its schema.: This node has no actions in its schema.
+This node has no actions or writable properties in its schema.: This node has no actions or writable properties in its schema.
+This organization has no enrolment secret, so no new node can enrol. Add one.: This organization has no enrolment secret, so no new node can enrol. Add one.
+Time On (s): Time On (s)
+To: To
+Too many attempts - please wait a few minutes: Too many attempts - please wait a few minutes
+Topic: Topic
+Topic and Value are required: Topic and Value are required
+TVOC: TVOC
+'Two credentials for two different connections: the password is what the MQTT bridge logs in with on port 8883, and the token is what lets that Pi pull this organization''s logins over HTTPS, so the same people can log in there too. The token can be skipped - press Enter at its prompt - and added later by doing this again. Neither is asked for on the command line, so that neither ends up in the Pi''s shell history.': 'Two credentials for two different connections: the password is what the MQTT bridge logs in with on port 8883, and the token is what lets that Pi pull this organization''s logins over HTTPS, so the same people can log in there too. The token can be skipped - press Enter at its prompt - and added later by doing this again. Neither is asked for on the command line, so that neither ends up in the Pi''s shell history.'
+Unable to find node: Unable to find node
+Unable to find project: Unable to find project
+Unauthorized: Unauthorized
+undefined: undefined
+Unknown: Unknown
+Unsupported board: Unsupported board
+Unused: Unused
+Up: Up
+Updating the app only: Updating the app only
+Updating the app only - the existing configuration will be preserved: Updating the app only - the existing configuration will be preserved
+Upload: Upload
+Upload finished - check the list below: Upload finished - check the list below
+Uploading: Uploading
+Username: Username
+Username or email: Username or email
+Value: Value
+Value *: Value *
+Voltage: Voltage
+Waiting: Waiting
+Waiting for devices: Waiting for devices
+We will email you a code and a link to choose a new password.: We will email you a code and a link to choose a new password.
+When: When
+WiFi: WiFi
+Withdraw this enrolment secret?: Withdraw this enrolment secret?
+Withdrawn: Withdrawn
+Yes: Yes
+You do not have permission for this organization: You do not have permission for this organization
+Forwarders: Forwarders
+Grafana: Grafana
+OpenSearch: OpenSearch
+OpenSearch Dashboards: OpenSearch Dashboards
+every %s s: every %s s
+'%s topics': '%s topics'
+From the file: From the file
+Delete "%s"?: Delete "%s"?
+Readings stop being sent to it straight away. Nothing already sent is removed from there.: Readings stop being sent to it straight away. Nothing already sent is removed from there.
+Deleted, but the logger could not be told - it will take effect at the next restart: Deleted, but the logger could not be told - it will take effect at the next restart
+set - leave blank to keep it: set - leave blank to keep it
+Give it a name first: Give it a name first
+Saved, but the logger could not be told - it will take effect at the next restart: Saved, but the logger could not be told - it will take effect at the next restart
+Sending... %s readings so far: Sending... %s readings so far
+'Stopped: %s': 'Stopped: %s'
+Never: Never
+Making it again replaces its token, and the Grafana using the old one stops working until it is given the new one.: Making it again replaces its token, and the Grafana using the old one stops working until it is given the new one.
+Revoke "%s"?: Revoke "%s"?
+The Grafana using it stops being able to read this organization straight away.: The Grafana using it stops being able to read this organization straight away.
+Copied: Copied
+Press Ctrl-C or Cmd-C to copy: Press Ctrl-C or Cmd-C to copy
+'You have a login: %s. Making another replaces its password, and your Dashboards stops working until it is given the new one.': 'You have a login: %s. Making another replaces its password, and your Dashboards stops working until it is given the new one.'
+Replace the password?: Replace the password?
+The Dashboards using the old one stops working until it is given the new one.: The Dashboards using the old one stops working until it is given the new one.
+Remove the login?: Remove the login?
+Dashboards using it stops being able to read this organization straight away.: Dashboards using it stops being able to read this organization straight away.
+Loading...: Loading...
+This organization forwards its readings nowhere. They are still recorded in the CSV files and charted in Grafana - add a forwarder to send them somewhere as well.: This organization forwards its readings nowhere. They are still recorded in the CSV files and charted in Grafana - add a forwarder to send them somewhere as well.
+Type: Type
+Sends to: Sends to
+State: State
+Edit: Edit
+Delete: Delete
+Send earlier readings...: Send earlier readings...
+Save: Save
+Cancel: Cancel
+From this day on (leave empty for everything): From this day on (leave empty for everything)
+Start: Start
+Close: Close
+Readings are always recorded in the CSV files, and charted in Grafana from them. A forwarder also sends each reading, as it is logged, somewhere else - OpenSearch to search and browse them, or Google Sheets to add a row of values every so often. Changes apply straight away.: Readings are always recorded in the CSV files, and charted in Grafana from them. A forwarder also sends each reading, as it is logged, somewhere else - OpenSearch to search and browse them, or Google Sheets to add a row of values every so often. Changes apply straight away.
+No Grafana has been given access to this organization yet.: No Grafana has been given access to this organization yet.
+Made: Made
+Last used: Last used
+Whose: Whose
+Revoke: Revoke
+Copy: Copy
+Copy this now - it is not shown again: Copy this now - it is not shown again
+Token: Token
+Allowed host: Allowed host
+Remove my login: Remove my login
+Everyone's logins: Everyone's logins
+OpenSearch Dashboards is a program you run on your own computer to search and chart this organization's readings, which this server keeps in OpenSearch. It needs a login, made here, that is yours. It can read this organization's readings and nothing else, and the people of an organization share its saved dashboards. It needs permission to read the whole organization; if you can read only some projects, use the Grafana card instead.: OpenSearch Dashboards is a program you run on your own computer to search and chart this organization's readings, which this server keeps in OpenSearch. It needs a login, made here, that is yours. It can read this organization's readings and nothing else, and the people of an organization share its saved dashboards. It needs permission to read the whole organization; if you can read only some projects, use the Grafana card instead.
+Give a Grafana access: Give a Grafana access
+Name it for whoever or wherever it is, so it can be revoked on its own.: Name it for whoever or wherever it is, so it can be revoked on its own.
+Make a token: Make a token
+The starter dashboard: The starter dashboard
+A chart with a list of every topic to pick from. In Grafana choose Dashboards, New, Import, upload this file, and pick the data source above when it asks.: A chart with a list of every topic to pick from. In Grafana choose Dashboards, New, Import, upload this file, and pick the data source above when it asks.
+Add a forwarder: Add a forwarder
+Change this forwarder: Change this forwarder
+Active (untick to pause; the settings are kept): Active (untick to pause; the settings are kept)
+Would send %s readings: Would send %s readings
+Sent %s readings: Sent %s readings
+'Sends the readings already recorded in the CSV files, which this forwarder did not see because it was off or OpenSearch was down. It is safe to repeat: a reading already there is replaced, not doubled.': 'Sends the readings already recorded in the CSV files, which this forwarder did not see because it was off or OpenSearch was down. It is safe to repeat: a reading already there is replaced, not doubled.'
+Only count them, send nothing: Only count them, send nothing
+Yours: Yours
+Another user's: Another user's
+'In Grafana, add a data source of type Infinity, with Authentication set to Bearer Token and the token above, and the allowed host above. Or let this do it:': 'In Grafana, add a data source of type Infinity, with Authentication set to Bearer Token and the token above, and the allowed host above. Or let this do it:'
+Download the data source file: Download the data source file
+You have no login yet.: You have no login yet.
+Replace the password: Replace the password
+Make a login: Make a login
+'Put these lines in the configuration file of the OpenSearch Dashboards on your computer (opensearch_dashboards.yml), then restart it. Nothing is asked for when you open it: the login is in the file. The password is not kept anywhere you can read it, so if you lose this, press the button below to make a new one and paste the lines in again.': 'Put these lines in the configuration file of the OpenSearch Dashboards on your computer (opensearch_dashboards.yml), then restart it. Nothing is asked for when you open it: the login is in the file. The password is not kept anywhere you can read it, so if you lose this, press the button below to make a new one and paste the lines in again.'
+'Grafana can chart this organization''s readings straight from the server - every reading ever recorded, with nothing to export first. To set it up: install the Infinity plugin in Grafana, make a token here, give Grafana the data source, then import the dashboard. A token is yours: it lets one Grafana read what you can read in this organization, and stops working if your access to it does.': 'Grafana can chart this organization''s readings straight from the server - every reading ever recorded, with nothing to export first. To set it up: install the Infinity plugin in Grafana, make a token here, give Grafana the data source, then import the dashboard. A token is yours: it lets one Grafana read what you can read in this organization, and stops working if your access to it does.'
+Download the dashboard: Download the dashboard
+Forgotten: Forgotten
+Failed - approve: Failed - approve
+Choose an organization first, so there is a broker connection to publish on: Choose an organization first, so there is a broker connection to publish on
+Add Farm: Add Farm
+No broker credentials for this organization: No broker credentials for this organization
+Listening on %s ...: Listening on %s ...
+'Could not connect: %s': 'Could not connect: %s'
+'Could not subscribe: %s': 'Could not subscribe: %s'
+Nothing retained matches that pattern: Nothing retained matches that pattern
+Deleting %s ...: Deleting %s ...
+'Could not delete: %s': 'Could not delete: %s'
+Deleted %s: Deleted %s
+If one comes back, a node is still publishing it.: If one comes back, a node is still publishing it.
+Add Project: Add Project
+Add Platform: Add Platform
+', %s failed': ', %s failed'
+This server has no OpenSearch of its own set up (config.d/opensearch.yaml): This server has no OpenSearch of its own set up (config.d/opensearch.yaml)
+This server has not said where OpenSearch can be reached from outside (config.d/opensearch.yaml, "public"): This server has not said where OpenSearch can be reached from outside (config.d/opensearch.yaml, "public")
+OpenSearch logins need an organization id of lower-case letters and digits only: OpenSearch logins need an organization id of lower-case letters and digits only
+OpenSearch did not answer: OpenSearch did not answer

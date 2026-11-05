@@ -267,7 +267,7 @@ function unitSuffix(code) {
 // which hand-rolling would, in four languages, for every unit.
 function relativeTime(ms) {
   if (!Number.isFinite(ms)) return ''; // Intl throws rather than returning anything for NaN
-  const rtf = new Intl.RelativeTimeFormat(preferedLanguages[0] || 'en', { numeric: 'auto', style: 'narrow' });
+  const rtf = new Intl.RelativeTimeFormat(language, { numeric: 'auto', style: 'narrow' });
   const s = Math.round(ms / 1000);
   if (Math.abs(s) < 60) return rtf.format(-s, 'second');
   const m = Math.round(s / 60);
@@ -386,1417 +386,67 @@ function isEditableTarget(e) {
   return ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName) || t.isContentEditable;
 }
 // =============================== Languages and Internationalization ===============================
-// TODO-L8 move this to config on server
-const languages = yaml.load(`
-#Language configuration - will be read from files at some point
-EN:
-  '"%s" already exists.': '"%s" already exists.'
-  "+ matches one level, # matches the rest. Look before deleting.": "+ matches one level, # matches the rest. Look before deleting."
-  _nameAndFlag: English 🇬🇧
-  _thisLanguage: English
-  (Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): (Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin)
-  A bridge relays a Pi's readings to this server, so its nodes appear here too, while the Pi carries on recording and serving on its own whenever the link is down. "Bridge" is the broker's live view of the relay; "Last check-in" is when that Pi last collected this organization's logins, which it does over HTTP - so a Pi can be checking in while its bridge is down, and the two together say which half is broken.: A bridge relays a Pi's readings to this server, so its nodes appear here too, while the Pi carries on recording and serving on its own whenever the link is down. "Bridge" is the broker's live view of the relay; "Last check-in" is when that Pi last collected this organization's logins, which it does over HTTP - so a Pi can be checking in while its bridge is down, and the two together say which half is broken.
-  Action: Action
-  Action *: Action *
-  Add: Add
-  Reset board: Reset board
-  Clear log: Clear log
-  Copy log: Copy log
-  Start the monitor to configure: Start the monitor to configure
-  Board not answering - old firmware?: Board not answering - old firmware?
-  Waiting for the board: Waiting for the board
-  Board was already configured - its settings were kept. Apply to board changes them: Board was already configured - its settings were kept. Apply to board changes them
-  Configure board: Configure board
-  Apply after flashing: Apply after flashing
-  Apply to board: Apply to board
-  Board ready: Board ready
-  Boards done: Boards done
-  WiFi networks: WiFi networks
-  Add network: Add network
-  Remove: Remove
-  No active project: No active project
-  Project name must be 2 to 15 characters: Project name must be 2 to 15 characters
-  Add a WiFi network: Add a WiFi network
-  WiFi network not valid: WiFi network not valid
-  Not understood: Not understood
-  Too long: Too long
-  No reply: No reply
-  Could not fetch the enrolment secret: Could not fetch the enrolment secret
-  WiFi connected: WiFi connected
-  WiFi not connected: WiFi not connected
-  MQTT connected: MQTT connected
-  MQTT not connected: MQTT not connected
-  Not enrolled: Not enrolled
-  Add a bridge: Add a bridge
-  Add another enrolment secret: Add another enrolment secret
-  Added: Added
-  Adding it again issues a new broker password and a new replica token, and the ones that Pi is using now stop working. It will stay disconnected until you put the new ones into its configuration and restart its broker.: Adding it again issues a new broker password and a new replica token, and the ones that Pi is using now stop working. It will stay disconnected until you put the new ones into its configuration and restart its broker.
-  Admin: Admin
-  Advanced: Advanced
-  All: All
-  Already have an account?: Already have an account?
-  "And these two, if you are not building against the production server:": "And these two, if you are not building against the production server:"
-  Any node flashed with it that has not enrolled yet will be refused and will need reflashing. Nodes that have already enrolled are unaffected - they never present it again.: Any node flashed with it that has not enrolled yet will be refused and will need reflashing. Nodes that have already enrolled are unaffected - they never present it again.
-  API: API
-  Approved: Approved
-  AQI: AQI
-  AQI500: AQI500
-  Asked and was refused. Click to let it enrol.: Asked and was refused. Click to let it enrol.
-  Auth Token: Auth Token
-  Back to sign in: Back to sign in
-  Base URL: Base URL
-  Battery: Battery
-  Board: Board
-  Bridge: Bridge
-  Bridged Pis: Bridged Pis
-  Bridges: Bridges
-  Brightness: Brightness
-  Broker: Broker
-  Broker account: Broker account
-  Broker password: Broker password
-  Built in LED: Built in LED
-  buttons: buttons
-  Choose a project to see its devices: Choose a project to see its devices
-  Click to change project: Click to change project
-  Click to sort: Click to sort
-  Climate: Climate
-  close: close
-  Collapse: Collapse
-  Color:  Color
-  "Compiled into firmware and used to request broker credential. Add a second one to change it: both are accepted, so nodes already flashed keep working until you withdraw the old one.": "Compiled into firmware and used to request broker credential. Add a second one to change it: both are accepted, so nodes already flashed keep working until you withdraw the old one."
-  Connect board: Connect board
-  connected: connected
-  connecting: connecting
-  Control: Control
-  Cookie Name: Cookie Name
-  Copy these now - they are not shown again: Copy these now - they are not shown again
-  Could not read the board - assuming it is already provisioned: Could not read the board - assuming it is already provisioned
-  Create an account: Create an account
-  Dashboard: Dashboard
-  Data: Data
-  Delete these: Delete these
-  Delete this firmware: Delete this firmware
-  Denied: Denied
-  Deny %s?: Deny %s?
-  Description: Description
-  Device: Device
-  Display carousel: Display carousel
-  DOWN: DOWN
-  Download this firmware: Download this firmware
-  Done: Done
-  ds18b20: ds18b20
-  e.g. LiteFarm: e.g. LiteFarm
-  eCO2: eCO2
-  Email: Email
-  Enrol URL: Enrol URL
-  Enrolled: Enrolled
-  Enrolled nodes: Enrolled nodes
-  Enrolment secret: Enrolment secret
-  ENS AHT: ENS AHT
-  Enter the code we emailed you, then choose a new password.: Enter the code we emailed you, then choose a new password.
-  Enter topic: Enter topic
-  Enter value: Enter value
-  Existing OTA Files: Existing OTA Files
-  Failed: Failed
-  Farm ID *: Farm ID *
-  Farm registered: Farm registered
-  Farms: Farms
-  File: File
-  Firmware: Firmware
-  Firmware file: Firmware file
-  Flash: Flash
-  Flash over USB: Flash over USB
-  Flash size was not detected reliably - flash anyway: Flash size was not detected reliably - flash anyway
-  Flash this over USB: Flash this over USB
-  Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer: Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer
-  for node: for node
-  Forget: Forget
-  Forget %s?: Forget %s?
-  Forget this node, so it is issued a new credential: Forget this node, so it is issued a new credential
-  Forgot password?: Forgot password?
-  From: From
-  Frugal IoT project: Frugal IoT project
-  Frugal-IoT Username *: Frugal-IoT Username *
-  Full provision - all configuration on the board will be erased: Full provision - all configuration on the board will be erased
-  Gas Resistance: Gas Resistance
-  Give the Pi a short name - it becomes its broker account and cannot be changed later without reconfiguring that Pi. Lower-case letters, digits and hyphens.: Give the Pi a short name - it becomes its broker account and cannot be changed later without reconfiguring that Pi. Lower-case letters, digits and hyphens.
-  Give the Pi a short name first: Give the Pi a short name first
-  Graph: Graph
-  Greater Than: Greater Than
-  Has its own broker credential. Click to deny it.: Has its own broker credential. Click to deny it.
-  heating: heating
-  humidifier: humidifier
-  Humidity: Humidity
-  humidity: humidity
-  Humidity control: Humidity control
-  Hysteresis: Hysteresis
-  hysteresis: hysteresis
-  I have a code: I have a code
-  id: id
-  If that account exists we have emailed a reset code: If that account exists we have emailed a reset code
-  If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.'
-  Incorrect username or password: Incorrect username or password
-  Info: Info
-  Input: Input
-  It will be issued a new broker credential the next time it asks. A node that is running will be offline for a minute or two while it notices; a node whose filesystem was erased needs this before it can rejoin at all.: It will be issued a new broker credential the next time it asks. A node that is running will be offline for a minute or two while it notices; a node whose filesystem was erased needs this before it can rejoin at all.
-  Its broker account is deleted, so it stops being able to publish or subscribe, and it cannot enrol again until you clear this. Use it for a node sending bad readings.: Its broker account is deleted, so it stops being able to publish or subscribe, and it cannot enrol again until you clear this. Use it for a node sending bad readings.
-  Its next request will be accepted. Click to deny it.: Its next request will be accepted. Click to deny it.
-  Key: Key
-  Last asked: Last asked
-  Last check-in: Last check-in
-  Last Seen: Last Seen
-  Last seen: Last seen
-  LED: LED
-  Limit: Limit
-  List: List
-  Live: Live
-  Load Cell: Load Cell
-  Loading schema...: Loading schema...
-  Log out: Log out
-  Lower-case letters and numbers only, no spaces or punctuation: Lower-case letters and numbers only, no spaces or punctuation
-  Lux: Lux
-  Manual: Manual
-  Message: Message
-  Monitor: Monitor
-  Monitor speed: Monitor speed
-  Move down: Move down
-  Move up: Move up
-  Name: Name
-  Never seen: Never seen
-  New here?: New here?
-  New password: New password
-  Connect a board to flash: Connect a board to flash
-  Choose a firmware file to flash: Choose a firmware file to flash
-  Erase and flash: Erase and flash
-  kept from last session: kept from last session
-  No farms registered for this organization yet.: No farms registered for this organization yet.
-  No nodes found for this farm's project(s).: No nodes found for this farm's project(s).
-  No nodes found for this organization: No nodes found for this organization
-  No nodes have enrolled yet, and none have asked and been rejected.: No nodes have enrolled yet, and none have asked and been rejected.
-  No organization: No organization
-  No organization selected: No organization selected
-  No OTA files uploaded yet.: No OTA files uploaded yet.
-  No Pi bridges to this server for this organization. A bridge relays a Pi's readings here while the Pi carries on working on its own - see INSTALLATION.md step 11.: No Pi bridges to this server for this organization. A bridge relays a Pi's readings here while the Pi carries on working on its own - see INSTALLATION.md step 11.
-  No platforms registered yet.: No platforms registered yet.
-  No projects added for this organization yet.: No projects added for this organization yet.
-  No projects to display until organization selected: No projects to display until organization selected
-  No state received from the broker yet: No state received from the broker yet
-  Nobody added for this organization yet.: Nobody added for this organization yet.
-  Node: Node
-  Node Actions: Node Actions
-  Node ID:  Node ID
-  Node Name:  Node Name
-  Nodes: Nodes
-  Nodes in Farm: Nodes in Farm
-  Nodes in Organization: Nodes in Organization
-  Nodes that have obtained broker credentials on first connection. Forget reissues a new credential at next connection and is needed if memory has been erased. Refused nodes are listed - click Approve to allow (on next retry, typically 30 minutes).: Nodes that have obtained broker credentials on first connection. Forget reissues a new credential at next connection and is needed if memory has been erased. Refused nodes are listed - click Approve to allow (on next retry, typically 30 minutes).
-  Not in the schema: Not in the schema
-  Not selected: Not selected
-  Note this is your organization - not the organizations whose devices you want to access.: Note this is your organization - not the organizations whose devices you want to access.
-  Now: Now
-  now: now
-  Off: Off
-  offline: offline
-  Offline: Offline
-  On: On
-  "On ArduinoIDE the file is typically in ": "On ArduinoIDE the file is typically in "
-  "On PlatformIO The file is typically in ": "On PlatformIO The file is typically in "
-  Organization: Organization
-  OTA: OTA
-  OTA Upload: OTA Upload
-  OTA binary uploaded: OTA binary uploaded
-  OTA Key: OTA Key
-  OTA Key or Device ID: OTA Key or Device ID
-  Out: Out
-  out: out
-  Output: Output
-  Password: Password
-  Password reset - please sign in: Password reset - please sign in
-  Password reset is not available on this server: Password reset is not available on this server
-  Pattern: Pattern
-  Permissions: Permissions
-  Phone or Whatsapp: Phone or Whatsapp
-  Platform *: Platform *
-  Platform Name *: Platform Name *
-  Platform registered: Platform registered
-  Please login: Please login
-  Pressure: Pressure
-  Project: Project
-  Project changed to: Project changed to
-  Asked %s to move: Asked %s to move
-  Waiting for %s to report: Waiting for %s to report
-  Project ID: Project ID
-  Project ID *: Project ID *
-  Project Name: Project Name
-  Projects: Projects
-  Property: Property
-  Provision instead (erases config): Provision instead (erases config)
-  Publish Message: Publish Message
-  "Published to ": "Published to "
-  "Put this in platformio-secrets-local.ini, which is not committed:": "Put this in platformio-secrets-local.ini, which is not committed:"
-  QoS: QoS
-  reconnect: reconnect
-  Reconnect the board to flash again: Reconnect the board to flash again
-  Register: Register
-  Register a platform above before adding a farm.: Register a platform above before adding a farm.
-  Register Farm: Register Farm
-  Refresh: Refresh
-  Register Platform: Register Platform
-  Registered Platforms: Registered Platforms
-  Registration failed: Registration failed
-  Registration successful - please login: Registration successful - please login
-  Relay: Relay
-  Replica token: Replica token
-  Reporting every: Reporting every
-  Reset code: Reset code
-  Reset password: Reset password
-  Retain: Retain
-  Retained: Retained
-  Retained messages: Retained messages
-  Run this on the Pi, in the directory the server is installed in. Replace the placeholder with this server's fully-qualified name - the one on its certificate, which you can check by opening https:// that name in a browser. It will then ask for the broker password and for the replica token, in that order, so have both of the values below to hand.: Run this on the Pi, in the directory the server is installed in. Replace the placeholder with this server's fully-qualified name - the one on its certificate, which you can check by opening https:// that name in a browser. It will then ask for the broker password and for the replica token, in that order, so have both of the values below to hand.
-  Schema: Schema
-  Select: Select
-  Select a farm above to see its nodes.: Select a farm above to see its nodes.
-  Select a node above to see actions.: Select a node above to see actions.
-  Select a node above to send an action.: Select a node above to send an action.
-  Select an organization to continue.: Select an organization to continue.
-  Send: Send
-  SEND: SEND
-  Send another code: Send another code
-  Send reset code: Send reset code
-  sent: sent
-  server: server
-  set: set
-  Setpoint: Setpoint
-  Settings: Settings
-  Show enrolment secrets: Show enrolment secrets
-  SHT: SHT
-  SHT30: SHT30
-  Sign In: Sign In
-  Sign in: Sign in
-  Site: Site
-  Soil: Soil
-  Soil Moisture: Soil Moisture
-  Soil Temperature: Soil Temperature
-  Sonoff R2 switch: Sonoff R2 switch
-  Sonoff switch: Sonoff switch
-  Speed: Speed
-  SSID: SSID
-  Not reported recently: Not reported recently
-  Status: Status
-  Stop monitor: Stop monitor
-  Stopped, and its credential removed. Click to clear.: Stopped, and its credential removed. Click to clear.
-  Submit: Submit
-  System: System
-  Temperature: Temperature
-  temperature: temperature
-  That code is not valid or has expired: That code is not valid or has expired
-  The broker reports this bridge connected: The broker reports this bridge connected
-  The broker reports this bridge not connected: The broker reports this bridge not connected
-  This field has no invocation URL (forms[0].href) in its schema: This field has no invocation URL (forms[0].href) in its schema
-  This node has no actions in its schema.: This node has no actions in its schema.
-  This node has no actions or writable properties in its schema.: This node has no actions or writable properties in its schema.
-  This organization has no enrolment secret, so no new node can enrol. Add one.: This organization has no enrolment secret, so no new node can enrol. Add one.
-  Time On (s): Time On (s)
-  To: To
-  Too many attempts - please wait a few minutes: Too many attempts - please wait a few minutes
-  Topic: Topic
-  Topic and Value are required: Topic and Value are required
-  TVOC: TVOC
-  'Two credentials for two different connections: the password is what the MQTT bridge logs in with on port 8883, and the token is what lets that Pi pull this organization''s logins over HTTPS, so the same people can log in there too. The token can be skipped - press Enter at its prompt - and added later by doing this again. Neither is asked for on the command line, so that neither ends up in the Pi''s shell history.': 'Two credentials for two different connections: the password is what the MQTT bridge logs in with on port 8883, and the token is what lets that Pi pull this organization''s logins over HTTPS, so the same people can log in there too. The token can be skipped - press Enter at its prompt - and added later by doing this again. Neither is asked for on the command line, so that neither ends up in the Pi''s shell history.'
-  Unable to find node: Unable to find node
-  Unable to find project: Unable to find project
-  Unauthorized: Unauthorized
-  undefined: undefined
-  Unknown: Unknown
-  Unsupported board: Unsupported board
-  Unused: Unused
-  Up: Up
-  Updating the app only: Updating the app only
-  Updating the app only - the existing configuration will be preserved: Updating the app only - the existing configuration will be preserved
-  Upload: Upload
-  Upload finished - check the list below: Upload finished - check the list below
-  Uploading: Uploading
-  Username: Username
-  Username or email: Username or email
-  Value: Value
-  Value *: Value *
-  Voltage: Voltage
-  Waiting: Waiting
-  Waiting for devices: Waiting for devices
-  We will email you a code and a link to choose a new password.: We will email you a code and a link to choose a new password.
-  When: When
-  WiFi: WiFi
-  Withdraw this enrolment secret?: Withdraw this enrolment secret?
-  Withdrawn: Withdrawn
-  Yes: Yes
-  You do not have permission for this organization: You do not have permission for this organization
-FR:
-  '"%s" already exists.': « %s » existe déjà.
-  "+ matches one level, # matches the rest. Look before deleting.": "+ correspond à un niveau, # au reste. Regardez avant de supprimer."
-  _nameAndFlag: Français 🇫🇷
-  _thisLanguage: Francaise
-  (Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): (Max 4 Mo, .bin uniquement, généralement frugal-iot.ino.bin ou firmware.bin)
-  A bridge relays a Pi's readings to this server, so its nodes appear here too, while the Pi carries on recording and serving on its own whenever the link is down. "Bridge" is the broker's live view of the relay; "Last check-in" is when that Pi last collected this organization's logins, which it does over HTTP - so a Pi can be checking in while its bridge is down, and the two together say which half is broken.: Une passerelle relaie les mesures d'un Pi vers ce serveur, de sorte que ses nœuds apparaissent ici aussi, tandis que le Pi continue d'enregistrer et de servir de son côté chaque fois que le lien est coupé. « Passerelle » est la vue en direct du relais par le courtier ; « Dernier contact » indique quand ce Pi a récupéré pour la dernière fois les comptes de cette organisation, ce qu'il fait en HTTP - un Pi peut donc prendre contact alors que sa passerelle est coupée, et les deux ensemble disent quelle moitié est en panne.
-  Action: Action
-  Action *: Action *
-  Add: Ajouter
-  Reset board: Réinitialiser la carte
-  Clear log: Effacer le journal
-  Copy log: Copier le journal
-  Start the monitor to configure: Démarrez le moniteur pour configurer
-  Board not answering - old firmware?: La carte ne répond pas - ancien firmware ?
-  Waiting for the board: En attente de la carte
-  Board was already configured - its settings were kept. Apply to board changes them: La carte était déjà configurée - ses réglages sont conservés. « Appliquer à la carte » les modifie
-  Configure board: Configurer la carte
-  Apply after flashing: Appliquer après le flashage
-  Apply to board: Appliquer à la carte
-  Board ready: Carte prête
-  Boards done: Cartes terminées
-  WiFi networks: Réseaux WiFi
-  Add network: Ajouter un réseau
-  Remove: Retirer
-  No active project: Aucun projet actif
-  Project name must be 2 to 15 characters: Le nom du projet doit faire 2 à 15 caractères
-  Add a WiFi network: Ajoutez un réseau WiFi
-  WiFi network not valid: Réseau WiFi non valide
-  Not understood: Non compris
-  Too long: Trop long
-  No reply: Pas de réponse
-  Could not fetch the enrolment secret: Impossible d'obtenir le secret d'enrôlement
-  WiFi connected: WiFi connecté
-  WiFi not connected: WiFi non connecté
-  MQTT connected: MQTT connecté
-  MQTT not connected: MQTT non connecté
-  Not enrolled: Non enrôlé
-  Add a bridge: Ajouter une passerelle
-  Add another enrolment secret: Ajouter un autre secret d'enrôlement
-  Added: Ajouté
-  Adding it again issues a new broker password and a new replica token, and the ones that Pi is using now stop working. It will stay disconnected until you put the new ones into its configuration and restart its broker.: Le refaire émet un nouveau mot de passe de courtier et un nouveau jeton de réplique, et ceux que ce Pi utilise actuellement cessent de fonctionner. Il restera déconnecté jusqu'à ce que vous mettiez les nouveaux dans sa configuration et redémarriez son courtier.
-  Admin: Admin
-  Advanced: Avancé
-  All: Tous
-  Already have an account?: Vous avez déjà un compte ?
-  "And these two, if you are not building against the production server:": "Et ces deux-ci, si vous ne compilez pas pour le serveur de production :"
-  Any node flashed with it that has not enrolled yet will be refused and will need reflashing. Nodes that have already enrolled are unaffected - they never present it again.: Tout nœud flashé avec lui qui ne s'est pas encore enrôlé sera refusé et devra être reflashé. Les nœuds déjà enrôlés ne sont pas affectés - ils ne le présentent plus jamais.
-  API: API
-  Approved: Approuvé
-  AQI: IQA  
-  AQI500: IQA500  
-  Asked and was refused. Click to let it enrol.: A demandé et a été refusé. Cliquez pour l'autoriser à s'enrôler.
-  Auth Token: Jeton d'authentification
-  Back to sign in: Retour à la connexion
-  Base URL: URL de base
-  Battery: Batterie
-  Board: Carte
-  Bridge: Passerelle
-  Bridged Pis: Pi reliés par passerelle
-  Bridges: Passerelles
-  Brightness: Luminosité  
-  Broker: Courtier
-  Broker account: Compte du courtier
-  Broker password: Mot de passe du courtier
-  Built in LED: LED intégrée
-  buttons: boutons
-  Choose a project to see its devices: Choisissez un projet pour voir ses appareils
-  Click to change project: Cliquez pour changer de projet
-  Click to sort: Cliquez pour trier
-  Climate: Climat
-  close: fermer
-  Collapse: Réduire
-  Color: Couleur  
-  "Compiled into firmware and used to request broker credential. Add a second one to change it: both are accepted, so nodes already flashed keep working until you withdraw the old one.": "Compilé dans le micrologiciel et utilisé pour demander l'identifiant de broker. Ajoutez-en un second pour le changer : les deux sont acceptés, donc les nœuds déjà flashés continuent de fonctionner jusqu'à ce que vous retiriez l'ancien."
-  Connect board: Connecter la carte
-  connected: connecté
-  connecting: connexion
-  Control: Contrôle
-  Cookie Name: Nom du cookie
-  Copy these now - they are not shown again: Copiez-les maintenant - ils ne seront plus affichés
-  Could not read the board - assuming it is already provisioned: Impossible de lire la carte - on suppose qu'elle est déjà provisionnée
-  Create an account: Créer un compte
-  Dashboard: Tableau de bord
-  Data: Données
-  Delete these: Supprimer ceux-ci
-  Delete this firmware: Supprimer ce micrologiciel
-  Denied: Refusé
-  Deny %s?: Refuser %s ?
-  Description: Description
-  Device: Appareil
-  Display carousel: Carrousel d'affichage
-  DOWN: HORS SERVICE
-  Download this firmware: Télécharger ce micrologiciel
-  Done: Fait
-  ds18b20: ds18b20
-  e.g. LiteFarm: par ex. LiteFarm
-  eCO2: eCO2
-  Email: Email
-  Enrol URL: URL d'enrôlement
-  Enrolled: Enrôlé
-  Enrolled nodes: Nœuds enrôlés
-  Enrolment secret: Secret d'enrôlement
-  ENS AHT: ENS AHT  
-  Enter the code we emailed you, then choose a new password.: Saisissez le code que nous vous avons envoyé par e-mail, puis choisissez un nouveau mot de passe.
-  Enter topic: Entrez le sujet
-  Enter value: Entrez la valeur
-  Existing OTA Files: Fichiers OTA existants
-  Failed: Échec
-  Farm ID *: ID de la ferme *
-  Farm registered: Ferme enregistrée
-  Farms: Fermes
-  File: Fichier
-  Firmware: Micrologiciel
-  Firmware file: Fichier micrologiciel
-  Flash: Flasher
-  Flash over USB: Flasher par USB
-  Flash size was not detected reliably - flash anyway: Taille de la mémoire flash non détectée de façon fiable - flasher quand même
-  Flash this over USB: Flasher ceci par USB
-  Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer: Le flashage nécessite l'API Web Serial - utilisez Chrome, Edge ou Opera sur un ordinateur de bureau
-  for node: pour le nœud
-  Forget: Oublier
-  Forget %s?: Oublier %s ?
-  Forget this node, so it is issued a new credential: Oublier ce nœud, pour qu'un nouvel identifiant lui soit délivré
-  Forgot password?: Mot de passe oublié ?
-  From: De
-  Frugal IoT project: Projet Frugal IoT
-  Frugal-IoT Username *: Nom d'utilisateur Frugal-IoT *
-  Full provision - all configuration on the board will be erased: Provisionnement complet - toute la configuration de la carte sera effacée
-  Gas Resistance: Résistance du gaz
-  Give the Pi a short name - it becomes its broker account and cannot be changed later without reconfiguring that Pi. Lower-case letters, digits and hyphens.: Donnez au Pi un nom court - il devient son compte de courtier et ne peut plus être changé ensuite sans reconfigurer ce Pi. Lettres minuscules, chiffres et traits d'union.
-  Give the Pi a short name first: Donnez d'abord un nom court au Pi
-  Graph: Graphique
-  Greater Than: Supérieur à
-  Has its own broker credential. Click to deny it.: Possède son propre identifiant de broker. Cliquez pour le refuser.
-  heating: chauffage
-  humidifier: humidificateur
-  Humidity: Humidité
-  humidity: humidité
-  Humidity control: Contrôle de l'humidité
-  Hysteresis: Hystérésis
-  hysteresis: hystérésis
-  I have a code: J'ai un code
-  id: id
-  If that account exists we have emailed a reset code: Si ce compte existe, nous avons envoyé un code de réinitialisation par e-mail
-  If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': Si ce répertoire est invisible dans le sélecteur de fichiers, copiez le fichier ailleurs OU créez un alias vers le répertoire .pio sans point au début.
-  Incorrect username or password: Nom d'utilisateur ou mot de passe incorrect
-  Info: Infos
-  Input: Entrée
-  It will be issued a new broker credential the next time it asks. A node that is running will be offline for a minute or two while it notices; a node whose filesystem was erased needs this before it can rejoin at all.: Un nouvel identifiant de courtier lui sera délivré la prochaine fois qu'il le demandera. Un nœud en fonctionnement sera hors ligne une minute ou deux le temps qu'il s'en aperçoive ; un nœud dont le système de fichiers a été effacé en a besoin pour pouvoir rejoindre.
-  Its broker account is deleted, so it stops being able to publish or subscribe, and it cannot enrol again until you clear this. Use it for a node sending bad readings.: Son compte de courtier est supprimé, il ne peut donc plus publier ni s'abonner, et il ne peut pas s'enrôler de nouveau tant que vous n'avez pas annulé ceci. À utiliser pour un nœud qui envoie de mauvaises mesures.
-  Its next request will be accepted. Click to deny it.: Sa prochaine demande sera acceptée. Cliquez pour le refuser.
-  Key: Clé
-  Last asked: Dernière demande
-  Last check-in: Dernier contact
-  Last Seen: Dernière activité
-  Last seen: Vu pour la dernière fois
-  LED: LED
-  Limit: Limite
-  List: Lister
-  Live: En ligne
-  Load Cell: Cellule de charge
-  Loading schema...: Chargement du schéma...
-  Log out: Se déconnecter
-  Lower-case letters and numbers only, no spaces or punctuation: Lettres minuscules et chiffres uniquement, sans espaces ni ponctuation
-  Lux: Lux
-  Manual: Manuel
-  Message: Message
-  Monitor: Moniteur
-  Monitor speed: Vitesse du moniteur
-  Move down: Descendre
-  Move up: Monter
-  Name: Nom 
-  Never seen: Jamais vu
-  New here?: Nouveau ici ?
-  New password: Nouveau mot de passe
-  Connect a board to flash: Connectez une carte pour flasher
-  Choose a firmware file to flash: Choisissez un fichier micrologiciel à flasher
-  Erase and flash: Effacer et flasher
-  kept from last session: conservé de la dernière session
-  No farms registered for this organization yet.: Aucune ferme enregistrée pour cette organisation pour l'instant.
-  No nodes found for this farm's project(s).: Aucun nœud trouvé pour le(s) projet(s) de cette ferme.
-  No nodes found for this organization: Aucun nœud trouvé pour cette organisation
-  No nodes have enrolled yet, and none have asked and been rejected.: Aucun nœud ne s'est encore enrôlé, et aucun n'a été refusé.
-  No organization: Aucune organisation
-  No organization selected: Aucune organisation sélectionnée
-  No OTA files uploaded yet.: Aucun fichier OTA téléversé pour l'instant.
-  No Pi bridges to this server for this organization. A bridge relays a Pi's readings here while the Pi carries on working on its own - see INSTALLATION.md step 11.: Aucune passerelle Pi vers ce serveur pour cette organisation. Une passerelle relaie ici les mesures d'un Pi pendant que celui-ci continue de fonctionner de son côté - voir INSTALLATION.md étape 11.
-  No platforms registered yet.: Aucune plateforme enregistrée pour l'instant.
-  No projects added for this organization yet.: Aucun projet ajouté pour cette organisation pour l'instant.
-  No projects to display until organization selected: Aucun projet à afficher tant qu'une organisation n'est sélectionnée
-  No state received from the broker yet: Aucun état reçu du courtier pour l'instant
-  Nobody added for this organization yet.: Personne n'a encore été ajouté pour cette organisation.
-  Node: Nœud
-  Node Actions: Actions du nœud
-  Node ID: ID du nœud
-  Node Name: Nom du nœud  
-  Nodes: Nœuds
-  Nodes in Farm: Nœuds dans la ferme
-  Nodes in Organization: Nœuds dans l'organisation
-  Nodes that have obtained broker credentials on first connection. Forget reissues a new credential at next connection and is needed if memory has been erased. Refused nodes are listed - click Approve to allow (on next retry, typically 30 minutes).: Nœuds ayant obtenu leur identifiant de broker à la première connexion. Oublier en délivre un nouveau à la prochaine connexion, nécessaire si la mémoire a été effacée. Les nœuds refusés sont listés - cliquez sur Approuver pour autoriser (à la prochaine tentative, généralement 30 minutes).
-  Not in the schema: Absent du schéma
-  Not selected: Non sélectionné
-  Note this is your organization - not the organizations whose devices you want to access.: Ceci est votre organisation - pas les organisations dont vous voulez accéder aux appareils.
-  Now: Maintenant
-  now: maintenant
-  Off: Éteint
-  offline: hors ligne
-  Offline: Hors ligne
-  On: Allumé
-  "On ArduinoIDE the file is typically in ": "Sur ArduinoIDE, le fichier se trouve généralement dans "
-  "On PlatformIO The file is typically in ": "Sur PlatformIO, le fichier se trouve généralement dans "
-  Organization: Organisation
-  OTA: OTA
-  OTA Upload: Téléversement OTA
-  OTA binary uploaded: Binaire OTA téléversé
-  OTA Key: Clé OTA
-  OTA Key or Device ID: Clé OTA ou ID de l’appareil
-  Out: Sortie
-  out: sortie
-  Output: Sortie
-  Password: Mot de passe
-  Password reset - please sign in: Mot de passe réinitialisé - veuillez vous connecter
-  Password reset is not available on this server: La réinitialisation du mot de passe n'est pas disponible sur ce serveur
-  Pattern: Motif
-  Permissions: Autorisations
-  Phone or Whatsapp: Téléphone ou Whatsapp
-  Platform *: Plateforme *
-  Platform Name *: Nom de la plateforme *
-  Platform registered: Plateforme enregistrée
-  Please login: Veuillez vous connecter
-  Pressure: Pression
-  Project: Projet
-  Project changed to: Projet changé en
-  Asked %s to move: Déplacement demandé à %s
-  Waiting for %s to report: En attente du rapport de %s
-  Project ID: ID du projet
-  Project ID *: ID du projet *
-  Project Name: Nom du projet
-  Projects: Projets
-  Property: Propriété
-  Provision instead (erases config): Provisionner plutôt (effacer la configuration)
-  Publish Message: Publier un message
-  "Published to ": "Publié sur "
-  "Put this in platformio-secrets-local.ini, which is not committed:": "Mettez ceci dans platformio-secrets-local.ini, qui n'est pas commité :"
-  QoS: QoS
-  reconnect: reconnecter
-  Reconnect the board to flash again: Reconnectez la carte pour flasher à nouveau
-  Register: Registre
-  Register a platform above before adding a farm.: Enregistrez une plateforme ci-dessus avant d'ajouter une ferme.
-  Register Farm: Enregistrer la ferme
-  Refresh: Actualiser
-  Register Platform: Enregistrer la plateforme
-  Registered Platforms: Plateformes enregistrées
-  Registration failed: L'inscription a échoué
-  Registration successful - please login: Inscription réussie - veuillez vous connecter
-  Relay: Relais
-  Replica token: Jeton de réplique
-  Reporting every: Transmet toutes les
-  Reset code: Code de réinitialisation
-  Reset password: Réinitialiser le mot de passe
-  Retain: Conserver
-  Retained: Conservés
-  Retained messages: Messages conservés
-  Run this on the Pi, in the directory the server is installed in. Replace the placeholder with this server's fully-qualified name - the one on its certificate, which you can check by opening https:// that name in a browser. It will then ask for the broker password and for the replica token, in that order, so have both of the values below to hand.: Exécutez ceci sur le Pi, dans le répertoire où le serveur est installé. Remplacez l'espace réservé par le nom pleinement qualifié de ce serveur - celui qui figure sur son certificat, que vous pouvez vérifier en ouvrant https:// ce nom dans un navigateur. Il demandera ensuite le mot de passe du courtier puis le jeton de réplique, dans cet ordre, alors ayez les deux valeurs ci-dessous sous la main.
-  Schema: Schéma
-  Select: Sélectionner
-  Select a farm above to see its nodes.: Sélectionnez une ferme ci-dessus pour voir ses nœuds.
-  Select a node above to see actions.: Sélectionnez un nœud ci-dessus pour voir les actions.
-  Select a node above to send an action.: Sélectionnez un nœud ci-dessus pour envoyer une action.
-  Select an organization to continue.: Sélectionnez une organisation pour continuer.
-  Send: Envoyer
-  SEND: ENVOYER
-  Send another code: Envoyer un autre code
-  Send reset code: Envoyer le code
-  sent: envoyé
-  server: serveur
-  set: défini
-  Setpoint: consigne
-  Settings: Réglages
-  Show enrolment secrets: Afficher les secrets d'enrôlement
-  SHT: SHT
-  SHT30: SHT30
-  Sign In: Se connecter
-  Sign in: Se connecter
-  Site: Site
-  Soil: Sol
-  Soil Moisture: Humidité du sol
-  Soil Temperature: Température du sol
-  Sonoff R2 switch: Interrupteur Sonoff R2
-  Sonoff switch: Interrupteur Sonoff
-  Speed: Vitesse
-  SSID: SSID
-  Not reported recently: Pas de nouvelles récentes
-  Status: État
-  Stop monitor: Arrêter moniteur
-  Stopped, and its credential removed. Click to clear.: Arrêté, et son identifiant supprimé. Cliquez pour annuler.
-  Submit: Soumettre
-  System: Système
-  Temperature: Température
-  temperature: température
-  That code is not valid or has expired: Ce code n'est pas valide ou a expiré
-  The broker reports this bridge connected: Le courtier signale cette passerelle comme connectée
-  The broker reports this bridge not connected: Le courtier signale cette passerelle comme non connectée
-  This field has no invocation URL (forms[0].href) in its schema: Ce champ n'a pas d'URL d'invocation (forms[0].href) dans son schéma
-  This node has no actions in its schema.: Ce nœud n'a aucune action dans son schéma.
-  This node has no actions or writable properties in its schema.: Ce nœud n'a aucune action ni propriété modifiable dans son schéma.
-  This organization has no enrolment secret, so no new node can enrol. Add one.: Cette organisation n'a aucun secret d'enrôlement, donc aucun nouveau nœud ne peut s'enrôler. Ajoutez-en un.
-  Time On (s): Durée active (s)
-  To: À
-  Too many attempts - please wait a few minutes: Trop de tentatives - veuillez patienter quelques minutes
-  Topic: Sujet
-  Topic and Value are required: Le sujet et la valeur sont requis
-  TVOC: COVT  
-  'Two credentials for two different connections: the password is what the MQTT bridge logs in with on port 8883, and the token is what lets that Pi pull this organization''s logins over HTTPS, so the same people can log in there too. The token can be skipped - press Enter at its prompt - and added later by doing this again. Neither is asked for on the command line, so that neither ends up in the Pi''s shell history.': 'Deux identifiants pour deux connexions différentes : le mot de passe est celui avec lequel la passerelle MQTT se connecte sur le port 8883, et le jeton est ce qui permet à ce Pi de récupérer les comptes de cette organisation en HTTPS, afin que les mêmes personnes puissent aussi s''y connecter. Le jeton peut être omis - appuyez sur Entrée à son invite - et ajouté plus tard en refaisant ceci. Ni l''un ni l''autre n''est demandé sur la ligne de commande, afin qu''aucun ne se retrouve dans l''historique du shell du Pi.'
-  Unable to find node: Impossible de trouver le nœud
-  Unable to find project: Impossible de trouver le projet
-  Unauthorized: Non autorisé
-  undefined: indéfini
-  Unknown: Inconnu
-  Unsupported board: Carte non prise en charge
-  Unused: Inutilisé
-  Up: Actif
-  Updating the app only: Mise à jour de l'application uniquement
-  Updating the app only - the existing configuration will be preserved: Mise à jour de l'application uniquement - la configuration existante sera conservée
-  Upload: Téléverser
-  Upload finished - check the list below: Téléversement terminé - vérifiez la liste ci-dessous
-  Uploading: Téléversement
-  Username: Nom de User
-  Username or email: Nom d'utilisateur ou e-mail
-  Value: Valeur
-  Value *: Valeur *
-  Voltage: Tension
-  Waiting: En attente
-  Waiting for devices: En attente des appareils
-  We will email you a code and a link to choose a new password.: Nous vous enverrons par e-mail un code et un lien pour choisir un nouveau mot de passe.
-  When: Quand
-  WiFi: WiFi
-  Withdraw this enrolment secret?: Retirer ce secret d'enrôlement ?
-  Withdrawn: Retiré
-  Yes: Oui
-  You do not have permission for this organization: Vous n'avez pas la permission pour cette organisation
-HI:
-  '"%s" already exists.': '"%s" पहले से मौजूद है।'
-  "+ matches one level, # matches the rest. Look before deleting.": "+ एक स्तर से मेल खाता है, # बाकी सभी से। हटाने से पहले देख लें।"
-  _nameAndFlag: हिंदी 🇮🇳
-  _thisLanguage: हिंदी
-  (Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): (अधिकतम 4MB, केवल .bin, सामान्यतः frugal-iot.ino.bin या firmware.bin)
-  A bridge relays a Pi's readings to this server, so its nodes appear here too, while the Pi carries on recording and serving on its own whenever the link is down. "Bridge" is the broker's live view of the relay; "Last check-in" is when that Pi last collected this organization's logins, which it does over HTTP - so a Pi can be checking in while its bridge is down, and the two together say which half is broken.: एक ब्रिज किसी Pi की रीडिंग इस सर्वर तक पहुँचाता है, जिससे उसके नोड यहाँ भी दिखते हैं, जबकि लिंक टूटने पर Pi अपने आप रिकॉर्ड और सर्व करता रहता है। « ब्रिज » रिले का ब्रोकर द्वारा दिखाया गया सीधा दृश्य है; « अंतिम संपर्क » वह समय है जब उस Pi ने आखिरी बार इस संगठन के लॉगिन एकत्र किए, जो वह HTTP पर करता है - इसलिए कोई Pi संपर्क कर सकता है जबकि उसका ब्रिज बंद हो, और दोनों मिलकर बताते हैं कि कौन-सा हिस्सा खराब है।
-  Action: क्रिया
-  Action *: क्रिया *
-  Add: जोड़ें
-  Reset board: बोर्ड रीसेट करें
-  Clear log: लॉग साफ़ करें
-  Copy log: लॉग कॉपी करें
-  Start the monitor to configure: कॉन्फ़िगर करने के लिए मॉनिटर शुरू करें
-  Board not answering - old firmware?: बोर्ड जवाब नहीं दे रहा - पुराना फ़र्मवेयर?
-  Waiting for the board: बोर्ड की प्रतीक्षा
-  Board was already configured - its settings were kept. Apply to board changes them: बोर्ड पहले से कॉन्फ़िगर था - उसकी सेटिंग रखी गईं। इन्हें बदलने के लिए बोर्ड पर लागू करें दबाएँ
-  Configure board: बोर्ड कॉन्फ़िगर करें
-  Apply after flashing: फ़्लैश के बाद लागू करें
-  Apply to board: बोर्ड पर लागू करें
-  Board ready: बोर्ड तैयार
-  Boards done: पूर्ण बोर्ड
-  WiFi networks: वाई-फ़ाई नेटवर्क
-  Add network: नेटवर्क जोड़ें
-  Remove: हटाएं
-  No active project: कोई सक्रिय परियोजना नहीं
-  Project name must be 2 to 15 characters: परियोजना का नाम 2 से 15 अक्षरों का होना चाहिए
-  Add a WiFi network: एक वाई-फ़ाई नेटवर्क जोड़ें
-  WiFi network not valid: वाई-फ़ाई नेटवर्क मान्य नहीं
-  Not understood: समझ नहीं आया
-  Too long: बहुत लंबा
-  No reply: कोई उत्तर नहीं
-  Could not fetch the enrolment secret: नामांकन गुप्त कुंजी नहीं मिल सकी
-  WiFi connected: वाई-फ़ाई जुड़ा
-  WiFi not connected: वाई-फ़ाई नहीं जुड़ा
-  MQTT connected: MQTT जुड़ा
-  MQTT not connected: MQTT नहीं जुड़ा
-  Not enrolled: नामांकित नहीं
-  Add a bridge: ब्रिज जोड़ें
-  Add another enrolment secret: एक और पंजीकरण सीक्रेट जोड़ें
-  Added: जोड़ा गया
-  Adding it again issues a new broker password and a new replica token, and the ones that Pi is using now stop working. It will stay disconnected until you put the new ones into its configuration and restart its broker.: इसे दोबारा जोड़ने पर नया ब्रोकर पासवर्ड और नया प्रतिकृति टोकन जारी होता है, और वह Pi अभी जिनका उपयोग कर रहा है वे काम करना बंद कर देते हैं। जब तक आप नए मान उसकी कॉन्फ़िगरेशन में नहीं डालते और उसका ब्रोकर पुनः आरंभ नहीं करते, वह डिस्कनेक्ट ही रहेगा।
-  Admin: एडमिन
-  Advanced: उन्नत
-  All: सभी
-  Already have an account?: पहले से खाता है?
-  "And these two, if you are not building against the production server:": "और ये दो, यदि आप उत्पादन सर्वर के लिए बिल्ड नहीं कर रहे हैं:"
-  Any node flashed with it that has not enrolled yet will be refused and will need reflashing. Nodes that have already enrolled are unaffected - they never present it again.: इसके साथ फ्लैश किया गया कोई भी नोड जो अभी तक पंजीकृत नहीं हुआ है, अस्वीकार कर दिया जाएगा और उसे दोबारा फ्लैश करना होगा। जो नोड पहले ही पंजीकृत हो चुके हैं वे प्रभावित नहीं होते - वे इसे फिर कभी प्रस्तुत नहीं करते।
-  API: एपीआई
-  Approved: स्वीकृत
-  AQI: वायु गुणवत्ता सूचकांक  
-  AQI500: वायु गुणवत्ता सूचकांक 500  
-  Asked and was refused. Click to let it enrol.: अनुरोध किया और अस्वीकार हुआ। पंजीकरण की अनुमति देने के लिए क्लिक करें।
-  Auth Token: प्रमाणीकरण टोकन
-  Back to sign in: साइन इन पर वापस जाएँ
-  Base URL: बेस यूआरएल
-  Battery: बैटरी
-  Board: बोर्ड
-  Bridge: ब्रिज
-  Bridged Pis: ब्रिज किए गए Pi
-  Bridges: ब्रिज
-  Brightness: चमक  
-  Broker: ब्रोकर
-  Broker account: ब्रोकर खाता
-  Broker password: ब्रोकर पासवर्ड
-  Built in LED: बिल्ट-इन एलईडी
-  buttons: बटन
-  Choose a project to see its devices: उपकरण देखने के लिए प्रोजेक्ट चुनें
-  Click to change project: प्रोजेक्ट बदलने के लिए क्लिक करें
-  Click to sort: क्रमबद्ध करने के लिए क्लिक करें
-  Climate: जलवायु
-  close: बंद करें
-  Collapse: छोटा करें
-  Color: रंग  
-  "Compiled into firmware and used to request broker credential. Add a second one to change it: both are accepted, so nodes already flashed keep working until you withdraw the old one.": "फ़र्मवेयर में संकलित और ब्रोकर क्रेडेंशियल माँगने के लिए उपयोग किया जाता है। इसे बदलने के लिए दूसरा जोड़ें: दोनों स्वीकार किए जाते हैं, इसलिए पहले फ़्लैश किए गए नोड तब तक काम करते रहते हैं जब तक आप पुराना वापस नहीं लेते।"
-  Connect board: बोर्ड कनेक्ट करें
-  connected: जुड़े हुए
-  connecting: कनेक्ट हो रहा है
-  Control: नियंत्रण
-  Cookie Name: कुकी नाम
-  Copy these now - they are not shown again: इन्हें अभी कॉपी करें - ये दोबारा नहीं दिखाए जाएंगे
-  Could not read the board - assuming it is already provisioned: बोर्ड पढ़ा नहीं जा सका - मान लिया गया कि यह पहले से प्रोविजन किया हुआ है
-  Create an account: खाता बनाएँ
-  Dashboard: डैशबोर्ड
-  Data: डेटा
-  Delete these: इन्हें हटाएँ
-  Delete this firmware: इस फर्मवेयर को हटाएँ
-  Denied: अस्वीकृत
-  Deny %s?: '%s को अस्वीकार करें?'
-  Description: विवरण
-  Device: उपकरण
-  Display carousel: डिस्प्ले कैरोसेल
-  DOWN: बंद
-  Download this firmware: इस फर्मवेयर को डाउनलोड करें
-  Done: पूर्ण
-  ds18b20: ds18b20
-  e.g. LiteFarm: उदाहरण के लिए LiteFarm
-  eCO2: ईसीओ2
-  Email: ईमेल
-  Enrol URL: पंजीकरण URL
-  Enrolled: पंजीकृत
-  Enrolled nodes: पंजीकृत नोड
-  Enrolment secret: पंजीकरण सीक्रेट
-  ENS AHT: ईएनएस एएचटी  
-  Enter the code we emailed you, then choose a new password.: हमने आपको ईमेल किया कोड दर्ज करें, फिर नया पासवर्ड चुनें।
-  Enter topic: टॉपिक दर्ज करें
-  Enter value: मान दर्ज करें
-  Existing OTA Files: मौजूदा OTA फ़ाइलें
-  Failed: असफल
-  Farm ID *: फार्म आईडी *
-  Farm registered: फार्म पंजीकृत किया गया
-  Farms: फार्म
-  File: फ़ाइल
-  Firmware: फर्मवेयर
-  Firmware file: फर्मवेयर फ़ाइल
-  Flash: फ्लैश करें
-  Flash over USB: USB से फ्लैश करें
-  Flash size was not detected reliably - flash anyway: फ्लैश आकार का विश्वसनीय पता नहीं चला - फिर भी फ्लैश करें
-  Flash this over USB: इसे USB से फ्लैश करें
-  Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer: फ्लैश करने के लिए Web Serial API आवश्यक है - डेस्कटॉप कंप्यूटर पर Chrome, Edge या Opera का उपयोग करें
-  for node: नोड के लिए
-  Forget: भुलाएँ
-  Forget %s?: '%s को भुला दें?'
-  Forget this node, so it is issued a new credential: इस नोड को भुला दें, ताकि इसे नया क्रेडेंशियल मिले
-  Forgot password?: पासवर्ड भूल गए?
-  From: से
-  Frugal IoT project: फ़्रूगल IoT परियोजना
-  Frugal-IoT Username *: Frugal-IoT उपयोगकर्ता नाम *
-  Full provision - all configuration on the board will be erased: पूर्ण प्रोविजनिंग - बोर्ड की सारी कॉन्फ़िगरेशन मिट जाएगी
-  Gas Resistance: गैस प्रतिरोध
-  Give the Pi a short name - it becomes its broker account and cannot be changed later without reconfiguring that Pi. Lower-case letters, digits and hyphens.: Pi को एक छोटा नाम दें - यही उसका ब्रोकर खाता बनता है और बाद में उस Pi को दोबारा कॉन्फ़िगर किए बिना इसे बदला नहीं जा सकता। छोटे अक्षर, अंक और हाइफ़न।
-  Give the Pi a short name first: पहले Pi को एक छोटा नाम दें
-  Graph: ग्राफ़
-  Greater Than: इससे बड़ा
-  Has its own broker credential. Click to deny it.: इसके पास अपना ब्रोकर क्रेडेंशियल है। अस्वीकार करने के लिए क्लिक करें।
-  heating: हीटिंग
-  humidifier: ह्यूमिडिफ़ायर
-  Humidity: आर्द्रता
-  humidity: आर्द्रता
-  Humidity control: आर्द्रता नियंत्रण
-  Hysteresis: हिस्टेरिसिस
-  hysteresis: हिस्टेरेसिस
-  I have a code: मेरे पास कोड है
-  id: आईडी
-  If that account exists we have emailed a reset code: यदि वह खाता मौजूद है, तो हमने रीसेट कोड ईमेल कर दिया है
-  If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': यदि यह निर्देशिका फ़ाइल चयनकर्ता में दिखाई नहीं देती है, तो फ़ाइल को किसी अन्य स्थान पर कॉपी करें या बिना अग्रणी बिंदु के .pio निर्देशिका के लिए एक उपनाम बनाएं।
-  Incorrect username or password: उपयोगकर्ता नाम या पासवर्ड गलत है
-  Info: जानकारी
-  Input: इनपुट
-  It will be issued a new broker credential the next time it asks. A node that is running will be offline for a minute or two while it notices; a node whose filesystem was erased needs this before it can rejoin at all.: अगली बार माँगने पर उसे नया ब्रोकर क्रेडेंशियल जारी किया जाएगा। चालू नोड एक-दो मिनट के लिए ऑफ़लाइन रहेगा जब तक उसे इसका पता चलता है; जिस नोड का फ़ाइल सिस्टम मिटा दिया गया है उसे दोबारा जुड़ने के लिए यही चाहिए।
-  Its broker account is deleted, so it stops being able to publish or subscribe, and it cannot enrol again until you clear this. Use it for a node sending bad readings.: उसका ब्रोकर खाता हटा दिया जाता है, इसलिए वह न प्रकाशित कर पाता है न सब्सक्राइब, और जब तक आप इसे हटाते नहीं तब तक वह दोबारा पंजीकृत नहीं हो सकता। इसका उपयोग उस नोड के लिए करें जो गलत रीडिंग भेज रहा है।
-  Its next request will be accepted. Click to deny it.: इसका अगला अनुरोध स्वीकार किया जाएगा। अस्वीकार करने के लिए क्लिक करें।
-  Key: कुंजी
-  Last asked: अंतिम अनुरोध
-  Last check-in: अंतिम संपर्क
-  Last Seen: अंतिम बार देखा गया
-  Last seen: अंतिम बार देखा
-  LED: एलईडी
-  Limit: सीमा
-  List: सूची
-  Live: चालू
-  Load Cell: लोड सेल
-  Loading schema...: स्कीमा लोड हो रहा है...
-  Log out: लॉग आउट
-  Lower-case letters and numbers only, no spaces or punctuation: केवल छोटे अक्षर और अंक, कोई स्पेस या विरामचिह्न नहीं
-  Lux: लक्स
-  Manual: मैनुअल
-  Message: संदेश
-  Monitor: मॉनिटर
-  Monitor speed: मॉनिटर गति
-  Move down: नीचे ले जाएँ
-  Move up: ऊपर ले जाएँ
-  Name: नाम
-  Never seen: कभी नहीं देखा
-  New here?: यहाँ नए हैं?
-  New password: नया पासवर्ड
-  Connect a board to flash: फ़्लैश करने के लिए बोर्ड कनेक्ट करें
-  Choose a firmware file to flash: फ़्लैश करने के लिए फ़र्मवेयर फ़ाइल चुनें
-  Erase and flash: मिटाएँ और फ़्लैश करें
-  kept from last session: पिछले सत्र से रखा गया
-  No farms registered for this organization yet.: इस संगठन के लिए अभी तक कोई फार्म पंजीकृत नहीं है।
-  No nodes found for this farm's project(s).: इस फार्म के प्रोजेक्ट (प्रोजेक्ट्स) के लिए कोई नोड नहीं मिला।
-  No nodes found for this organization: इस संगठन के लिए कोई नोड नहीं मिला
-  No nodes have enrolled yet, and none have asked and been rejected.: अभी तक कोई नोड पंजीकृत नहीं हुआ है, और किसी को अस्वीकार नहीं किया गया है।
-  No organization: कोई संगठन नहीं
-  No organization selected: कोई संगठन चयनित नहीं
-  No OTA files uploaded yet.: अभी तक कोई OTA फ़ाइल अपलोड नहीं की गई है।
-  No Pi bridges to this server for this organization. A bridge relays a Pi's readings here while the Pi carries on working on its own - see INSTALLATION.md step 11.: इस संगठन के लिए इस सर्वर से कोई Pi ब्रिज नहीं है। एक ब्रिज Pi की रीडिंग यहाँ पहुँचाता है जबकि Pi अपने आप काम करता रहता है - INSTALLATION.md चरण 11 देखें।
-  No platforms registered yet.: अभी तक कोई प्लेटफ़ॉर्म पंजीकृत नहीं है।
-  No projects added for this organization yet.: इस संगठन के लिए अभी तक कोई प्रोजेक्ट नहीं जोड़ा गया है।
-  No projects to display until organization selected: संगठन चुने जाने तक कोई प्रोजेक्ट प्रदर्शित नहीं होगा
-  No state received from the broker yet: ब्रोकर से अभी तक कोई स्थिति प्राप्त नहीं हुई
-  Nobody added for this organization yet.: इस संगठन के लिए अभी तक कोई नहीं जोड़ा गया है।
-  Node: नोड
-  Node Actions: नोड क्रियाएँ
-  Node ID: नोड आईडी
-  Node Name: नोड नाम 
-  Nodes: नोड्स
-  Nodes in Farm: फार्म में नोड्स
-  Nodes in Organization: संगठन में नोड्स
-  Nodes that have obtained broker credentials on first connection. Forget reissues a new credential at next connection and is needed if memory has been erased. Refused nodes are listed - click Approve to allow (on next retry, typically 30 minutes).: वे नोड जिन्होंने पहली बार जुड़ने पर ब्रोकर क्रेडेंशियल प्राप्त किए हैं। भुलाएँ अगली बार जुड़ने पर नया क्रेडेंशियल जारी करता है, और यह ज़रूरी है यदि मेमोरी मिटा दी गई हो। अस्वीकृत नोड भी सूचीबद्ध हैं - अनुमति देने के लिए स्वीकृत करें पर क्लिक करें (अगले प्रयास पर, आमतौर पर 30 मिनट)।
-  Not in the schema: स्कीमा में नहीं
-  Not selected: चयनित नहीं
-  Note this is your organization - not the organizations whose devices you want to access.: ध्यान दें यह आपका संगठन है - वे संगठन नहीं जिनके उपकरणों तक आप पहुंचना चाहते हैं।
-  Now: अभी
-  now: अभी
-  Off: बंद
-  offline: ऑफ़लाइन
-  Offline: ऑफ़लाइन
-  On: चालू
-  "On ArduinoIDE the file is typically in ": "ArduinoIDE पर फ़ाइल सामान्यतः यहाँ होती है "
-  "On PlatformIO The file is typically in ": "PlatformIO पर फ़ाइल सामान्यतः यहाँ होती है "
-  Organization: संगठन
-  OTA: ओटीए
-  OTA Upload: ओटीए अपलोड
-  OTA binary uploaded: OTA बाइनरी अपलोड की गई
-  OTA Key: OTA कुंजी
-  OTA Key or Device ID: OTA कुंजी या डिवाइस आईडी
-  Out: आउट
-  out: आउट
-  Output: आउटपुट
-  Password: पासवर्ड
-  Password reset - please sign in: पासवर्ड रीसेट हो गया - कृपया साइन इन करें
-  Password reset is not available on this server: इस सर्वर पर पासवर्ड रीसेट उपलब्ध नहीं है
-  Pattern: पैटर्न
-  Permissions: अनुमतियाँ
-  Phone or Whatsapp: फ़ोन या व्हाट्सएप
-  Platform *: प्लेटफ़ॉर्म *
-  Platform Name *: प्लेटफ़ॉर्म का नाम *
-  Platform registered: प्लेटफ़ॉर्म पंजीकृत किया गया
-  Please login: कृपया लॉगिन करें
-  Pressure: दाब
-  Project: परियोजना
-  Project changed to: प्रोजेक्ट बदलकर किया गया
-  Asked %s to move: "%s को स्थानांतरित करने को कहा"
-  Waiting for %s to report: "%s की रिपोर्ट की प्रतीक्षा"
-  Project ID: प्रोजेक्ट आईडी
-  Project ID *: प्रोजेक्ट आईडी *
-  Project Name: प्रोजेक्ट का नाम
-  Projects: प्रोजेक्ट्स
-  Property: प्रॉपर्टी
-  Provision instead (erases config): इसके बजाय प्रोविजन करें (कॉन्फ़िगरेशन मिटेगी)
-  Publish Message: संदेश प्रकाशित करें
-  "Published to ": "पर प्रकाशित किया गया "
-  "Put this in platformio-secrets-local.ini, which is not committed:": "इसे platformio-secrets-local.ini में रखें, जो कमिट नहीं किया जाता:"
-  QoS: QoS
-  reconnect: पुनः कनेक्ट करें
-  Reconnect the board to flash again: फिर से फ्लैश करने के लिए बोर्ड को दोबारा कनेक्ट करें
-  Register: पंजीकरण करें
-  Register a platform above before adding a farm.: फार्म जोड़ने से पहले ऊपर एक प्लेटफ़ॉर्म पंजीकृत करें।
-  Register Farm: फार्म पंजीकृत करें
-  Refresh: ताज़ा करें
-  Register Platform: प्लेटफ़ॉर्म पंजीकृत करें
-  Registered Platforms: पंजीकृत प्लेटफ़ॉर्म
-  Registration failed: पंजीकरण विफल
-  Registration successful - please login: पंजीकरण सफल - कृपया लॉगिन करें
-  Relay: रिले
-  Replica token: प्रतिकृति टोकन
-  Reporting every: हर बार रिपोर्ट
-  Reset code: रीसेट कोड
-  Reset password: पासवर्ड रीसेट करें
-  Retain: बनाए रखें
-  Retained: संचित
-  Retained messages: संचित संदेश
-  Run this on the Pi, in the directory the server is installed in. Replace the placeholder with this server's fully-qualified name - the one on its certificate, which you can check by opening https:// that name in a browser. It will then ask for the broker password and for the replica token, in that order, so have both of the values below to hand.: इसे Pi पर उसी डायरेक्टरी में चलाएँ जहाँ सर्वर इंस्टॉल है। प्लेसहोल्डर की जगह इस सर्वर का पूरा नाम डालें - वही जो उसके प्रमाणपत्र पर है, जिसे आप ब्राउज़र में https:// उस नाम को खोलकर जाँच सकते हैं। फिर यह ब्रोकर पासवर्ड और उसके बाद प्रतिकृति टोकन माँगेगा, इसी क्रम में, इसलिए नीचे दिए दोनों मान तैयार रखें।
-  Schema: स्कीमा
-  Select: चुनें
-  Select a farm above to see its nodes.: इसके नोड्स देखने के लिए ऊपर एक फार्म चुनें।
-  Select a node above to see actions.: क्रियाएँ देखने के लिए ऊपर एक नोड चुनें।
-  Select a node above to send an action.: क्रिया भेजने के लिए ऊपर एक नोड चुनें।
-  Select an organization to continue.: जारी रखने के लिए एक संगठन चुनें।
-  Send: भेजें
-  SEND: भेजें
-  Send another code: दूसरा कोड भेजें
-  Send reset code: रीसेट कोड भेजें
-  sent: भेजा गया
-  server: सर्वर
-  set: सेट किया गया
-  Setpoint: सेटपॉइंट
-  Settings: सेटिंग्स
-  Show enrolment secrets: पंजीकरण सीक्रेट दिखाएँ
-  SHT: एसएचटी
-  SHT30: एसएचटी30
-  Sign In: साइन इन करें
-  Sign in: साइन इन करें
-  Site: साइट
-  Soil: मिट्टी
-  Soil Moisture: मिट्टी की नमी
-  Soil Temperature: मिट्टी का तापमान
-  Sonoff R2 switch: सोनऑफ R2 स्विच
-  Sonoff switch: सोनऑफ स्विच
-  Speed: गति
-  SSID: SSID
-  Not reported recently: हाल में रिपोर्ट नहीं
-  Status: स्थिति
-  Stop monitor: मॉनिटर बंद करें
-  Stopped, and its credential removed. Click to clear.: रोका गया, और इसका क्रेडेंशियल हटा दिया गया। हटाने के लिए क्लिक करें।
-  Submit: जमा करें
-  System: सिस्टम
-  Temperature: तापमान
-  temperature: तापमान
-  That code is not valid or has expired: यह कोड मान्य नहीं है या समाप्त हो गया है
-  The broker reports this bridge connected: ब्रोकर बताता है कि यह ब्रिज जुड़ा हुआ है
-  The broker reports this bridge not connected: ब्रोकर बताता है कि यह ब्रिज जुड़ा हुआ नहीं है
-  This field has no invocation URL (forms[0].href) in its schema: इस फ़ील्ड के स्कीमा में कोई इनवोकेशन यूआरएल (forms[0].href) नहीं है
-  This node has no actions in its schema.: इस नोड के स्कीमा में कोई क्रिया नहीं है।
-  This node has no actions or writable properties in its schema.: इस नोड के स्कीमा में कोई क्रिया या लिखने योग्य गुण नहीं है।
-  This organization has no enrolment secret, so no new node can enrol. Add one.: इस संगठन के पास कोई पंजीकरण सीक्रेट नहीं है, इसलिए कोई नया नोड पंजीकृत नहीं हो सकता। एक जोड़ें।
-  Time On (s): चालू समय (से)
-  To: तक
-  Too many attempts - please wait a few minutes: बहुत अधिक प्रयास - कृपया कुछ मिनट प्रतीक्षा करें
-  Topic: टॉपिक
-  Topic and Value are required: टॉपिक और मान आवश्यक हैं
-  TVOC: टीवीओसी  
-  'Two credentials for two different connections: the password is what the MQTT bridge logs in with on port 8883, and the token is what lets that Pi pull this organization''s logins over HTTPS, so the same people can log in there too. The token can be skipped - press Enter at its prompt - and added later by doing this again. Neither is asked for on the command line, so that neither ends up in the Pi''s shell history.': 'दो अलग-अलग कनेक्शनों के लिए दो क्रेडेंशियल: पासवर्ड वह है जिससे MQTT ब्रिज पोर्ट 8883 पर लॉग इन करता है, और टोकन वह है जो उस Pi को इस संगठन के लॉगिन HTTPS पर लाने देता है, ताकि वही लोग वहाँ भी लॉग इन कर सकें। टोकन को छोड़ा जा सकता है - उसके प्रॉम्प्ट पर Enter दबाएँ - और बाद में यही दोबारा करके जोड़ा जा सकता है। इनमें से कोई भी कमांड लाइन पर नहीं पूछा जाता, ताकि कोई भी Pi के शेल इतिहास में न पहुँचे।'
-  Unable to find node: नोड नहीं मिल सका
-  Unable to find project: प्रोजेक्ट नहीं मिल सका
-  Unauthorized: अनधिकृत
-  undefined: अपरिभाषित
-  Unknown: अज्ञात
-  Unsupported board: असमर्थित बोर्ड
-  Unused: अप्रयुक्त
-  Up: चालू
-  Updating the app only: केवल ऐप अपडेट हो रहा है
-  Updating the app only - the existing configuration will be preserved: केवल ऐप अपडेट हो रहा है - मौजूदा कॉन्फ़िगरेशन सुरक्षित रहेगी
-  Upload: अपलोड
-  Upload finished - check the list below: अपलोड पूरा हुआ - नीचे दी गई सूची देखें
-  Uploading: अपलोड हो रहा है
-  Username: उपयोगकर्ता नाम
-  Username or email: उपयोगकर्ता नाम या ईमेल
-  Value: मान
-  Value *: मान *
-  Voltage: वोल्टेज
-  Waiting: प्रतीक्षा में
-  Waiting for devices: उपकरणों की प्रतीक्षा
-  We will email you a code and a link to choose a new password.: हम आपको नया पासवर्ड चुनने के लिए एक कोड और एक लिंक ईमेल करेंगे।
-  When: कब
-  WiFi: वाई-फ़ाई
-  Withdraw this enrolment secret?: क्या यह पंजीकरण सीक्रेट वापस लें?
-  Withdrawn: वापस लिया गया
-  Yes: हाँ
-  You do not have permission for this organization: इस संगठन के लिए आपके पास अनुमति नहीं है
-ID:
-  '"%s" already exists.': '"%s" sudah ada.'
-  "+ matches one level, # matches the rest. Look before deleting.": "+ cocok dengan satu tingkat, # dengan sisanya. Lihat dulu sebelum menghapus."
-  _nameAndFlag: Bahasa Indonesia 🇮🇩
-  _thisLanguage: Bahasa Indonesia
-  (Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): (Maks 4MB, hanya .bin, biasanya frugal-iot.ino.bin atau firmware.bin)
-  A bridge relays a Pi's readings to this server, so its nodes appear here too, while the Pi carries on recording and serving on its own whenever the link is down. "Bridge" is the broker's live view of the relay; "Last check-in" is when that Pi last collected this organization's logins, which it does over HTTP - so a Pi can be checking in while its bridge is down, and the two together say which half is broken.: Sebuah jembatan meneruskan pembacaan Pi ke server ini, sehingga node-nya muncul di sini juga, sementara Pi tetap merekam dan melayani sendiri setiap kali tautannya putus. « Jembatan » adalah tampilan langsung relai menurut broker; « Kontak terakhir » adalah saat Pi itu terakhir mengambil login organisasi ini, yang dilakukannya lewat HTTP - jadi sebuah Pi bisa berkontak sementara jembatannya mati, dan keduanya bersama-sama menunjukkan bagian mana yang rusak.
-  Action: Aksi
-  Action *: Aksi *
-  Add: Tambah
-  Reset board: Setel ulang papan
-  Clear log: Hapus log
-  Copy log: Salin log
-  Start the monitor to configure: Mulai monitor untuk mengonfigurasi
-  Board not answering - old firmware?: Papan tidak menjawab - firmware lama?
-  Waiting for the board: Menunggu papan
-  Board was already configured - its settings were kept. Apply to board changes them: Papan sudah dikonfigurasi - pengaturannya dipertahankan. Terapkan ke papan untuk mengubahnya
-  Configure board: Konfigurasi papan
-  Apply after flashing: Terapkan setelah flash
-  Apply to board: Terapkan ke papan
-  Board ready: Papan siap
-  Boards done: Papan selesai
-  WiFi networks: Jaringan WiFi
-  Add network: Tambah jaringan
-  Remove: Hapus
-  No active project: Tidak ada proyek aktif
-  Project name must be 2 to 15 characters: Nama proyek harus 2 sampai 15 karakter
-  Add a WiFi network: Tambahkan jaringan WiFi
-  WiFi network not valid: Jaringan WiFi tidak valid
-  Not understood: Tidak dipahami
-  Too long: Terlalu panjang
-  No reply: Tidak ada balasan
-  Could not fetch the enrolment secret: Tidak dapat mengambil rahasia pendaftaran
-  WiFi connected: WiFi terhubung
-  WiFi not connected: WiFi tidak terhubung
-  MQTT connected: MQTT terhubung
-  MQTT not connected: MQTT tidak terhubung
-  Not enrolled: Belum terdaftar
-  Add a bridge: Tambah jembatan
-  Add another enrolment secret: Tambah rahasia pendaftaran lain
-  Added: Ditambahkan
-  Adding it again issues a new broker password and a new replica token, and the ones that Pi is using now stop working. It will stay disconnected until you put the new ones into its configuration and restart its broker.: Menambahkannya lagi menerbitkan kata sandi broker dan token replika yang baru, dan yang sedang dipakai Pi itu berhenti bekerja. Pi akan tetap terputus sampai Anda memasukkan yang baru ke konfigurasinya dan memulai ulang brokernya.
-  Admin: Admin
-  Advanced: Lanjutan
-  All: Semua
-  Already have an account?: Sudah punya akun?
-  "And these two, if you are not building against the production server:": "Dan dua ini, jika Anda tidak membangun untuk server produksi:"
-  Any node flashed with it that has not enrolled yet will be refused and will need reflashing. Nodes that have already enrolled are unaffected - they never present it again.: Node mana pun yang diflash dengannya dan belum terdaftar akan ditolak dan perlu diflash ulang. Node yang sudah terdaftar tidak terpengaruh - node itu tidak pernah menyajikannya lagi.
-  API: API
-  Approved: Disetujui
-  AQI: Indeks Kualitas Udara  
-  AQI500: Indeks Kualitas Udara 500  
-  Asked and was refused. Click to let it enrol.: Meminta dan ditolak. Klik untuk mengizinkannya mendaftar.
-  Auth Token: Token Autentikasi
-  Back to sign in: Kembali ke masuk
-  Base URL: URL Dasar
-  Battery: Baterai
-  Board: Papan
-  Bridge: Jembatan
-  Bridged Pis: Pi yang dijembatani
-  Bridges: Jembatan
-  Brightness: Kecerahan  
-  Broker: Broker
-  Broker account: Akun broker
-  Broker password: Kata sandi broker
-  Built in LED: LED bawaan
-  buttons: tombol
-  Choose a project to see its devices: Pilih proyek untuk melihat perangkatnya
-  Click to change project: Klik untuk mengubah proyek
-  Click to sort: Klik untuk mengurutkan
-  Climate: Iklim
-  close: tutup
-  Collapse: Ciutkan
-  Color: Warna  
-  "Compiled into firmware and used to request broker credential. Add a second one to change it: both are accepted, so nodes already flashed keep working until you withdraw the old one.": "Dikompilasi ke dalam firmware dan digunakan untuk meminta kredensial broker. Tambahkan yang kedua untuk menggantinya: keduanya diterima, sehingga node yang sudah di-flash tetap bekerja sampai Anda mencabut yang lama."
-  Connect board: Hubungkan papan
-  connected: terhubung
-  connecting: menghubungkan
-  Control: Kontrol
-  Cookie Name: Nama Cookie
-  Copy these now - they are not shown again: Salin sekarang - ini tidak akan ditampilkan lagi
-  Could not read the board - assuming it is already provisioned: Tidak dapat membaca papan - dianggap sudah diprovisioning
-  Create an account: Buat akun
-  Dashboard: Dasbor
-  Data: Data
-  Delete these: Hapus ini
-  Delete this firmware: Hapus firmware ini
-  Denied: Ditolak
-  Deny %s?: Tolak %s?
-  Description: Deskripsi
-  Device: Perangkat
-  Display carousel: Karosel tampilan
-  DOWN: MATI
-  Download this firmware: Unduh firmware ini
-  Done: Selesai
-  ds18b20: ds18b20
-  e.g. LiteFarm: misalnya LiteFarm
-  eCO2: eCO2  
-  Email: Email
-  Enrol URL: URL pendaftaran
-  Enrolled: Terdaftar
-  Enrolled nodes: Node terdaftar
-  Enrolment secret: Rahasia pendaftaran
-  ENS AHT: ENS AHT  
-  Enter the code we emailed you, then choose a new password.: Masukkan kode yang kami kirim lewat email, lalu pilih kata sandi baru.
-  Enter topic: Masukkan topik
-  Enter value: Masukkan nilai
-  Existing OTA Files: Berkas OTA yang Ada
-  Failed: Gagal
-  Farm ID *: ID Farm *
-  Farm registered: Farm terdaftar
-  Farms: Farm
-  File: Berkas
-  Firmware: Firmware
-  Firmware file: Berkas firmware
-  Flash: Flash
-  Flash over USB: Flash melalui USB
-  Flash size was not detected reliably - flash anyway: Ukuran flash tidak terdeteksi dengan pasti - flash saja
-  Flash this over USB: Flash ini melalui USB
-  Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer: Flashing memerlukan Web Serial API - gunakan Chrome, Edge atau Opera di komputer desktop
-  for node: untuk node
-  Forget: Lupakan
-  Forget %s?: Lupakan %s?
-  Forget this node, so it is issued a new credential: Lupakan node ini, agar diberi kredensial baru
-  Forgot password?: Lupa kata sandi?
-  From: Dari
-  Frugal IoT project: Proyek Frugal IoT
-  Frugal-IoT Username *: Nama Pengguna Frugal-IoT *
-  Full provision - all configuration on the board will be erased: Provisioning penuh - semua konfigurasi pada papan akan dihapus
-  Gas Resistance: Resistansi gas
-  Give the Pi a short name - it becomes its broker account and cannot be changed later without reconfiguring that Pi. Lower-case letters, digits and hyphens.: Beri Pi nama pendek - nama itu menjadi akun brokernya dan tidak dapat diubah nanti tanpa mengonfigurasi ulang Pi tersebut. Huruf kecil, angka, dan tanda hubung.
-  Give the Pi a short name first: Beri Pi nama pendek terlebih dahulu
-  Graph: Grafik
-  Greater Than: Lebih dari
-  Has its own broker credential. Click to deny it.: Memiliki kredensial broker sendiri. Klik untuk menolaknya.
-  heating: pemanas
-  humidifier: pelembap
-  Humidity: Kelembapan
-  humidity: kelembapan
-  Humidity control: Kontrol kelembapan
-  Hysteresis: Histeresis
-  hysteresis: histeresis
-  I have a code: Saya punya kode
-  id: id
-  If that account exists we have emailed a reset code: Jika akun itu ada, kami telah mengirim kode reset lewat email
-  If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': Jika direktori ini tidak terlihat di pemilih berkas, salin berkas ke tempat lain ATAU buat alias ke direktori .pio tanpa titik di awal.
-  Incorrect username or password: Nama pengguna atau kata sandi salah
-  Info: Info
-  Input: Masukan
-  It will be issued a new broker credential the next time it asks. A node that is running will be offline for a minute or two while it notices; a node whose filesystem was erased needs this before it can rejoin at all.: Node itu akan diberi kredensial broker baru saat berikutnya meminta. Node yang sedang berjalan akan offline satu dua menit sampai menyadarinya; node yang sistem berkasnya terhapus memerlukan ini agar bisa bergabung kembali.
-  Its broker account is deleted, so it stops being able to publish or subscribe, and it cannot enrol again until you clear this. Use it for a node sending bad readings.: Akun brokernya dihapus, sehingga ia berhenti dapat menerbitkan atau berlangganan, dan tidak bisa mendaftar lagi sampai Anda membatalkan ini. Gunakan untuk node yang mengirim pembacaan yang salah.
-  Its next request will be accepted. Click to deny it.: Permintaan berikutnya akan diterima. Klik untuk menolaknya.
-  Key: Kunci
-  Last asked: Terakhir meminta
-  Last check-in: Kontak terakhir
-  Last Seen: Terakhir Dilihat
-  Last seen: Terakhir terlihat
-  LED: LED
-  Limit: Batas
-  List: Daftar
-  Live: Aktif
-  Load Cell: Sel Beban
-  Loading schema...: Memuat skema...
-  Log out: Keluar
-  Lower-case letters and numbers only, no spaces or punctuation: Hanya huruf kecil dan angka, tanpa spasi atau tanda baca
-  Lux: Lux
-  Manual: Manual
-  Message: Pesan
-  Monitor: Monitor
-  Monitor speed: Kecepatan monitor
-  Move down: Turunkan
-  Move up: Naikkan
-  Name: Nama
-  Never seen: Belum pernah terlihat
-  New here?: Baru di sini?
-  New password: Kata sandi baru
-  Connect a board to flash: Hubungkan papan untuk flash
-  Choose a firmware file to flash: Pilih berkas firmware untuk di-flash
-  Erase and flash: Hapus dan flash
-  kept from last session: disimpan dari sesi terakhir
-  No farms registered for this organization yet.: Belum ada farm yang terdaftar untuk organisasi ini.
-  No nodes found for this farm's project(s).: Tidak ada node ditemukan untuk proyek farm ini.
-  No nodes found for this organization: Tidak ada node ditemukan untuk organisasi ini
-  No nodes have enrolled yet, and none have asked and been rejected.: Belum ada node yang terdaftar, dan tidak ada yang ditolak.
-  No organization: Tidak ada organisasi
-  No organization selected: Tidak ada organisasi yang dipilih
-  No OTA files uploaded yet.: Belum ada berkas OTA yang diunggah.
-  No Pi bridges to this server for this organization. A bridge relays a Pi's readings here while the Pi carries on working on its own - see INSTALLATION.md step 11.: Tidak ada jembatan Pi ke server ini untuk organisasi ini. Sebuah jembatan meneruskan pembacaan Pi ke sini sementara Pi tetap bekerja sendiri - lihat INSTALLATION.md langkah 11.
-  No platforms registered yet.: Belum ada platform yang terdaftar.
-  No projects added for this organization yet.: Belum ada proyek yang ditambahkan untuk organisasi ini.
-  No projects to display until organization selected: Tidak ada proyek untuk ditampilkan sampai organisasi dipilih
-  No state received from the broker yet: Belum ada status yang diterima dari broker
-  Nobody added for this organization yet.: Belum ada yang ditambahkan untuk organisasi ini.
-  Node: Node
-  Node Actions: Aksi Node
-  Node ID: ID Node
-  Node Name: Nama Node  
-  Nodes: Node
-  Nodes in Farm: Node dalam Farm
-  Nodes in Organization: Node dalam Organisasi
-  Nodes that have obtained broker credentials on first connection. Forget reissues a new credential at next connection and is needed if memory has been erased. Refused nodes are listed - click Approve to allow (on next retry, typically 30 minutes).: Node yang telah memperoleh kredensial broker saat pertama kali tersambung. Lupakan menerbitkan kredensial baru pada sambungan berikutnya, dan diperlukan jika memori telah dihapus. Node yang ditolak juga dicantumkan - klik Setujui untuk mengizinkan (pada percobaan berikutnya, biasanya 30 menit).
-  Not in the schema: Tidak ada di skema
-  Not selected: Tidak dipilih
-  Note this is your organization - not the organizations whose devices you want to access.: Ini adalah organisasi Anda - bukan organisasi yang perangkatnya ingin Anda akses.
-  Now: Sekarang
-  now: sekarang
-  Off: Mati
-  offline: offline
-  Offline: Offline
-  On: Hidup
-  "On ArduinoIDE the file is typically in ": "Di ArduinoIDE berkas biasanya ada di "
-  "On PlatformIO The file is typically in ": "Di PlatformIO berkas biasanya ada di "
-  Organization: Organisasi
-  OTA: OTA
-  OTA Upload: Unggah OTA
-  OTA binary uploaded: Biner OTA diunggah
-  OTA Key: Kunci OTA
-  OTA Key or Device ID: Kunci OTA atau ID Perangkat
-  Out: Keluar
-  out: keluar
-  Output: Keluaran
-  Password: Kata Sandi
-  Password reset - please sign in: Kata sandi disetel ulang - silakan masuk
-  Password reset is not available on this server: Setel ulang kata sandi tidak tersedia di server ini
-  Pattern: Pola
-  Permissions: Izin
-  Phone or Whatsapp: Telepon atau Whatsapp
-  Platform *: Platform *
-  Platform Name *: Nama Platform *
-  Platform registered: Platform terdaftar
-  Please login: Silakan masuk
-  Pressure: Tekanan
-  Project: Proyek
-  Project changed to: Proyek diubah menjadi
-  Asked %s to move: Meminta %s pindah
-  Waiting for %s to report: Menunggu laporan %s
-  Project ID: ID Proyek
-  Project ID *: ID Proyek *
-  Project Name: Nama Proyek
-  Projects: Proyek
-  Property: Properti
-  Provision instead (erases config): Provisioning saja (menghapus konfigurasi)
-  Publish Message: Publikasikan Pesan
-  "Published to ": "Dipublikasikan ke "
-  "Put this in platformio-secrets-local.ini, which is not committed:": "Letakkan ini di platformio-secrets-local.ini, yang tidak di-commit:"
-  QoS: QoS
-  reconnect: sambungkan kembali
-  Reconnect the board to flash again: Hubungkan kembali papan untuk flash lagi
-  Register: Daftar
-  Register a platform above before adding a farm.: Daftarkan platform di atas sebelum menambahkan farm.
-  Register Farm: Daftarkan Farm
-  Refresh: Segarkan
-  Register Platform: Daftarkan Platform
-  Registered Platforms: Platform Terdaftar
-  Registration failed: Pendaftaran gagal
-  Registration successful - please login: Pendaftaran berhasil - silakan masuk
-  Relay: Relay
-  Replica token: Token replika
-  Reporting every: Melapor setiap
-  Reset code: Kode reset
-  Reset password: Setel ulang kata sandi
-  Retain: Simpan
-  Retained: Tersimpan
-  Retained messages: Pesan tersimpan
-  Run this on the Pi, in the directory the server is installed in. Replace the placeholder with this server's fully-qualified name - the one on its certificate, which you can check by opening https:// that name in a browser. It will then ask for the broker password and for the replica token, in that order, so have both of the values below to hand.: Jalankan ini di Pi, di direktori tempat server dipasang. Ganti placeholder dengan nama lengkap server ini - nama yang ada pada sertifikatnya, yang bisa Anda periksa dengan membuka https:// nama itu di peramban. Setelah itu akan diminta kata sandi broker lalu token replika, dalam urutan tersebut, jadi siapkan kedua nilai di bawah ini.
-  Schema: Skema
-  Select: Pilih
-  Select a farm above to see its nodes.: Pilih farm di atas untuk melihat node-nodenya.
-  Select a node above to see actions.: Pilih node di atas untuk melihat aksi.
-  Select a node above to send an action.: Pilih node di atas untuk mengirim aksi.
-  Select an organization to continue.: Pilih organisasi untuk melanjutkan.
-  Send: Kirim
-  SEND: KIRIM
-  Send another code: Kirim kode lain
-  Send reset code: Kirim kode reset
-  sent: terkirim
-  server: server
-  set: diatur
-  Setpoint: titik setel
-  Settings: Pengaturan
-  Show enrolment secrets: Tampilkan rahasia pendaftaran
-  SHT: SHT
-  SHT30: SHT30
-  Sign In: Masuk
-  Sign in: Masuk
-  Site: Situs
-  Soil: Tanah
-  Soil Moisture: Kelembapan Tanah
-  Soil Temperature: Suhu Tanah
-  Sonoff R2 switch: Saklar Sonoff R2
-  Sonoff switch: Saklar Sonoff
-  Speed: Kecepatan
-  SSID: SSID
-  Not reported recently: Belum melapor baru-baru ini
-  Status: Status
-  Stop monitor: Hentikan monitor
-  Stopped, and its credential removed. Click to clear.: Dihentikan, dan kredensialnya dihapus. Klik untuk membatalkan.
-  Submit: Kirim
-  System: Sistem
-  Temperature: Suhu
-  temperature: suhu
-  That code is not valid or has expired: Kode itu tidak valid atau sudah kedaluwarsa
-  The broker reports this bridge connected: Broker melaporkan jembatan ini terhubung
-  The broker reports this bridge not connected: Broker melaporkan jembatan ini tidak terhubung
-  This field has no invocation URL (forms[0].href) in its schema: Bidang ini tidak memiliki URL pemanggilan (forms[0].href) dalam skemanya
-  This node has no actions in its schema.: Node ini tidak memiliki aksi dalam skemanya.
-  This node has no actions or writable properties in its schema.: Node ini tidak memiliki aksi atau properti yang dapat ditulis dalam skemanya.
-  This organization has no enrolment secret, so no new node can enrol. Add one.: Organisasi ini tidak memiliki rahasia pendaftaran, jadi tidak ada node baru yang dapat mendaftar. Tambahkan satu.
-  Time On (s): Waktu Nyala (d)
-  To: Sampai
-  Too many attempts - please wait a few minutes: Terlalu banyak percobaan - harap tunggu beberapa menit
-  Topic: Topik
-  Topic and Value are required: Topik dan Nilai wajib diisi
-  TVOC: TVOC  
-  'Two credentials for two different connections: the password is what the MQTT bridge logs in with on port 8883, and the token is what lets that Pi pull this organization''s logins over HTTPS, so the same people can log in there too. The token can be skipped - press Enter at its prompt - and added later by doing this again. Neither is asked for on the command line, so that neither ends up in the Pi''s shell history.': 'Dua kredensial untuk dua koneksi berbeda: kata sandi adalah yang dipakai jembatan MQTT untuk masuk di port 8883, dan token adalah yang memungkinkan Pi itu menarik login organisasi ini lewat HTTPS, sehingga orang yang sama bisa masuk di sana juga. Token boleh dilewati - tekan Enter pada promptnya - dan ditambahkan nanti dengan mengulangi langkah ini. Keduanya tidak diminta di baris perintah, agar tidak ada yang tersimpan di riwayat shell Pi.'
-  Unable to find node: Tidak dapat menemukan node
-  Unable to find project: Tidak dapat menemukan proyek
-  Unauthorized: Tidak sah
-  undefined: tidak ditentukan
-  Unknown: Tidak diketahui
-  Unsupported board: Papan tidak didukung
-  Unused: Tidak digunakan
-  Up: Aktif
-  Updating the app only: Hanya memperbarui aplikasi
-  Updating the app only - the existing configuration will be preserved: Hanya memperbarui aplikasi - konfigurasi yang ada akan dipertahankan
-  Upload: Unggah
-  Upload finished - check the list below: Unggahan selesai - periksa daftar di bawah
-  Uploading: Mengunggah
-  Username: Nama Pengguna
-  Username or email: Nama pengguna atau email
-  Value: Nilai
-  Value *: Nilai *
-  Voltage: Tegangan
-  Waiting: Menunggu
-  Waiting for devices: Menunggu perangkat
-  We will email you a code and a link to choose a new password.: Kami akan mengirim kode dan tautan lewat email untuk memilih kata sandi baru.
-  When: Ketika
-  WiFi: WiFi
-  Withdraw this enrolment secret?: Cabut rahasia pendaftaran ini?
+// Every language the picker offers. Each but English has a file in languages/; a key is its own
+// English text, so English needs none.
+const languageIndex = {
+  en: { name: 'English', flag: '🇬🇧' },
+  fr: { name: 'Français', flag: '🇫🇷' },
+  hi: { name: 'हिंदी', flag: '🇮🇳' },
+  id: { name: 'Bahasa Indonesia', flag: '🇮🇩' },
+};
+// Vocabulary by language code: the one in use, and whatever a dashboard adds with addVocabulary.
+const languages = {};
 
-  Withdrawn: Dicabut
-  Yes: Ya
-  You do not have permission for this organization: Anda tidak memiliki izin untuk organisasi ini`);
-
-// Initialise from ?lang= immediately so language-picker renders with the correct selection
-// before any element connects. mqtt-wrapper.changeAttribute("lang") will reinforce this later.
-const _langInit = new URL(window.location.href).searchParams.get('lang');
-let preferedLanguages = _langInit ? _langInit.split(',').map(l => l.toUpperCase()) : [];
-function languageNamesAndFlags() {
-  //noinspection JSUnresolvedVariable
-  return Object.entries(languages).map(([k,v]) => [k,v._nameAndFlag]);
+// A code from ?lang= or a browser, as the index has it: exact first, then just the language, so
+// fr-CA finds fr. Null when the index has neither.
+function languageMatch(code) {
+  if (!code) return null;
+  const c = code.trim().toLowerCase();
+  if (languageIndex[c]) return c;
+  const primary = c.split('-')[0];
+  return languageIndex[primary] ? primary : null;
 }
+// Fixed for the life of the page - its file has to be loaded before anything renders, so a change
+// reloads with a new ?lang=. A legacy list (?lang=FR,EN) takes its first.
+const language = languageMatch((new URL(window.location.href).searchParams.get('lang') || '').split(',')[0]) || 'en';
+document.documentElement.lang = language;
 function addVocabulary(langs) {
-  // Accepts an object in the same format as `languages` e.g. { FR: { word: 'mot' } },
-  // or a YAML string in the same format. Merges into existing language entries; adds new languages wholesale.
+  // Accepts an object e.g. { FR: { word: 'mot' } }, or a YAML string in the same format. Merges into
+  // existing language entries; adds new languages wholesale.
   if (typeof langs === 'string') langs = yaml.load(langs);
   for (const [lang, words] of Object.entries(langs)) {
-    if (languages[lang]) {
-      Object.assign(languages[lang], words);
+    const code = lang.toLowerCase();
+    if (languages[code]) {
+      Object.assign(languages[code], words);
     } else {
-      languages[lang] = words;
+      languages[code] = words;
     }
   }
 }
-function getStringFrom(langs, tag) {
-  for (let lang of preferedLanguages) {
-    let foo
-    // noinspection JSAssignmentUsedAsCondition
-    if (foo = langs[lang] && langs[lang][tag]) {
-      return foo;
-    }
-    if (tag.includes(' ')) {
-      let tags = tag.split(' ');
-      return tags.map((t) => getString(t)).join(' '); // At worst it will be English parts concatenated
-    }
-    XXX(["Cannot translate ", tag, ' into ', lang]);
+// Top-level await, so the vocabulary is complete before any module importing this one renders. A
+// file that fails to load leaves every string as its key, which is English, rather than no page.
+if (language !== 'en') {
+  try {
+    const response = await fetch(new URL(`languages/${language}.yaml`, import.meta.url));
+    if (!response.ok) throw new Error(`${response.status} ${response.url}`);
+    addVocabulary({ [language]: yaml.load(await response.text()) });
+  } catch (err) {
+    XXX(["Cannot load language", language, err]);
   }
-  //noinspection JSUnresolvedVariable
-  return undefined;
 }
+function hasTranslation(tag) {
+  const words = languages[language];
+  return !!words && Object.hasOwn(words, tag);
+}
+// A miss shows the tag, which is English. A phrase is tried word by word first, because some reach
+// here by routes the client does not control - schema names, values from a node.
 function getString(tag) {
-  return getStringFrom(languages, tag) || languages.EN[tag] || tag;
+  if (typeof tag !== 'string') { XXX(["getString given a non-string", tag]); return tag; }
+  if (hasTranslation(tag)) return languages[language][tag];
+  // Logged whole, before the words are tried, so a missing sentence shows as itself
+  if (language !== 'en') XXX(["Cannot translate ", tag, ' into ', language]);
+  if (tag.includes(' ')) return tag.split(' ').map(getString).join(' ');
+  return tag;
 }
 // A name dropped into translated prose. The placeholder rather than concatenation, because where
 // the name falls in the sentence is the translation's decision, not this caller's.
@@ -1811,9 +461,10 @@ function configSet(json) {
 }
 // List of tags to try and translate
 const i8ntags = {
+  a: ["textContent", "title"],
   label: ["textContent"],
-  button: ["textContent"],
-  span: ["textContent"],
+  button: ["textContent", "title"],
+  span: ["textContent", "title"],
   option: ["textContent"],
   p: ["textContent"],
   h1: ["textContent"],
@@ -1825,7 +476,7 @@ const i8ntags = {
   td: ["textContent", "title"],
   input: ["title", "placeholder"],
   section: ["title"],
-  button: ["textContent"],
+  img: ["alt"],
 }
 // Local version of EL
 function el(tag, attributes = {}, children) {
@@ -1834,11 +485,13 @@ function el(tag, attributes = {}, children) {
     // noinspection JSUnusedLocalSymbols
     Object.entries(attributes)
       .filter(([k, unused]) => i8ntags[tag] && i8ntags[tag].includes(k))
-      .filter(([unused, v]) => (
-        v && typeof v === 'string' &&
-        !v.includes(':') &&  // e.g.  dev: Development
-        !v.includes('/') && // e.g. dev/developers
-        'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'.includes(v[0])
+      // An exact key always translates. The rest only keep non-prose away from the word-by-word fallback
+      .filter(([unused, v]) => v && typeof v === 'string' && (
+        hasTranslation(v) || (
+          !v.includes(':') &&  // e.g.  dev: Development
+          !v.includes('/') && // e.g. dev/developers
+          'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'.includes(v[0])
+        )
       ))
       .forEach(([k, v]) => {
         attributes[k] = getString(v)
@@ -1888,13 +541,6 @@ function PUT(httpurl, body, cb) {
     .catch((err) => cb(err));
 }
 
-// Set v as prefered language, but remove if already there
-// Note this does not redraw anything, that is a function of the caller
-function preferedLanguageSet(v) {
-  const idx = preferedLanguages.indexOf(v);
-  if (idx !== -1) preferedLanguages.splice(idx, 1);
-  preferedLanguages.unshift(v);
-}
 class LanguagePicker extends HTMLElementExtended {
 
   constructor() {
@@ -1906,21 +552,18 @@ class LanguagePicker extends HTMLElementExtended {
   static get observedAttributes() { return ['compact']; }
   static get boolAttributes() { return ['compact']; }
 
-  // TODO-34 (maybe) pull language files from server
   onchange(ev) {
-    preferedLanguageSet(ev.target.value);
-    locationParameterChange("lang", preferedLanguages.join(','));
+    locationParameterChange("lang", ev.target.value);
   }
-  // "English 🇬🇧" -> "🇬🇧". Every _nameAndFlag ends with its flag, so the last word is it.
-  labelFor(nameAndFlag) {
-    return this.state.compact ? nameAndFlag.split(' ').pop() : nameAndFlag;
+  labelFor({name, flag}) {
+    return this.state.compact ? flag : `${name} ${flag}`;
   }
   render() {
     return [
       el('link', {rel: 'stylesheet', href: CssUrl}),
       el('select', {class: "language-picker", onchange: this.onchange.bind(this)},
-        languageNamesAndFlags().map(([k,v]) =>
-          EL('option', {value: k, textContent: this.labelFor(v), selected: k === preferedLanguages[0]}))
+        Object.entries(languageIndex).map(([k,v]) =>
+          EL('option', {value: k, textContent: this.labelFor(v), selected: k === language}))
       ),
     ];
   }
@@ -3156,7 +1799,7 @@ class MqttWrapper extends HTMLElementExtended {
     super();
     this.state.elements = {}; // Pointer to specific child elements for targeted updates
   }
-  static get observedAttributes() { return RECEIVER_ATTRIBUTES.concat(['organization','project','node','lang','clientdisplay']); }
+  static get observedAttributes() { return RECEIVER_ATTRIBUTES.concat(['organization','project','node','clientdisplay']); }
   // Maybe add 'discover' but think thru interactions
 
   // Note this is not using the standard connectedCallBack which loads content and re-renders,
@@ -3360,19 +2003,6 @@ class MqttWrapper extends HTMLElementExtended {
     if (orgSelect) { orgSelect.value = org; }
     this.onOrganization({target: {value: org}});
   }
-  changeAttribute(name, value) {
-    if (name === "lang") {
-      if (value.includes(',')) {
-        preferedLanguages = (value.split(',')).map(v => v.toUpperCase());
-      } else if(!value) {
-        preferedLanguageSet('EN');
-        locationParameterChange("lang", preferedLanguages.join(','));
-      } else {
-        preferedLanguageSet(value.toUpperCase());
-      }
-    }
-    super.changeAttribute(name, value);
-  }
   render() {
     return [
       el('link', {rel: 'stylesheet', href: CssUrl}),
@@ -3403,8 +2033,10 @@ export {
   el,
   getString,
   getStringWith,
-  getStringFrom,
   isEditableTarget,
+  language,
+  languageIndex,
+  languageMatch,
   leafAttribute,
   locationParameterChange,
   moduleBaseId,
@@ -3416,8 +2048,6 @@ export {
   mqtt_unsubscribe_organization,
   nextUniqueId,
   nowMs,
-  preferedLanguageSet,
-  preferedLanguages,
   hasCapability,
   redirectToLogin,
   relativeTime,

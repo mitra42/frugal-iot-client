@@ -2,14 +2,20 @@
 
 ## Status
 
-**Planned**, branch `language`. Done so far:
+**Phases 1 and 2 built**, branch `language` in the client and the server. Phases 3 and 4 not started.
 
-- `admin.js` assigned to the imported `preferedLanguages`, which throws. It now goes through
-  `preferedLanguageSet` as `login.js` does. Phase 1 replaces both.
-- Every English entry now maps a key to itself, except `_nameAndFlag` and `_thisLanguage`, which
-  move to the index. The node status codes (`live`, `stale`, `offline`, `never`) are turned into
-  text by `STATUS_TEXT` in `cards.js`. `nodeconfig.js` pushes the full message instead of
-  `Project name length`. The `hysterisis` misspelling is gone everywhere.
+- One `language`, fixed from `?lang=` when `core.js` loads; `preferedLanguages`, `preferedLanguageSet`
+  and the `lang` attribute on `mqtt-wrapper`, `mqtt-admin` and `mqtt-login` are gone. The plan's
+  helper for that attribute turned out unnecessary: `core.js` reads `?lang=` itself, and a language
+  cannot change without a reload, so the attribute only duplicated it.
+- `languages/{en,fr,hi,id}.yaml`, checked equal to the old table. `en.yaml` maps every key to
+  itself: the status codes are turned into text by `STATUS_TEXT` in `cards.js`, `nodeconfig.js`
+  pushes the full message instead of `Project name length`, and `hysterisis` is gone.
+- `document.documentElement.lang` is set to the language, for screen readers and font choice.
+- `getString` returns a tag that is not a string unchanged. The old code only ever looked such a tag
+  up in a table; the word-by-word step calls `.includes` on it, which threw in `page.test.js`.
+- The service worker (server) caches a language file when first used, instead of at install.
+- Text direction is not in the index yet; it waits for the first right-to-left language (Phase 4).
 
 ## Goal
 

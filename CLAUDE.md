@@ -40,7 +40,8 @@ Dashboards (e.g. `dashboard_example.html`) are thin HTML pages importing selecti
 reasoning, deferred work is L-n, and it is the place to argue with a choice rather than re-deciding
 it in code. `docs/CARDS_PLAN.md` is how it was built, including the bugs found on the way.
 `docs/FLASH_PLAN.md` and `docs/HEADLESS_PLAN.md` cover their own areas; `docs/CONFIG_PLAN.md` covers configuring
-a node over USB (a profile applied to each board, serial transport into the node's existing `set/` path). Comments throughout the code cite
+a node over USB (a profile applied to each board, serial transport into the node's existing `set/` path). `docs/LANGUAGES_PLAN.md`
+covers the per-language files and how a page chooses one. Comments throughout the code cite
 these by bare filename (`see CARDS_UX.md 4.7`); they all live in `docs/`.
 
 ## Code style
@@ -125,7 +126,7 @@ Helper functions: `topicTwig(path)` → twig, `topicLeaf(path)` → leaf, `twigA
 | `mqtt_subscriptions` | `[{topic, cb}]` — all active subscriptions |
 | `server_config` | Config JSON fetched from `/config.json` at startup |
 | `graph` | The default `MqttGraph` created on first graphing action |
-| `preferedLanguages` | Array of language codes, e.g. `['EN']` |
+| `language` | The page's one language code, e.g. `fr` — fixed from `?lang=` when `core.js` loads |
 
 ### Class hierarchy
 
@@ -347,24 +348,34 @@ and read the diff.
 
 ## Internationalisation
 
-The master language table is `const languages` in `core.js`. Dashboard-specific strings are added via `addVocabulary(yamlString)` in the dashboard's `<script>`.
+Each language is a file, `languages/<code>.yaml`, and a page loads only its own (see `LANGUAGES_PLAN.md`).
+A key is its own English text, so English loads nothing; `languages/en.yaml` is the catalogue of every key
+and is never fetched. `languageIndex` in `core.js` lists the languages the picker offers.
 
-Every `addVocabulary` block must include **all four** language sections (EN, FR, HI, ID). Strings absent from `core.js` must be explicitly added in the dashboard block — do not assume the core file covers them.
+- The language is fixed when `core.js` loads — a top-level `await` fetches its file before any module
+  importing `core.js` renders. Changing it reloads the page with a new `?lang=`. There is no `lang`
+  attribute on any element.
+- A key must be English text, not a code: a status or a validation problem maps its code to English where
+  it is displayed (`STATUS_TEXT` in `cards.js`), so English needs no file.
+- `test/languages.test.js` fails if any language lacks a key in `en.yaml`, or has one it lacks.
+
+Dashboard-specific strings are added via `addVocabulary(yamlString)` in the dashboard's `<script>`, with a
+section for every supported language. An EN section is unnecessary.
 
 ### How a string gets translated
 
 There are four ways a piece of UI text is translated. If a string doesn't go through one of these, it silently stays in English regardless of the selected language:
 
-1. **Direct call to `getString(tag)`** — looks the string up in `languages`, falling back to the English value, falling back to `tag` itself. Used for names built dynamically (e.g. a graph's scale/axis name at `text: getString(this.name...)`).
-2. **Via `el(tag, attributes, children)`** — `el()` auto-translates certain *attributes* on certain *tags*, per the `i8ntags` table (currently `label`, `button`, `span`, `option`, `p`, `h1`–`h5`, `th`, all via their `textContent` attribute). Add a tag/attribute pair to `i8ntags` when a new kind of element needs translated text. Excluded even on a listed tag: values containing `:` or `/` (these are usually paths or key:value pairs, not prose), and values not starting with a letter (emoji/symbol-only content). Pass `i8n: false` on an element you know is untranslatable (a proper name, an id, dynamic per-row data).
+1. **Direct call to `getString(tag)`** — looks the string up in the page's language; a phrase it does not find is translated word by word, and a word it does not find is shown as itself — which is English. Used for names built dynamically (e.g. a graph's scale/axis name at `text: getString(this.name...)`).
+2. **Via `el(tag, attributes, children)`** — `el()` auto-translates certain *attributes* on certain *tags*, per the `i8ntags` table (currently `textContent` on `a`, `label`, `button`, `span`, `option`, `p`, `h1`–`h5`, `th`, `td`; `title` on `a`, `button`, `span`, `th`, `td`, `input`, `section`; `placeholder` on `input`; and `alt` on `img`). Pass a key there, not `getString(key)` — `el()` would look the translation up again and miss. Add a tag/attribute pair to `i8ntags` when a new kind of element needs translated text. A value that is exactly a key always translates. Otherwise excluded even on a listed tag: values containing `:` or `/` (these are usually paths or key:value pairs, not prose), and values not starting with a letter (emoji/symbol-only content) — which keeps them out of the word-by-word fallback. Pass `i8n: false` on an element you know is untranslatable (a proper name, an id, dynamic per-row data).
 3. **Via a graph's scale name** — same as (1), a direct `getString()` call when building the Chart.js scale config.
 4. **Via `getStringWith(tag, value)`** — prose with a name in it. The table entry holds a `%s` and the value is substituted after the lookup: `getStringWith("Forget %s?", nodeId)`. Concatenating a translated fragment with the name instead pins the word order to English, which is wrong in HI. The `window.confirm` dialogs in `admin.js` are built this way.
 
-**Prose that `el()` skips can still be translated.** A paragraph containing a URL or a colon is excluded by (2), so call `getString()` on it yourself and pass `i8n: false` — otherwise `el()` looks up the already-translated text, misses, and falls back to translating it word by word.
+**Prose with a colon or a leading symbol still translates through `el()`**, as long as the whole string is a key. Call `getString()` yourself, with `i8n: false`, only when the text is built from parts — `getStringWith`, or a `+ ` put in front of a label — since the result is no longer a key.
 
-**Only `textContent` is translated — never a literal string passed as a DOM `children` argument.** `el('p', {}, ["Some text"])` bypasses the mechanism entirely because the filter inspects `attributes`, not `children`. Always write `el('p', {textContent: "Some text"})` instead. This applies to `p`, `h1`–`h5`, `span`, and any other tag in `i8ntags`.
+**Only the attributes in `i8ntags` are translated — never a literal string passed as a DOM `children` argument.** `el('p', {}, ["Some text"])` bypasses the mechanism entirely because the filter inspects `attributes`, not `children`. Always write `el('p', {textContent: "Some text"})` instead. This applies to `p`, `h1`–`h5`, `span`, and any other tag in `i8ntags`.
 
-When adding a new UI string: add matching entries to all four language sections in `languages` (or the dashboard's `addVocabulary` block) — even if you only have the English text, add the same text under EN so `getString` doesn't silently fall through and hide missing translations.
+When adding a new UI string: add it to `languages/en.yaml` mapped to itself, and translate it into every other `languages/*.yaml` in the same change — a machine translation is fine.
 
 ---
 

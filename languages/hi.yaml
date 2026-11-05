@@ -1,0 +1,434 @@
+# Hindi
+'"%s" already exists.': '"%s" पहले से मौजूद है।'
+"+ matches one level, # matches the rest. Look before deleting.": "+ एक स्तर से मेल खाता है, # बाकी सभी से। हटाने से पहले देख लें।"
+(Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): (अधिकतम 4MB, केवल .bin, सामान्यतः frugal-iot.ino.bin या firmware.bin)
+A bridge relays a Pi's readings to this server, so its nodes appear here too, while the Pi carries on recording and serving on its own whenever the link is down. "Bridge" is the broker's live view of the relay; "Last check-in" is when that Pi last collected this organization's logins, which it does over HTTP - so a Pi can be checking in while its bridge is down, and the two together say which half is broken.: एक ब्रिज किसी Pi की रीडिंग इस सर्वर तक पहुँचाता है, जिससे उसके नोड यहाँ भी दिखते हैं, जबकि लिंक टूटने पर Pi अपने आप रिकॉर्ड और सर्व करता रहता है। « ब्रिज » रिले का ब्रोकर द्वारा दिखाया गया सीधा दृश्य है; « अंतिम संपर्क » वह समय है जब उस Pi ने आखिरी बार इस संगठन के लॉगिन एकत्र किए, जो वह HTTP पर करता है - इसलिए कोई Pi संपर्क कर सकता है जबकि उसका ब्रिज बंद हो, और दोनों मिलकर बताते हैं कि कौन-सा हिस्सा खराब है।
+Action: क्रिया
+Action *: क्रिया *
+Add: जोड़ें
+Reset board: बोर्ड रीसेट करें
+Clear log: लॉग साफ़ करें
+Copy log: लॉग कॉपी करें
+Start the monitor to configure: कॉन्फ़िगर करने के लिए मॉनिटर शुरू करें
+Board not answering - old firmware?: बोर्ड जवाब नहीं दे रहा - पुराना फ़र्मवेयर?
+Waiting for the board: बोर्ड की प्रतीक्षा
+Board was already configured - its settings were kept. Apply to board changes them: बोर्ड पहले से कॉन्फ़िगर था - उसकी सेटिंग रखी गईं। इन्हें बदलने के लिए बोर्ड पर लागू करें दबाएँ
+Configure board: बोर्ड कॉन्फ़िगर करें
+Apply after flashing: फ़्लैश के बाद लागू करें
+Apply to board: बोर्ड पर लागू करें
+Board ready: बोर्ड तैयार
+Boards done: पूर्ण बोर्ड
+WiFi networks: वाई-फ़ाई नेटवर्क
+Add network: नेटवर्क जोड़ें
+Remove: हटाएं
+No active project: कोई सक्रिय परियोजना नहीं
+Project name must be 2 to 15 characters: परियोजना का नाम 2 से 15 अक्षरों का होना चाहिए
+Add a WiFi network: एक वाई-फ़ाई नेटवर्क जोड़ें
+WiFi network not valid: वाई-फ़ाई नेटवर्क मान्य नहीं
+Not understood: समझ नहीं आया
+Too long: बहुत लंबा
+No reply: कोई उत्तर नहीं
+Could not fetch the enrolment secret: नामांकन गुप्त कुंजी नहीं मिल सकी
+WiFi connected: वाई-फ़ाई जुड़ा
+WiFi not connected: वाई-फ़ाई नहीं जुड़ा
+MQTT connected: MQTT जुड़ा
+MQTT not connected: MQTT नहीं जुड़ा
+Not enrolled: नामांकित नहीं
+Add a bridge: ब्रिज जोड़ें
+Add another enrolment secret: एक और पंजीकरण सीक्रेट जोड़ें
+Added: जोड़ा गया
+Adding it again issues a new broker password and a new replica token, and the ones that Pi is using now stop working. It will stay disconnected until you put the new ones into its configuration and restart its broker.: इसे दोबारा जोड़ने पर नया ब्रोकर पासवर्ड और नया प्रतिकृति टोकन जारी होता है, और वह Pi अभी जिनका उपयोग कर रहा है वे काम करना बंद कर देते हैं। जब तक आप नए मान उसकी कॉन्फ़िगरेशन में नहीं डालते और उसका ब्रोकर पुनः आरंभ नहीं करते, वह डिस्कनेक्ट ही रहेगा।
+Admin: एडमिन
+Advanced: उन्नत
+All: सभी
+Already have an account?: पहले से खाता है?
+"And these two, if you are not building against the production server:": "और ये दो, यदि आप उत्पादन सर्वर के लिए बिल्ड नहीं कर रहे हैं:"
+Any node flashed with it that has not enrolled yet will be refused and will need reflashing. Nodes that have already enrolled are unaffected - they never present it again.: इसके साथ फ्लैश किया गया कोई भी नोड जो अभी तक पंजीकृत नहीं हुआ है, अस्वीकार कर दिया जाएगा और उसे दोबारा फ्लैश करना होगा। जो नोड पहले ही पंजीकृत हो चुके हैं वे प्रभावित नहीं होते - वे इसे फिर कभी प्रस्तुत नहीं करते।
+API: एपीआई
+Approved: स्वीकृत
+AQI: वायु गुणवत्ता सूचकांक  
+AQI500: वायु गुणवत्ता सूचकांक 500  
+Asked and was refused. Click to let it enrol.: अनुरोध किया और अस्वीकार हुआ। पंजीकरण की अनुमति देने के लिए क्लिक करें।
+Auth Token: प्रमाणीकरण टोकन
+Back to sign in: साइन इन पर वापस जाएँ
+Base URL: बेस यूआरएल
+Battery: बैटरी
+Board: बोर्ड
+Bridge: ब्रिज
+Bridged Pis: ब्रिज किए गए Pi
+Bridges: ब्रिज
+Brightness: चमक  
+Broker: ब्रोकर
+Broker account: ब्रोकर खाता
+Broker password: ब्रोकर पासवर्ड
+Built in LED: बिल्ट-इन एलईडी
+buttons: बटन
+Choose a project to see its devices: उपकरण देखने के लिए प्रोजेक्ट चुनें
+Click to change project: प्रोजेक्ट बदलने के लिए क्लिक करें
+Click to sort: क्रमबद्ध करने के लिए क्लिक करें
+Climate: जलवायु
+close: बंद करें
+Collapse: छोटा करें
+Color: रंग  
+"Compiled into firmware and used to request broker credential. Add a second one to change it: both are accepted, so nodes already flashed keep working until you withdraw the old one.": "फ़र्मवेयर में संकलित और ब्रोकर क्रेडेंशियल माँगने के लिए उपयोग किया जाता है। इसे बदलने के लिए दूसरा जोड़ें: दोनों स्वीकार किए जाते हैं, इसलिए पहले फ़्लैश किए गए नोड तब तक काम करते रहते हैं जब तक आप पुराना वापस नहीं लेते।"
+Connect board: बोर्ड कनेक्ट करें
+connected: जुड़े हुए
+connecting: कनेक्ट हो रहा है
+Control: नियंत्रण
+Cookie Name: कुकी नाम
+Copy these now - they are not shown again: इन्हें अभी कॉपी करें - ये दोबारा नहीं दिखाए जाएंगे
+Could not read the board - assuming it is already provisioned: बोर्ड पढ़ा नहीं जा सका - मान लिया गया कि यह पहले से प्रोविजन किया हुआ है
+Create an account: खाता बनाएँ
+Dashboard: डैशबोर्ड
+Data: डेटा
+Delete these: इन्हें हटाएँ
+Delete this firmware: इस फर्मवेयर को हटाएँ
+Denied: अस्वीकृत
+Deny %s?: '%s को अस्वीकार करें?'
+Description: विवरण
+Device: उपकरण
+Display carousel: डिस्प्ले कैरोसेल
+DOWN: बंद
+Download this firmware: इस फर्मवेयर को डाउनलोड करें
+Done: पूर्ण
+ds18b20: ds18b20
+e.g. LiteFarm: उदाहरण के लिए LiteFarm
+eCO2: ईसीओ2
+Email: ईमेल
+Enrol URL: पंजीकरण URL
+Enrolled: पंजीकृत
+Enrolled nodes: पंजीकृत नोड
+Enrolment secret: पंजीकरण सीक्रेट
+ENS AHT: ईएनएस एएचटी  
+Enter the code we emailed you, then choose a new password.: हमने आपको ईमेल किया कोड दर्ज करें, फिर नया पासवर्ड चुनें।
+Enter topic: टॉपिक दर्ज करें
+Enter value: मान दर्ज करें
+Existing OTA Files: मौजूदा OTA फ़ाइलें
+Failed: असफल
+Farm ID *: फार्म आईडी *
+Farm registered: फार्म पंजीकृत किया गया
+Farms: फार्म
+File: फ़ाइल
+Firmware: फर्मवेयर
+Firmware file: फर्मवेयर फ़ाइल
+Flash: फ्लैश करें
+Flash over USB: USB से फ्लैश करें
+Flash size was not detected reliably - flash anyway: फ्लैश आकार का विश्वसनीय पता नहीं चला - फिर भी फ्लैश करें
+Flash this over USB: इसे USB से फ्लैश करें
+Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer: फ्लैश करने के लिए Web Serial API आवश्यक है - डेस्कटॉप कंप्यूटर पर Chrome, Edge या Opera का उपयोग करें
+for node: नोड के लिए
+Forget: भुलाएँ
+Forget %s?: '%s को भुला दें?'
+Forget this node, so it is issued a new credential: इस नोड को भुला दें, ताकि इसे नया क्रेडेंशियल मिले
+Forgot password?: पासवर्ड भूल गए?
+From: से
+Frugal IoT project: फ़्रूगल IoT परियोजना
+Frugal-IoT Username *: Frugal-IoT उपयोगकर्ता नाम *
+Full provision - all configuration on the board will be erased: पूर्ण प्रोविजनिंग - बोर्ड की सारी कॉन्फ़िगरेशन मिट जाएगी
+Gas Resistance: गैस प्रतिरोध
+Give the Pi a short name - it becomes its broker account and cannot be changed later without reconfiguring that Pi. Lower-case letters, digits and hyphens.: Pi को एक छोटा नाम दें - यही उसका ब्रोकर खाता बनता है और बाद में उस Pi को दोबारा कॉन्फ़िगर किए बिना इसे बदला नहीं जा सकता। छोटे अक्षर, अंक और हाइफ़न।
+Give the Pi a short name first: पहले Pi को एक छोटा नाम दें
+Graph: ग्राफ़
+Greater Than: इससे बड़ा
+Has its own broker credential. Click to deny it.: इसके पास अपना ब्रोकर क्रेडेंशियल है। अस्वीकार करने के लिए क्लिक करें।
+heating: हीटिंग
+humidifier: ह्यूमिडिफ़ायर
+Humidity: आर्द्रता
+humidity: आर्द्रता
+Humidity control: आर्द्रता नियंत्रण
+Hysteresis: हिस्टेरिसिस
+hysteresis: हिस्टेरेसिस
+I have a code: मेरे पास कोड है
+id: आईडी
+If that account exists we have emailed a reset code: यदि वह खाता मौजूद है, तो हमने रीसेट कोड ईमेल कर दिया है
+If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': यदि यह निर्देशिका फ़ाइल चयनकर्ता में दिखाई नहीं देती है, तो फ़ाइल को किसी अन्य स्थान पर कॉपी करें या बिना अग्रणी बिंदु के .pio निर्देशिका के लिए एक उपनाम बनाएं।
+Incorrect username or password: उपयोगकर्ता नाम या पासवर्ड गलत है
+Info: जानकारी
+Input: इनपुट
+It will be issued a new broker credential the next time it asks. A node that is running will be offline for a minute or two while it notices; a node whose filesystem was erased needs this before it can rejoin at all.: अगली बार माँगने पर उसे नया ब्रोकर क्रेडेंशियल जारी किया जाएगा। चालू नोड एक-दो मिनट के लिए ऑफ़लाइन रहेगा जब तक उसे इसका पता चलता है; जिस नोड का फ़ाइल सिस्टम मिटा दिया गया है उसे दोबारा जुड़ने के लिए यही चाहिए।
+Its broker account is deleted, so it stops being able to publish or subscribe, and it cannot enrol again until you clear this. Use it for a node sending bad readings.: उसका ब्रोकर खाता हटा दिया जाता है, इसलिए वह न प्रकाशित कर पाता है न सब्सक्राइब, और जब तक आप इसे हटाते नहीं तब तक वह दोबारा पंजीकृत नहीं हो सकता। इसका उपयोग उस नोड के लिए करें जो गलत रीडिंग भेज रहा है।
+Its next request will be accepted. Click to deny it.: इसका अगला अनुरोध स्वीकार किया जाएगा। अस्वीकार करने के लिए क्लिक करें।
+Key: कुंजी
+Last asked: अंतिम अनुरोध
+Last check-in: अंतिम संपर्क
+Last Seen: अंतिम बार देखा गया
+Last seen: अंतिम बार देखा
+LED: एलईडी
+Limit: सीमा
+List: सूची
+Live: चालू
+Load Cell: लोड सेल
+Loading schema...: स्कीमा लोड हो रहा है...
+Log out: लॉग आउट
+Lower-case letters and numbers only, no spaces or punctuation: केवल छोटे अक्षर और अंक, कोई स्पेस या विरामचिह्न नहीं
+Lux: लक्स
+Manual: मैनुअल
+Message: संदेश
+Monitor: मॉनिटर
+Monitor speed: मॉनिटर गति
+Move down: नीचे ले जाएँ
+Move up: ऊपर ले जाएँ
+Name: नाम
+Never seen: कभी नहीं देखा
+New here?: यहाँ नए हैं?
+New password: नया पासवर्ड
+Connect a board to flash: फ़्लैश करने के लिए बोर्ड कनेक्ट करें
+Choose a firmware file to flash: फ़्लैश करने के लिए फ़र्मवेयर फ़ाइल चुनें
+Erase and flash: मिटाएँ और फ़्लैश करें
+kept from last session: पिछले सत्र से रखा गया
+No farms registered for this organization yet.: इस संगठन के लिए अभी तक कोई फार्म पंजीकृत नहीं है।
+No nodes found for this farm's project(s).: इस फार्म के प्रोजेक्ट (प्रोजेक्ट्स) के लिए कोई नोड नहीं मिला।
+No nodes found for this organization: इस संगठन के लिए कोई नोड नहीं मिला
+No nodes have enrolled yet, and none have asked and been rejected.: अभी तक कोई नोड पंजीकृत नहीं हुआ है, और किसी को अस्वीकार नहीं किया गया है।
+No organization: कोई संगठन नहीं
+No organization selected: कोई संगठन चयनित नहीं
+No OTA files uploaded yet.: अभी तक कोई OTA फ़ाइल अपलोड नहीं की गई है।
+No Pi bridges to this server for this organization. A bridge relays a Pi's readings here while the Pi carries on working on its own - see INSTALLATION.md step 11.: इस संगठन के लिए इस सर्वर से कोई Pi ब्रिज नहीं है। एक ब्रिज Pi की रीडिंग यहाँ पहुँचाता है जबकि Pi अपने आप काम करता रहता है - INSTALLATION.md चरण 11 देखें।
+No platforms registered yet.: अभी तक कोई प्लेटफ़ॉर्म पंजीकृत नहीं है।
+No projects added for this organization yet.: इस संगठन के लिए अभी तक कोई प्रोजेक्ट नहीं जोड़ा गया है।
+No projects to display until organization selected: संगठन चुने जाने तक कोई प्रोजेक्ट प्रदर्शित नहीं होगा
+No state received from the broker yet: ब्रोकर से अभी तक कोई स्थिति प्राप्त नहीं हुई
+Nobody added for this organization yet.: इस संगठन के लिए अभी तक कोई नहीं जोड़ा गया है।
+Node: नोड
+Node Actions: नोड क्रियाएँ
+Node ID: नोड आईडी
+Node Name: नोड नाम 
+Nodes: नोड्स
+Nodes in Farm: फार्म में नोड्स
+Nodes in Organization: संगठन में नोड्स
+Nodes that have obtained broker credentials on first connection. Forget reissues a new credential at next connection and is needed if memory has been erased. Refused nodes are listed - click Approve to allow (on next retry, typically 30 minutes).: वे नोड जिन्होंने पहली बार जुड़ने पर ब्रोकर क्रेडेंशियल प्राप्त किए हैं। भुलाएँ अगली बार जुड़ने पर नया क्रेडेंशियल जारी करता है, और यह ज़रूरी है यदि मेमोरी मिटा दी गई हो। अस्वीकृत नोड भी सूचीबद्ध हैं - अनुमति देने के लिए स्वीकृत करें पर क्लिक करें (अगले प्रयास पर, आमतौर पर 30 मिनट)।
+Not in the schema: स्कीमा में नहीं
+Not selected: चयनित नहीं
+Note this is your organization - not the organizations whose devices you want to access.: ध्यान दें यह आपका संगठन है - वे संगठन नहीं जिनके उपकरणों तक आप पहुंचना चाहते हैं।
+Now: अभी
+now: अभी
+Off: बंद
+offline: ऑफ़लाइन
+Offline: ऑफ़लाइन
+On: चालू
+"On ArduinoIDE the file is typically in ": "ArduinoIDE पर फ़ाइल सामान्यतः यहाँ होती है "
+"On PlatformIO The file is typically in ": "PlatformIO पर फ़ाइल सामान्यतः यहाँ होती है "
+Organization: संगठन
+OTA: ओटीए
+OTA Upload: ओटीए अपलोड
+OTA binary uploaded: OTA बाइनरी अपलोड की गई
+OTA Key: OTA कुंजी
+OTA Key or Device ID: OTA कुंजी या डिवाइस आईडी
+Out: आउट
+out: आउट
+Output: आउटपुट
+Password: पासवर्ड
+Password reset - please sign in: पासवर्ड रीसेट हो गया - कृपया साइन इन करें
+Password reset is not available on this server: इस सर्वर पर पासवर्ड रीसेट उपलब्ध नहीं है
+Pattern: पैटर्न
+Permissions: अनुमतियाँ
+Phone or Whatsapp: फ़ोन या व्हाट्सएप
+Platform *: प्लेटफ़ॉर्म *
+Platform Name *: प्लेटफ़ॉर्म का नाम *
+Platform registered: प्लेटफ़ॉर्म पंजीकृत किया गया
+Please login: कृपया लॉगिन करें
+Pressure: दाब
+Project: परियोजना
+Project changed to: प्रोजेक्ट बदलकर किया गया
+Asked %s to move: "%s को स्थानांतरित करने को कहा"
+Waiting for %s to report: "%s की रिपोर्ट की प्रतीक्षा"
+Project ID: प्रोजेक्ट आईडी
+Project ID *: प्रोजेक्ट आईडी *
+Project Name: प्रोजेक्ट का नाम
+Projects: प्रोजेक्ट्स
+Property: प्रॉपर्टी
+Provision instead (erases config): इसके बजाय प्रोविजन करें (कॉन्फ़िगरेशन मिटेगी)
+Publish Message: संदेश प्रकाशित करें
+"Published to ": "पर प्रकाशित किया गया "
+"Put this in platformio-secrets-local.ini, which is not committed:": "इसे platformio-secrets-local.ini में रखें, जो कमिट नहीं किया जाता:"
+QoS: QoS
+reconnect: पुनः कनेक्ट करें
+Reconnect the board to flash again: फिर से फ्लैश करने के लिए बोर्ड को दोबारा कनेक्ट करें
+Register: पंजीकरण करें
+Register a platform above before adding a farm.: फार्म जोड़ने से पहले ऊपर एक प्लेटफ़ॉर्म पंजीकृत करें।
+Register Farm: फार्म पंजीकृत करें
+Refresh: ताज़ा करें
+Register Platform: प्लेटफ़ॉर्म पंजीकृत करें
+Registered Platforms: पंजीकृत प्लेटफ़ॉर्म
+Registration failed: पंजीकरण विफल
+Registration successful - please login: पंजीकरण सफल - कृपया लॉगिन करें
+Relay: रिले
+Replica token: प्रतिकृति टोकन
+Reporting every: हर बार रिपोर्ट
+Reset code: रीसेट कोड
+Reset password: पासवर्ड रीसेट करें
+Retain: बनाए रखें
+Retained: संचित
+Retained messages: संचित संदेश
+Run this on the Pi, in the directory the server is installed in. Replace the placeholder with this server's fully-qualified name - the one on its certificate, which you can check by opening https:// that name in a browser. It will then ask for the broker password and for the replica token, in that order, so have both of the values below to hand.: इसे Pi पर उसी डायरेक्टरी में चलाएँ जहाँ सर्वर इंस्टॉल है। प्लेसहोल्डर की जगह इस सर्वर का पूरा नाम डालें - वही जो उसके प्रमाणपत्र पर है, जिसे आप ब्राउज़र में https:// उस नाम को खोलकर जाँच सकते हैं। फिर यह ब्रोकर पासवर्ड और उसके बाद प्रतिकृति टोकन माँगेगा, इसी क्रम में, इसलिए नीचे दिए दोनों मान तैयार रखें।
+Schema: स्कीमा
+Select: चुनें
+Select a farm above to see its nodes.: इसके नोड्स देखने के लिए ऊपर एक फार्म चुनें।
+Select a node above to see actions.: क्रियाएँ देखने के लिए ऊपर एक नोड चुनें।
+Select a node above to send an action.: क्रिया भेजने के लिए ऊपर एक नोड चुनें।
+Select an organization to continue.: जारी रखने के लिए एक संगठन चुनें।
+Send: भेजें
+SEND: भेजें
+Send another code: दूसरा कोड भेजें
+Send reset code: रीसेट कोड भेजें
+sent: भेजा गया
+server: सर्वर
+set: सेट किया गया
+Setpoint: सेटपॉइंट
+Settings: सेटिंग्स
+Show enrolment secrets: पंजीकरण सीक्रेट दिखाएँ
+SHT: एसएचटी
+SHT30: एसएचटी30
+Sign In: साइन इन करें
+Sign in: साइन इन करें
+Site: साइट
+Soil: मिट्टी
+Soil Moisture: मिट्टी की नमी
+Soil Temperature: मिट्टी का तापमान
+Sonoff R2 switch: सोनऑफ R2 स्विच
+Sonoff switch: सोनऑफ स्विच
+Speed: गति
+SSID: SSID
+Not reported recently: हाल में रिपोर्ट नहीं
+Status: स्थिति
+Stop monitor: मॉनिटर बंद करें
+Stopped, and its credential removed. Click to clear.: रोका गया, और इसका क्रेडेंशियल हटा दिया गया। हटाने के लिए क्लिक करें।
+Submit: जमा करें
+System: सिस्टम
+Temperature: तापमान
+temperature: तापमान
+That code is not valid or has expired: यह कोड मान्य नहीं है या समाप्त हो गया है
+The broker reports this bridge connected: ब्रोकर बताता है कि यह ब्रिज जुड़ा हुआ है
+The broker reports this bridge not connected: ब्रोकर बताता है कि यह ब्रिज जुड़ा हुआ नहीं है
+This field has no invocation URL (forms[0].href) in its schema: इस फ़ील्ड के स्कीमा में कोई इनवोकेशन यूआरएल (forms[0].href) नहीं है
+This node has no actions in its schema.: इस नोड के स्कीमा में कोई क्रिया नहीं है।
+This node has no actions or writable properties in its schema.: इस नोड के स्कीमा में कोई क्रिया या लिखने योग्य गुण नहीं है।
+This organization has no enrolment secret, so no new node can enrol. Add one.: इस संगठन के पास कोई पंजीकरण सीक्रेट नहीं है, इसलिए कोई नया नोड पंजीकृत नहीं हो सकता। एक जोड़ें।
+Time On (s): चालू समय (से)
+To: तक
+Too many attempts - please wait a few minutes: बहुत अधिक प्रयास - कृपया कुछ मिनट प्रतीक्षा करें
+Topic: टॉपिक
+Topic and Value are required: टॉपिक और मान आवश्यक हैं
+TVOC: टीवीओसी  
+'Two credentials for two different connections: the password is what the MQTT bridge logs in with on port 8883, and the token is what lets that Pi pull this organization''s logins over HTTPS, so the same people can log in there too. The token can be skipped - press Enter at its prompt - and added later by doing this again. Neither is asked for on the command line, so that neither ends up in the Pi''s shell history.': 'दो अलग-अलग कनेक्शनों के लिए दो क्रेडेंशियल: पासवर्ड वह है जिससे MQTT ब्रिज पोर्ट 8883 पर लॉग इन करता है, और टोकन वह है जो उस Pi को इस संगठन के लॉगिन HTTPS पर लाने देता है, ताकि वही लोग वहाँ भी लॉग इन कर सकें। टोकन को छोड़ा जा सकता है - उसके प्रॉम्प्ट पर Enter दबाएँ - और बाद में यही दोबारा करके जोड़ा जा सकता है। इनमें से कोई भी कमांड लाइन पर नहीं पूछा जाता, ताकि कोई भी Pi के शेल इतिहास में न पहुँचे।'
+Unable to find node: नोड नहीं मिल सका
+Unable to find project: प्रोजेक्ट नहीं मिल सका
+Unauthorized: अनधिकृत
+undefined: अपरिभाषित
+Unknown: अज्ञात
+Unsupported board: असमर्थित बोर्ड
+Unused: अप्रयुक्त
+Up: चालू
+Updating the app only: केवल ऐप अपडेट हो रहा है
+Updating the app only - the existing configuration will be preserved: केवल ऐप अपडेट हो रहा है - मौजूदा कॉन्फ़िगरेशन सुरक्षित रहेगी
+Upload: अपलोड
+Upload finished - check the list below: अपलोड पूरा हुआ - नीचे दी गई सूची देखें
+Uploading: अपलोड हो रहा है
+Username: उपयोगकर्ता नाम
+Username or email: उपयोगकर्ता नाम या ईमेल
+Value: मान
+Value *: मान *
+Voltage: वोल्टेज
+Waiting: प्रतीक्षा में
+Waiting for devices: उपकरणों की प्रतीक्षा
+We will email you a code and a link to choose a new password.: हम आपको नया पासवर्ड चुनने के लिए एक कोड और एक लिंक ईमेल करेंगे।
+When: कब
+WiFi: वाई-फ़ाई
+Withdraw this enrolment secret?: क्या यह पंजीकरण सीक्रेट वापस लें?
+Withdrawn: वापस लिया गया
+Yes: हाँ
+You do not have permission for this organization: इस संगठन के लिए आपके पास अनुमति नहीं है
+Forwarders: फ़ॉरवर्डर
+Grafana: Grafana
+OpenSearch: OpenSearch
+OpenSearch Dashboards: OpenSearch Dashboards
+every %s s: हर %s सेकंड
+'%s topics': '%s टॉपिक'
+From the file: फ़ाइल से
+Delete "%s"?: '"%s" हटाएँ?'
+Readings stop being sent to it straight away. Nothing already sent is removed from there.: रीडिंग उसे तुरंत भेजी जानी बंद हो जाती हैं। जो पहले भेजा जा चुका है, वह वहाँ से नहीं हटाया जाता।
+Deleted, but the logger could not be told - it will take effect at the next restart: हटा दिया गया, पर लॉगर को सूचित नहीं किया जा सका - यह अगली बार पुनः आरंभ होने पर लागू होगा
+set - leave blank to keep it: सेट है - इसे रखने के लिए खाली छोड़ें
+Give it a name first: पहले इसे एक नाम दें
+Saved, but the logger could not be told - it will take effect at the next restart: सहेजा गया, पर लॉगर को सूचित नहीं किया जा सका - यह अगली बार पुनः आरंभ होने पर लागू होगा
+Sending... %s readings so far: भेजा जा रहा है... अब तक %s रीडिंग
+'Stopped: %s': 'रुका: %s'
+Never: कभी नहीं
+Making it again replaces its token, and the Grafana using the old one stops working until it is given the new one.: इसे दोबारा बनाने से इसका टोकन बदल जाता है, और पुराना टोकन इस्तेमाल करने वाला Grafana तब तक काम नहीं करेगा जब तक उसे नया टोकन न दिया जाए।
+Revoke "%s"?: '"%s" रद्द करें?'
+The Grafana using it stops being able to read this organization straight away.: इसे इस्तेमाल करने वाला Grafana तुरंत इस संगठन को पढ़ नहीं पाएगा।
+Copied: कॉपी हो गया
+Press Ctrl-C or Cmd-C to copy: कॉपी करने के लिए Ctrl-C या Cmd-C दबाएँ
+'You have a login: %s. Making another replaces its password, and your Dashboards stops working until it is given the new one.': 'आपका एक लॉगिन है: %s। दूसरा बनाने से इसका पासवर्ड बदल जाता है, और आपका Dashboards तब तक काम नहीं करेगा जब तक उसे नया पासवर्ड न दिया जाए।'
+Replace the password?: पासवर्ड बदलें?
+The Dashboards using the old one stops working until it is given the new one.: पुराना इस्तेमाल करने वाला Dashboards तब तक काम नहीं करेगा जब तक उसे नया न दिया जाए।
+Remove the login?: लॉगिन हटाएँ?
+Dashboards using it stops being able to read this organization straight away.: इसे इस्तेमाल करने वाला Dashboards तुरंत इस संगठन को पढ़ नहीं पाएगा।
+Loading...: लोड हो रहा है...
+This organization forwards its readings nowhere. They are still recorded in the CSV files and charted in Grafana - add a forwarder to send them somewhere as well.: यह संगठन अपनी रीडिंग कहीं नहीं भेजता। वे फिर भी CSV फ़ाइलों में दर्ज होती हैं और Grafana में चार्ट होती हैं - उन्हें कहीं और भी भेजने के लिए एक फ़ॉरवर्डर जोड़ें।
+Type: प्रकार
+Sends to: भेजता है
+State: स्थिति
+Edit: संपादित करें
+Delete: हटाएँ
+Send earlier readings...: पहले की रीडिंग भेजें...
+Save: सहेजें
+Cancel: रद्द करें
+From this day on (leave empty for everything): इस दिन से आगे (सब कुछ के लिए खाली छोड़ें)
+Start: शुरू करें
+Close: बंद करें
+Readings are always recorded in the CSV files, and charted in Grafana from them. A forwarder also sends each reading, as it is logged, somewhere else - OpenSearch to search and browse them, or Google Sheets to add a row of values every so often. Changes apply straight away.: रीडिंग हमेशा CSV फ़ाइलों में दर्ज होती हैं, और उन्हीं से Grafana में चार्ट होती हैं। एक फ़ॉरवर्डर हर रीडिंग को, दर्ज होते ही, कहीं और भी भेजता है - खोजने और देखने के लिए OpenSearch को, या समय-समय पर मानों की एक पंक्ति जोड़ने के लिए Google Sheets को। बदलाव तुरंत लागू होते हैं।
+No Grafana has been given access to this organization yet.: अभी तक किसी Grafana को इस संगठन तक पहुँच नहीं दी गई है।
+Made: बनाया गया
+Last used: अंतिम उपयोग
+Whose: किसका
+Revoke: रद्द करें
+Copy: कॉपी करें
+Copy this now - it is not shown again: इसे अभी कॉपी करें - यह दोबारा नहीं दिखाया जाएगा
+Token: टोकन
+Allowed host: अनुमत होस्ट
+Remove my login: मेरा लॉगिन हटाएँ
+Everyone's logins: सभी के लॉगिन
+OpenSearch Dashboards is a program you run on your own computer to search and chart this organization's readings, which this server keeps in OpenSearch. It needs a login, made here, that is yours. It can read this organization's readings and nothing else, and the people of an organization share its saved dashboards. It needs permission to read the whole organization; if you can read only some projects, use the Grafana card instead.: OpenSearch Dashboards एक प्रोग्राम है जिसे आप अपने कंप्यूटर पर चलाकर इस संगठन की रीडिंग खोज और चार्ट कर सकते हैं, जिन्हें यह सर्वर OpenSearch में रखता है। इसके लिए यहाँ बनाया गया एक लॉगिन चाहिए, जो आपका अपना हो। यह इस संगठन की रीडिंग पढ़ सकता है और कुछ नहीं, और संगठन के लोग इसके सहेजे गए डैशबोर्ड साझा करते हैं। इसके लिए पूरे संगठन को पढ़ने की अनुमति चाहिए; यदि आप केवल कुछ परियोजनाएँ पढ़ सकते हैं, तो इसके बजाय Grafana कार्ड का उपयोग करें।
+Give a Grafana access: किसी Grafana को पहुँच दें
+Name it for whoever or wherever it is, so it can be revoked on its own.: इसे उसके व्यक्ति या जगह के नाम पर रखें, ताकि इसे अलग से रद्द किया जा सके।
+Make a token: टोकन बनाएँ
+The starter dashboard: शुरुआती डैशबोर्ड
+A chart with a list of every topic to pick from. In Grafana choose Dashboards, New, Import, upload this file, and pick the data source above when it asks.: हर टॉपिक की सूची वाला एक चार्ट, जिसमें से चुनना है। Grafana में Dashboards, New, Import चुनें, यह फ़ाइल अपलोड करें, और पूछे जाने पर ऊपर दिया गया डेटा स्रोत चुनें।
+Add a forwarder: फ़ॉरवर्डर जोड़ें
+Change this forwarder: यह फ़ॉरवर्डर बदलें
+Active (untick to pause; the settings are kept): सक्रिय (रोकने के लिए निशान हटाएँ; सेटिंग्स रखी जाती हैं)
+Would send %s readings: '%s रीडिंग भेजी जाएँगी'
+Sent %s readings: '%s रीडिंग भेजी गईं'
+'Sends the readings already recorded in the CSV files, which this forwarder did not see because it was off or OpenSearch was down. It is safe to repeat: a reading already there is replaced, not doubled.': 'CSV फ़ाइलों में पहले से दर्ज रीडिंग भेजता है, जिन्हें यह फ़ॉरवर्डर बंद होने या OpenSearch के बंद होने के कारण नहीं देख पाया। इसे दोहराना सुरक्षित है: जो रीडिंग पहले से वहाँ है वह बदल दी जाती है, दोगुनी नहीं होती।'
+Only count them, send nothing: केवल गिनें, कुछ न भेजें
+Yours: आपका
+Another user's: किसी अन्य उपयोगकर्ता का
+'In Grafana, add a data source of type Infinity, with Authentication set to Bearer Token and the token above, and the allowed host above. Or let this do it:': 'Grafana में Infinity प्रकार का एक डेटा स्रोत जोड़ें, जिसमें Authentication को Bearer Token पर सेट करें और ऊपर दिया टोकन तथा ऊपर दिया अनुमत होस्ट डालें। या इसे यह करने दें:'
+Download the data source file: डेटा स्रोत फ़ाइल डाउनलोड करें
+You have no login yet.: आपका अभी कोई लॉगिन नहीं है।
+Replace the password: पासवर्ड बदलें
+Make a login: लॉगिन बनाएँ
+'Put these lines in the configuration file of the OpenSearch Dashboards on your computer (opensearch_dashboards.yml), then restart it. Nothing is asked for when you open it: the login is in the file. The password is not kept anywhere you can read it, so if you lose this, press the button below to make a new one and paste the lines in again.': 'इन पंक्तियों को अपने कंप्यूटर पर OpenSearch Dashboards की कॉन्फ़िगरेशन फ़ाइल (opensearch_dashboards.yml) में डालें, फिर उसे पुनः आरंभ करें। खोलने पर कुछ नहीं पूछा जाता: लॉगिन फ़ाइल में है। पासवर्ड कहीं ऐसी जगह नहीं रखा जाता जहाँ आप उसे पढ़ सकें, इसलिए यदि यह खो जाए तो नीचे दिया बटन दबाकर नया बनाएँ और पंक्तियाँ फिर से चिपकाएँ।'
+'Grafana can chart this organization''s readings straight from the server - every reading ever recorded, with nothing to export first. To set it up: install the Infinity plugin in Grafana, make a token here, give Grafana the data source, then import the dashboard. A token is yours: it lets one Grafana read what you can read in this organization, and stops working if your access to it does.': 'Grafana इस संगठन की रीडिंग सीधे सर्वर से चार्ट कर सकता है - अब तक दर्ज हर रीडिंग, पहले कुछ निर्यात किए बिना। इसे सेट करने के लिए: Grafana में Infinity प्लगइन इंस्टॉल करें, यहाँ एक टोकन बनाएँ, Grafana को डेटा स्रोत दें, फिर डैशबोर्ड आयात करें। टोकन आपका होता है: यह एक Grafana को वह पढ़ने देता है जो आप इस संगठन में पढ़ सकते हैं, और आपकी पहुँच समाप्त होने पर काम करना बंद कर देता है।'
+Download the dashboard: डैशबोर्ड डाउनलोड करें
+Forgotten: भुला दिया गया
+Failed - approve: असफल - स्वीकृत करें
+Choose an organization first, so there is a broker connection to publish on: पहले एक संगठन चुनें, ताकि प्रकाशित करने के लिए ब्रोकर कनेक्शन हो
+Add Farm: खेत जोड़ें
+No broker credentials for this organization: इस संगठन के लिए कोई ब्रोकर क्रेडेंशियल नहीं
+Listening on %s ...: '%s पर सुन रहा है ...'
+'Could not connect: %s': 'कनेक्ट नहीं हो सका: %s'
+'Could not subscribe: %s': 'सब्सक्राइब नहीं हो सका: %s'
+Nothing retained matches that pattern: कोई संरक्षित संदेश इस पैटर्न से मेल नहीं खाता
+Deleting %s ...: '%s हटाए जा रहे हैं ...'
+'Could not delete: %s': 'हटाया नहीं जा सका: %s'
+Deleted %s: '%s हटाए गए'
+If one comes back, a node is still publishing it.: अगर कोई वापस आता है, तो कोई नोड अभी भी उसे प्रकाशित कर रहा है।
+Add Project: परियोजना जोड़ें
+Add Platform: प्लेटफ़ॉर्म जोड़ें
+', %s failed': ', %s असफल'
+This server has no OpenSearch of its own set up (config.d/opensearch.yaml): इस सर्वर पर इसका अपना OpenSearch सेट नहीं है (config.d/opensearch.yaml)
+This server has not said where OpenSearch can be reached from outside (config.d/opensearch.yaml, "public"): इस सर्वर ने नहीं बताया है कि OpenSearch बाहर से कहाँ पहुँचा जा सकता है (config.d/opensearch.yaml, "public")
+OpenSearch logins need an organization id of lower-case letters and digits only: OpenSearch लॉगिन के लिए संगठन आईडी में केवल छोटे अक्षर और अंक होने चाहिए
+OpenSearch did not answer: OpenSearch ने जवाब नहीं दिया

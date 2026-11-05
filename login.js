@@ -9,7 +9,7 @@
  */
 
 import { HTMLElementExtendedMinimum } from '/node_modules/html-element-extended/htmlelementextended.js';
-import { XXX, el, getString, locationParameterChange, preferedLanguageSet, preferedLanguages } from './core.js';
+import { el, getString, language } from './core.js';
 
 // One card, four modes (CARDS_UX.md D-45). "register" is still accepted as an attribute because
 // the server's redirects have been sending ?register=true|false since before there were modes.
@@ -20,15 +20,11 @@ class MqttLogin extends HTMLElementExtendedMinimum { // TODO-89 may depend on or
     super(props);
     this.state = { mode: 'signin' };
   }
-  static get observedAttributes() { return ['mode', 'register', 'message', 'messagetype', 'url', 'lang', 'username', 'code']; }
+  static get observedAttributes() { return ['mode', 'register', 'message', 'messagetype', 'url', 'username', 'code']; }
   static get boolAttributes() { return ['register']; }
 
   connectedCallback() {
     this.loadAttributesFromURL();
-    // Nothing has set a language when the page is opened without "?lang=", and this is the one page
-    // where somebody picks one before going further - so settle on English rather than leaving the
-    // picker showing nothing and every getString falling through its "cannot translate" path.
-    if (!preferedLanguages.length) { preferedLanguageSet('EN'); }
     // The emailed link carries the reset token in the query string, which is where the browser's
     // history, a bookmark and any Referer header would go on keeping it. It is in state by now and
     // the form holds it, so take it back out of the address bar.
@@ -43,18 +39,6 @@ class MqttLogin extends HTMLElementExtendedMinimum { // TODO-89 may depend on or
     window.history.replaceState(null, '', u.toString());
   }
   changeAttribute(name, value) {
-    if (name === "lang") {
-      if (value.includes(',')) {
-        // Not "preferedLanguages = ..." - it is an imported binding, and assigning to one throws.
-        // preferedLanguageSet unshifts, so feed them in reverse to end up in the order given.
-        value.split(',').reverse().forEach((v) => preferedLanguageSet(v.trim().toUpperCase()));
-      } else if (!value) {
-        preferedLanguageSet('EN');
-        locationParameterChange("lang", preferedLanguages.join(','));
-      } else {
-        preferedLanguageSet(value.toUpperCase());
-      }
-    }
     super.changeAttribute(name, value);
     // Map the legacy boolean onto the mode, but only when "mode" itself was not given - otherwise
     // ?mode=reset&register=false would land back on the sign-in form.
@@ -78,7 +62,7 @@ class MqttLogin extends HTMLElementExtendedMinimum { // TODO-89 may depend on or
     if (!urlStr) { return urlStr; }
     try {
       const u = new URL(urlStr, window.location.origin);
-      u.searchParams.set('lang', preferedLanguages.join(','));
+      u.searchParams.set('lang', language);
       return u.toString();
     } catch (e) {
       return urlStr;
@@ -194,7 +178,6 @@ class MqttLogin extends HTMLElementExtendedMinimum { // TODO-89 may depend on or
       textContent: this.state.message });
   }
   render() {
-    if (preferedLanguages.length === 0) { XXX("Tracking down issue with lang"); }
     const body = {
       signin: () => this.renderSignin(),
       register: () => this.renderRegister(),
@@ -205,7 +188,7 @@ class MqttLogin extends HTMLElementExtendedMinimum { // TODO-89 may depend on or
       el('div', { class: 'fi-login' }, [
         el('header', { class: 'fi-login__brand' }, [
           // The same mark and wordmark the dashboard header uses, so this reads as the same product
-          el('a', { class: 'fi-brand', href: '/', title: getString('Frugal IoT project') }, [
+          el('a', { class: 'fi-brand', href: '/', title: 'Frugal IoT project' }, [
             el('img', { src: '/images/icon-192x192.png', alt: 'Frugal IoT', i8n: false }),
             el('span', { class: 'fi-header__title', textContent: 'Frugal IoT', i8n: false }),
           ]),

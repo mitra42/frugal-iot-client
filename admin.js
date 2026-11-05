@@ -7,7 +7,7 @@
 
 import {EL, GET, HTMLElementExtended} from '/node_modules/html-element-extended/htmlelementextended.js';
 import mqtt from '/node_modules/mqtt/dist/mqtt.esm.js'; // https://www.npmjs.com/package/mqtt
-import { CssUrl, DELETE, POST, XXX, brokerHost, configSet, el, getString, getStringWith, hasCapability, mqttTempConnect, mqtt_subscribe, mqtt_unsubscribe, retainedPattern, locationParameterChange, mqtt_client, preferedLanguageSet, preferedLanguages, redirectToLogin, server_config } from './core.js';
+import { CssUrl, DELETE, POST, XXX, brokerHost, configSet, el, getString, getStringWith, hasCapability, mqttTempConnect, mqtt_subscribe, mqtt_unsubscribe, retainedPattern, language, mqtt_client, redirectToLogin, server_config } from './core.js';
 
 
 // The OTA upload is multipart, which POST() (JSON) cannot carry. Callback-style, like the rest.
@@ -38,7 +38,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       activeSectionTitle: 'Dashboard', sectionsNeedingLoad: new Set()};
     this.state.elements = {};
   }
-  static get observedAttributes() { return ['register','message','url','lang','org','section']; }
+  static get observedAttributes() { return ['register','message','url','org','section']; }
   static get boolAttributes() { return ['register']; }
 
   message(msg, i8n=true) {
@@ -128,18 +128,6 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       const section = this.adminSections().find((x) => x.key === value);
       if (section) this.state.activeSectionTitle = section.title;
     }
-    if (name === "lang") {
-      if (value.includes(',')) {
-        // preferedLanguages is an imported binding, so it cannot be assigned; preferedLanguageSet
-        // unshifts, so feed them in reverse to end up in the order given.
-        value.split(',').reverse().forEach((v) => preferedLanguageSet(v.trim().toUpperCase()));
-      } else if (!value) {
-        preferedLanguageSet('EN');
-        locationParameterChange("lang", preferedLanguages.join(','));
-      } else {
-        preferedLanguageSet(value.toUpperCase());
-      }
-    }
     // org - changes state, may need to get ota files and rerender
     super.changeAttribute(name, value);
   }
@@ -176,7 +164,8 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     if (this.state.expanded[key]) {
       return buildForm.call(this);
     }
-    return el('button', {class: 'submit', type: 'button', textContent: `+ ${label}`, onclick: () => {
+    // The label is translated before the "+" goes on, which would stop it being a key
+    return el('button', {class: 'submit', type: 'button', i8n: false, textContent: `+ ${getString(label)}`, onclick: () => {
       this.state.expanded[key] = true;
       this.replaceElement(key, this.collapsibleArea(key, label, buildForm));
     }});
@@ -252,11 +241,11 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       el('p', {textContent: "No OTA files uploaded yet."}) :
       el('p', {}, this.state.ota_files.map(f => [
         hasCapability(this.state.org, 'OTAFLASH') // no flash card to send it to otherwise
-          ? el('span', {class: 'pseudolink otaicon', title: getString("Flash this over USB"), textContent: '⚡', onclick: this.onOtaFlash.bind(this, f)})
+          ? el('span', {class: 'pseudolink otaicon', title: "Flash this over USB", textContent: '⚡', onclick: this.onOtaFlash.bind(this, f)})
           : null,
         // The basket alone deletes; the name beside it downloads, which is what a name invites.
         hasCapability(this.state.org, 'OTAUPDATE')
-          ? el('span', {class: 'pseudolink otaicon', title: getString("Delete this firmware"), textContent: '🗑', onclick: this.onOtaDelete.bind(this,`${this.state.org}/${f}`)})
+          ? el('span', {class: 'pseudolink otaicon', title: "Delete this firmware", textContent: '🗑', onclick: this.onOtaDelete.bind(this,`${this.state.org}/${f}`)})
           : null,
         el('a', {href: `/ota_get/${this.state.org}/${f}`, download: `${f.replace(/\//g, '-')}-firmware.bin`,
           title: getString("Download this firmware"), textContent: f, i8n: false}),
@@ -655,7 +644,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     if (!data) return el('span', {});
     const form = this.state.forwarder_form;
     if (!form) {
-      return el('button', {class: 'submit', type: 'button', textContent: "+ Add a forwarder", onclick: () => {
+      return el('button', {class: 'submit', type: 'button', i8n: false, textContent: `+ ${getString("Add a forwarder")}`, onclick: () => {
         this.state.forwarder_form = { type: Object.keys(data.types)[0] };
         this.replaceElement("forwarder_form", this.forwarderForm());
       }});
@@ -682,7 +671,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       ...this.forwarderFields(def, row),
       el('p', {}, [el('label', {}, [
         this.state.elements.forwarder_enabled = el('input', {i8n: false, type: 'checkbox', checked: row ? row.enabled : true}),
-        el('span', {textContent: " Active (untick to pause; the settings are kept)"})])]),
+        ' ', el('span', {textContent: "Active (untick to pause; the settings are kept)"})])]),
       el('button', {class: 'submit', type: 'button', textContent: "Save", onclick: this.onForwarderSave.bind(this)}),
       el('button', {type: 'button', textContent: "Cancel", onclick: () => {
         this.state.forwarder_form = null;
@@ -737,7 +726,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
         this.state.elements.backfill_since = el('input', {i8n: false, type: 'date'})])]),
       el('p', {}, [el('label', {}, [
         this.state.elements.backfill_dry = el('input', {i8n: false, type: 'checkbox'}),
-        el('span', {textContent: " Only count them, send nothing"})])]),
+        ' ', el('span', {textContent: "Only count them, send nothing"})])]),
       el('button', {class: 'submit backfill-start', type: 'button', textContent: "Start", disabled: !!running, onclick: this.onBackfillStart.bind(this)}),
       el('button', {type: 'button', textContent: "Close", onclick: () => {
         clearTimeout(b.timer);
@@ -1086,7 +1075,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
           el('td', {i8n: false, textContent: n.project || ''}),
           el('td', {i8n: false, textContent: `${n.nodeid}${n.lora ? ' (LoRa)' : ''}`}),
           el('td', {}, [
-            el('span', {class: 'pseudolink', title: getString(st.hint), textContent: st.label,
+            el('span', {class: 'pseudolink', title: st.hint, textContent: st.label,
               onclick: this.onNodeState.bind(this, n.project, n.nodeid, st.next)}),
           ]),
           // Untrusted, and shown as such: an address and a time for the admin to recognise. The
@@ -1101,7 +1090,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
           el('td', {}, [
             n.enrolled_at
               ? el('span', {class: 'pseudolink', textContent: ' 🗑 ',
-                  title: getString("Forget this node, so it is issued a new credential"),
+                  title: "Forget this node, so it is issued a new credential",
                   onclick: this.onNodeReset.bind(this, n.project, n.nodeid)})
               : el('span', {}),
           ]),
@@ -1177,7 +1166,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   peopleList() {
     let EL = el('form', {action: `/add_permission/${this.state.org}`, method: "post"}, [
       el('input', {id: "url3", name: "url", type: "hidden", value: `/dashboard/`}),
-      el('input', {id: "lang", name: "lang", type: "hidden", value: preferedLanguages.join(',')}),
+      el('input', {id: "lang", name: "lang", type: "hidden", value: language}),
       // dropdown for name and for permissions
       el('div', {class: 'dropdownsadmin'}, [
         //el('label', {for: 'projects', textContent: "Project"}),
@@ -1700,7 +1689,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   // change, so the heading carries the way to ask again.
   // refreshFn is given a callback for when its reply has arrived, which is what stops the spin.
   refreshableHeading(title, refreshFn) {
-    const iconEl = el('span', {class: 'pseudolink refresh', i8n: false, title: getString("Refresh"),
+    const iconEl = el('span', {class: 'pseudolink refresh', title: "Refresh",
       textContent: '\u27f3', onclick: () => {
         if (iconEl.classList.contains('busy')) return;
         iconEl.classList.add('busy');
@@ -1981,7 +1970,9 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     renderProjectIdCell(node, onChanged) {
       const move = this.state.nodeMoves?.[node.nodeId];
       const pending = move && move.from === node.projectId;
+      // i8n: false - the title is translated here, and the text is a project id
       return el('td', {
+        i8n: false,
         style: 'cursor: pointer; position: relative;',
         title: pending ? getStringWith("Waiting for %s to report", node.nodeId) : getString("Click to change project"),
         onclick: (e) => {
@@ -2012,7 +2003,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
        el('form', {action: '/ota_update', method: "post", enctype: "multipart/form-data",
          onsubmit: this.onOtaUpload.bind(this)}, [
          el('input', {id: "url2", name: "url", type: "hidden", value: `/dashboard/`}),
-         el('input', {id: "lang", name: "lang", type: "hidden", value: preferedLanguages.join(',')}),
+         el('input', {id: "lang", name: "lang", type: "hidden", value: language}),
          // The organization dropdown for this tab is a sibling of this form rather than inside it
          // (see renderSection), so the browser does not submit it. The server needs it: it checks
          // the OTAUPDATE permission against it and builds the upload directory from it, and
@@ -2103,23 +2094,23 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
      const pattern = retainedPattern(this.state.org, this.state.elements.retained_pattern.value);
      this.state.retained.pattern = this.state.elements.retained_pattern.value;
      const client = mqttTempConnect();
-     if (!client) { this.retainedShow("No broker credentials for this organization"); return; }
-     this.retainedShow(`Listening on ${pattern} ...`);
+     if (!client) { this.retainedShow(getString("No broker credentials for this organization")); return; }
+     this.retainedShow(getStringWith('Listening on %s ...', pattern));
      const found = new Map();
      client.on('message', (topic, payload, packet) => {
        // Only what the broker is holding. A live message arriving while we listen has the retain
        // flag clear, and clearing that would remove something nobody asked us to.
        if (packet.retain) found.set(topic, payload.toString());
      });
-     client.on('error', (e) => { this.retainedShow(`Could not connect: ${e.message}`); client.end(true); });
+     client.on('error', (e) => { this.retainedShow(getStringWith('Could not connect: %s', e.message)); client.end(true); });
      client.on('connect', () => {
        client.subscribe(pattern, {qos: 0}, (err) => {
-         if (err) { this.retainedShow(`Could not subscribe: ${err.message}`); client.end(true); return; }
+         if (err) { this.retainedShow(getStringWith('Could not subscribe: %s', err.message)); client.end(true); return; }
          // Retained messages all arrive at once on subscribe; this waits for them, not for news
          setTimeout(() => {
            client.end(true);
            const topics = [...found].map(([topic, value]) => ({topic, value})).sort((a, b) => a.topic.localeCompare(b.topic));
-           this.retainedShow(topics.length ? null : "Nothing retained matches that pattern", topics);
+           this.retainedShow(topics.length ? null : getString("Nothing retained matches that pattern"), topics);
          }, 3000);
        });
      });
@@ -2128,7 +2119,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
      const r = this.state.retained;
      if (!r.confirming) { this.retainedShow(null, r.topics, true); return; }
      const topics = r.topics.map((t) => t.topic);
-     this.retainedShow(`Deleting ${topics.length} ...`);
+     this.retainedShow(getStringWith('Deleting %s ...', topics.length));
      /*
       * The server does the publishing, not this browser.
       *
@@ -2139,11 +2130,11 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       * "Deleted 23" came to be printed while all 23 were still there.
       */
      POST(`/retained_delete/${this.state.org}`, {topics}, (err, json) => {
-       if (err) { this.retainedShow(`Could not delete: ${err.message}`); return; }
+       if (err) { this.retainedShow(getStringWith('Could not delete: %s', err.message)); return; }
        const failed = (json && json.failed) || 0;
        this.retainedShow(
-         `Deleted ${(json && json.deleted) || 0}${failed ? `, ${failed} failed` : ''}. ` +
-         `If one comes back, a node is still publishing it.`);
+         getStringWith('Deleted %s', (json && json.deleted) || 0) + (failed ? getStringWith(', %s failed', failed) : '') +
+         '. ' + getString('If one comes back, a node is still publishing it.'));
      });
    }
    projectsRestContent() {

@@ -188,12 +188,7 @@
 </div>
 
 <script type="module">
-  import { el, getString, addVocabulary, preferedLanguageSet } from './core.js';
-
-  // Seed the language from ?lang= before any el()/getString() calls, so translated strings
-  // are correct from the first render rather than waiting for mqtt-wrapper's async config fetch.
-  const _langParam = new URL(window.location.href).searchParams.get('lang');
-  if (_langParam) _langParam.split(',').reverse().forEach(l => preferedLanguageSet(l.toUpperCase()));
+  import { el, getString, addVocabulary } from './core.js';
 
   addVocabulary(`
 EN:
