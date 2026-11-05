@@ -416,23 +416,14 @@ All four are **refusals, not warnings** — a bad combination here means a board
 
 ### 1. Dependency and import maps
 
-`npm i esptool-js`, then add to the import map in **all five** pages that load `webcomponents.js`:
+`esptool-js` (0.7.1) is mapped to `/node_modules/esptool-js/bundle.js` in the import maps of the pages
+(`index.html` is the one that uses it). It is loaded **lazily** — `esptoolImport()` runs on the first Connect — so the
+library never hits a plain dashboard page load.
 
-```json
-"esptool-js": "/node_modules/esptool-js/bundle.js"
-```
+### 2. The `mqtt-flash` element in `flash.js`
 
-- `index.html`, `index-project.html`, `login.html`, `dashboard_example.html` — relative path as above.
-- `index-embedded.html` — use the absolute form to match its existing entries:
-  `https://frugaliot.naturalinnovation.org/node_modules/esptool-js/bundle.js`.
-
-Load it **lazily** — `await import('esptool-js')` inside the click handler — so 214 KB never hits a
-plain dashboard page load.
-
-### 2. New `MqttFlash` element in `webcomponents.js`
-
-Per CLAUDE.md this belongs in the main file, not a dashboard. It has no MQTT topic, so it extends
-`HTMLElementExtended` directly rather than `MqttReceiver`.
+Its own module, imported by `dashboard.js` for the Flash card on the project's back. It has no
+MQTT topic, so it extends `HTMLElementExtended` directly rather than `MqttReceiver`.
 
 Renders: a **Connect** button, a detected-hardware line, an app-source selector (local file or one of
 the listed OTA files), a **Flash** button, a progress bar, and a `<pre>` log driven by esptool-js's
@@ -440,16 +431,15 @@ the listed OTA files), a **Flash** button, a progress bar, and a `<pre>` log dri
 
 State refs go in `this.state.elements` and update in place, per the existing pattern.
 
-### 3. Wire it into the OTA tab
+### 3. The Flash card
 
-Add a `el('section', …)` to `otaRestContent()` ([webcomponents.js:3086](webcomponents.js#L3086)),
-after the existing upload form, guarded on `'serial' in navigator`.
+The flasher is a card on the project's back, shown only with the OTAFLASH capability and only where
+`'serial' in navigator`.
 
-### 4. Add ⚡ to the OTA file list
+### 4. ⚡ on the OTA file list
 
-`otaFilesList()` ([webcomponents.js:2244](webcomponents.js#L2244)) lists directories (`myproject/node42`,
-`+/esp32c3`), each holding a `firmware.bin`. Add a ⚡ pseudolink beside the existing 🗑 that selects
-that file as the flash source.
+The OTA card lists directories (`myproject/node42`, `+/esp32c3`), each holding a `firmware.bin`; the ⚡
+beside each selects that file as the flash source (see "The ⚡ across two cards" below).
 
 Fetching the bytes needs `fetch(url)` → `new Uint8Array(await res.arrayBuffer())`. `GET()` from
 html-element-extended parses JSON and won't do here.
@@ -458,20 +448,23 @@ html-element-extended parses JSON and won't do here.
 
 ```javascript
 const port = await navigator.serial.requestPort();        // synchronous in the click handler
-const transport = new Transport(port, true);
-const esploader = new ESPLoader({transport, baudrate: 921600, terminal});
-const chip = await esploader.main();                      // detect + return chip name
-const flashSize = await esploader.detectFlashSize();
-// … pick base, read back flash, decide provision vs app-only, run refusal checks …
+const transport = new Transport(port, tracing);
+const esploader = new ESPLoader({transport, baudrate, terminal});  // as Espressif's own page builds it
+await esploader.main();                                   // detect, stub, baud change, flash id
+// … flash size from the flash id, pick base, read back flash, decide provision vs app-only, refusal checks …
 await esploader.writeFlash({
   fileArray,                                              // [{data: Uint8Array, address: number}, …]
-  flashSize: 'detect', flashMode: 'dio', flashFreq: '80m',
+  flashSize: '4MB', flashMode: 'dio', flashFreq: '80m',   // a literal size - see "Other bring-up fixes"
   eraseAll: provisioning, compress: true, reportProgress,
 });
-await esploader.after();                                  // hard reset into the new app
-// … stream boot log …
+// an S2 on native USB: restart by its RTC watchdog; otherwise:
+await esploader.after('no_reset_stub');                   // the monitor resets it, once, after reopening
 await transport.disconnect();
+// … monitor reopens the port, resets the board, streams the boot log …
 ```
+
+The `ESPLoader` used is a subclass made in `steppedReads()`, which corrects two things in esptool-js -
+see "esptool-js in a browser" below.
 
 `fileArray.data` is a **`Uint8Array`** — older 0.4.x tutorials pass a binary string; that API is
 gone. A full provision is one `writeFlash` call with four entries, so the user connects once and the
@@ -479,15 +472,15 @@ board resets once.
 
 ### 6. Baud rate
 
-Start at 921600. CH340-based D1 Minis are often happier at 460800 — make it a dropdown if real
-hardware proves flaky.
+A Speed menu, default 921600. Raising it means closing and reopening the port, which on a CH340 D1 Mini
+resets the ESP8266; esptool-js notices ("The board reset while the serial port was reopened") and
+carries on at 115200, so the flash is only slower. Choosing 115200 for an ESP8266 avoids the reset.
 
 ### 7. MD5 verification
 
 `calculateMD5Hash` is optional in `FlashOptions`, and esptool-js ships no MD5 of its own. `hash-wasm`
-(what the server uses) is async and cannot satisfy the sync `(Uint8Array) => string` signature. Omit
-it initially and confirm `writeFlash` skips verification cleanly rather than throwing; if
-verification matters, add a small sync MD5 helper.
+(what the server uses) is async and cannot satisfy the sync `(Uint8Array) => string` signature. It is
+omitted, and `writeFlash` skips verification without complaint (confirmed on a board).
 
 ### 8. Async style
 
@@ -654,8 +647,9 @@ format-on-fail argument):
   a single byte is written.
 - **Never let a failed diagnostic read default to erasing.** `deviceInspect` originally treated an
   unreadable board as "needs provisioning", which silently erased a working board.
-- **`readFlash` waits `FLASH_READ_TIMEOUT` = 100 s** for its first packet. Bound every read or Connect
-  appears to hang.
+- **`readFlash` waits `FLASH_READ_TIMEOUT` = 100 s** for its first packet. It is set to 8 s, and every
+  read is bounded as well, or Connect appears to hang. A read that gives up must really stop: one left
+  waiting steals the reply to the next command.
 - **`eraseAll` is silently ignored unless the stub is running** (`IS_STUB && eraseAll`).
 - **`base/` is served `immutable, maxAge: 1 day`.** `boards.json` must be fetched with
   `cache: 'no-cache'` and the part binaries cache-busted with its `version`, or edits are invisible
@@ -719,6 +713,12 @@ RTS pulse that restarts the board (a reconnect must not reset a board that has j
 25s silence deadline that catches a wrong monitor speed. After that a `read()` with no deadline is
 exactly right: it settles when the board wakes, or when Stop cancels it.
 
+One case matches on vendor alone. An S2 restarted out of its ROM loader comes back as the *app's* USB
+device - Espressif's vendor id, another product id - so for that one search (`state.stalePort`) any
+granted Espressif port will do. If the page has never been given that device, nothing can open it;
+the log says so, and Monitor then asks for a port. The loader's own port can still open in the moment
+before the restart, and that must not end the search.
+
 ### Serial monitor speed
 
 frugal-iot's `startSerial()` picks the rate by toolchain, so the boot log needs a selector rather
@@ -742,21 +742,47 @@ mounts LittleFS, creates its `/wifi`, `/frugal_iot`, … directories and brings 
 Confirmed with the filesystem partition left erased: the firmware formats and mounts it itself, so no
 blank-filesystem image is shipped.
 
-Still untested:
+Since confirmed on boards, with esptool-js 0.7.1: ESP32-C3 (LOLIN C3 Pico) provisioned with the v5.5.5
+bootloader, and the wrong-chip and wrong-IDF refusals leaving it untouched; ESP32-S3 (Heltec WiFi LoRa
+32 V3); ESP32-S2 (LOLIN S2 Mini, on native USB - see below); ESP8266 (D1 Mini, CH340) end to end.
+What is still open is under "Open questions".
 
-- the **S2 and S3 bootloaders**, generated with the same recipe but never checked against a reference
-  build from those boards
-- whether 921600 baud is reliable on CH340 adapters, or the default should drop to 460800
-- whether unsupported octal flash on an S3 really does surface as the capacity-byte fallback
-- ESP8266 end to end (single whole image at `0x0`, no base bundle)
+### esptool-js in a browser — what the S2 and ESP8266 found
+
+Both were working from Node (esptool-js driven through the `serialport` package against the same
+board) while failing in Chrome, which is the quickest way to tell a library fault from a browser one.
+
+- **Chrome drops the tail of a read burst from a native-USB chip.** esptool-js's `readFlash` asks the
+  stub for 4 KB packets with up to 1024 unacknowledged. On the S2, Chrome delivered 939 bytes of a
+  4 KB packet and nothing more; the stub, having sent it all, then waits for an ack for ever, so the
+  next command - often the flash - gets no answer either. `steppedReads()` overrides `readFlash` to ask
+  for 256-byte packets, one at a time, and reads the stub's closing MD5 so it cannot answer the next
+  command. Espressif's own esptool-js page never reads flash, which is why it flashed the same S2
+  without trouble. A larger WebSerial buffer and staying at 115200 were both tried and did not help.
+- **esptool-js's ESP8266 SPI commands are wrong.** Its ESP8266 target marks the absent
+  `SPI_MOSI_DLEN` register with `0` where `runSpiflashCommand` tests for `null`, so it drives the flash
+  through the ESP32's registers: the flash ID reads 0 and the size cannot be detected. esptool-py has
+  `None`. `steppedReads()` corrects it before any SPI command. A flash chip that does not answer is now
+  refused outright rather than left to the "flash anyway" box.
+- **The S2 on native USB needs IO0 held while plugging in.** Its USB is the chip's own, so the app and
+  the ROM loader are different USB devices. Without the button, Connect resets the app into the
+  loader, the board re-enumerates, and the first attempt finds nothing; the page has no permission
+  for the new device, so retrying from code cannot reach it (PlatformIO's esptool-py fails every other
+  run the same way). Connect says to click again and pick it. Holding IO0 leaves it in the loader.
+- **The S2 is restarted by its watchdog after a flash.** Its ROM ignores the DTR/RTS reset, and
+  esptool-js's "hard reset" only toggles RTS. `usbOtgReset()` arms the RTC watchdog as esptool-py does -
+  only on chips whose target defines those registers (the S2), and not when the loader was entered from
+  the app over USB, which is latched and would restart into the loader again; then it says to press
+  RESET. The monitor then follows the board to the app's device (see "Serial monitor").
+- **Tracing:** `?flashtrace` keeps the last 40 lines of esptool's byte trace and writes them into the
+  flasher's log when a read or a flash fails. The full trace is megabytes. A USB disconnect is logged
+  too, which tells a chip that reset from one that stopped answering.
 
 ---
 
 ## Next steps
 
-Everything below that still needs a board is collected, in the order to do it, in `FLASH_BOARD_TEST.md`.
-
-### 1. Arduino-IDE-built firmware needs a different bootloader — DONE, untested on a board
+### 1. Arduino-IDE-built firmware needs a different bootloader — DONE
 
 A bootloader from another IDF release than the app is what broke LittleFS (or so it looked — see the
 variant note under "The bootloader must come from the same framework"). So there is one bootloader
@@ -772,8 +798,8 @@ with `version`, `project_name`, `time`, `date` and `idf_ver`.
   told the flasher is behind. An image with no descriptor (ESP8266) gets the first. App-only updates
   write no bootloader, so they are never checked.
 
-Not yet tried on a board: provisioning with a v5.5.5 bootloader (from either toolchain), and the S2/S3
-ones (step 6 applies to them too).
+Provisioning with the v5.5.5 bootloader is confirmed on a C3, an S2 and an S3 with PlatformIO builds.
+An Arduino-IDE build has not been provisioned (see "Open questions").
 
 **Release check:** `npm run check:bootloaders`, run by frugal-iot-demo's `scripts/release.zsh` (stage 1,
 with `--update`; `--no-fetch` there makes it `--offline`). We do not develop in the Arduino IDE, so a
@@ -820,12 +846,12 @@ confirm rather than assume.
 
 ### 3. Monitor needs Clear and Copy buttons — DONE
 
-"Clear log" and "Copy log" sit beside Monitor and Reset board. Clear empties the log and the displayed
+Clear (trash icon) and Copy (copy icon) sit beside Monitor and Reset board. Clear empties the log and the displayed
 text; Copy writes the whole log (not just the selection) to the clipboard, and does nothing on an empty
 log or a page with no clipboard (plain http). Neither says anything on success — a one-line "Copied"
-would be a third string if it turns out to be missed. Not looked at in a browser.
+would be a third string if it turns out to be missed.
 
-### 4. `fs.cpp` reports a scary failure that isn't one — DONE, not seen on a board
+### 4. `fs.cpp` reports a scary failure that isn't one — DONE
 
 Most of it was already fixed in the firmware (`ce5e1f6`): the mount and format outcomes print
 unconditionally, and a real failure says so rather than hiding behind `SYSTEM_LITTLEFS_DEBUG`. What
@@ -836,17 +862,15 @@ as the core's own `LittleFSFS::format()` does) before saying anything, and print
 `LittleFS would not mount (normal on a first boot) - formatting`. Only the failure case lets the
 component speak again, by retrying the mount once so its error is visible. ESP8266 is untouched.
 
-Firmware repo, branch `flasher`. Compiles for `c3_pico` and `d1_mini`. **Unverified:** that the lines
-really vanish — they were last seen on core 3.3.9, and the 3.3.12 core's `format()` already quiets
-some of them itself — so the first fresh provision on 3.3.12 shows whether anything is left.
+Firmware repo, branch `flasher`. A fresh provision of a C3 on core 3.3.12 booted cleanly.
 
-### 5. ESP8266 end to end
+### 5. ESP8266 end to end — DONE
 
-Single whole image at `0x0`, no base bundle. Note it cannot format its own filesystem — its
-`ESPFS.begin()` takes no format-on-fail argument — so this is the one case that may genuinely need the
-pre-formatted blank image described above.
+Single whole image at `0x0`, no base bundle. Its `ESPFS.begin()` takes no format-on-fail argument, so
+`fs.cpp` calls `format()` itself and no pre-formatted image is needed. Confirmed on a D1 Mini once
+esptool-js's ESP8266 SPI bug was corrected (see "esptool-js in a browser").
 
-### 6. S2 and S3 bootloaders — v5.5.5 verified, v5.5.4 not
+### 6. S2 and S3 bootloaders — v5.5.5 verified on boards, v5.5.4 not
 
 Checked the way the C3 was: built `s2_mini` and `lilygo_t3_s3_sx127x` with pioarduino 3.3.12 and
 compared `.pio/build/<env>/bootloader.bin` with `base/bootloader/v5.5.5/`.
@@ -859,7 +883,7 @@ compared `.pio/build/<env>/bootloader.bin` with `base/bootloader/v5.5.5/`.
   libs. They were built the `qio_80m` way, so the S2 one is probably the wrong variant. They only matter
   for firmware built before that update; downloading the 3.3.9 libs would settle it, or drop them.
 
-Not run on a board: whether the S2 bootloader actually boots and mounts LittleFS.
+The v5.5.5 S2 and S3 bootloaders boot and mount LittleFS on real boards.
 
 ### 7. Auto-detect chip type and refuse a binary built for the wrong chip — DONE
 
@@ -877,7 +901,8 @@ The two related refusals are tested the same way: an app larger than the partiti
 provisioned into (`... larger than the ... app partition of default_8MB`), and a `<chip>-<flashsize>`
 absent from `boards.json` (`No base bundle for ESP32-S3 2MB`). The latter also had a gap: `flash()`
 called directly, with no base built, would have thrown a `TypeError`; `appCheck()` now raises the
-refusal first. Not tried on real hardware — a deliberately wrong binary on a board.
+refusal first. Confirmed on a C3: S2 and S3 images, and an IDF v5.3.2 image when provisioning, were
+each refused and the board kept running its firmware.
 
 ### The ⚡ across two cards
 
@@ -888,7 +913,7 @@ the Flash card, scrolls to it, and calls `flashRemote()` on its `mqtt-admin`, wh
 thing that can see the `mqtt-flash` in its own shadow root. The bolt is left out entirely without
 OTAFLASH, since there is then no Flash card for it to open.
 
-### 8. UI polish — DONE, not looked at in a browser
+### 8. UI polish — DONE
 
 - **Why Flash is grey is now said.** The status area gains "Choose a firmware file to flash" and
   "Connect a board to flash" (one or both), replacing "No board connected". The reasons that already
@@ -914,11 +939,13 @@ Configure, which suits "flash, then watch it boot" but pushes Configure further 
 
 - **Octal-flash S3 detection.** Confirm on a real ESP32-S3-WROOM-2 that unsupported OPI flash shows up
   as `detectFlashSize()`'s unrecognized-capacity fallback, so the refusal message can be stated as
-  fact rather than a guess.
-- Confirm `writeFlash` tolerates an omitted `calculateMD5Hash` (see Client change 7).
+  fact rather than a guess. Note the capacity byte it prints.
 - **Ship 4 MB only at first.** Larger boards are still more expensive and not seen in practice, so
   `min_spiffs` is the only scheme that needs to work on day one. `default_8MB` / `default_16MB` are
   the stock tables, but provisioning with them is untested on real hardware — an unlisted
   `<chip>-<flashsize>` already fails cleanly as "unsupported board".
-- Whether an ESP32-S2 `bootloader.bin` is worth harvesting up front, given `ARDUINO_LOLIN_S2_MINI`
-  appears in the firmware but may not be in active use.
+- **An Arduino-IDE build, IDF v5.5.5,** provisioned on a C3: the flasher should accept it and write the
+  same v5.5.5 bootloader.
+- **The v5.5.4 S2 and S3 bootloaders** (step 6) are unverified, and the S2 one is probably the wrong
+  variant. Either download the 3.3.9 libs to check them or drop them; until then, provisioning an S2 or
+  S3 with v5.5.4 firmware relies on them.
