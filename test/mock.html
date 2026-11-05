@@ -40,7 +40,7 @@
     <label>Scenario <select id="scenario"></select></label>
     <label>View <select id="view">
         <option value="cards">cards</option>
-        <option value="headless">data tree only</option>
+        <option value="tree">data tree only</option>
     </select></label>
     <button id="rerun">Re-run</button>
     <button id="forget" title="Clear the remembered card order and open/closed state">Forget layout</button>
@@ -85,11 +85,11 @@
     if (view === 'cards') {
       // The grid makes its own cards, in the order it remembers, and adds more as devices arrive
       const grid = el('mqtt-devicegrid');
-      grid.mt = projectMt;   // Deliberately not projectMt.element - that is for an MqttProject
+      grid.mt = projectMt;   // Deliberately not projectMt.element - nothing is
       stage.append(grid);
     }
-    tree.style.display = (view === 'headless') ? '' : 'none';
-    if (view === 'headless') {
+    tree.style.display = (view === 'tree') ? '' : 'none';
+    if (view === 'tree') {
       tree.textContent = Object.values(projectMt.nodes).map((n) =>
         `${n.nodeId}  ${n.status}\n  summary: ${n.summaryChips.map((c) => c.text).join('  ')}\n` +
         n.frontRows.map((r) => `  ${r.kind.padEnd(9)}${(r.label || '').padEnd(20)}${r.mt ? r.mt.formatted : r.groupMt.summaryText()}`).join('\n')

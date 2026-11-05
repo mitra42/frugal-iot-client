@@ -11,6 +11,10 @@ This complements OTA rather than replacing it: OTA handles boards that are alrea
 talking to the broker; USB flashing handles first provisioning and recovery of boards that can't be
 reached.
 
+
+## Status
+
+Complete except for Open Questions at bottom 
 ---
 
 ## Library
@@ -338,7 +342,6 @@ a single key:
   },
   "bootloadersByChip": {
     "ESP32-C3": [
-      {"idfVer": "v5.5.4", "core": "3.3.9", "path": "bootloader/v5.5.4/esp32c3.bin"},
       {"idfVer": "v5.5.5", "core": "3.3.12", "path": "bootloader/v5.5.5/esp32c3.bin"}
     ]
   },
@@ -566,7 +569,7 @@ platform-espressif32, so:
 
 ```bash
 esptool --chip esp32c3 elf2image --flash-mode dio --flash-freq 80m --flash-size 4MB \
-  -o base/bootloader/v5.5.4/esp32c3.bin \
+  -o base/bootloader/v5.5.5/esp32c3.bin \
   ~/.platformio/packages/framework-arduinoespressif32-libs/esp32c3/bin/bootloader_qio_80m.elf
 ```
 
@@ -786,17 +789,21 @@ board) while failing in Chrome, which is the quickest way to tell a library faul
 
 A bootloader from another IDF release than the app is what broke LittleFS (or so it looked — see the
 variant note under "The bootloader must come from the same framework"). So there is one bootloader
-per IDF release for C3, S2 and S3 (`v5.5.4`, `v5.5.5`), and the flasher **reads the release out of the
+per IDF release for C3, S2 and S3 (now only `v5.5.5`), and the flasher **reads the release out of the
 app image** to choose: every ESP-IDF app carries an `esp_app_desc_t` at `0x20` (magic `0xABCD5432`)
 with `version`, `project_name`, `time`, `date` and `idf_ver`.
 
-- `appDescription()` parses it, and selecting a file logs `Built with ESP-IDF v5.5.4 (…)`.
+- `appDescription()` parses it, and selecting a file logs `Built with ESP-IDF v5.5.5 (…)`.
 - `boards.json` `bootloadersByChip` lists each bootloader with the `idfVer` string inside it; a test
   keeps the tags true to the binaries.
 - `bootloaderFor()` picks the one whose `idfVer` equals the app's, and **refuses to provision** if
   none does. An older release is told to update the Arduino IDE or PlatformIO platform; a newer one is
   told the flasher is behind. An image with no descriptor (ESP8266) gets the first. App-only updates
   write no bootloader, so they are never checked.
+
+`v5.5.4` (core 3.3.9) was shipped too and has been dropped, since everything is now built on v5.5.5. Its
+S2 and S3 bootloaders could not be re-checked once PlatformIO had updated, and the S2 one was probably
+the wrong variant. Firmware still on v5.5.4 can be updated app-only, but is refused when provisioning.
 
 Provisioning with the v5.5.5 bootloader is confirmed on a C3, an S2 and an S3 with PlatformIO builds.
 An Arduino-IDE build has not been provisioned (see "Open questions").
@@ -870,7 +877,7 @@ Single whole image at `0x0`, no base bundle. Its `ESPFS.begin()` takes no format
 `fs.cpp` calls `format()` itself and no pre-formatted image is needed. Confirmed on a D1 Mini once
 esptool-js's ESP8266 SPI bug was corrected (see "esptool-js in a browser").
 
-### 6. S2 and S3 bootloaders — v5.5.5 verified on boards, v5.5.4 not
+### 6. S2 and S3 bootloaders — DONE
 
 Checked the way the C3 was: built `s2_mini` and `lilygo_t3_s3_sx127x` with pioarduino 3.3.12 and
 compared `.pio/build/<env>/bootloader.bin` with `base/bootloader/v5.5.5/`.
@@ -879,9 +886,6 @@ compared `.pio/build/<env>/bootloader.bin` with `base/bootloader/v5.5.5/`.
 - **S2:** *not* identical — the real build is 19744 bytes (the `dio_80m` ELF, because `lolin_s2_mini` is a
   `dio` board) against our 20976 (`qio_80m`). The shipped S2 `v5.5.5` is now the `dio_80m` build and is
   byte-identical to the real one. See "Which variant follows the board".
-- **v5.5.4 S2 and S3** (from pioarduino 3.3.9) cannot be re-checked: updating PlatformIO removed those
-  libs. They were built the `qio_80m` way, so the S2 one is probably the wrong variant. They only matter
-  for firmware built before that update; downloading the 3.3.9 libs would settle it, or drop them.
 
 The v5.5.5 S2 and S3 bootloaders boot and mount LittleFS on real boards.
 
@@ -937,15 +941,57 @@ Configure, which suits "flash, then watch it boot" but pushes Configure further 
 
 ## Open questions
 
-- **Octal-flash S3 detection.** Confirm on a real ESP32-S3-WROOM-2 that unsupported OPI flash shows up
-  as `detectFlashSize()`'s unrecognized-capacity fallback, so the refusal message can be stated as
-  fact rather than a guess. Note the capacity byte it prints.
-- **Ship 4 MB only at first.** Larger boards are still more expensive and not seen in practice, so
-  `min_spiffs` is the only scheme that needs to work on day one. `default_8MB` / `default_16MB` are
-  the stock tables, but provisioning with them is untested on real hardware — an unlisted
-  `<chip>-<flashsize>` already fails cleanly as "unsupported board".
-- **An Arduino-IDE build, IDF v5.5.5,** provisioned on a C3: the flasher should accept it and write the
-  same v5.5.5 bootloader.
-- **The v5.5.4 S2 and S3 bootloaders** (step 6) are unverified, and the S2 one is probably the wrong
-  variant. Either download the 3.3.9 libs to check them or drop them; until then, provisioning an S2 or
-  S3 with v5.5.4 firmware relies on them.
+Each has the bench steps that would settle it. Serve the client from `frugal-iot-server`, open the
+Flash card on the project's back in Chrome or Edge, and keep the flasher's log (the copy icon) for
+anything that does not go as described. Adding `?flashtrace` to the page's address puts the end of
+esptool's byte trace into the log when a read or a flash fails.
+
+### Octal-flash S3 detection
+
+Confirm on a real ESP32-S3-WROOM-2 that unsupported OPI flash shows up as `detectFlashSize()`'s
+unrecognized-capacity fallback, so the refusal message can be stated as fact rather than a guess.
+
+1. Choose any S3 firmware, e.g. `lilygo_t3_s3_sx127x/firmware.bin`.
+2. Connect the WROOM-2 board.
+3. **Look for:** `WARNING: flash size not recognised (capacity byte 0x…)`, then the line about octal
+   (OPI) flash. **Write down the capacity byte.**
+4. Do **not** tick "flash anyway".
+5. If instead it reports a normal size such as `ESP32-S3-16MB`, the octal message is wrong: note the
+   size and the Flash ID line, and do not flash.
+
+### Provisioning 8 MB and 16 MB boards
+
+Ship 4 MB only at first. Larger boards are still more expensive and not seen in practice, so
+`min_spiffs` is the only scheme that needs to work on day one. `default_8MB` and `default_16MB` are the
+stock tables, but provisioning with them is untested on real hardware. An unlisted
+`<chip>-<flashsize>` already fails cleanly as "unsupported board".
+
+1. Use an 8 MB S3. Provisioning erases the board's configuration, so use a board whose config can be
+   lost.
+2. Choose its firmware and Connect. **Look for:** the status line names `ESP32-S3-8MB` and
+   `default_8MB`.
+3. If it reads as already provisioned, click **Provision instead**. The button should say
+   **Erase and flash** in red.
+4. Flash. **Look for:** `Partition table write verified at 0x8000`, and a completed write at `0x10000`.
+5. In the monitor, on the first boot: `LittleFS would not mount (normal on a first boot) - formatting`,
+   then `LittleFS mounted`, and the captive portal coming up.
+6. Reset the board: the second boot mounts LittleFS with no format.
+7. Repeat with a 16 MB board if one turns up.
+
+### An Arduino-IDE build, IDF v5.5.5
+
+Provisioned on a C3, the flasher should accept it and write the same v5.5.5 bootloader.
+`npm run check:bootloaders` already shows that the bootloader rebuilt from the Arduino IDE's 3.3.12
+core matches the shipped one for all three chips, so what remains is trying it on a board.
+
+1. In the Arduino IDE with the esp32 core at 3.3.12 (IDF v5.5.5), choose **LOLIN C3 Pico** and build
+   the frugal-iot sketch with **Sketch → Export Compiled Binary**. Use the app image
+   `build/esp32.esp32.lolin_c3_pico/frugal-iot.ino.bin`, not `.merged.bin` or `.bootloader.bin`.
+2. Choose it in the flasher. **Look for:** `Built with ESP-IDF v5.5.5`.
+3. Connect the C3 and click **Provision instead**, then **Erase and flash**.
+4. **Look for:** `Bootloader: ESP-IDF v5.5.5 (core 3.3.12)`, and the write completing.
+5. Set the monitor speed to **115200**, since an Arduino-IDE build prints at that rate, and watch the
+   first boot. LittleFS should format and mount as in the previous section.
+6. If LittleFS reports `Corrupted dir pair` or `mount failed (-84)`, the bootloader does not suit this
+   build. Compare the ROM banner's `load:… len:…` lines with a flash from the IDE itself (see "The
+   bootloader must come from the same framework").

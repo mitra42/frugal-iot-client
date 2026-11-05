@@ -1,5 +1,14 @@
 # Device Cards — UX Design
 
+## Status
+
+**Complete.** Every decision (D-1…D-52) is confirmed and every open issue (O-1…O-10) resolved, so
+the "open" wording below is historical. The design is built — see `CARDS_PLAN.md`. L-7 is done: the
+broker enforces `WRITE` with per-user credentials. What remains is deferred, not undecided: L-1/L-2
+(overriding a control, setting `manual`) in §14; L-6 is unlikely. Not built: the flip and sheet of
+§3.4 (D-6, O-8) and the motion of §9 — the card swaps sides in place. Tracked as Phase 9 of
+`CARDS_PLAN.md`.
+
 Step 1 of 3: **UX design** → implementation plan (`CARDS_PLAN.md`) → implementation.
 
 This document is the thing to argue with. Every place marked **D-n** is a decision that is open;
@@ -664,6 +673,10 @@ user can still arrange their own dashboard and drive the graph.
 
 ### 10.3 This is decluttering, not security — and must be labelled as such
 
+*Superseded by L-7:* each user now has their own broker account, in a group per capability, so the
+broker refuses a publish without `WRITE`. The UI gating is still not the enforcement — the broker is
+— but it no longer hides a hole. The reasoning below is as it was written.
+
 Every user of an organization connects to the broker with the **same** credentials: `setClientCredentials`
 sets `username = org` and `password = orgConfig.mqtt_password`, and that password reaches the browser
 inside `/config.json`. So a user without `WRITE` still holds working publish credentials and can
@@ -784,7 +797,7 @@ Reopening one means revisiting this document, not deciding it in code.
 | D-24 | Rename `MqttBar.get width()`? | Yes → `fillPercent`, to free the name for the schema's `width` |
 | D-25 | Add a `WRITE` capability? | Yes, org-scoped, required for every change including an actuator tap |
 | D-26 | Hide the whole back without WRITE? | No — show it read-only; omit only ADVANCED's actions |
-| D-27 | Is client-side WRITE gating a security boundary? | No, and must not be described as one — all org users share one broker credential |
+| D-27 | Is client-side WRITE gating a security boundary? | No, and must not be described as one — all org users share one broker credential. *Since L-7 the broker is the boundary* |
 | D-28 | What becomes of `<mqtt-admin>`'s other tabs? | Cards on the project's back, reached by the project gear |
 | D-29 | Project gear when the user can do nothing? | Omit the gear rather than open an empty back |
 | D-30 | Redesign the API tab? | No — wrap the existing markup in a card, change nothing |
@@ -825,7 +838,7 @@ planned at all. This list is expected to grow as the plan and the implementation
 | ~~L-4~~ | ~~`control: true` in `modules.yaml`~~ | **Not doing.** Control modules start with "control"; if that ever stops being true, add the flag then |
 | ~~L-5~~ | ~~`TODO-213` — a module declaring dynamically-added outputs~~ | **Already supported.** What remains is merging `manual` into `controlhysteresis` — non-trivial, not urgent, and part of L-1/L-2 |
 | L-6 | **Per-user server-side layout sync** (§7.3) | **Unlikely.** It would mean server-side database changes to hold user preferences, which is not a direction worth taking for this; `localStorage` covers the common case |
-| L-7 | **Real enforcement of `WRITE`** (§10.3) | A known, separate project — per-user broker credentials or a server-side publish proxy. Until it lands, the UI gating is decluttering only and must be described that way |
+| ~~L-7~~ | ~~**Real enforcement of `WRITE`** (§10.3)~~ | **Done** — per-user broker credentials, with `WRITE` mapped to an `<org>-write` broker group; see the server's `SECURITY.md` |
 
 ---
 

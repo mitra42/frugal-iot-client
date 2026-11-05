@@ -1,5 +1,12 @@
 # Plan: Headless Data-Tree Mode for mqtt-wrapper
 
+## Status
+
+**Complete** — all eight changes landed with issue 73 (`463a46c`). Since then the plan has gone
+further than it proposed: the old node/group UI was retired, so the `headless` attribute (change 1)
+was removed too and the wrapper only ever builds the data tree. Line numbers below are in
+`webcomponents.js`, which has since been split; `core.js` holds all of this now.
+
 ## Goal
 
 Allow `mqtt-wrapper` to operate without building any DOM elements for the project/node/group/leaf UX. The `MqttTopic` data tree becomes the single source of truth, shared across all dashboards. DOM elements become optional UX decorations layered on top. In headless mode, a dashboard may still create individual standalone elements by calling `MqttTopic.createElement()` directly.

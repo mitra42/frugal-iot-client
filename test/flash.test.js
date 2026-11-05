@@ -710,14 +710,14 @@ describe('matching the app to the bootloader it would be provisioned with', () =
   test('the bootloader is chosen by the app’s IDF release', () => {
     const flash = flashFor(true);
     flash.state.app = {name: 'x.bin'};
-    assert.equal(flash.bootloaderFor({idfVer: 'v5.5.4'}).core, '3.3.9');
     assert.equal(flash.bootloaderFor({idfVer: 'v5.5.5'}).core, '3.3.12');
+    assert.throws(() => flash.bootloaderFor({idfVer: 'v5.5.4'}), /Update the Arduino IDE/, 'no longer shipped');
   });
 
   test('an app from a release with no bootloader is refused when it would be provisioned', () => {
     const flash = flashFor(true);
     flash.state.app = {name: 'old.bin', bytes: described('v5.3.2-282-gcfea4f7c98-dirty')};
-    assert.throws(() => flash.appCheck(), /ESP-IDF v5\.3\.2.*no bootloader.*v5\.5\.4.*v5\.5\.5/);
+    assert.throws(() => flash.appCheck(), /ESP-IDF v5\.3\.2.*no bootloader.*v5\.5\.5/);
   });
 
   test('an older IDE is told to update, a newer one is told the flasher is behind', () => {
@@ -728,12 +728,10 @@ describe('matching the app to the bootloader it would be provisioned with', () =
     assert.throws(() => flash.bootloaderFor({idfVer: 'v5.10.0'}), /newer than this flasher knows/, 'compared as numbers, not text');
   });
 
-  test('both shipped toolchains are accepted', () => {
-    for (const v of ['v5.5.4', 'v5.5.5']) {
-      const flash = flashFor(true);
-      flash.state.app = {name: 'firmware.bin', bytes: described(v)};
-      flash.appCheck();
-    }
+  test('the shipped release is accepted', () => {
+    const flash = flashFor(true);
+    flash.state.app = {name: 'firmware.bin', bytes: described('v5.5.5')};
+    flash.appCheck();
   });
 
   test('an app-only update keeps the board’s own bootloader, so the release does not matter', () => {
@@ -747,7 +745,7 @@ describe('matching the app to the bootloader it would be provisioned with', () =
     const bytes = new Uint8Array(0x1000); bytes[0] = 0xe9; bytes[12] = 5;
     flash.state.app = {name: 'firmware.bin', bytes};
     flash.appCheck();
-    assert.equal(flash.bootloaderFor(null).idfVer, 'v5.5.4');
+    assert.equal(flash.bootloaderFor(null).idfVer, 'v5.5.5');
   });
 
   test('provisioning writes the bootloader that matches the app', async () => {
@@ -757,7 +755,7 @@ describe('matching the app to the bootloader it would be provisioned with', () =
       return {ok: true, arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)};
     };
     try {
-      for (const [v, path] of [['v5.5.4', 'bootloader/v5.5.4/esp32c3.bin'], ['v5.5.5', 'bootloader/v5.5.5/esp32c3.bin']]) {
+      for (const [v, path] of [['v5.5.5', 'bootloader/v5.5.5/esp32c3.bin']]) {
         const flash = flashFor(true);
         flash.state.device.base.partitions = {url: './base/partitions/min_spiffs.bin', address: 0x8000};
         flash.state.device.base.otadata = {url: './base/boot_app0.bin'};

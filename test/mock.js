@@ -270,9 +270,7 @@ export function setNow(t) {
 }
 
 // Build a project data tree and replay a scenario into it.
-// headless: true builds the data tree only. headless: false builds the existing node/group UI too,
-// which is how the same scenarios give that UI a regression check - see CARDS_PLAN.md phase 0.
-// Returns { projectMt, projectEl } (projectEl is null when headless).
+// Returns { projectMt }.
 export function runScenario(name, { at = null } = {}) {
   const scenario = scenarios[name];
   if (!scenario) throw new Error(`No such scenario: ${name}`);
@@ -281,10 +279,9 @@ export function runScenario(name, { at = null } = {}) {
   // scenario's messages into the previous scenario's tree.
   mqtt_unsubscribe_organization(ORG);
 
-  // Always the data tree alone. The paired DOM tree was the old node/group UI, which is gone; the
-  // cards build their own display from the tree, so nothing needs an element here.
+  // The cards build their own display from the tree, so nothing needs an element here.
   const projectMt = new MqttTopicProject();
-  projectMt.initialize({ type: 'text', twig: `${ORG}/${PROJECT}`, headless: true });
+  projectMt.initialize({ type: 'text', twig: `${ORG}/${PROJECT}` });
   projectMt.subscribe();
   // A message may carry the instant it arrived, so a replayed history is spread over real time
   // rather than piling onto one moment

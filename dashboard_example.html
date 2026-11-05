@@ -92,7 +92,7 @@
         .ctrl-field { display: flex; flex-direction: column; }
         #dashboard-controls mqtt-text { --mqtt-text-val-width: 90px; }
 
-        /* ── Settings: hide the mqtt-client connection-status widget (headless mode has no mqtt-project) ── */
+        /* ── Settings: hide the mqtt-client connection-status widget (the data tree has no mqtt-project) ── */
         #settings-panel > mqtt-wrapper > mqtt-client  { display: none !important; }
 
         /* ── Settings: chooser section ── */
@@ -422,7 +422,7 @@ ID:
   }
 
   /* ── React to control groups appearing via the topic data tree ──
-     Fired by MqttNode.addGroupFromTemplate when a control group is created. */
+     Fired by MqttTopicNode.addGroupFromTemplate when a control group is created. */
   document.addEventListener('frugaliot:controlgroup', (e) => {
     buildChoosers(); // Rebuild control dropdown to include the new group
     if (!currentEntry) {
@@ -446,7 +446,7 @@ ID:
   });
 
   /* ── Rebuild sensor/actuator choosers and re-resolve wiring when new topics are discovered ──
-     Fired by MqttProject.rebuildTopicDropdowns whenever nodes or groups are added.
+     Fired by MqttTopicProject.addNode and MqttTopicNode whenever nodes or groups are added.
      Also re-runs wireUpDashboard so that if the wired sensor's node arrived after the
      frugaliot:groupchanged event (causing wiredTopic to resolve to null at that point),
      the connection-info labels and sensor bar are updated once the sensor is in the tree. */

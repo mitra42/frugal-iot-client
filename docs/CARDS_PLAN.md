@@ -1,5 +1,18 @@
 # Device Cards — Implementation Plan
 
+## Status
+
+**Built and deployed; a little of Phase 9 open.** Phases 0–8 are done. The card page is
+`index.html`, `nodeview.js` and `index-old.html` are retired, and `html-element-extended` 0.1.7 is
+published — the two items Phase 9 listed as outstanding. The invalid `border: 1px,black,solid`
+declarations are fixed, and the rules for the retired node/group elements they sat in are gone.
+P-1 is answered: no Playwright. Not done, and each wants a decision on whether it is still wanted:
+
+- the desktop flip and the mobile bottom sheet for the card back, and the sheet for the mobile graph
+  (`CARDS_UX.md` 3.4, D-6, O-8) — the card swaps sides in place today
+- 150–200ms motion on summary↔front and the flip, honouring `prefers-reduced-motion` (`CARDS_UX.md` 9)
+- the four-language sweep for new strings — not checked
+
 Step 2 of 3. The design is `CARDS_UX.md`; decisions D-1…D-33, deferrals L-1…L-7 and resolved plan
 questions O-1…O-10 are settled there and are inputs here, not open questions. This document says
 **how and in what order**, and sets the code rules the implementation must hold to.
@@ -835,7 +848,8 @@ The snapshot records the fix: `Relay = SHT:Temperature > 32 +/- 3 ✓`.
 
 ## 6. Open plan questions
 
-- **P-1** Playwright for tier 2 browser snapshots, or tier 0+1 only?
+- ~~**P-1** Playwright for tier 2 browser snapshots, or tier 0+1 only?~~ — resolved: tier 0+1 only;
+  visual changes are checked by hand in a browser.
 - ~~**P-2** New page name~~ — resolved: `dashboard.html`.
 
 Neither blocks starting phase 0.

@@ -10,7 +10,7 @@ it loadable on its own, and it is maintained by reaching the display elements **
 
 | File | Imports | Holds |
 |---|---|---|
-| `core.js` | none | MQTT plumbing, the `MqttTopic*` data tree, `Watchdog`, i18n and `el`, `server_config`, `MqttClient`, `MqttWrapper` |
+| `core.js` | none | MQTT plumbing, the `MqttTopic*` data tree, i18n and `el`, `server_config`, `MqttClient`, `MqttWrapper` |
 | `widgets.js` | core | `mqtt-bar`, `mqtt-text`, `mqtt-toggle`, `mqtt-gauge`, `mqtt-slider`, `mqtt-color`, `mqtt-choosetopic` — all shadow DOM |
 | `graph.js` | core, widgets | `mqtt-graph`, `mqtt-graphdataset` — pulls Chart.js |
 | `cards.js` | core | the card UI: `mqtt-devicecard`, `mqtt-devicegrid`, `mqtt-projectback`, `mqtt-dashboard`, the layout store |
@@ -39,9 +39,9 @@ Dashboards (e.g. `dashboard_example.html`) are thin HTML pages importing selecti
 `docs/CARDS_UX.md` is the design for the card UI — every decision is numbered (D-n) with its
 reasoning, deferred work is L-n, and it is the place to argue with a choice rather than re-deciding
 it in code. `docs/CARDS_PLAN.md` is how it was built, including the bugs found on the way.
-`docs/FLASH_PLAN.md` and `HEADLESS_PLAN.md` cover their own areas; `docs/CONFIG_PLAN.md` plans configuring
+`docs/FLASH_PLAN.md` and `docs/HEADLESS_PLAN.md` cover their own areas; `docs/CONFIG_PLAN.md` covers configuring
 a node over USB (a profile applied to each board, serial transport into the node's existing `set/` path). Comments throughout the code cite
-these by bare filename (`see CARDS_UX.md 4.7`); they all live in `docs/` except `HEADLESS_PLAN.md`.
+these by bare filename (`see CARDS_UX.md 4.7`); they all live in `docs/`.
 
 ## Code style
 
@@ -110,7 +110,7 @@ Helper functions: `topicTwig(path)` → twig, `topicLeaf(path)` → leaf, `twigA
 - `mt.leaf` — getter, last segment of twig
 - `mt.topicPath` — getter, full path including node prefix
 - `mt.topicSetPath` — getter, write path (`…/set/…`); **throws when `this.nodeMt` is null** — only call on topics that are part of the node hierarchy. Project-level topics have no node and must not reach this getter. Topics built by `standaloneTopic()` do have a `nodeMt` (a stub), so an embedded widget's set path resolves.
-- `mt.element` — back-reference to the DOM element currently bound to this topic (null in headless mode or before binding)
+- `mt.element` — back-reference to the DOM element currently bound to this topic (usually null — a card's widgets deliberately do not take it; see The card UI)
 - `el.mt` — forward-reference from a DOM element to its `MqttTopic`
 
 ---
@@ -129,10 +129,11 @@ Helper functions: `topicTwig(path)` → twig, `topicLeaf(path)` → leaf, `twigA
 
 ### Class hierarchy
 
-Data-tree classes are always instantiated. UI element classes are only instantiated when not in headless mode.
+The wrapper builds only the data tree. Elements are created by whatever page displays it — the cards,
+a dashboard, an embedded widget — and bound to topics in that tree.
 
 **Data-tree** (plain JS, no HTMLElement, all in `core.js`). This is where derived values live, and
-it works with no DOM at all — which is what lets the cards run headless and be tested without a
+it works with no DOM at all — which is what lets the cards be tested without a
 browser.
 ```
 MqttTopic            leaf data node — history, metadata, subscribe/publish, formatted, canWrite
@@ -140,8 +141,7 @@ MqttTopic            leaf data node — history, metadata, subscribe/publish, fo
     MqttTopicGroupRelay / …Ota / …ControlHysteresis   only where a reading list is the wrong shape
   MqttTopicProject   discovery; nodes
   MqttTopicNode      status, deviceConfig, frontRows, summaryChips — what a card reads
-Watchdog             offline detection timer per node (old UI only; the data tree derives status
-                     from message arrival instead, with no timer)
+MqttNodeStandalone   stub nodeMt from standaloneTopic(), for an embedded widget with no tree
 ```
 
 **UI elements** (extend HTMLElementExtended):
@@ -156,28 +156,14 @@ HTMLElementExtended          (from html-element-extended)
         MqttSlider           drag slider
       MqttBar                progress bar display
       MqttGauge              dial-gauge display
-      MqttProject            manages a project and its nodes     ← not created in headless
-      MqttNode               manages a single IoT node           ← not created in headless
     MqttChooseTopic          dropdown to wire one topic to another
     MqttGraph                Chart.js wrapper (time-series graph)
     MqttGraphDataset         one dataset/line within a MqttGraph
-    MqttGroup                collapsible group of topics         ← not created in headless
-      MqttSummaryGroup       base for groups with a summary line
-        MqttGroupLedbuiltin  LED on/off indicator dot
-        MqttGroupRelay       relay on/off symbol
-        MqttGroupSht         temperature + humidity summary
-        MqttGroupSoil        soil moisture %
-        MqttGroupDS18B20     DS18B20 temperature °C
-        MqttGroupBattery     battery mV
-        MqttGroupOta         OTA key display
-        MqttGroupControlHysteresis   control loop summary
-        MqttGroupControlHysterisis   legacy spelling alias
-      MqttGroupFrugalIot     the frugal_iot system group (name, battery, OTA…)
   MqttClient                 MQTT connection UI element
-  MqttWrapper                top-level entry point; fetches config, builds tree
-  MqttAdmin                  admin panel (OTA, permissions, node table)
+  MqttWrapper                top-level entry point; fetches config, builds the data tree
+  MqttAdmin                  one admin section, chosen by its `section` attribute
+  MqttFlash                  flash and configure a board over USB
   LanguagePicker             language selector
-  TabbedDisplay              generic tab UI
 HTMLElementExtendedMinimum   (light DOM - no shadow root, so frugaliot.css reaches inside)
   MqttLogin                  sign in / register / forgot / reset, one card and four modes
   MqttDeviceCard, MqttDeviceGrid, MqttProjectBack, MqttDashboard   the card UI
@@ -209,18 +195,21 @@ a control shows a rule. Then:
 - A light-DOM element has no `<slot>`, and `renderAndReplace` **clears its own children** — so the
   grid renders once with `render0()` and mutates in place, and a card builds every child itself.
 - Widgets in a card are pre-bound (`el.mt = mt`) but deliberately **not** registered as `mt.element`:
-  only one element may hold that, and binding would have a card competing with a graph, a second
-  card, or the old UI for the same topic. The card pushes values into its own children instead.
+  only one element may hold that, and binding would have a card competing with a graph or a second
+  card for the same topic. The card pushes values into its own children instead.
 - Which readings a device shows comes from `config.d/schema/devices.yaml`, keyed by OTA key and
   matched by prefix. `nodeMt.deviceConfig` resolves it.
 
 ---
 
-## Headless mode
+## The data tree has no elements of its own
 
-`<mqtt-wrapper headless>` builds the full data tree without creating any DOM elements for the project/node/group/leaf UX. Dashboards subscribe to document events and create individual standalone elements on demand. **The card UI runs this way** — `index.html` uses a headless wrapper for the connection, the selectors and the tree, and the cards render from it. So headless is the main path now, not a special case for custom dashboards, and anything that only works with `this.element` set is broken for the primary UI.
+`mqtt-wrapper` builds the data tree and no DOM for it — there is no `headless` attribute any more,
+because that is the only mode. Pages subscribe to document events and create elements on demand; the
+cards render from the tree. So **`this.element` is usually null**, and anything that only works with
+it set is broken for the primary UI.
 
-Key points for `MqttTopic.message_received` headless path (the `else` branch when `this.element` is null):
+Key points for the `MqttTopic.message_received` path taken when `this.element` is null:
 - Must set `this.state.value` so that getters like `usableName` and `wiredTopic` work without a DOM element.
 - Must call `setWired` when a `wired` parameter arrives.
 - Must fire `frugaliot:groupchanged` to notify dashboards of state changes.
@@ -277,9 +266,9 @@ const mt = document.querySelector('mqtt-wrapper')?.projectMt?.findTopic(this.sta
 
 | Event | Fired by | Carries | Typical use |
 |---|---|---|---|
-| `frugaliot:controlgroup` | `MqttGroupControlHysteresis` | `{ nodeMt, groupId, topics }` | populate node/group dropdowns |
-| `frugaliot:groupchanged` | `MqttTopic.message_received` (headless) | `{ nodeMt, groupId, groupMt, changed }` | re-run `wireUpDashboard` on wired/on state changes |
-| `frugaliot:topicschanged` | `MqttProject`, `MqttTopicProject.addNode` | `{ project }` | retry wiring, and add a card, after late-arriving nodes |
+| `frugaliot:controlgroup` | `MqttTopicNode.addGroupFromTemplate` | `{ nodeMt, groupId, topics }` | populate node/group dropdowns |
+| `frugaliot:groupchanged` | `MqttTopic.message_received`, `MqttReceiver.topicValueSet` | `{ nodeMt, groupId, groupMt, changed }` | re-run `wireUpDashboard` on wired/on state changes |
+| `frugaliot:topicschanged` | `MqttTopicProject.addNode`, `MqttTopicNode.topicValueSet` | `{ project }` | retry wiring, and add a card, after late-arriving nodes |
 | `frugaliot:projectchanged` | `MqttWrapper.addProject` | `{ projectMt, organization, project }` | a project now exists — `topicschanged` is too late, it needs a node |
 | `frugaliot:organizationchanged` | `MqttWrapper.onOrganization` | `{ organization }` | capabilities are per organization, so this precedes any project |
 | `frugaliot:cardmove` / `cardmoveover` | `mqtt-devicecard` | `{ nodeId, delta }` / `{ nodeId, targetNodeId }` | the card asks to be moved; the grid decides what that means |
@@ -305,7 +294,7 @@ Each of these cost real time. They are not obvious from reading the code.
   embedded examples, so removing them is a visual change to those and wants looking at on a phone.
 - **`:host-context(details[open]) div { display: block }`** near the top of `frugaliot.css` has
   specificity (0,2,2) and overrides most rules for any div in a shadow root inside an open
-  `<details>` — which is every widget in the old UI.
+  `<details>` — such as a widget in the ADVANCED section of a card's back.
 - **A card's own gestures eat keystrokes and drags meant for a widget inside it.** `mqtt-devicecard`
   listens for `keydown` (space picks it up) and `pointerdown` (drag to reorder) on itself, so a text
   field on the back had every space `preventDefault`ed and a mouse selection of its text lifted the
@@ -341,7 +330,7 @@ imports.
 Messages are injected with `mqtt_deliver`, the same call the real client makes for every message, so
 scenarios in `test/mock.js` drive the whole tree with nothing mocked below it. **`test/mock.html`
 (served at `/dashboard/test/mock.html`) replays those scenarios in a browser** — pick one, switch
-between the card UI, the old UI and the data tree, and see the messages that produced it.
+between the card UI and the data tree, and see the messages that produced it.
 
 Two lessons worth keeping:
 
@@ -350,8 +339,9 @@ Two lessons worth keeping:
 - **Shadow content is not in `textContent` and not reachable by `card.querySelector`.** A test
   asserting `querySelector('mqtt-choosetopic')` is null passes whether or not the chooser exists.
 
-Snapshots in `test/snapshots/` record the rendered tree of both UIs. They exist so the old UI cannot
-regress unnoticed; regenerate deliberately with `npm run test:update` and read the diff.
+Snapshots in `test/snapshots/card-*.txt` record the rendered cards for each scenario and mode, so a
+change to what a card shows cannot pass unnoticed; regenerate deliberately with `npm run test:update`
+and read the diff.
 
 ---
 
@@ -400,15 +390,15 @@ When adding a new UI string: add matching entries to all four language sections 
 | `async` | Callback-style async utilities (preferred over Promises) |
 | `csv-parse` | Parse historical CSV data from the logger |
 | `chart.js` | Time-series graphs |
-| `luxon` | Date/time for Chart.js (adapter inlined in webcomponents.js) |
+| `luxon` | Date/time for Chart.js (adapter inlined in `core.js`) |
 | `dial-gauge` | Gauge web component |
+| `esptool-js` | Flashing over Web Serial, from `flash.js` (see `FLASH_PLAN.md`) |
 
 ---
 
 ## Running locally
 
-The card UI is `index.html`, served at `/dashboard/`. The node/group UI it replaced is
-`index-old.html`, linked from the project's home page. `frugal-iot-server` must be running: it serves
+The card UI is `index.html`, served at `/dashboard/`. `frugal-iot-server` must be running: it serves
 `/config.json`, `/node_modules`, the OTA files and the login flow, so the client cannot be opened as
 a file.
 

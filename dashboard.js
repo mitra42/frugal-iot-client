@@ -1,8 +1,6 @@
 /*
  * Entry point for index.html - the card UI.
  *
- * Everything except nodeview.js, which is the node/group UI this page replaces. webcomponents.js
- * would pull that in too; it is the entry for index.html, which still needs it.
  */
 import './core.js';      // MQTT, the topic data tree, i18n, the wrapper and the connection
 import './widgets.js';   // mqtt-bar, mqtt-text, mqtt-toggle and the rest

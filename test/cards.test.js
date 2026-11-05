@@ -285,7 +285,7 @@ describe('the summary line', () => {
   test('a module summary works with no element - the point of moving it to the data tree', () => {
     const { projectMt } = mock.runScenario('control-wired');
     const groups = projectMt.nodes['esp8266-fb94bb'].groups;
-    assert.equal(groups.sht.element, undefined, 'headless: there should be no element');
+    assert.equal(groups.sht.element, undefined, 'there should be no element');
     assert.equal(groups.sht.summaryText(), '30.1°C 85.1%RH'); // formatted, and units from the schema
     assert.match(groups.controlhysteresis.summaryText(), /^Relay = SHT:Temperature > 32/);
   });
@@ -318,7 +318,7 @@ describe('status', () => {
   });
 
   test('a device the server knows but which has not reported reads as offline, not never seen', () => {
-    // The old UI listed these from config with their last-seen time. Without seeding it, a device
+    // Without seeding the last-seen time from config, a device
     // asleep since before the page loaded would claim never to have been heard from.
     const { projectMt } = mock.runScenario('one-device', { at: T0 });
     const nodeMt = projectMt.nodes['esp8266-fb94bb'];

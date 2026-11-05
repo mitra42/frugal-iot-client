@@ -1,7 +1,7 @@
 {
-  "version": 12,
-  "coreVersion": "pioarduino framework-arduinoespressif32 3.3.9",
-  "comment": "Base bundles for USB flashing - see FLASH_PLAN.md. A bootloader MUST come from the same ESP-IDF release as the firmware: bootloadersByChip lists one per release, tagged with the idfVer string inside it, and the flasher picks the one matching the app image's idf_ver (the first is the default for an image with no descriptor). Each is the core's libs ELF patched to a DIO header via 'esptool elf2image --flash-mode dio --flash-freq 80m --flash-size 4MB'. Which ELF is what PlatformIO builds for our boards of that chip - it follows the board's flash_mode: qio_80m for the C3 and S3 boards, dio_80m for lolin_s2_mini - recorded in bootloaderVariantByChip (default qio_80m). pioarduino and the Arduino IDE share the same libs per release, so one serves both; the core named is the one it was built from. v5.5.5 for all three chips is byte-identical to a real pioarduino 3.3.12 build; v5.5.4 C3 was identical to a real 3.3.9 build, and v5.5.4 S2/S3 are qio_80m and unverified (S2 is probably the wrong variant). Flash-size independent (esptool patches the header at write time). Partition tables are chip-independent, and are the core's stock CSVs, so they match what a PlatformIO env using the same scheme writes. boot_app0.bin is universal.",
+  "version": 13,
+  "coreVersion": "pioarduino framework-arduinoespressif32 3.3.12",
+  "comment": "Base bundles for USB flashing - see FLASH_PLAN.md. A bootloader MUST come from the same ESP-IDF release as the firmware: bootloadersByChip lists one per release, tagged with the idfVer string inside it, and the flasher picks the one matching the app image's idf_ver (the first is the default for an image with no descriptor). Each is the core's libs ELF patched to a DIO header via 'esptool elf2image --flash-mode dio --flash-freq 80m --flash-size 4MB'. Which ELF is what PlatformIO builds for our boards of that chip - it follows the board's flash_mode: qio_80m for the C3 and S3 boards, dio_80m for lolin_s2_mini - recorded in bootloaderVariantByChip (default qio_80m). pioarduino and the Arduino IDE share the same libs per release, so one serves both; the core named is the one it was built from. v5.5.5 for all three chips is byte-identical to a real pioarduino 3.3.12 build. Firmware from an older release is refused when provisioning, with a message to update the toolchain. Flash-size independent (esptool patches the header at write time). Partition tables are chip-independent, and are the core's stock CSVs, so they match what a PlatformIO env using the same scheme writes. boot_app0.bin is universal.",
   "otadata": "boot_app0.bin",
   "partitionTableOffset": 32768,
   "bootloaderVariantByChip": {
@@ -10,11 +10,6 @@
   "bootloadersByChip": {
     "ESP32-C3": [
       {
-        "idfVer": "v5.5.4",
-        "core": "3.3.9",
-        "path": "bootloader/v5.5.4/esp32c3.bin"
-      },
-      {
         "idfVer": "v5.5.5",
         "core": "3.3.12",
         "path": "bootloader/v5.5.5/esp32c3.bin"
@@ -22,22 +17,12 @@
     ],
     "ESP32-S2": [
       {
-        "idfVer": "v5.5.4",
-        "core": "3.3.9",
-        "path": "bootloader/v5.5.4/esp32s2.bin"
-      },
-      {
         "idfVer": "v5.5.5",
         "core": "3.3.12",
         "path": "bootloader/v5.5.5/esp32s2.bin"
       }
     ],
     "ESP32-S3": [
-      {
-        "idfVer": "v5.5.4",
-        "core": "3.3.9",
-        "path": "bootloader/v5.5.4/esp32s3.bin"
-      },
       {
         "idfVer": "v5.5.5",
         "core": "3.3.12",

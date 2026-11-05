@@ -1,7 +1,7 @@
 /*
  * Frugal IoT client - core: the MQTT connection, the topic data tree, i18n, and the element builder.
  *
- * Everything a headless consumer needs, and the only one of these modules that imports none of the
+ * Everything a page needs to build and read the data tree, and the only one of these modules that imports none of the
  * others - it reaches the display elements by tag name (el('mqtt-bar')), never by class, which is
  * what keeps it loadable on its own. See CARDS_PLAN.md phase 3.
  */
@@ -206,7 +206,7 @@ function brokerHost(url) {
 // Route a received message to every matching subscription.
 // Separate from the client's on('message') so a test or mock can inject messages with no broker.
 function mqtt_deliver(topic, msg, retained) {
-  // The subscriptions are all going to be MqttNode which will then look at rest of topic
+  // Mostly MqttTopicNode wildcards, which route the rest of the topic down their tree
   for (let o of mqtt_subscriptions) {
     if (topicMatches(o.topic, topic)) { // Matches trailing wildcards, but not middle ones
       o.cb(topic, msg, retained);
@@ -1935,33 +1935,11 @@ class LanguagePicker extends HTMLElementExtended {
 }
 customElements.define('language-picker', LanguagePicker);
 
-// The watchdog is looking at individual nodes, noticing how often they tend to report, then marking offline if they don't
-// show up as expected.
-class Watchdog {
-  constructor(elx) {
-    this.elx = elx;
-    this.latest = Date.now();
-    this.offlineAfter = undefined;
-    this.count = 3; // How many times latest before consider offline
-  }
-  tickle(now) {
-    let delta = now-this.latest;
-    this.latest = now;
-    if (!this.offlineAfter) { this.offlineAfter = delta * this.count; }
-    this.offlineAfter = ((this.offlineAfter) * (this.count-1)/this.count)+delta; // Smoothed
-    clearTimeout(this.timer);
-    this.timer = setTimeout(this.offline.bind(this), this.offlineAfter);
-  }
-  offline() {
-    this.elx.offline();
-  }
-}
 class MqttTopic {
   // Manages a single topic - keeps track of data it has seen, and can create UI element or graphdataset for it
   // Note this intentionally does NOT extend HtmlElement or MqttElement etc
   // Encapsulate a single topic, mostly this will be built during the discovery process,
   // but could also be built by hard coded UI if doesn't exist
-  // Should be indexed in MqttNode
 
   // Creation & initialization =========
   constructor() {
@@ -1984,13 +1962,11 @@ class MqttTopic {
       }
     });
   }
-  fromTemplate(topicTemplate, twig, group, node) {
+  fromTemplate(topicTemplate, twig, group) {
     // topic, name, type, display, rw, min, max, color, options,
     this.initialize(topicTemplate);
     this.group = group // e.g. "sht"
     this.twig = twig;  // e.g. "sht/temperature"
-    // getters defined for leaf
-    this.node = node; // Instance of MqttNode
   }
 
   // Gets and related fields ========
@@ -2005,8 +1981,6 @@ class MqttTopic {
     return (gmt && gmt.state.name) || this.group;
   }
   // usableName qualified by which device it is on, e.g. "Greenhouse North:SHT:Temperature".
-  // Goes through nodeMt, not node - the latter is the MqttNode element, which does not exist on a
-  // headless page such as the cards.
   get fullName() {
     const owner = this.nodeMt;
     return owner ? `${owner.usableName}:${this.usableName}` : this.usableName;
@@ -2021,12 +1995,8 @@ class MqttTopic {
     }
   }
 
-  // instance of MqttProject element — still needed by element-side callers
-  get project() {
-    return this.node.project;
-  }
   // Project-level MqttTopicProject. Reached via nodeMt._projectMt, which is set on all MqttTopicNode
-  // objects — by MqttProject.addNode in normal mode and MqttTopicProject.addNode in headless mode.
+  // objects by MqttTopicProject.addNode.
   get projectMt() {
     return this._projectMt || (this.nodeMt && this.nodeMt._projectMt);
   }
@@ -2034,7 +2004,7 @@ class MqttTopic {
     return this.twig.split("/").pop();
   }
   // e.g. org/project/node/group/leaf; for node/project topics nodeMt is absent and twig is the full path.
-  // nodeMt is set on all leaf topics by MqttTopicNode.addTopicFromTemplate in both normal and headless mode.
+  // nodeMt is set on all leaf topics by MqttTopicNode.addTopicFromTemplate.
   get topicPath() {
     return (this.nodeMt ? this.nodeMt.topicPath + "/" : "") + this.twig;
   }
@@ -2048,18 +2018,13 @@ class MqttTopic {
   }
   // e.g. or for node /dev/project/node/# and should not be used at element level as subscribe at node level.
   get topicSubscribePath() {
-    // isNode was the old UI's MqttNode element. Nothing sets it now, so this is the embedded path.
-    if (this.element && this.element.isNode) {
-      return this.topicPath + "/#"; // Subscribe to all subtopics
-    } else {
-      //noinspection JSUnresolvedVariable
-      // should only happen for embedded as normally subscribe to wildcard at topic level
-      switch (this.rw) { // Note for project this will be undefined
-        case 'w': // Note should not be happening as subscribing at node level
-          return this.topicSetPath;
-        default:
-          return this.topicPath;
-      }
+    //noinspection JSUnresolvedVariable
+    // should only happen for embedded as normally subscribe to wildcard at topic level
+    switch (this.rw) { // Note for project this will be undefined
+      case 'w': // Note should not be happening as subscribing at node level
+        return this.topicSetPath;
+      default:
+        return this.topicPath;
     }
   }
   // The organization this topic belongs to - the first segment of its path
@@ -2134,7 +2099,7 @@ class MqttTopic {
   }
 
   // Lazy-initialised map of nodeId → node-level MqttTopic.
-  // Only meaningful when this topic represents a project; populated by MqttProject.addNode.
+  // Only meaningful when this topic represents a project; populated by MqttTopicProject.addNode.
   get nodes() { return this._nodes || (this._nodes = {}); }
 
   // Lazy-initialised map of leaf → MqttTopic.
@@ -2142,7 +2107,7 @@ class MqttTopic {
   get topics() { return this._topics || (this._topics = {}); }
 
   // Lazy-initialised map of groupId → MqttTopicGroup for this node.
-  // Only meaningful when this topic represents a node; populated via MqttNode.topicGroups.
+  // Only meaningful when this topic represents a node; populated by MqttTopicNode.addGroupFromTemplate.
   get groups() { return this._groups || (this._groups = {}); }
 
   // For node-level topics: the subset of groups whose id starts with 'control'.
@@ -2308,8 +2273,7 @@ class MqttTopic {
     }
   }
 
-  // Note sometimes called from MqttClient and sometimes from node.topicValueSet
-  // Note pathway MqttTopic (for node) -> MqttNode -> MqttTopic for module
+  // Called by a subscription, or by MqttTopicNode routing a message down to this topic
   message_received(topic, message) {
     if (this.element) {
       if (this.element.topicValueSet(topic, message)) {
@@ -2317,7 +2281,7 @@ class MqttTopic {
         this.element.renderAndReplace(); // TODO note gradually replacing need to rerender by smarter valueSet() on different subclasses
       }
     } else {
-      // Headless path: update the data tree directly (also reached by detached MqttGraphDataset topics).
+      // No element bound - the usual case: update the data tree directly (also reached by detached MqttGraphDataset topics).
       // topicSetPath throws if nodeMt is null, so guard the startsWith call with nodeMt.
       // The node publishes its own wired paths on the read path, the UX writes them on the set path.
       const isParam = this.nodeMt
@@ -2329,7 +2293,7 @@ class MqttTopic {
         // Value arriving on this topic's own path, its set-path, or its wired source.
         const value = this.valueFromText(message);
         this.data.push({value, time: nowMs()});
-        this.state.value = value; // Keep state.value current so usableName, wiredTopic, etc. work headlessly
+        this.state.value = value; // Keep state.value current so usableName, wiredTopic, etc. work with no element
       }
       // Mirror to the data-tree group and notify dashboard listeners, matching what the element path does.
       // groupMt is null for graph-dataset topics (no nodeMt), so this block is skipped for those.
@@ -2421,8 +2385,7 @@ class MqttTopic {
         min: this.min,
         max: this.max,
         yaxisid: yaxisid,
-        // fullName, not name - the legend has to say which device a reading came from, and it goes
-        // through nodeMt because this.node (the MqttNode element) is absent on a headless page.
+        // fullName, not name - the legend has to say which device a reading came from
         label: this.fullName,
       });
       this.graphdataset.mt = this;
@@ -2590,7 +2553,6 @@ function standaloneTopic(topicPath, o = {}) {
 // Group-level data node in the topic tree. Holds the leaf MqttTopics for one module group.
 // Subclass of MqttTopic so it can be stored in and navigated via the same tree.
 // topics: { leaf → MqttTopic } — inherited lazy map via get topics().
-// Paired with an optional MqttGroup element via this.element.
 class MqttTopicGroup extends MqttTopic {
   // Values roll up here as they arrive - see the groupMt.state[leafAttr] assignments in
   // MqttTopic.message_received and MqttReceiver.topicValueSet - so a summary can be built with no
@@ -2676,7 +2638,7 @@ const topicGroupClasses = {
 };
 
 // Project-level data node in the topic tree. Receives discovery messages and creates nodes.
-// Created by MqttWrapper.addProject; paired with MqttProject element via this.element.
+// Created by MqttWrapper.addProject.
 class MqttTopicProject extends MqttTopic {
   // Route directly on the data-tree object rather than through the element.
   // base MqttTopic.message_received routes through this.element.topicValueSet, which is wrong at project level.
@@ -2689,30 +2651,23 @@ class MqttTopicProject extends MqttTopic {
     const val = this.valueFromText(message);
     if (!this.nodes[val]) this.addNode(val);
   }
-  // Creates the MqttTopicNode for a node id. Works in both headless and normal mode.
-  // In normal mode, MqttProject.addNode calls this and then does the DOM layer on top.
-  // _groups starts as {} and is replaced by MqttProject.addNode with elNode.topicGroups.
+  // Creates the MqttTopicNode for a node id.
   addNode(id) {
     const topicPath = `${this.topicPath}/${id}`;
     const mt = new MqttTopicNode();
     mt.initialize({ type: "yaml", twig: topicPath });
-    if (this.headless) mt.headless = true;
     mt._groups = {};
     mt._projectMt = this;
     mt.nodeId = id;
     this.nodes[id] = mt;
     mt.subscribe();
-    // In headless mode only — normal mode fires via MqttProject.rebuildTopicDropdowns
-    if (this.headless) {
-      document.dispatchEvent(new CustomEvent('frugaliot:topicschanged', { detail: { project: this } }));
-    }
+    document.dispatchEvent(new CustomEvent('frugaliot:topicschanged', { detail: { project: this } }));
     return mt;
   }
 }
 
 // Node-level data node in the topic tree. Routes incoming MQTT messages to the correct leaf MqttTopic.
-// Always created by MqttTopicProject.addNode. In normal mode MqttProject.addNode then adds the paired
-// MqttNode element (this.element) and replaces _groups with elNode.topicGroups.
+// Always created by MqttTopicProject.addNode.
 class MqttTopicNode extends MqttTopic {
   /*
    * Route directly on the data-tree object rather than through the element.
@@ -2763,9 +2718,6 @@ class MqttTopicNode extends MqttTopic {
       }
     }
     let matched = this.sendMessageToMatchingTopics(topicPath, twig, message);
-    if (["frugal_iot/name"].some(s => s === twig || twig.includes(s + "/"))) {
-      this.element?.project?.rebuildTopicDropdowns();
-    }
     // No match — try to add the topic from a template and route again
     if (!matched) {
       const leaf = parts[1];
@@ -2805,8 +2757,7 @@ class MqttTopicNode extends MqttTopic {
   }
   // ===== What the cards read. All of this works with no DOM, which is the point. =====
 
-  // Learn the reporting interval as messages arrive, the way Watchdog does for the old UI, but with
-  // no timer, so status can be reasoned about and tested.
+  // Learn the reporting interval as messages arrive, with no timer, so status can be reasoned about and tested.
   noteMessage() {
     const now = nowMs();
     if (this.lastMessageAt) {
@@ -3004,8 +2955,7 @@ class MqttTopicNode extends MqttTopic {
     return allow;
   }
 
-  // Data-tree group creation: builds MqttTopicGroup and its template topics with no paired DOM element.
-  // MqttNode.addGroupFromTemplate delegates here and then adds the DOM element on top.
+  // Builds the MqttTopicGroup and its template topics.
   addGroupFromTemplate(groupId) {
     if (this.groups[groupId]) return false;
     const mTemplate = moduleTemplate(groupId); // Resolves soil1 -> soil etc, see moduleBaseId
@@ -3037,14 +2987,12 @@ class MqttTopicNode extends MqttTopic {
     }
     return true;
   }
-  // Data-tree topic creation: builds a MqttTopic with no paired DOM element.
   // Sets mt.nodeMt so topicPath, groupMt, and projectMt getters work via the data tree.
-  // MqttNode.addTopicFromTemplate delegates here and then adds the DOM element on top.
   addTopicFromTemplate(topicTemplate, groupId) {
     const groupMt = this.groups[groupId];
     if (groupMt && !groupMt.topics[topicTemplate.leaf]) {
       const mt = new MqttTopic();
-      mt.fromTemplate(topicTemplate, groupId + "/" + topicTemplate.leaf, groupId, null);
+      mt.fromTemplate(topicTemplate, groupId + "/" + topicTemplate.leaf, groupId);
       mt.nodeMt = this; // Back-reference so data-tree getters resolve without traversing the DOM
       groupMt.topics[topicTemplate.leaf] = mt;
       return true;
@@ -3061,7 +3009,6 @@ class MqttTopicNode extends MqttTopic {
     return (nameTopic && nameTopic.state.value) || this.nodeId;
   }
   // Flat list of topics on this node matching the given types and rw, in choosetopic format.
-  // Uses the data-tree groups/topics rather than MqttNode.state.topics flat index.
   topicsByType(types, rw) {
     const usableName = this.usableName;
     return Object.values(this.groups)
@@ -3218,8 +3165,6 @@ class MqttWrapper extends HTMLElementExtended {
     super();
     this.state.elements = {}; // Pointer to specific child elements for targeted updates
   }
-  // No 'headless' any more: it chose between the data tree alone and the data tree plus the old
-  // node/group DOM, and there is only the tree now.
   static get observedAttributes() { return RECEIVER_ATTRIBUTES.concat(['organization','project','node','lang','clientdisplay']); }
   // Maybe add 'discover' but think thru interactions
 
@@ -3250,9 +3195,7 @@ class MqttWrapper extends HTMLElementExtended {
   onProject(e) {
     this.state.project = e.target.value;
     if (this.state.project) { // Will be false if the placeholder option is re-chosen
-      if (!this.querySelector(`mqtt-project[id="${this.state.project}"]`)) {
-        this.appender();
-      }
+      this.appender();
     }
   }
   appendClient() {
@@ -3294,16 +3237,13 @@ class MqttWrapper extends HTMLElementExtended {
     clientEl.setAttribute('username', me.mqtt_username);
   }
   /*
-   * Creates the MqttTopicProject - the data tree for one project, and nothing else.
-   *
-   * There used to be a paired DOM tree as well, of mqtt-project / mqtt-node / mqtt-group elements.
-   * That was the old node/group UI; it is gone, and the cards build their display from this tree
-   * instead - which is what the wrapper's `headless` attribute used to ask for.
+   * Creates the MqttTopicProject - the data tree for one project, and nothing else. Pages build
+   * their own display from it.
    */
   addProject(discover) {
     const twig = `${this.state.organization}/${this.state.project}`;
     const mt = new MqttTopicProject();
-    mt.initialize({ type: "text", twig, headless: true });
+    mt.initialize({ type: "text", twig });
     mt.subscribe();
     this.state.elements["project"] = mt; // Store MqttTopicProject directly
     // So a page built around the wrapper knows a project now exists. topicschanged only fires once
@@ -3466,7 +3406,6 @@ export {
   DELETE,
   POST,
   RECEIVER_ATTRIBUTES,
-  Watchdog,
   XXX,
   addVocabulary,
   configSet,

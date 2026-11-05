@@ -49,7 +49,7 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
 
   connectedCallback() {
     super.connectedCallback();
-    // Every message fires this, in both the element and the headless paths, so it is the one signal
+    // Every message fires this, whether or not a widget is bound to the topic, so it is the one signal
     // a card needs. Filtered to this device below.
     document.addEventListener('frugaliot:groupchanged', this.onGroupChanged);
     // A device going quiet sends nothing, so nothing would re-render to show it - status and "4s
@@ -264,8 +264,8 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
   //
   // Each row is built from a resolved entry of nodeMt.frontRows, and the widgets are the ones the
   // rest of the client already uses. Deliberately NOT bound as mt.element: only one element can hold
-  // that at a time, so binding would mean this card fighting a graph, a second card, or the old UI
-  // for the same topic. The card pushes new values into its own children in refresh() instead.
+  // that at a time, so binding would mean this card fighting a graph or a second card for the
+  // same topic. The card pushes new values into its own children in refresh() instead.
   widgetFor(row, extra = {}) {
     const mt = row.mt;
     const common = {

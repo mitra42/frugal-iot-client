@@ -298,8 +298,8 @@ describe('back mode', () => {
   });
 
   test('the chooser shows what the topic is wired to, not "Unused"', () => {
-    // The "wired" attribute is only ever set on the element path, so a headless card read null and
-    // every chooser claimed to be unwired
+    // The "wired" attribute is set only on a widget registered as mt.element, which a card's are not,
+    // so reading it made every chooser claim to be unwired
     const { card, nodeMt } = cardFor('control-wired', 'esp8266-fb94bb', { mode: 'back', at: T0 });
     const now = card.querySelector('[topic$="controlhysteresis/now"]');
     const chooser = now.shadowRoot.querySelector('mqtt-choosetopic');
@@ -364,8 +364,7 @@ describe('back mode', () => {
   });
 
   test('every widget actually renders - a throw in render leaves one silently empty', () => {
-    // renderWiredName reached wiredTopic.node, the MqttNode element, which a headless page has
-    // none of. It threw inside connectedCallback, so the widget just came out blank.
+    // A throw inside connectedCallback leaves the widget blank rather than failing loudly.
     for (const mode of ['front', 'back']) {
       const { card } = cardFor('control-wired', 'esp8266-fb94bb', { mode, at: T0 });
       const empty = [...card.querySelectorAll('mqtt-text, mqtt-toggle, mqtt-bar, mqtt-choosetopic')]
@@ -470,6 +469,29 @@ describe('it updates in place as messages arrive', () => {
     const { card } = cardFor('one-device', 'esp8266-fb94bb', { at: T0 });
     card.remove();
     core.mqtt_deliver('dev/lotus/esp8266-fb94bb/sht/temperature', '99.9'); // must not throw
+  });
+});
+
+describe('a widget a dashboard binds as mt.element', () => {
+  test('still announces the group change, as the tree does when nothing is bound', () => {
+    // dashboard_example.html binds its sensor bar this way and re-wires on groupchanged
+    const { projectMt } = mock.runScenario('one-device', { at: T0 });
+    const mt = projectMt.nodes['esp8266-fb94bb'].groups.sht.topics.temperature;
+    const bar = document.createElement('mqtt-bar');
+    bar.setAttribute('topic', mt.topicPath);
+    bar.mt = mt;
+    mt.element = bar;
+    document.body.append(bar);
+    const heard = [];
+    const listen = (e) => heard.push(e.detail);
+    document.addEventListener('frugaliot:groupchanged', listen);
+    core.mqtt_deliver(mt.topicPath, '31.7');
+    document.removeEventListener('frugaliot:groupchanged', listen);
+    mt.element = null;
+    bar.remove();
+    assert.equal(heard.length, 1);
+    assert.equal(heard[0].nodeMt, mt.nodeMt);
+    assert.equal(heard[0].groupId, 'sht');
   });
 });
 

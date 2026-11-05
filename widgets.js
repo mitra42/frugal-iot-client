@@ -44,14 +44,6 @@ class MqttReceiver extends MqttElement {
   static get observedAttributes() { return [...RECEIVER_ATTRIBUTES]; }
   static get boolAttributes() { return ['graphable']; }
 
-  get isNode() { return false; } // Overridden in MqttNode
-  get node() {
-    return this.mt.node;
-  }
-  get groupElement() {
-    // Its also mt.node.state.groups[this.mt.group]
-    return this.parentElement;
-  }
   // Return the topic this is wired to or undefined
   get wiredTopic() {
     return this.mt.wiredTopic; // May be undefined
@@ -122,7 +114,6 @@ class MqttReceiver extends MqttElement {
 }
 
 // Return true if need to rerender
-  // Note overridden in MqttNode and MqttProject
   topicValueSet(topicPath, message) {
     if ([this.mt.topicPath, this.mt.topicSetPath, this.mt.wired].includes(topicPath)) {
       // Its trying to set our value
@@ -135,11 +126,10 @@ class MqttReceiver extends MqttElement {
       this.mt.data.push({value, time: now}); // Same format as graph dataset expects
       const leafAttr = leafAttribute(topicPath);
       const groupMt = this.mt.groupMt;
-      if (groupMt) groupMt.state[leafAttr] = value; // Mirror to data-tree group (headless-safe roll-up)
-      if (this.groupElement) this.groupElement.setAttribute(leafAttr, value); // DOM roll-up for element-based rendering
-      if (groupMt && this.mt.node?.mt) {
+      if (groupMt) groupMt.state[leafAttr] = value; // Mirror to data-tree group, so the roll-up needs no group element
+      if (groupMt && this.mt.nodeMt) {
         document.dispatchEvent(new CustomEvent('frugaliot:groupchanged', {
-          detail: { nodeMt: this.mt.node.mt, groupId: this.mt.group, groupMt, changed: [leafAttr] }
+          detail: { nodeMt: this.mt.nodeMt, groupId: this.mt.group, groupMt, changed: [leafAttr] }
         }));
       }
       return this.valueSet(value); // Subclassed for each element e.g. MqttText
@@ -150,11 +140,10 @@ class MqttReceiver extends MqttElement {
       this.parameterSet(parameter, message); // True if need to rerender
       const leafAttr = leafAttribute(topicPath);
       const groupMt = this.mt.groupMt;
-      if (groupMt) groupMt.state[leafAttr] = message; // Mirror to data-tree group (headless-safe roll-up)
-      if (this.groupElement) this.groupElement.setAttribute(leafAttr, message); // DOM roll-up for element-based rendering
-      if (groupMt && this.mt.node?.mt) {
+      if (groupMt) groupMt.state[leafAttr] = message; // Mirror to data-tree group, so the roll-up needs no group element
+      if (groupMt && this.mt.nodeMt) {
         document.dispatchEvent(new CustomEvent('frugaliot:groupchanged', {
-          detail: { nodeMt: this.mt.node.mt, groupId: this.mt.group, groupMt, changed: [leafAttr] }
+          detail: { nodeMt: this.mt.nodeMt, groupId: this.mt.group, groupMt, changed: [leafAttr] }
         }));
       }
       return false; // parameterSet will have rerendered if needed
@@ -173,7 +162,7 @@ class MqttReceiver extends MqttElement {
   valueSet(val) {
     // Note val can be of many types - it will be subclass dependent
     this.state.value = val;
-    if (this.mt) this.mt.state.value = val; // Mirror to data tree so wiredTopic.state.value works headlessly
+    if (this.mt) this.mt.state.value = val; // Mirror to data tree so wiredTopic.state.value works with no element
     return true; // Rerender by default - subclass will often return false
   }
   // Subclass "changeAttribute" to edit rendered elements and return true if do not want to rerender
@@ -190,10 +179,6 @@ class MqttReceiver extends MqttElement {
     } else {
       this.mt.parameterSet(parameter, message, this.typeOfAttribute(parameter)); // Ensure MqttTopic tracks same parameters
     }
-  }
-  get project() { // Note this will only work once the element is connected
-    // noinspection CssInvalidHtmlTagReference
-    return this.closest("mqtt-project");
   }
 
 // Event gets called when graph icon is clicked - asks topic to add a line to the graph
@@ -240,15 +225,14 @@ class MqttReceiver extends MqttElement {
   }
 
   renderWiredName() {
-    // fullName, not node.usableName - "node" is the MqttNode element, and there is not one on a
-    // headless page, so this threw and left the widget rendering nothing at all
+    // fullName, so the name says which device it is on
     let wiredTopicName = this.wiredTopic ? this.wiredTopic.fullName : undefined;
     return el('span', {class: 'wired', textContent: wiredTopicName})
   }
   renderDropdown() {
     // noinspection JSUnresolvedVariable
-    // mt.wired is the source of truth. The "wired" attribute is only set on the element path, so on
-    // a headless page the chooser showed "Unused" for a topic that was plainly wired.
+    // mt.wired is the source of truth. The "wired" attribute is set only on a widget registered as
+    // mt.element, which a card's widgets are not.
     // name comes from displayLabel so that a caller which labels the row itself (label="") does not
     // get the topic's name repeated inside the chooser.
     return el('mqtt-choosetopic', {name: this.displayLabel, type: this.mt.type,
@@ -329,7 +313,6 @@ class MqttTransmitter extends MqttReceiver {
   // TODO - make sure this doesn't get triggered by a message from server.
   get valueGet() { // Needs to return an integer or a string
     return this.state.value
-    // TODO could probably use a switch in MqttNode rather than overriding in each subclass
   } // Overridden for booleans
 
   publish() {
@@ -458,7 +441,6 @@ class MqttToggle extends MqttTransmitter {
     this.publish();
   }
   get textValue() {
-    // Note same code in MqttGroupControlHysteresis but no obvious common parent
     if (this.hasLabels) {
       return (this.state.value === undefined) ? '?' : (this.state.value ? this.state.trueLabel : this.state.falseLabel);
     }

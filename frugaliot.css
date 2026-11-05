@@ -66,46 +66,9 @@ div.mqtt-text {
             font-size: var(--fi-chrome-font, xx-large);
         }
     }
-    /* In MqttProject */
-    .mqtt-project {
-    { margin: 0.2em; }
-        .projectname {margin-right: 2em; }
-    }
-    /* In MqttNode */
-    .mqtt-node {
-    { border: 1px,black,solid;  margin: 0.2em; }
-        /*.name,.description,.nodeid,.projectname { margin-left: 1em; margin-right: 1em; }*/
-        /*.lastseen {margin-left: 1em; margin-right: 1em; float: right;} */
-        /*.batteryimg {height:17px;width:34px;float:right;}*/
-        @media (max-width: 1001px ) {
-            .name {
-                font-size: xxx-large;
-            }
-            .description, .nodeid, .projectname, .lastseen {
-                font-size: xx-large;
-            }
-        }
-    }
-    /* In the children of an mqtt-node */
-    mqtt-node {
-        details.group { border: 1px,black,solid; margin:1px }
-        @media (max-width:1001px){
-            details {font-size: x-large;}
-        }
-    }
-
-    .mqtt-group {
-        border: 1px, black, solid;
-        margin: 1px;
-        @media (max-width: 1001px) {
-            font-size: x-large;
-        }
-    }
-
-    div.offline {background-color: #888888;} /* Not INSIDE mqtt-node, it is the mqtt-node */
     /* In MqttBar */
     .mqtt-bar {
-        .bar {border: 1px,black,solid; background-color: white;margin: 0px;}
+        .bar {border: 1px solid black; background-color: white;margin: 0px;}
         .left {display:inline-block; text-align: right;}
         .right {background-color:white; display:inline-block;}
         .val {margin:5px;}
@@ -118,7 +81,7 @@ div.mqtt-text {
 
     /* In MqttChoosetopic */
     .mqtt-choosetopic {
-        .outer { border: 0px,black,solid;  margin: 0.2em; }
+        .outer { border: 0;  margin: 0.2em; }
         @media (max-width:1001px){
             .dropdown {font-size: var(--fi-chrome-font, x-large);}
             select { font-size: var(--fi-chrome-font, x-large);}
@@ -163,7 +126,6 @@ div.mqtt-text {
     }
     /* In MqttGraph */
     /* In MqttWrapper */
-    /*Not useful: .mqtt-wrapper {border: 1px,black,solid;  margin: 0.2em; } */
     mqtt-wrapper,  .mqtt-admin {
         .dropdown {
             display: flex; align-items: center; gap: 8px; margin-bottom: 8px;

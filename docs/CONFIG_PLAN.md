@@ -1,5 +1,12 @@
 # Plan: Configure a node from the browser over USB
 
+## Status
+
+**Complete.** Phases 1 and 2 were released in 2.0.8 and tested on real boards during the
+`FLASH_PLAN.md` work, ESP8266 included, which covers phase 4. Phase 3 (`~fields`) is dropped: the
+fixed form is enough. Both open questions are resolved. One small gap remains: no test has the fake
+node restart mid-Apply.
+
 ## Goal
 
 After a board is flashed (or any time it is plugged in), let the user set its WiFi, project, name and
@@ -113,7 +120,7 @@ so a freshly flashed board is awake long enough to be configured. Serial activit
 `lastActivityMs` so a config session is not cut off. A board on native USB loses the port when it
 sleeps; the monitor already reconnects.
 
-### 4. Describing the fields (later)
+### 4. Describing the fields (dropped — the fixed form is enough)
 
 The portal page is HTML built by `addString` / `addNumber` / `addBool`; nothing machine-readable lists
 what is settable. First cut: the client hard-codes the few first-boot fields (below). Better: make
@@ -164,8 +171,8 @@ All in `flash.js` - it already owns the port and the monitor.
 |---|---|---|
 | 1 | `~hello`, `~set`, `~ok/~err` (codes), `~status` over serial, regardless of `ANY_DEBUG`; settable `org` and `enrol_secret` | yes |
 | 2 | Monitor line-buffering, `monitorSend`, profile editor and Apply, enrolment secret fetch | no |
-| 3 | `~fields?` so the form is generated from the node | yes + client |
-| 4 | *(optional)* serial reconfigure for ESP8266 (no native USB, UART bridge baud matters) | check |
+| ~~3~~ | ~~`~fields?` so the form is generated from the node~~ — dropped, the fixed form is enough | — |
+| 4 | *(optional)* serial reconfigure for ESP8266 (no native USB, UART bridge baud matters) — works | check |
 
 ## As built (branch `flashconfig`, all three repos)
 
@@ -199,8 +206,8 @@ Where the build departs from the text above, this is what is true:
 - **Server:** `GET /enrolment_secret/:org` now accepts ADMIN or OTAFLASH (`can_ADMIN_or_OTAFLASH`).
   No test was added - the route is inline in `frugal-iot-server.js` and has none today.
 
-Still to do: a run on real C3 and ESP8266 boards, the `~fields` form (phase 3), and a
-`mqtt-flash` test for the node restarting mid-Apply (the fake node never restarts).
+Since run on real boards, ESP8266 included. Still to do: a `mqtt-flash` test for the node
+restarting mid-Apply (the fake node never restarts).
 
 ## Decisions
 
@@ -218,8 +225,7 @@ Still to do: a run on real C3 and ESP8266 boards, the `~fields` form (phase 3), 
 
 ## Open questions
 
-- **UART-bridge boards** (CH340): baud must match the firmware's, so the Monitor speed selector and
-  Configure share one setting. Untested.
-- **Changing `org` on a node that already enrolled elsewhere**: its stored credential is for the old
-  org/project. `project` change already clears it for that reason (frugal.cpp ~103); `org` should
-  do the same.
+- ~~**UART-bridge boards** (CH340)~~ — resolved: configured an ESP8266 over its bridge while testing
+  `FLASH_PLAN.md`.
+- ~~**Changing `org` on a node that already enrolled elsewhere**~~ — resolved: `org` clears the
+  stored credential as `project` does (frugal.cpp ~99).
