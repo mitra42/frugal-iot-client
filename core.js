@@ -397,6 +397,9 @@ const languageIndex = {
 // Vocabulary by language code: the one in use, and whatever a dashboard adds with addVocabulary.
 const languages = {};
 
+function browserLanguages() {
+  return (navigator.languages && navigator.languages.length) ? [...navigator.languages] : [navigator.language].filter(Boolean);
+}
 // A code from ?lang= or a browser, as the index has it: exact first, then just the language, so
 // fr-CA finds fr. Null when the index has neither.
 function languageMatch(code) {
@@ -406,9 +409,19 @@ function languageMatch(code) {
   const primary = c.split('-')[0];
   return languageIndex[primary] ? primary : null;
 }
+// The picker's choice, so it survives a link without ?lang=. A convenience only: localStorage throws
+// in some private modes, and losing it just falls back to the browser's languages.
+const LanguageKey = 'frugaliot:language';
+function storedLanguage() {
+  try { return localStorage.getItem(LanguageKey); } catch (e) { return null; }
+}
 // Fixed for the life of the page - its file has to be loaded before anything renders, so a change
-// reloads with a new ?lang=. A legacy list (?lang=FR,EN) takes its first.
-const language = languageMatch((new URL(window.location.href).searchParams.get('lang') || '').split(',')[0]) || 'en';
+// reloads with a new ?lang=. That comes first, then the picker's last choice, then the browser's own
+// preferences in order; a legacy list (?lang=FR,EN) takes its first.
+const language = languageMatch((new URL(window.location.href).searchParams.get('lang') || '').split(',')[0])
+  || languageMatch(storedLanguage())
+  || browserLanguages().map(languageMatch).find(Boolean)
+  || 'en';
 document.documentElement.lang = language;
 function addVocabulary(langs) {
   // Accepts an object e.g. { FR: { word: 'mot' } }, or a YAML string in the same format. Merges into
@@ -553,6 +566,7 @@ class LanguagePicker extends HTMLElementExtended {
   static get boolAttributes() { return ['compact']; }
 
   onchange(ev) {
+    try { localStorage.setItem(LanguageKey, ev.target.value); } catch (e) { XXX(`language save: ${e.message}`); }
     locationParameterChange("lang", ev.target.value);
   }
   labelFor({name, flag}) {
@@ -2034,6 +2048,7 @@ export {
   getString,
   getStringWith,
   isEditableTarget,
+  browserLanguages,
   language,
   languageIndex,
   languageMatch,

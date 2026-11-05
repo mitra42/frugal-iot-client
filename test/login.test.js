@@ -26,7 +26,7 @@ describe('modes', () => {
   test('defaults to sign in', () => {
     const el = login();
     assert.equal(form(el).getAttribute('action'), '/login');
-    assert.deepEqual(names(el), ['username', 'password', 'url']);
+    assert.deepEqual(names(el), ['username', 'password', 'url', 'browserlangs']);
   });
   test('mode=register posts to /register and asks for the extra fields', () => {
     const el = login({ mode: 'register' });

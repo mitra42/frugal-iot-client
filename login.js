@@ -9,7 +9,7 @@
  */
 
 import { HTMLElementExtendedMinimum } from '/node_modules/html-element-extended/htmlelementextended.js';
-import { el, getString, language } from './core.js';
+import { browserLanguages, el, getString, language } from './core.js';
 
 // One card, four modes (CARDS_UX.md D-45). "register" is still accepted as an attribute because
 // the server's redirects have been sending ?register=true|false since before there were modes.
@@ -93,6 +93,8 @@ class MqttLogin extends HTMLElementExtendedMinimum { // TODO-89 may depend on or
           { autocomplete: "username", required: true, autofocus: true }),
         this.field("password", 'Password', { type: "password", autocomplete: "current-password", required: true }),
         this.hiddenUrl(),
+        // Counted by the server, unsupported ones included, to show which languages to add next
+        el('input', { name: "browserlangs", type: "hidden", value: browserLanguages().join(',') }),
         el('button', { class: "fi-login__submit", type: "submit", textContent: 'Sign in' }),
       ]),
       el('div', { class: 'fi-login__links' }, [

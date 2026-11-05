@@ -2,7 +2,14 @@
 
 ## Status
 
-**Phases 1 and 2 built**, branch `language` in the client and the server. Phases 3 and 4 not started.
+**Phases 1, 2 and 3 built**, branch `language` in the client and the server. Phase 4 not started.
+
+Phase 3 as built: `?lang=`, then the picker's last choice (`localStorage`, key `frugaliot:language`,
+written only by the picker), then `navigator.languages`, then `en`. Sign-in sends `browserlangs`;
+the server counts it in `language_requests` (`lib/language-requests.js`) once the password is
+accepted, so failed attempts do not pad it, and decides "supported" from the client's
+`languages/*.yaml`. `loginRedirect` and the failed-sign-in redirect now carry `lang` from the return
+url. Read the counts with `SELECT * FROM language_requests ORDER BY supported, count DESC;`
 
 - One `language`, fixed from `?lang=` when `core.js` loads; `preferedLanguages`, `preferedLanguageSet`
   and the `lang` attribute on `mqtt-wrapper`, `mqtt-admin` and `mqtt-login` are gone. The plan's
@@ -116,6 +123,11 @@ falls back to the browser's language.
 - Reading it is an SQL query at first. A section in `mqtt-admin` can come later.
 - Server work is in `frugal-iot-server`: the login handler, the table in `frugal-iot-createdb.sql`,
   and the redirect.
+- "Supported" can be decided on the server by whether `languages/<code>.yaml` exists in `htmldir`
+  (or the code is `en`), so the server keeps no list of its own.
+- A failed sign-in redirects to `login.html` with the language only inside `url`, so the login page
+  comes back in the browser's language rather than one picked with the picker. The failure redirect
+  should carry `lang` at the top level too, taken from the `lang` in `req.body.url`.
 
 ## Phase 4 — more languages
 

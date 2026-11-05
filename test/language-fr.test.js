@@ -6,8 +6,10 @@ import assert from 'node:assert/strict';
 
 let core;
 before(async () => {
-  // A legacy list, in the old upper case - still sent by the server and by old links
+  // A legacy list, in the old upper case - still sent by the server and by old links. The browser
+  // prefers Indonesian, which ?lang= overrides.
   dom.reconfigure({ url: 'https://localhost:8080/dashboard/?lang=FR,EN' });
+  Object.defineProperty(navigator, 'languages', { value: ['id-ID'], configurable: true });
   core = await import('../core.js');
 });
 
