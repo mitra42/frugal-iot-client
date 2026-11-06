@@ -358,3 +358,64 @@ describe('last seen, taken from config.json', () => {
     tidy();
   });
 });
+
+// What the map reads: MAPPING_PLAN.md M-2 (the payload) and M-3 (GPS against a set location)
+describe('location', () => {
+  const locationAfter = (payload) => {
+    const { projectMt } = mock.runScenario('one-device');
+    mock.deliver('dev/lotus/esp8266-fb94bb/frugal_iot/location', payload);
+    return projectMt.nodes['esp8266-fb94bb'].location;
+  };
+
+  test('a set location is parsed from one "lat,lon" payload', () => {
+    assert.deepEqual(locationAfter('-6.208800,106.845600'), { lat: -6.2088, lon: 106.8456, source: 'set' });
+  });
+
+  test('spaces around the comma are allowed', () => {
+    assert.deepEqual(locationAfter(' -6.2088 , 106.8456 '), { lat: -6.2088, lon: 106.8456, source: 'set' });
+  });
+
+  test('empty, malformed and out-of-range payloads are no location', () => {
+    for (const payload of ['', '-6.2088', '-6.2088,', ',106.8', 'here', '1,2,3', '91,0', '0,181']) {
+      assert.equal(locationAfter(payload), null, `"${payload}"`);
+    }
+  });
+
+  test('a device that has never been given one has none', () => {
+    const { projectMt } = mock.runScenario('one-device');
+    assert.equal(projectMt.nodes['esp8266-fb94bb'].location, null);
+  });
+
+  test('a GPS with a fix wins over a set location', () => {
+    const { projectMt } = mock.runScenario('located-devices');
+    assert.deepEqual(projectMt.nodes['esp32-tractor'].location, { lat: -6.215, lon: 106.842, source: 'gps' });
+  });
+
+  test('a GPS with no fix falls back to the set location', () => {
+    const { projectMt } = mock.runScenario('located-devices');
+    assert.deepEqual(projectMt.nodes['esp32-shed'].location, { lat: -6.2105, lon: 106.847, source: 'set' });
+  });
+
+  test('locatedNodes leaves out a device with no location', () => {
+    const { projectMt } = mock.runScenario('located-devices');
+    const ids = projectMt.locatedNodes.map((n) => n.nodeId).sort();
+    assert.deepEqual(ids, ['esp32-shed', 'esp32-tractor', 'esp8266-farfield', 'esp8266-north', 'esp8266-pump', 'esp8266-south']);
+  });
+
+  test('an offline device keeps its pin', () => {
+    const { projectMt } = mock.runScenario('located-devices');
+    const farMt = projectMt.nodes['esp8266-farfield'];
+    assert.equal(farMt.status, 'offline');
+    assert.ok(projectMt.locatedNodes.includes(farMt));
+  });
+
+  test('locationBounds spans every located device', () => {
+    const { projectMt } = mock.runScenario('located-devices');
+    assert.deepEqual(projectMt.locationBounds, { south: -6.22, west: 106.842, north: -6.2088, east: 106.86 });
+  });
+
+  test('locationBounds is null when nothing is located', () => {
+    const { projectMt } = mock.runScenario('one-device');
+    assert.equal(projectMt.locationBounds, null);
+  });
+});

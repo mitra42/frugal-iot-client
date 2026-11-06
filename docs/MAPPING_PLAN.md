@@ -3,7 +3,7 @@
 ## Status
 
 Plan agreed 2026-11-06. Phase 1 (firmware) built and compiling, not yet run on a board; it goes
-into the next release. Decisions are numbered M-n so they can be argued here rather than
+into the next release. Phase 2 (schema, data tree, `located-devices` mock scenario) built and tested. Decisions are numbered M-n so they can be argued here rather than
 re-decided in code; open questions are Q-n, deferred work is ML-n.
 
 ## Goal
@@ -142,6 +142,11 @@ reasoning as D-11 for graphs). In pick mode:
 - **I'm here** puts it at the browser's position — the installer standing beside the device
 - **Save** publishes `set/frugal_iot/location`, **Cancel** puts it back, **Clear** publishes empty
 - other devices' pins stay visible, so "between the two greenhouses" can be placed by eye
+
+**"Pending" cannot be read off the value.** The browser subscribes to `<node>/#`, so it receives its
+own `set/frugal_iot/location`, and `MqttTopicNode.topicValueSet` strips `set/` and routes it to the same
+topic as the node's echo. The value changes the moment Save is pressed. Pending has to be "sent, and
+no echo on the read path since" — tracked by the read path, not the value.
 
 **M-10 Where pick mode starts:** the device's current location → else the project's other pins →
 else the browser's position → else zoomed out. The other pins come before the browser's position

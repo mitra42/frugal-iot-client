@@ -1332,6 +1332,32 @@ class MqttTopicProject extends MqttTopic {
     document.dispatchEvent(new CustomEvent('frugaliot:topicschanged', { detail: { project: this } }));
     return mt;
   }
+  get locatedNodes() {
+    return Object.values(this.nodes).filter((nodeMt) => nodeMt.location);
+  }
+  // { south, west, north, east } around every located node, for fitting a map; null if none
+  get locationBounds() {
+    const locations = this.locatedNodes.map((nodeMt) => nodeMt.location);
+    if (!locations.length) return null;
+    const lats = locations.map((l) => l.lat);
+    const lons = locations.map((l) => l.lon);
+    return { south: Math.min(...lats), west: Math.min(...lons), north: Math.max(...lats), east: Math.max(...lons) };
+  }
+}
+
+// null for anything that is not a real coordinate, so a half-typed or garbled value draws no pin
+function validLocation(lat, lon) {
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  if ((Math.abs(lat) > 90) || (Math.abs(lon) > 180)) return null;
+  return { lat, lon };
+}
+// "lat,lon" as frugal_iot/location carries it - one payload, so a pin never moves half-way (M-2)
+function parseLocation(text) {
+  if ((typeof text !== 'string') || !text.trim()) return null;
+  const parts = text.split(',');
+  if (parts.length !== 2) return null;
+  const [lat, lon] = parts.map((p) => (p.trim() === '' ? NaN : Number(p)));
+  return validLocation(lat, lon);
 }
 
 // Node-level data node in the topic tree. Routes incoming MQTT messages to the correct leaf MqttTopic.
@@ -1496,6 +1522,19 @@ class MqttTopicNode extends MqttTopic {
   get otaKey() {
     const ota = this.groups.ota;
     return ota && ota.topics.key && ota.topics.key.state.value;
+  }
+  // { lat, lon, source } or null. A GPS with a fix wins over a location someone set, because a device
+  // that moves should be shown where it is - see MAPPING_PLAN.md M-3.
+  get location() {
+    const gps = this.groups.gps;
+    const value = (leaf) => gps && gps.topics[leaf] && gps.topics[leaf].state.value;
+    if (value('satellites') > 0) {
+      const fix = validLocation(value('latitude'), value('longitude'));
+      if (fix) return { ...fix, source: 'gps' };
+    }
+    const fi = this.groups.frugal_iot;
+    const set = parseLocation(fi && fi.topics.location && fi.topics.location.state.value);
+    return set && { ...set, source: 'set' };
   }
   // The devices.yaml entry: this device's own id first, then its exact OTA key, then the longest
   // key the OTA key starts with - see CARDS_UX.md 4.6.

@@ -376,7 +376,39 @@
      {
       "leaf": "hysteresis",
       "leaf_from": "controlfloat",
-      "name": "Hysteresis",
+      "name": "Hysterisis",
+      "max": 100,
+      "wireable": false
+     },
+     {
+      "leaf": "out",
+      "leaf_from": "controlouttoggle",
+      "name": "Out"
+     }
+    ]
+   },
+   "controlhysterisis": {
+    "name": "Control",
+    "topics": [
+     {
+      "leaf": "now",
+      "leaf_from": "controlfloat",
+      "name": "Now"
+     },
+     {
+      "leaf": "greater",
+      "leaf_from": "controlintoggle",
+      "name": "Greater Than"
+     },
+     {
+      "leaf": "limit",
+      "leaf_from": "controlfloat",
+      "name": "Limit"
+     },
+     {
+      "leaf": "hysterisis",
+      "leaf_from": "controlfloat",
+      "name": "Hysterisis",
       "max": 100,
       "wireable": false
      },
@@ -482,6 +514,9 @@
       "leaf": "description"
      },
      {
+      "leaf": "location"
+     },
+     {
       "leaf": "lastseen"
      }
     ]
@@ -557,6 +592,20 @@
       "name": "Heatsink Temperature",
       "min": 0,
       "max": 120
+     }
+    ]
+   },
+   "hm3301": {
+    "name": "HM3301",
+    "topics": [
+     {
+      "leaf": "pm1"
+     },
+     {
+      "leaf": "pm25"
+     },
+     {
+      "leaf": "pm10"
      }
     ]
    },
@@ -923,6 +972,17 @@
       "leaf": "valve",
       "leaf_from": "controlouttoggle",
       "name": "Valve"
+     }
+    ]
+   },
+   "sds011": {
+    "name": "SDS011",
+    "topics": [
+     {
+      "leaf": "pm25"
+     },
+     {
+      "leaf": "pm10"
      }
     ]
    },
@@ -1465,6 +1525,16 @@
     "calibrate": true,
     "graphable": true
    },
+   "location": {
+    "leaf": "location",
+    "slot": "location",
+    "name": "Location",
+    "type": "text",
+    "log": false,
+    "display": "text",
+    "rw": "w",
+    "retain": true
+   },
    "longitude": {
     "leaf": "longitude",
     "name": "Longitude",
@@ -1614,6 +1684,60 @@
     },
     "graphable": true,
     "units": "%"
+   },
+   "pm1": {
+    "leaf": "pm1",
+    "name": "PM1.0",
+    "type": "float",
+    "display": "bar",
+    "min": 0,
+    "max": 100,
+    "width": 5,
+    "color": "#d2691e",
+    "units": "ug/m3",
+    "rw": "r",
+    "graphable": true,
+    "log": true,
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 1
+    }
+   },
+   "pm10": {
+    "leaf": "pm10",
+    "name": "PM10",
+    "type": "float",
+    "display": "bar",
+    "min": 0,
+    "max": 200,
+    "width": 5,
+    "color": "#696969",
+    "units": "ug/m3",
+    "rw": "r",
+    "graphable": true,
+    "log": true,
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 1
+    }
+   },
+   "pm25": {
+    "leaf": "pm25",
+    "name": "PM2.5",
+    "type": "float",
+    "display": "bar",
+    "min": 0,
+    "max": 100,
+    "width": 5,
+    "color": "#a0522d",
+    "units": "ug/m3",
+    "rw": "r",
+    "graphable": true,
+    "log": true,
+    "duplicates": {
+     "significantdate": 900000,
+     "significantvalue": 1
+    }
    },
    "position": {
     "leaf": "position",

@@ -182,6 +182,32 @@ export const scenarios = {
     },
   },
 
+  'located-devices': {
+    // For the map: two pins close enough to cluster, a GPS that overrides a set location, a GPS that
+    // has lost its fix and so falls back to one, an offline device, and one with no location at all.
+    // Timed relative to when it runs, so the offline one is offline in a browser as well as in a test.
+    title: 'Devices with locations, for the map',
+    messages: () => {
+      const now = Date.now();
+      const at = (when, msgs) => msgs.map(([topic, payload]) => [topic, payload, when]);
+      const located = (id, name, location, twigs = {}) =>
+        device(id, name, { 'frugal_iot/location': location, ...SHT, ...twigs });
+      return [
+        ...at(now - (6 * 3600 * 1000), located('esp8266-farfield', 'Far Field', '-6.220000,106.860000')),
+        ...at(now, [
+          ...located('esp8266-north', 'Greenhouse North', '-6.208800,106.845600'),
+          ...located('esp8266-south', 'Greenhouse South', '-6.208850,106.845650'),
+          ...located('esp8266-pump', 'Pump House', '-6.212000,106.850000', { 'relay/on': 'true' }),
+          ...located('esp32-tractor', 'Tractor', '-6.200000,106.800000', {
+            'gps/latitude': '-6.215000', 'gps/longitude': '106.842000', 'gps/satellites': '7' }),
+          ...located('esp32-shed', 'Shed (no GPS fix)', '-6.210500,106.847000', {
+            'gps/latitude': '0', 'gps/longitude': '0', 'gps/satellites': '0' }),
+          ...device('esp8266-workbench', 'Workbench', SHT),
+        ]),
+      ];
+    },
+  },
+
   'every-device': {
     // One device per devices.yaml entry, each announcing that entry's OTA key, so every configured
     // card layout can be seen at once. Built when it runs, since it reads the schema.
