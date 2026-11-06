@@ -56,7 +56,14 @@
   import { scenarios, loadConfig, runScenario, messagesOf } from './mock.js';
   import { snapshot } from './serialize.js';
   import '../cards.js';
-  import { el } from '../core.js';
+  import { el, mqtt_deliver, setMqttClient } from '../core.js';
+
+  // No broker, so act as one: a publish comes back to us as the broker would send it. No node
+  // answers on the read path, so a location saved here moves its pin and stays Pending.
+  setMqttClient({ connected: false, publish: (topic, payload) => {
+    console.log('mock publish', topic, payload);
+    setTimeout(() => mqtt_deliver(topic, payload), 0);
+  } });
 
   // The fixture is generated from the real server schema - see fixtures/regenerate.js
   const config = await (await fetch('./fixtures/config.json')).json();
@@ -66,7 +73,12 @@
   Object.entries(scenarios).forEach(([key, s]) =>
     picker.append(Object.assign(document.createElement('option'), { value: key, textContent: s.title })));
 
+  // Replaced on every run, so a pick only ever reaches the map on screen
+  let onLocationPick = null;
+  document.addEventListener('frugaliot:locationpick', (e) => onLocationPick && onLocationPick(e));
+
   function run() {
+    onLocationPick = null;
     const name = picker.value;
     const view = document.getElementById('view').value;
     const stage = document.getElementById('stage');
@@ -92,6 +104,11 @@
         stage.append(mapEl);
         mapEl.setProject(projectMt);
         mapEl.open();
+        // What mqtt-dashboard does with a card's 📍
+        onLocationPick = (e) => {
+          const nodeMt = projectMt.nodes[e.detail.nodeId];
+          if (nodeMt) mapEl.pick(nodeMt);
+        };
       }
       stage.append(grid);
     }

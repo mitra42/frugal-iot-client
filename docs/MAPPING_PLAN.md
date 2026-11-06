@@ -4,7 +4,8 @@
 
 Plan agreed 2026-11-06. Phase 1 (firmware) built and compiling, not yet run on a board; it goes
 into the next release. Phase 2 (schema, data tree, `located-devices` mock scenario) built and tested. Phase 3 (the
-read-only map) built and tested in jsdom; not yet looked at in a browser. Decisions are numbered M-n so they can be argued here rather than
+read-only map) built, tested in jsdom, and looked at in a browser. Phase 4 (pick mode) built and tested in
+jsdom; not yet looked at in a browser, and not yet round-tripped through a node. Decisions are numbered M-n so they can be argued here rather than
 re-decided in code; open questions are Q-n, deferred work is ML-n.
 
 ## Goal
@@ -113,9 +114,11 @@ separate from the card layout's, because the grid caches its layout and would wr
 On a phone it is the same docked panel. The graph panel turned out not to be a sheet either.
 
 - Button: 🗺 in the project header beside the gear, shown only when the map has something to do:
-  at least one located device, or WRITE (so there is something to set). *Phase 3:* located devices
-  only, since there is nothing to set yet. The panel is hidden with its button, so a map remembered
-  open is never left on screen with no way to close it.
+  at least one located device, or WRITE (so there is something to set). *As built:* located devices
+  only, not WRITE. Setting starts from a card's 📍, never from the header, so an empty map behind the
+  button would have nothing to do. The panel is hidden with its button, so a map remembered open is
+  never left on screen with no way to close it. While picking it is shown regardless, since pick
+  mode has its own Cancel.
 - Opens fitted to `locationBounds`; one device → a fixed zoom on it.
 
 **M-8 Pins.**
@@ -154,6 +157,13 @@ reasoning as D-11 for graphs). In pick mode:
 own `set/frugal_iot/location`, and `MqttTopicNode.topicValueSet` strips `set/` and routes it to the same
 topic as the node's echo. The value changes the moment Save is pressed. Pending has to be "sent, and
 no echo on the read path since" — tracked by the read path, not the value.
+
+*As built:* `MqttTopic.publish` stamps `sentAt` and any message on the topic's read path clears it, so
+`mt.pending` works for any topic, not only this one. `publish` also fires `frugaliot:groupchanged`, or
+the card would not show Pending until something came back. The 📍 stays while Pending, since a
+node may be asleep for hours and a mis-placed pin should not wait for it. When the pick ends, the
+dashboard sends `frugaliot:cardopen` to return to the card, and the map closes again if it was
+closed before. Escape cancels. The pin being placed is a bullseye, unlike any status.
 
 **M-10 Where pick mode starts:** the device's current location → else the project's other pins →
 else the browser's position → else zoomed out. The other pins come before the browser's position
@@ -209,6 +219,14 @@ own controls are icons, and its attribution stays as the provider wrote it.
 | ML-4 | **Card ↔ pin highlighting** | Hovering a card lights its pin. Nice, not needed to be useful |
 | ML-5 | **Shapes** — fields, beds, a greenhouse outline | A different data model (a polygon per project, not a point per device) |
 | ML-6 | **Values on the map** — pins coloured by a reading (soil moisture across a field) | The most interesting one, and needs a choice of reading and scale; wait until there are real deployments with several located sensors |
+
+## Questions — open
+
+- **Q-5** Should a `set/` be retained? `MqttTopic`'s constructor says not, so a set is not replayed
+  at every subscribe, but `initialize()` copies the schema's `retain: true` over it. So
+  `description`, `location` and six other topics already publish their sets retained. For a location
+  that means a page loaded after a Save shows the new value even if the node never took it, with no
+  Pending to say so. `location` follows `description` until this is decided for all of them.
 
 ## Questions — resolved 2026-11-06
 

@@ -129,6 +129,7 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
     if (e.meta) e.meta.replaceChildren(...this.renderMeta());
     if (e.chips) e.chips.replaceChildren(...this.renderChips());
     if (e.footer) e.footer.replaceChildren(...this.footerContent());
+    if (e.location) e.location.replaceChildren(...this.locationContent());
     // Push values into the widgets rather than letting them subscribe, so nothing competes for
     // mt.element - see widgetFor
     (e.widgets || []).forEach(({ row, widget }) => {
@@ -363,12 +364,38 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
     return this.section('Device', [
       fi && fi.topics.name ? this.field('Name', this.widgetForTopic(fi.topics.name, '')) : null,
       fi && fi.topics.description ? this.field('Description', this.widgetForTopic(fi.topics.description, '')) : null,
+      (nodeMt.locationMt || nodeMt.location)
+        ? this.field('Location', this.state.elements.location = el('span', { class: 'fi-location' }, this.locationContent()))
+        : null,
       this.field('Node ID', nodeMt.nodeId),
       this.field('Last seen', this.ageText),
       battery ? this.field('Battery', `${battery.mt.formatted} (${battery.percent}%)`) : null,
       wifi ? this.field('WiFi', wifi) : null,
       ota && ota.topics.key ? this.field('OTA Key', ota.topics.key.state.value) : null,
     ]);
+  }
+
+  // Set on the project's map rather than in the card: a map would fight the flip's fixed box (M-9).
+  // GPS has no 📍 - a device that locates itself would only move the pin back (M-3).
+  locationContent() {
+    const nodeMt = this.nodeMt;
+    const loc = nodeMt.location;
+    const locationMt = nodeMt.locationMt;
+    const gps = loc && (loc.source === 'gps');
+    return [
+      loc ? el('span', { i8n: false, textContent: `${loc.lat.toFixed(5)}, ${loc.lon.toFixed(5)}` })
+        : el('span', { class: 'fi-location__none', textContent: 'Not set' }),
+      gps ? el('span', { class: 'fi-location__note', textContent: 'From GPS' })
+        : (locationMt && locationMt.pending) ? el('span', { class: 'fi-location__note', textContent: 'Pending' })
+        : null,
+      (!gps && locationMt && locationMt.canWrite) ? el('button', {
+        class: 'fi-btn fi-location__pick', type: 'button', title: 'Set location', textContent: '📍',
+        onclick: (e) => {
+          e.stopPropagation();
+          document.dispatchEvent(new CustomEvent('frugaliot:locationpick', { detail: { nodeId: nodeMt.nodeId } }));
+        },
+      }) : null,
+    ].filter(Boolean);
   }
 
   // The compact form from dashboard_example: [>] [32.0] ± [3.0], rather than a labelled row each
@@ -866,11 +893,13 @@ class MqttDashboard extends HTMLElementExtendedMinimum {
     this.onProjectChanged = this.onProjectChanged.bind(this);
     this.onOrganizationChanged = this.onOrganizationChanged.bind(this);
     this.onGroupChanged = this.onGroupChanged.bind(this);
+    this.onLocationPick = this.onLocationPick.bind(this);
   }
   connectedCallback() {
     super.connectedCallback();
     // A location arriving changes no topic list, so topicschanged never says the map now has a pin
     document.addEventListener('frugaliot:groupchanged', this.onGroupChanged);
+    document.addEventListener('frugaliot:locationpick', this.onLocationPick);
     document.addEventListener('frugaliot:projectchanged', this.onProjectChanged);
     document.addEventListener('frugaliot:topicschanged', this.onProjectChanged);
     document.addEventListener('frugaliot:organizationchanged', this.onOrganizationChanged);
@@ -886,6 +915,7 @@ class MqttDashboard extends HTMLElementExtendedMinimum {
   }
   disconnectedCallback() {
     document.removeEventListener('frugaliot:groupchanged', this.onGroupChanged);
+    document.removeEventListener('frugaliot:locationpick', this.onLocationPick);
     document.removeEventListener('frugaliot:projectchanged', this.onProjectChanged);
     document.removeEventListener('frugaliot:topicschanged', this.onProjectChanged);
     document.removeEventListener('frugaliot:organizationchanged', this.onOrganizationChanged);
@@ -911,6 +941,18 @@ class MqttDashboard extends HTMLElementExtendedMinimum {
   onGroupChanged(e) {
     const groupId = (e.detail && e.detail.groupId) || '';
     if ((groupId === 'frugal_iot') || groupId.startsWith('gps')) this.refreshMap();
+  }
+  // From a card's 📍, and back to that card when it is done
+  onLocationPick(e) {
+    const map = this.state.elements.map;
+    const nodeMt = this.projectMt && e.detail && this.projectMt.nodes[e.detail.nodeId];
+    if (!map || !nodeMt) return;
+    map.pick(nodeMt, () => {
+      this.refreshMap();
+      document.dispatchEvent(new CustomEvent('frugaliot:cardopen', { detail: { nodeId: nodeMt.nodeId } }));
+    });
+    this.refreshMap();
+    if (map.scrollIntoView) map.scrollIntoView({ behavior: 'smooth', block: 'start' }); // jsdom has none
   }
 
   get projectMt() { return this.state.projectMt; }
@@ -964,12 +1006,14 @@ class MqttDashboard extends HTMLElementExtendedMinimum {
     this.refreshMap();
   }
 
-  // The map belongs to the front, and is offered only once there is something to put on it
+  // The map belongs to the front, and is offered only once there is something to put on it. Picking
+  // the first location of all is something too: the map then has Cancel, so it is never stranded.
   refreshMap() {
     const e = this.state.elements;
     if (!e.map) return;
     e.map.setProject(this.projectMt || null);
-    const offered = (this.state.mode !== 'back') && this.projectMt && (this.projectMt.locatedNodes.length > 0);
+    const offered = (this.state.mode !== 'back') && this.projectMt
+      && ((this.projectMt.locatedNodes.length > 0) || e.map.isPicking);
     // Shown with its button or not at all: a map remembered open, with nothing on it yet, has no way to close
     e.map.style.display = offered ? '' : 'none';
     if (!!e.mapButton.firstChild === !!offered) return;

@@ -8,7 +8,7 @@
  * Light DOM, so leaflet.css on the page reaches the map's own markup.
  */
 import { HTMLElementExtendedMinimum } from '/node_modules/html-element-extended/htmlelementextended.js';
-import { el, server_config, XXX } from './core.js';
+import { el, locationPayload, server_config, XXX } from './core.js';
 
 const LEAFLET_SCRIPTS = [
   '/node_modules/leaflet/dist/leaflet.js',
@@ -73,6 +73,18 @@ function mapPrefsSave(projectMt, prefs) {
   } catch (e) { /* the map still works, it just forgets */ }
 }
 
+// Geolocation exists only in a secure context, so an offline Pi on plain HTTP hides "I'm here"
+// rather than offering a button that fails
+function canLocate() {
+  return !!(window.isSecureContext && navigator.geolocation);
+}
+function locate(cb) {
+  navigator.geolocation.getCurrentPosition(
+    (p) => cb(null, { lat: p.coords.latitude, lon: p.coords.longitude }),
+    (err) => cb(err),
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+}
+
 // Classic scripts in order, once per page, however many maps ask. cb(err)
 let leafletState = null;  // null | 'loading' | 'loaded' | Error
 const leafletWaiting = [];
@@ -107,6 +119,8 @@ class MqttMap extends HTMLElementExtendedMinimum {
     this.onTopicsChanged = this.onTopicsChanged.bind(this);
     this.onHandleDown = this.onHandleDown.bind(this);
     this.onHandleKey = this.onHandleKey.bind(this);
+    this.onPickClick = this.onPickClick.bind(this);
+    this.onKeyDown = this.onKeyDown.bind(this);
   }
   connectedCallback() {
     super.connectedCallback();
@@ -114,28 +128,41 @@ class MqttMap extends HTMLElementExtendedMinimum {
     document.addEventListener('frugaliot:topicschanged', this.onTopicsChanged);
     this.state.tick = setInterval(() => this.scheduleSync(), STATUS_TICK_MS);
     if (this.state.tick && (typeof this.state.tick.unref === 'function')) this.state.tick.unref();
+    this.addEventListener('keydown', this.onKeyDown);
   }
   disconnectedCallback() {
     document.removeEventListener('frugaliot:groupchanged', this.onGroupChanged);
     document.removeEventListener('frugaliot:topicschanged', this.onTopicsChanged);
     clearInterval(this.state.tick);
+    this.removeEventListener('keydown', this.onKeyDown);
   }
 
   get projectMt() { return this.mt; }
   get isOpen() { return !this.hidden; }
+  get isPicking() { return !!this.state.pick; }
 
   // Rendered once - Leaflet owns the canvas's children from then on, and a re-render would drop them
   render0() {
-    const handle = this.state.elements.handle = el('button', { class: 'fi-map__handle', type: 'button', title: 'Resize map' });
+    const e = this.state.elements;
+    const handle = e.handle = el('button', { class: 'fi-map__handle', type: 'button', title: 'Resize map' });
     // Not via el(): EL wires only onclick, onchange and onsubmit
     handle.addEventListener('pointerdown', this.onHandleDown);
     handle.addEventListener('keydown', this.onHandleKey);
-    return [this.state.elements.canvas = el('div', { class: 'fi-map__canvas' }), handle];
+    e.pickBar = el('div', { class: 'fi-map__pick', hidden: true }, [
+      e.pickName = el('span', { class: 'fi-map__pickname', i8n: false }),
+      e.pickHint = el('span', { class: 'fi-map__hint', textContent: 'Tap the map' }),
+      e.here = el('button', { class: 'fi-btn', type: 'button', textContent: "I'm here", onclick: () => this.pickHere() }),
+      e.clear = el('button', { class: 'fi-btn', type: 'button', textContent: 'Clear', onclick: () => this.pickEnd('clear') }),
+      el('button', { class: 'fi-btn', type: 'button', textContent: 'Cancel', onclick: () => this.pickEnd('cancel') }),
+      e.save = el('button', { class: 'fi-btn fi-map__save', type: 'button', textContent: 'Save', onclick: () => this.pickEnd('save') }),
+    ]);
+    return [e.pickBar, e.canvas = el('div', { class: 'fi-map__canvas' }), handle];
   }
 
   // A different project starts from its own remembered state, fitted to its own devices
   setProject(projectMt) {
     if (projectMt === this.mt) return;
+    if (this.state.pick) this.pickEnd('cancel');
     this.mt = projectMt;
     if (this.state.cluster) this.state.cluster.clearLayers();
     this.state.markers.clear();
@@ -155,6 +182,7 @@ class MqttMap extends HTMLElementExtendedMinimum {
     });
   }
   close() {
+    if (this.state.pick) this.pickEnd('cancel');
     this.hidden = true;
     this.savePrefs({ open: false });
   }
@@ -215,7 +243,9 @@ class MqttMap extends HTMLElementExtendedMinimum {
   sync() {
     const L = window.L;
     if (!this.state.map || !L) return;
-    const pins = mapPins(this.projectMt);
+    // While picking, the draggable pin stands in for the device's own
+    const picking = this.state.pick && this.state.pick.nodeMt.nodeId;
+    const pins = mapPins(this.projectMt).filter((pin) => pin.nodeId !== picking);
     let restyled = false;
     pins.forEach((pin) => {
       let marker = this.state.markers.get(pin.nodeId);
@@ -279,6 +309,104 @@ class MqttMap extends HTMLElementExtendedMinimum {
     ]);
   }
 
+  // ===== pick mode: setting one device's location (M-9) =====
+  //
+  // Every other device stays on the map, so "between the two greenhouses" can be placed by eye.
+  // cb(null, how) when it ends - how is 'save', 'clear' or 'cancel'.
+  pick(nodeMt, cb = () => {}) {
+    if (this.state.pick) this.pickEnd('cancel');
+    const loc = nodeMt.location;
+    this.state.pick = { nodeMt, at: loc ? { lat: loc.lat, lon: loc.lon } : null, wasOpen: this.isOpen, cb };
+    const e = this.state.elements;
+    e.pickName.textContent = nodeMt.usableName;
+    e.here.hidden = !canLocate();
+    e.clear.hidden = !loc;
+    this.pickPlaced();
+    e.pickBar.hidden = false;
+    this.classList.add('fi-map--picking');
+    this.open();
+    this.ensureMap((err) => { if (!err) this.pickStart(); });
+  }
+  // Where it starts (M-10): the device, else the project's other pins, else here, else the world.
+  // The other pins come before here because whoever sets a device up is often in the office.
+  pickStart() {
+    const pick = this.state.pick;
+    if (!pick) return;
+    const map = this.state.map;
+    map.on('click', this.onPickClick);
+    this.sync();
+    if (pick.at) {
+      this.placePick(pick.at);
+      map.setView([pick.at.lat, pick.at.lon], Math.max(map.getZoom() || 0, 16));
+      this.state.fitted = true;
+    } else if (this.projectMt.locationBounds) {
+      this.state.fitted = false;
+      this.fit();
+    } else {
+      map.setView([0, 0], 2);
+      this.state.fitted = true;
+      if (canLocate()) locate((err, at) => { if (!err && (this.state.pick === pick)) map.setView([at.lat, at.lon], 16); });
+    }
+  }
+  onPickClick(e) {
+    // worldCopyJump lets the map scroll past 180°, and a click there is off the end of the world
+    const p = e.latlng.wrap();
+    this.placePick({ lat: p.lat, lon: p.lng });
+  }
+  placePick(at) {
+    const L = window.L;
+    const pick = this.state.pick;
+    pick.at = at;
+    if (!this.state.pickMarker) {
+      const marker = this.state.pickMarker = L.marker([at.lat, at.lon], {
+        draggable: true, keyboard: true, zIndexOffset: 1000,
+        icon: L.divIcon({ className: 'fi-pin-icon', iconSize: [22, 22], html: '<span class="fi-pin fi-pin--pick"></span>' }),
+      });
+      marker.on('dragend', () => {
+        const p = marker.getLatLng().wrap();
+        if (this.state.pick) this.state.pick.at = { lat: p.lat, lon: p.lng };
+      });
+      marker.addTo(this.state.map);
+    } else {
+      this.state.pickMarker.setLatLng([at.lat, at.lon]);
+    }
+    this.pickPlaced();
+  }
+  // Nothing to save until there is a pin, and the hint is only for when there is not
+  pickPlaced() {
+    const placed = !!(this.state.pick && this.state.pick.at);
+    this.state.elements.save.disabled = !placed;
+    this.state.elements.pickHint.hidden = placed;
+  }
+  pickHere() {
+    const here = this.state.elements.here;
+    here.disabled = true;
+    locate((err, at) => {
+      here.disabled = false;
+      if (err) { XXX(['map: no position', err.message]); return; }
+      if (!this.state.pick || !this.state.map) return;
+      this.placePick(at);
+      this.state.map.setView([at.lat, at.lon], Math.max(this.state.map.getZoom() || 0, 17));
+    });
+  }
+  pickEnd(how) {
+    const pick = this.state.pick;
+    if (!pick) return;
+    const locationMt = pick.nodeMt.locationMt;
+    if ((how === 'save') && pick.at && locationMt) locationMt.publish(locationPayload(pick.at.lat, pick.at.lon));
+    if ((how === 'clear') && locationMt) locationMt.publish('');  // the node echoes it empty, which clears the retained copy too
+    this.state.pick = null;
+    if (this.state.map) this.state.map.off('click', this.onPickClick);
+    if (this.state.pickMarker) { this.state.pickMarker.remove(); this.state.pickMarker = null; }
+    this.state.elements.pickBar.hidden = true;
+    this.classList.remove('fi-map--picking');
+    if (!pick.wasOpen) this.close(); else this.sync();
+    pick.cb(null, how);
+  }
+  onKeyDown(e) {
+    if ((e.key === 'Escape') && this.state.pick) { e.preventDefault(); this.pickEnd('cancel'); }
+  }
+
   // ===== resizing: the handle on the bottom edge =====
   setHeight(px) {
     const max = Math.max(MAP_HEIGHT_MIN, Math.round(window.innerHeight * 0.85));
@@ -309,4 +437,4 @@ class MqttMap extends HTMLElementExtendedMinimum {
 }
 customElements.define('mqtt-map', MqttMap);
 
-export { MqttMap, mapPins, mapPrefsLoad, mapPrefsSave, mapTiles, worstStatus };
+export { MqttMap, canLocate, mapPins, mapPrefsLoad, mapPrefsSave, mapTiles, worstStatus };

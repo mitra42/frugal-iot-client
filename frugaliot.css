@@ -595,6 +595,25 @@ mqtt-map:not([hidden]) {
     border-radius: 2px;
     background: var(--fi-muted);
 }
+/* Pick mode: a bar across the top saying which device, and how to finish */
+.fi-map__pick:not([hidden]) {
+    flex: none;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--fi-border);
+}
+.fi-map__pickname { font-weight: 600; margin-inline-end: auto; }
+.fi-map__hint { color: var(--fi-muted); }
+.fi-map__pick .fi-btn { border: 1px solid var(--fi-border); border-radius: var(--fi-radius); background: #fff; font-size: 1em; }
+.fi-map__pick .fi-map__save { background: var(--fi-leaf); border-color: var(--fi-leaf-deep); color: var(--fi-text); }
+.fi-map__pick .fi-btn:disabled { opacity: .5; cursor: default; }
+.fi-map--picking .fi-map__canvas { cursor: crosshair; }
+.fi-location { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 6px; }
+.fi-location__none, .fi-location__note { color: var(--fi-muted); }
+.fi-location__pick { min-height: 0; padding: 0 4px; }
 .fi-map__tip { min-width: 8em; }
 .fi-map__name { font-weight: 600; margin-bottom: 4px; }
 .fi-map__open { margin-top: 6px; }
@@ -616,6 +635,8 @@ mqtt-map:not([hidden]) {
 .fi-pin--offline,
 .fi-pin--never { background: #fff; border: 4px solid var(--fi-pin); }
 .fi-pin--gps   { border-radius: 3px; transform: rotate(45deg) scale(.85); }
+/* The one being placed: a bullseye, unlike any status, so it is clear which pin moves */
+.fi-pin--pick  { background: radial-gradient(circle, var(--fi-text) 30%, #fff 32%, #fff 55%, var(--fi-text) 57%); cursor: grab; }
 .fi-pin--cluster {
     display: flex;
     align-items: center;

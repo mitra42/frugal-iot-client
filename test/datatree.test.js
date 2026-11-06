@@ -418,4 +418,25 @@ describe('location', () => {
     const { projectMt } = mock.runScenario('one-device');
     assert.equal(projectMt.locationBounds, null);
   });
+
+  test('the payload has six decimals, as gps publishes', () => {
+    assert.equal(core.locationPayload(-6.2088, 106.8456), '-6.208800,106.845600');
+    assert.deepEqual(core.locationPayload(1 / 3, -2 / 3), '0.333333,-0.666667');
+  });
+
+  // The browser hears its own set/, which changes the value at once - so pending cannot be read off it
+  test('pending lasts from a publish until something arrives on the read path', () => {
+    const { projectMt } = mock.runScenario('one-device');
+    const locationMt = projectMt.nodes['esp8266-fb94bb'].locationMt;
+    core.setMqttClient({ connected: false, publish: () => {} });
+    assert.equal(locationMt.pending, false);
+    locationMt.publish('-6.2,106.8');
+    assert.equal(locationMt.pending, true);
+    mock.deliver('dev/lotus/esp8266-fb94bb/set/frugal_iot/location', '-6.2,106.8');
+    assert.equal(locationMt.pending, true, 'our own set coming back is not the node answering');
+    assert.deepEqual(projectMt.nodes['esp8266-fb94bb'].location, { lat: -6.2, lon: 106.8, source: 'set' });
+    mock.deliver('dev/lotus/esp8266-fb94bb/frugal_iot/location', '-6.2,106.8');
+    assert.equal(locationMt.pending, false);
+    core.setMqttClient(undefined);
+  });
 });

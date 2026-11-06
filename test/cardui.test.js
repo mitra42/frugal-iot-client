@@ -389,7 +389,7 @@ describe('back mode', () => {
 
   test('the close mark returns to the front, not all the way to the summary', () => {
     const { card } = cardFor('one-device', 'esp8266-fb94bb', { mode: 'back', at: T0 });
-    assert.equal(card.querySelectorAll('.fi-btn:not(.fi-btn--close)').length, 0, 'no gear on the back');
+    assert.equal(card.querySelectorAll('.fi-btn:not(.fi-btn--close):not(.fi-location__pick)').length, 0, 'no gear on the back');
     card.querySelector('.fi-btn--close').click();
     assert.equal(card.getAttribute('mode'), 'front');
     card.remove();

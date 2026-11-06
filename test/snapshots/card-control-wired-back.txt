@@ -31,6 +31,15 @@
                   <input name="dev/lotus/esp8266-fb94bb/frugal_iot/description" value="Greenhouse North - test scenario" class="val" type="text">
         <div class="fi-field">
           <span class="fi-field__label">
+            "Location"
+          <span class="fi-field__value">
+            <span class="fi-location">
+              <span class="fi-location__none">
+                "Not set"
+              <button class="fi-btn fi-location__pick" type="button">
+                "📍"
+        <div class="fi-field">
+          <span class="fi-field__label">
             "Node ID"
           <span class="fi-field__value">
             "esp8266-fb94bb"

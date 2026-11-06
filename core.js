@@ -242,6 +242,8 @@ function mqtt_unsubscribe_organization(org) {
 let _clock = Date.now;
 function nowMs() { return _clock(); }
 function setClock(fn) { _clock = fn || Date.now; }
+// Tests stand in for the broker here, to see what a page publishes
+function setMqttClient(client) { mqtt_client = client; }
 
 // SenML unit codes are not display symbols - "Cel" has to render as "°C". Anything absent from the
 // table is shown as it stands, which is right for V, mV, mA, mm, hPa, ppm and most of the rest.
@@ -944,6 +946,7 @@ class MqttTopic {
 
   // Called by a subscription, or by MqttTopicNode routing a message down to this topic
   message_received(topic, message) {
+    if (topic === this.topicPath) this.sentAt = null;  // the node's echo, or a reading - either way it answered
     if (this.element) {
       if (this.element.topicValueSet(topic, message)) {
         //XXX(["rerendering - possibly unnecessarily - on",topic,message]); // Should only be on MqttTopic (ok) and MqttSlider (needs work)
@@ -1087,7 +1090,18 @@ class MqttTopic {
     console.log("Publishing ", this.topicSetPath, val, this.retain ? "retain" : "", this.qos ? `qos=${this.qos}` : "");
     if (typeof val === 'number') { val = val.toString(); } // Convert to string if number
     mqtt_client.publish(this.topicSetPath, val, {retain: this.retain, qos: this.qos});
+    this.sentAt = nowMs();
+    // pending changed, and a card shows it - nothing may come back to say so on a slow link
+    const groupMt = this.groupMt;
+    if (groupMt) {
+      document.dispatchEvent(new CustomEvent('frugaliot:groupchanged', {
+        detail: { nodeMt: this.nodeMt, groupId: this.group, groupMt, changed: [] }
+      }));
+    }
   }
+  // Sent, and nothing heard on the read path since. Not readable off the value: our own set/ comes
+  // back to us and changes it at once, whether or not the node ever took it (MAPPING_PLAN.md M-9).
+  get pending() { return !!this.sentAt; }
   publishWired(val) {
     console.log("Publishing ", this.topicWiredPath, val, this.retain ? "retain" : "", this.qos ? `qos=${this.qos}` : "");
     mqtt_client.publish(this.topicWiredPath, val, {retain: this.retain, qos: this.qos});
@@ -1359,6 +1373,10 @@ function parseLocation(text) {
   const [lat, lon] = parts.map((p) => (p.trim() === '' ? NaN : Number(p)));
   return validLocation(lat, lon);
 }
+// Six decimals, as gps publishes - about 10 cm, and costs nothing over five (M-2)
+function locationPayload(lat, lon) {
+  return `${lat.toFixed(6)},${lon.toFixed(6)}`;
+}
 
 // Node-level data node in the topic tree. Routes incoming MQTT messages to the correct leaf MqttTopic.
 // Always created by MqttTopicProject.addNode.
@@ -1532,9 +1550,14 @@ class MqttTopicNode extends MqttTopic {
       const fix = validLocation(value('latitude'), value('longitude'));
       if (fix) return { ...fix, source: 'gps' };
     }
-    const fi = this.groups.frugal_iot;
-    const set = parseLocation(fi && fi.topics.location && fi.topics.location.state.value);
+    const locationMt = this.locationMt;
+    const set = parseLocation(locationMt && locationMt.state.value);
     return set && { ...set, source: 'set' };
+  }
+  // The topic a location is set through - for its canWrite, its pending, and publishing to
+  get locationMt() {
+    const fi = this.groups.frugal_iot;
+    return (fi && fi.topics.location) || null;
   }
   // The devices.yaml entry: this device's own id first, then its exact OTA key, then the longest
   // key the OTA key starts with - see CARDS_UX.md 4.6.
@@ -2113,6 +2136,7 @@ export {
   languageMatch,
   leafAttribute,
   locationParameterChange,
+  locationPayload,
   moduleBaseId,
   mqtt_client,
   mqttTempConnect,
@@ -2131,6 +2155,7 @@ export {
   SUMMARY_READINGS_PER_MODULE,
   server_config,
   setClock,
+  setMqttClient,
   standaloneTopic,
   topicMatches,
   unitSuffix,

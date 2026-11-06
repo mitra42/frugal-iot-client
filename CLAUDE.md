@@ -269,13 +269,14 @@ const mt = document.querySelector('mqtt-wrapper')?.projectMt?.findTopic(this.sta
 | Event | Fired by | Carries | Typical use |
 |---|---|---|---|
 | `frugaliot:controlgroup` | `MqttTopicNode.addGroupFromTemplate` | `{ nodeMt, groupId, topics }` | populate node/group dropdowns |
-| `frugaliot:groupchanged` | `MqttTopic.message_received`, `MqttReceiver.topicValueSet` | `{ nodeMt, groupId, groupMt, changed }` | re-run `wireUpDashboard` on wired/on state changes |
+| `frugaliot:groupchanged` | `MqttTopic.message_received`, `MqttTopic.publish` (pending changed), `MqttReceiver.topicValueSet` | `{ nodeMt, groupId, groupMt, changed }` | re-run `wireUpDashboard` on wired/on state changes |
 | `frugaliot:topicschanged` | `MqttTopicProject.addNode`, `MqttTopicNode.topicValueSet` | `{ project }` | retry wiring, and add a card, after late-arriving nodes |
 | `frugaliot:projectchanged` | `MqttWrapper.addProject` | `{ projectMt, organization, project }` | a project now exists — `topicschanged` is too late, it needs a node |
 | `frugaliot:organizationchanged` | `MqttWrapper.onOrganization` | `{ organization }` | capabilities are per organization, so this precedes any project |
 | `frugaliot:cardmove` / `cardmoveover` | `mqtt-devicecard` | `{ nodeId, delta }` / `{ nodeId, targetNodeId }` | the card asks to be moved; the grid decides what that means |
 | `frugaliot:cardmode` | `mqtt-devicecard` | `{ nodeId, mode }` | so the grid can remember what was open |
-| `frugaliot:cardopen` | `mqtt-map` (a pin's popup) | `{ nodeId }` | the grid opens that card on its front and scrolls to it |
+| `frugaliot:cardopen` | `mqtt-map` (a pin's popup), `mqtt-dashboard` (a pick ending) | `{ nodeId }` | the grid opens that card on its front and scrolls to it |
+| `frugaliot:locationpick` | `mqtt-devicecard` (the 📍 on its back) | `{ nodeId }` | `mqtt-dashboard` puts the project map into pick mode for that device |
 | `frugaliot:flashfile` | `mqtt-admin` (OTA section) | `{ org, path }` | the ⚡ beside an OTA file: `mqtt-projectback` opens the Flash card and passes it on |
 
 ---
@@ -314,7 +315,8 @@ Each of these cost real time. They are not obvious from reading the code.
   than timed, but a card still needs a slow interval to re-read it, or it shows whatever it showed
   when the last message arrived.
 - **Timestamps go through `nowMs()`**, never `Date.now()`, or a replayed history collapses onto one
-  instant and a graph has nothing to draw. `setClock()` is how tests decide what "now" is.
+  instant and a graph has nothing to draw. `setClock()` is how tests decide what "now" is,
+  and `setMqttClient()` is how they see what a page publishes.
 - **Caching will lie to you.** `/node_modules` and the client directory are served
   `immutable, max-age=86400`, *and* `frugal-iot-server/public/service-worker.js` caches the libraries
   cache-first at scope `/`. A stale library shows up as a null `append` inside `renderAndReplace`.
