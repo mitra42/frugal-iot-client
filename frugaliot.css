@@ -429,6 +429,8 @@ mqtt-devicecard { display: block; min-width: 0; }
 mqtt-devicecard:focus-visible { outline: 2px solid var(--fi-live); outline-offset: 2px; }
 .fi-dragging { opacity: 0.6; }
 .fi-grabbed .fi-card, mqtt-devicecard.fi-grabbed { outline: 2px dashed var(--fi-stale); }
+/* Lit from its pin on the map (ML-4) */
+mqtt-devicecard.fi-highlight .fi-card { outline: 2px solid var(--fi-text); outline-offset: 1px; }
 .fi-btn--move { font-size: 0.8em; padding: 4px 2px; }
 /* Nothing is dragged by accident: a press that turns into a scroll must scroll */
 mqtt-devicecard[movable] .fi-card__head { touch-action: pan-y; }
@@ -647,6 +649,9 @@ mqtt-map:not([hidden]) {
 .fi-pin--offline,
 .fi-pin--never { background: #fff; border: 4px solid var(--fi-pin); }
 .fi-pin--gps   { border-radius: 3px; transform: rotate(45deg) scale(.85); }
+/* Lit from its card (ML-4). !important beats the z-index Leaflet sets inline, so it is never under a neighbour. */
+.fi-pin-icon--highlight { z-index: 2000 !important; }
+.fi-pin-icon--highlight .fi-pin { box-shadow: 0 0 0 3px #fff, 0 0 0 6px var(--fi-text); }
 /* The one being placed: a bullseye, unlike any status, so it is clear which pin moves */
 .fi-pin--pick  { background: radial-gradient(circle, var(--fi-text) 30%, #fff 32%, #fff 55%, var(--fi-text) 57%); cursor: grab; }
 .fi-pin--cluster {

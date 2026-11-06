@@ -47,6 +47,8 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
     this.onPointerDown = this.onPointerDown.bind(this);
     this.onPointerMove = this.onPointerMove.bind(this);
     this.onPointerUp = this.onPointerUp.bind(this);
+    this.onHighlightOn = this.onHighlightOn.bind(this);
+    this.onHighlightOff = this.onHighlightOff.bind(this);
   }
 
   connectedCallback() {
@@ -65,12 +67,21 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
     // Not via el(): EL only assigns onclick, onchange and onsubmit as properties - any other
     // function it is handed goes into el.state and is never wired up at all.
     this.addEventListener('pointerdown', this.onPointerDown);
+    // Lights this device's pin on the map (MAPPING_PLAN.md ML-4) - by mouse or keyboard focus
+    this.addEventListener('pointerenter', this.onHighlightOn);
+    this.addEventListener('pointerleave', this.onHighlightOff);
+    this.addEventListener('focusin', this.onHighlightOn);
+    this.addEventListener('focusout', this.onHighlightOff);
   }
   disconnectedCallback() {
     document.removeEventListener('frugaliot:groupchanged', this.onGroupChanged);
     clearInterval(this.state.tick);
     this.removeEventListener('keydown', this.onKeyDown);
     this.removeEventListener('pointerdown', this.onPointerDown);
+    this.removeEventListener('pointerenter', this.onHighlightOn);
+    this.removeEventListener('pointerleave', this.onHighlightOff);
+    this.removeEventListener('focusin', this.onHighlightOn);
+    this.removeEventListener('focusout', this.onHighlightOff);
     // Deliberately not endDrag(): reordering re-appends the cards, so the one being dragged is
     // disconnected and reconnected on its very first move. Ending the drag there killed it after a
     // single step, which looked from the outside like dragging not working at all. The drag lives
@@ -88,6 +99,15 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
   }
   onGroupChanged(e) {
     if (e.detail && (e.detail.nodeMt === this.mt)) this.refresh();
+  }
+  // Not on touch: a tap already opens the card, and a ring left behind on the map would just be noise
+  onHighlightOn(e) {
+    if ((e.pointerType === 'touch') || !this.mt) return;
+    document.dispatchEvent(new CustomEvent('frugaliot:highlight', { detail: { nodeId: this.mt.nodeId } }));
+  }
+  onHighlightOff(e) {
+    if (e.pointerType === 'touch') return;
+    document.dispatchEvent(new CustomEvent('frugaliot:highlight', { detail: { nodeId: null } }));
   }
 
   get nodeMt() { return this.mt; }
@@ -641,6 +661,7 @@ class MqttDeviceGrid extends HTMLElementExtendedMinimum {
     this.onCardMoveOver = this.onCardMoveOver.bind(this);
     this.onModeChanged = this.onModeChanged.bind(this);
     this.onCardOpen = this.onCardOpen.bind(this);
+    this.onHighlight = this.onHighlight.bind(this);
   }
 
   connectedCallback() {
@@ -648,6 +669,7 @@ class MqttDeviceGrid extends HTMLElementExtendedMinimum {
     // Nodes arrive over time, so the order has to be applied per arrival rather than once (O-10)
     document.addEventListener('frugaliot:topicschanged', this.onTopicsChanged);
     document.addEventListener('frugaliot:cardopen', this.onCardOpen);
+    document.addEventListener('frugaliot:highlight', this.onHighlight);
     this.addEventListener('frugaliot:cardmove', this.onCardMove);
     this.addEventListener('frugaliot:cardmoveover', this.onCardMoveOver);
     this.addEventListener('frugaliot:cardmode', this.onModeChanged);
@@ -656,6 +678,7 @@ class MqttDeviceGrid extends HTMLElementExtendedMinimum {
   disconnectedCallback() {
     document.removeEventListener('frugaliot:topicschanged', this.onTopicsChanged);
     document.removeEventListener('frugaliot:cardopen', this.onCardOpen);
+    document.removeEventListener('frugaliot:highlight', this.onHighlight);
   }
   onTopicsChanged() { this.sync(); }
   // From a pin on the map. A card already open stays as it is - flipping someone's back away would lose their place.
@@ -671,6 +694,12 @@ class MqttDeviceGrid extends HTMLElementExtendedMinimum {
     if (card.mode === 'summary') card.mode = 'front';
     if (card.scrollIntoView) card.scrollIntoView({ behavior: 'smooth', block: 'start' }); // jsdom has none
     card.focus();
+  }
+
+  // From a pin, or a card itself - one device at a time, or none
+  onHighlight(e) {
+    const nodeId = e.detail && e.detail.nodeId;
+    this.state.cards.forEach((card, id) => card.classList.toggle('fi-highlight', id === nodeId));
   }
 
   get projectMt() { return this.mt; }

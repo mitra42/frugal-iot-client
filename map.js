@@ -121,11 +121,13 @@ class MqttMap extends HTMLElementExtendedMinimum {
     this.onHandleKey = this.onHandleKey.bind(this);
     this.onPickClick = this.onPickClick.bind(this);
     this.onKeyDown = this.onKeyDown.bind(this);
+    this.onHighlight = this.onHighlight.bind(this);
   }
   connectedCallback() {
     super.connectedCallback();
     document.addEventListener('frugaliot:groupchanged', this.onGroupChanged);
     document.addEventListener('frugaliot:topicschanged', this.onTopicsChanged);
+    document.addEventListener('frugaliot:highlight', this.onHighlight);
     this.state.tick = setInterval(() => this.scheduleSync(), STATUS_TICK_MS);
     if (this.state.tick && (typeof this.state.tick.unref === 'function')) this.state.tick.unref();
     this.addEventListener('keydown', this.onKeyDown);
@@ -133,6 +135,7 @@ class MqttMap extends HTMLElementExtendedMinimum {
   disconnectedCallback() {
     document.removeEventListener('frugaliot:groupchanged', this.onGroupChanged);
     document.removeEventListener('frugaliot:topicschanged', this.onTopicsChanged);
+    document.removeEventListener('frugaliot:highlight', this.onHighlight);
     clearInterval(this.state.tick);
     this.removeEventListener('keydown', this.onKeyDown);
   }
@@ -264,6 +267,9 @@ class MqttMap extends HTMLElementExtendedMinimum {
           marker.bindTooltip(() => this.pinContent(pin.nodeId, false), { direction: 'top', offset: [0, -8] });
         }
         marker.bindPopup(() => this.pinContent(pin.nodeId, true));
+        // Lights the card, as the card lights this (ML-4). Leaflet's mouseover is the mouse's alone.
+        marker.on('mouseover', () => document.dispatchEvent(new CustomEvent('frugaliot:highlight', { detail: { nodeId: pin.nodeId } })));
+        marker.on('mouseout', () => document.dispatchEvent(new CustomEvent('frugaliot:highlight', { detail: { nodeId: null } })));
         this.state.markers.set(pin.nodeId, marker);
         this.state.cluster.addLayer(marker);
         return;
@@ -284,6 +290,19 @@ class MqttMap extends HTMLElementExtendedMinimum {
     });
     if (restyled) this.state.cluster.refreshClusters();
     if (!this.state.fitted && pins.length) this.fit();
+  }
+  // One device at a time. A pin inside a cluster at this zoom cannot be seen, so its cluster is lit.
+  onHighlight(e) {
+    const nodeId = e.detail && e.detail.nodeId;
+    if (this.state.highlighted) this.state.highlighted.classList.remove('fi-pin-icon--highlight');
+    this.state.highlighted = null;
+    const marker = nodeId && this.state.markers.get(nodeId);
+    if (!marker || !this.isOpen || !this.state.cluster) return;
+    const shown = this.state.cluster.getVisibleParent(marker) || marker;
+    const iconEl = shown.getElement && shown.getElement();
+    if (!iconEl) return;  // off the edge of the view
+    iconEl.classList.add('fi-pin-icon--highlight');
+    this.state.highlighted = iconEl;
   }
   // Once per project: after that the view is the user's, and a reading arriving must not move it
   fit() {

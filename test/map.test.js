@@ -306,3 +306,88 @@ describe('setting a location', () => {
     page.remove();
   });
 });
+
+// ML-4: hovering a card lights its pin, and a pin its card. One event, either way.
+describe('card and pin light each other', () => {
+  const page = () => {
+    const pageEl = document.createElement('mqtt-dashboard');
+    document.body.append(pageEl);
+    showProject(pageEl, mock.runScenario('located-devices').projectMt);
+    const cards = [...pageEl.querySelectorAll('mqtt-devicecard')];
+    return { pageEl, cards, card: (id) => cards.find((c) => c.mt.nodeId === id), mapEl: pageEl.querySelector('mqtt-map') };
+  };
+  const heard = () => {
+    const seen = [];
+    const listen = (e) => seen.push(e.detail.nodeId);
+    document.addEventListener('frugaliot:highlight', listen);
+    return { seen, stop: () => document.removeEventListener('frugaliot:highlight', listen) };
+  };
+
+  test('a mouse over a card names it, and leaving clears it', () => {
+    const { pageEl, card } = page();
+    const h = heard();
+    card('esp8266-pump').dispatchEvent(new MouseEvent('pointerenter'));
+    card('esp8266-pump').dispatchEvent(new MouseEvent('pointerleave'));
+    h.stop();
+    assert.deepEqual(h.seen, ['esp8266-pump', null]);
+    pageEl.remove();
+  });
+
+  test('so does keyboard focus, from anywhere inside the card', () => {
+    const { pageEl, card } = page();
+    const h = heard();
+    card('esp8266-north').firstElementChild.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+    h.stop();
+    assert.deepEqual(h.seen, ['esp8266-north']);
+    pageEl.remove();
+  });
+
+  test('not on touch - a tap already opens the card', () => {
+    const { pageEl, card } = page();
+    const h = heard();
+    const tap = new MouseEvent('pointerenter');
+    Object.defineProperty(tap, 'pointerType', { value: 'touch' });  // jsdom has no PointerEvent
+    card('esp8266-pump').dispatchEvent(tap);
+    h.stop();
+    assert.deepEqual(h.seen, []);
+    pageEl.remove();
+  });
+
+  test('a pin lights its card, one at a time', () => {
+    const { pageEl, card, cards } = page();
+    const light = (nodeId) => document.dispatchEvent(new CustomEvent('frugaliot:highlight', { detail: { nodeId } }));
+    light('esp8266-pump');
+    assert.deepEqual(cards.filter((c) => c.classList.contains('fi-highlight')), [card('esp8266-pump')]);
+    light('esp8266-north');
+    assert.deepEqual(cards.filter((c) => c.classList.contains('fi-highlight')), [card('esp8266-north')]);
+    light(null);
+    assert.equal(cards.filter((c) => c.classList.contains('fi-highlight')).length, 0);
+    pageEl.remove();
+  });
+
+  // Leaflet does not run here, so its two calls are stood in for: where a marker's icon is, and
+  // which cluster hides it at this zoom
+  test('a card lights its pin - or the cluster it is hidden in', () => {
+    const { pageEl, mapEl } = page();
+    mapEl.hidden = false;
+    const pinEl = document.createElement('div');
+    const clusterEl = document.createElement('div');
+    const alone = { getElement: () => pinEl };
+    const clustered = { getElement: () => null };
+    const clusterMarker = { getElement: () => clusterEl };
+    mapEl.state.markers.set('esp8266-pump', alone);
+    mapEl.state.markers.set('esp8266-north', clustered);
+    mapEl.state.cluster = { getVisibleParent: (m) => ((m === clustered) ? clusterMarker : m) };
+    const light = (nodeId) => document.dispatchEvent(new CustomEvent('frugaliot:highlight', { detail: { nodeId } }));
+    light('esp8266-pump');
+    assert.ok(pinEl.classList.contains('fi-pin-icon--highlight'));
+    light('esp8266-north');
+    assert.ok(!pinEl.classList.contains('fi-pin-icon--highlight'), 'the last one goes out');
+    assert.ok(clusterEl.classList.contains('fi-pin-icon--highlight'));
+    light(null);
+    assert.ok(!clusterEl.classList.contains('fi-pin-icon--highlight'));
+    mapEl.state.cluster = null;
+    mapEl.state.markers.clear();
+    pageEl.remove();
+  });
+});

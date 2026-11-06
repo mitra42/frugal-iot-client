@@ -279,6 +279,7 @@ const mt = document.querySelector('mqtt-wrapper')?.projectMt?.findTopic(this.sta
 | `frugaliot:cardopen` | `mqtt-map` (a pin's popup), `mqtt-dashboard` (a pick ending, Open project) | `{ nodeId }` | the grid opens that card on its front and scrolls to it |
 | `frugaliot:organizationtree` | `MqttWrapper` | `{ organizationMt }`, null when dropped | the organization page's map; only for READ on the whole organization |
 | `frugaliot:projectopen` | `mqtt-map` (a pin's popup, organization level) | `{ project, nodeId }` | `mqtt-dashboard` switches to that project, with the card open |
+| `frugaliot:highlight` | `mqtt-devicecard` (mouse over, focus), `mqtt-map` (a pin hovered) | `{ nodeId }`, null to clear | the map rings that pin, the grid rings that card |
 | `frugaliot:locationpick` | `mqtt-devicecard` (the 📍 on its back) | `{ nodeId }` | `mqtt-dashboard` puts the project map into pick mode for that device |
 | `frugaliot:flashfile` | `mqtt-admin` (OTA section) | `{ org, path }` | the ⚡ beside an OTA file: `mqtt-projectback` opens the Flash card and passes it on |
 
