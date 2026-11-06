@@ -46,14 +46,14 @@ div.mqtt-text {
     /* Multiple places */
     .outer {background-color: white;margin:5px; padding:5px;}
     .icon { /* mqtt-toggle , mqtt-bar (graph) */
-        height:1em;width:1em;float:right;
+        height:1em;width:1em;float:inline-end;
         @media (max-width:1001px){
             height:var(--fi-icon-size, 1.5em);width:var(--fi-icon-size, 1.5em);
         }
     }
     .language-picker, language-picker, .language-picker select {
-        float: var(--fi-chrome-float, right);
-        text-align: right;
+        float: var(--fi-chrome-float, inline-end);
+        text-align: end;
         border: 0px;
         @media screen and (max-width: 1001px ) {
             font-size: var(--fi-chrome-font, x-large);
@@ -61,7 +61,7 @@ div.mqtt-text {
     }
     /* In MqttClient */
     details.mqtt-client {
-        margin-left: 1em; margin-right: 1em; float: var(--fi-chrome-float, right);
+        margin-inline: 1em; float: var(--fi-chrome-float, inline-end);
         @media screen and (max-width: 1001px ) {
             font-size: var(--fi-chrome-font, xx-large);
         }
@@ -69,7 +69,7 @@ div.mqtt-text {
     /* In MqttBar */
     .mqtt-bar {
         .bar {border: 1px solid black; background-color: white;margin: 0px;}
-        .left {display:inline-block; text-align: right;}
+        .left {display:inline-block; text-align: end;}
         .right {background-color:white; display:inline-block;}
         .val {margin:5px;}
         @media (max-width:1001px){
@@ -101,7 +101,9 @@ div.mqtt-text {
     }
 
     /* In MqttSlider */
-    .mqtt-slider .pointbar {margin:0px; padding 0px;}
+    /* The thumb is placed by its left offset in pixels, so the track is left to right even in Arabic -
+       MqttSlider turns the value round instead, putting the minimum at the right */
+    .mqtt-slider .pointbar {margin:0px; padding 0px; direction: ltr;}
     .mqtt-slider .val {margin:5px;}
     .mqtt-slider .setpoint {position: relative;top: -5px;cursor: pointer;width: max-content;height: max-content;}
 
@@ -133,22 +135,22 @@ div.mqtt-text {
         .dropdown label { flex-shrink: 0; white-space: nowrap; }
         .dropdown select {
             flex: 1; padding: 5px 8px; border: 1px solid #ccc; border-radius: 4px;
-            font-size: 0.92em; margin-left: 0;
+            font-size: 0.92em; margin-inline-start: 0;
             /* Fix: select couldn't shrink below its (huge) text content, causing overflow */
             min-width: 0;
         }
-        select { margin-left: 2em; }
+        select { margin-inline-start: 2em; }
         @media screen and (max-width: 1001px ) {
             .dropdown { font-size: var(--fi-chrome-font, xxx-large); }
             .dropdown select { font-size: inherit; }
             .dropdownsadmin {
                 display: flex;
-                justify-content: left;
+                justify-content: start;
                 gap: 10px;
             }
             .dropdownsadmin > select {
                 flex: 0 0 auto;
-                margin-left: 0;
+                margin-inline-start: 0;
             }
             select { font-size: var(--fi-chrome-font, xx-large); }
         }
@@ -165,7 +167,7 @@ div.mqtt-text {
             cursor: pointer;
         }
         /* The \27f3 beside a heading: still a link, but underlining a glyph reads as a typo. */
-        .refresh { text-decoration: none; display: inline-block; margin-left: 0.3em; }
+        .refresh { text-decoration: none; display: inline-block; margin-inline-start: 0.3em; }
         /* Spins until the fetch it started replies - on a slow link a still glyph got clicked again and again. */
         .refresh.busy { animation: fi-spin 1s linear infinite; cursor: progress; }
         /* An OTA row's glyphs: the padding is the whole hit area, so a mis-tap cannot reach delete. */
@@ -175,7 +177,7 @@ div.mqtt-text {
         .enrolment__line { word-break: break-all; }
         /* The enrolment state table: compact, since most of its cells are one word. */
         .nodestates { border-collapse: collapse; }
-        .nodestates th, .nodestates td { text-align: left; padding: 0.15em 0.6em 0.15em 0; }
+        .nodestates th, .nodestates td { text-align: start; padding-block: 0.15em; padding-inline: 0 0.6em; }
         .nodestates th { border-bottom: 1px solid #ccc; }
     }
 /* USB flashing - stylesheet is loaded inside the mqtt-flash shadow root, so match the wrapper div */
@@ -202,7 +204,7 @@ div.mqtt-text {
         font-size: small;
     }
     progress { width: 100%; }
-    button { margin-right: 0.5em; }
+    button { margin-inline-end: 0.5em; }
     button.icon-button { padding: 0.2em 0.4em; }
     button.icon-button img { width: 1.2em; height: 1.2em; vertical-align: middle; }
 }
@@ -371,8 +373,8 @@ div.outer.mqtt-bar > div.ends {
 .fi-section__title {
     margin: 0 0 4px;
     /* accented, not filled: text stays near-black */
-    border-left: 3px solid var(--fi-leaf);
-    padding-left: 6px;
+    border-inline-start: 3px solid var(--fi-leaf);
+    padding-inline-start: 6px;
     font-size: 0.75em;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -400,6 +402,9 @@ div.outer.mqtt-bar > div.ends {
 /* Nothing inside a card may make it wider than the grid cell it sits in */
 .fi-card, .fi-field, .fi-field__value, .fi-when { min-width: 0; }
 .fi-field__value { overflow-wrap: anywhere; }
+/* A value takes its direction from its own text, not the page's: a node id or a topic path stays
+   left to right on an Arabic page, and Arabic text stays right to left on an English one */
+.fi-field__value, .fi-chip, .fi-card__name, .fi-row__rule { unicode-bidi: plaintext; }
 .fi-field__value mqtt-text, .fi-field__value mqtt-toggle, .fi-field__value mqtt-choosetopic {
     display: block;
     max-width: 100%;
@@ -488,7 +493,7 @@ body:has(mqtt-dashboard) {
 .fi-header__title { order: 0; }
 .fi-header mqtt-client { order: 1; }
 .fi-header .dropdown { order: 2; display: inline-flex; align-items: baseline; gap: 4px; margin-bottom: 0; }
-.fi-header language-picker { order: 8; margin-left: auto; }
+.fi-header language-picker { order: 8; margin-inline-start: auto; }
 /* The gear sits in a span, and it is the span that is the flex item - ordering the button inside it
    left the span at the default 0, next to the title */
 .fi-header__gear { order: 9; display: inline-flex; }
@@ -512,7 +517,7 @@ body:has(mqtt-dashboard) {
 .fi-admincard__head {
     display: block;
     width: 100%;
-    text-align: left;
+    text-align: start;
     background: none;
     border: 0;
     padding: 12px 14px;
@@ -559,13 +564,13 @@ body:has(mqtt-dashboard) {
 
 /* Retained messages: a list to read before deleting anything, so it must not be cramped */
 /* .formgroup has no styling, so nothing separates the label from the org prefix that follows it */
-.retained__prefix { margin-left: 0.4em; }
+.retained__prefix { margin-inline-start: 0.4em; }
 .retained__help { color: var(--fi-muted); font-size: 0.85em; margin: 4px 0 8px; }
 .retained__list {
     max-height: 40vh;
     overflow-y: auto;
     margin: 6px 0;
-    padding-left: 1.2em;
+    padding-inline-start: 1.2em;
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     font-size: 0.85em;
     overflow-wrap: anywhere;
@@ -696,7 +701,7 @@ body:has(mqtt-login) {
     margin: 0 0 14px;
     padding: 10px 12px;
     border-radius: var(--fi-radius);
-    border-left: 3px solid;
+    border-inline-start: 3px solid;
     font-size: 0.95em;
 }
 /* Colour is never the only signal: an error also says so in words the server wrote */

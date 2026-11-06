@@ -1,0 +1,434 @@
+# Arabic
+'"%s" already exists.': '"%s" موجود بالفعل.'
+'+ matches one level, # matches the rest. Look before deleting.': + يطابق مستوى واحدًا، و# يطابق الباقي. راجع قبل الحذف.
+(Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): (الحد الأقصى 4 ميغابايت، ملفات .bin فقط، عادةً frugal-iot.ino.bin أو firmware.bin)
+A bridge relays a Pi's readings to this server, so its nodes appear here too, while the Pi carries on recording and serving on its own whenever the link is down. "Bridge" is the broker's live view of the relay; "Last check-in" is when that Pi last collected this organization's logins, which it does over HTTP - so a Pi can be checking in while its bridge is down, and the two together say which half is broken.: يرحّل الجسر قراءات جهاز Pi إلى هذا الخادم، فتظهر عُقده هنا أيضًا، بينما يواصل Pi التسجيل والخدمة بمفرده كلما انقطع الاتصال. "الجسر" هو عرض الوسيط المباشر للترحيل؛ و"آخر اتصال" هو آخر مرة جمع فيها ذلك الـ Pi حسابات هذه المؤسسة، وهو ما يفعله عبر HTTP - لذا قد يتصل Pi بينما جسره متوقف، ومعًا يبيّنان أي النصفين معطّل.
+Action: إجراء
+Action *: إجراء *
+Add: إضافة
+Reset board: إعادة تشغيل اللوحة
+Clear log: مسح السجل
+Copy log: نسخ السجل
+Start the monitor to configure: شغّل المراقب للإعداد
+Board not answering - old firmware?: اللوحة لا تستجيب - برنامج ثابت قديم؟
+Waiting for the board: في انتظار اللوحة
+Board was already configured - its settings were kept. Apply to board changes them: كانت اللوحة مُعدّة مسبقًا - احتُفظ بإعداداتها. "تطبيق على اللوحة" يغيّرها
+Configure board: إعداد اللوحة
+Apply after flashing: التطبيق بعد التحميل
+Apply to board: تطبيق على اللوحة
+Board ready: اللوحة جاهزة
+Boards done: اللوحات المنجزة
+WiFi networks: شبكات WiFi
+Add network: إضافة شبكة
+Remove: إزالة
+No active project: لا يوجد مشروع نشط
+Project name must be 2 to 15 characters: يجب أن يتكون اسم المشروع من 2 إلى 15 حرفًا
+Add a WiFi network: أضف شبكة WiFi
+WiFi network not valid: شبكة WiFi غير صالحة
+Not understood: غير مفهوم
+Too long: طويل جدًا
+No reply: لا يوجد رد
+Could not fetch the enrolment secret: تعذّر جلب سر التسجيل
+WiFi connected: WiFi متصل
+WiFi not connected: WiFi غير متصل
+MQTT connected: MQTT متصل
+MQTT not connected: MQTT غير متصل
+Not enrolled: غير مسجّل
+Add a bridge: إضافة جسر
+Add another enrolment secret: إضافة سر تسجيل آخر
+Added: تمت الإضافة
+Adding it again issues a new broker password and a new replica token, and the ones that Pi is using now stop working. It will stay disconnected until you put the new ones into its configuration and restart its broker.: إضافته مرة أخرى تُصدر كلمة مرور جديدة للوسيط ورمز نسخ جديدًا، ويتوقف ما يستخدمه ذلك الـ Pi الآن عن العمل. سيبقى غير متصل حتى تضع الجديدين في إعداداته وتعيد تشغيل وسيطه.
+Admin: الإدارة
+Advanced: متقدم
+All: الكل
+Already have an account?: لديك حساب بالفعل؟
+'And these two, if you are not building against the production server:': 'وهذان أيضًا، إن لم تكن تبني على خادم الإنتاج:'
+Any node flashed with it that has not enrolled yet will be refused and will need reflashing. Nodes that have already enrolled are unaffected - they never present it again.: أي عقدة حُمّلت به ولم تُسجَّل بعد ستُرفض وستحتاج إلى إعادة تحميل. العقد المسجّلة بالفعل لا تتأثر - فهي لا تقدّمه مرة أخرى.
+API: API
+Approved: موافَق عليه
+AQI: AQI
+AQI500: AQI500
+Asked and was refused. Click to let it enrol.: طلبت ورُفضت. انقر للسماح لها بالتسجيل.
+Auth Token: رمز المصادقة
+Back to sign in: العودة إلى تسجيل الدخول
+Base URL: عنوان URL الأساسي
+Battery: البطارية
+Board: اللوحة
+Bridge: الجسر
+Bridged Pis: أجهزة Pi المتصلة بجسر
+Bridges: الجسور
+Brightness: السطوع
+Broker: الوسيط
+Broker account: حساب الوسيط
+Broker password: كلمة مرور الوسيط
+Built in LED: LED المدمج
+buttons: الأزرار
+Choose a project to see its devices: اختر مشروعًا لرؤية أجهزته
+Click to change project: انقر لتغيير المشروع
+Click to sort: انقر للترتيب
+Climate: المناخ
+close: إغلاق
+Collapse: طيّ
+Color: اللون
+'Compiled into firmware and used to request broker credential. Add a second one to change it: both are accepted, so nodes already flashed keep working until you withdraw the old one.': 'يُضمَّن في البرنامج الثابت ويُستخدم لطلب بيانات اعتماد الوسيط. أضف سرًا ثانيًا لتغييره: كلاهما مقبول، فتستمر العقد المحمّلة به في العمل حتى تسحب القديم.'
+Connect board: توصيل اللوحة
+connected: متصل
+connecting: جارٍ الاتصال
+Control: التحكم
+Cookie Name: اسم ملف تعريف الارتباط
+Copy these now - they are not shown again: انسخ هذه الآن - لن تُعرض مرة أخرى
+Could not read the board - assuming it is already provisioned: تعذّرت قراءة اللوحة - يُفترض أنها مُجهّزة مسبقًا
+Create an account: إنشاء حساب
+Dashboard: لوحة المعلومات
+Data: البيانات
+Delete these: حذف هذه
+Delete this firmware: حذف هذا البرنامج الثابت
+Denied: مرفوض
+Deny %s?: رفض %s؟
+Description: الوصف
+Device: الجهاز
+Display carousel: عرض دوّار
+DOWN: أسفل
+Download this firmware: تنزيل هذا البرنامج الثابت
+Done: تم
+ds18b20: ds18b20
+e.g. LiteFarm: مثل LiteFarm
+eCO2: eCO2
+Email: البريد الإلكتروني
+Enrol URL: عنوان URL للتسجيل
+Enrolled: مسجّل
+Enrolled nodes: العقد المسجّلة
+Enrolment secret: سر التسجيل
+ENS AHT: ENS AHT
+Enter the code we emailed you, then choose a new password.: أدخل الرمز الذي أرسلناه إليك بالبريد، ثم اختر كلمة مرور جديدة.
+Enter topic: أدخل الموضوع
+Enter value: أدخل القيمة
+Existing OTA Files: ملفات OTA الموجودة
+Failed: فشل
+Farm ID *: معرّف المزرعة *
+Farm registered: تم تسجيل المزرعة
+Farms: المزارع
+File: ملف
+Firmware: البرنامج الثابت
+Firmware file: ملف البرنامج الثابت
+Flash: تحميل
+Flash over USB: التحميل عبر USB
+Flash size was not detected reliably - flash anyway: لم يُكتشف حجم الذاكرة بشكل موثوق - حمّل على أي حال
+Flash this over USB: حمّل هذا عبر USB
+Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer: يحتاج التحميل إلى Web Serial API - استخدم Chrome أو Edge أو Opera على حاسوب مكتبي
+for node: للعقدة
+Forget: نسيان
+Forget %s?: نسيان %s؟
+Forget this node, so it is issued a new credential: انسَ هذه العقدة، لتُمنح بيانات اعتماد جديدة
+Forgot password?: نسيت كلمة المرور؟
+From: من
+Frugal IoT project: مشروع Frugal IoT
+Frugal-IoT Username *: اسم مستخدم Frugal-IoT *
+Full provision - all configuration on the board will be erased: تجهيز كامل - ستُمحى كل الإعدادات على اللوحة
+Gas Resistance: مقاومة الغاز
+Give the Pi a short name - it becomes its broker account and cannot be changed later without reconfiguring that Pi. Lower-case letters, digits and hyphens.: أعطِ الـ Pi اسمًا قصيرًا - يصبح حسابه في الوسيط ولا يمكن تغييره لاحقًا دون إعادة إعداد ذلك الـ Pi. أحرف لاتينية صغيرة وأرقام وشرطات.
+Give the Pi a short name first: أعطِ الـ Pi اسمًا قصيرًا أولًا
+Graph: رسم بياني
+Greater Than: أكبر من
+Has its own broker credential. Click to deny it.: لديها بيانات اعتماد خاصة بالوسيط. انقر لرفضها.
+heating: تدفئة
+humidifier: مرطّب
+Humidity: الرطوبة
+humidity: الرطوبة
+Humidity control: التحكم في الرطوبة
+Hysteresis: التخلّف
+hysteresis: التخلّف
+I have a code: لديّ رمز
+id: المعرّف
+If that account exists we have emailed a reset code: إن كان هذا الحساب موجودًا فقد أرسلنا رمز إعادة التعيين بالبريد
+If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': إن كان هذا المجلد غير ظاهر في منتقي الملفات، فانسخ الملف إلى مكان آخر أو أنشئ اسمًا مستعارًا لمجلد .pio دون النقطة في أوله
+Incorrect username or password: اسم المستخدم أو كلمة المرور غير صحيحة
+Info: معلومات
+Input: المُدخل
+It will be issued a new broker credential the next time it asks. A node that is running will be offline for a minute or two while it notices; a node whose filesystem was erased needs this before it can rejoin at all.: ستُمنح بيانات اعتماد جديدة للوسيط في المرة التالية التي تطلب فيها. العقدة العاملة ستكون غير متصلة لدقيقة أو اثنتين حتى تلاحظ؛ والعقدة التي مُسح نظام ملفاتها تحتاج هذا قبل أن تتمكن من الانضمام مجددًا.
+Its broker account is deleted, so it stops being able to publish or subscribe, and it cannot enrol again until you clear this. Use it for a node sending bad readings.: يُحذف حسابها في الوسيط، فتتوقف عن النشر أو الاشتراك، ولا يمكنها التسجيل مجددًا حتى تزيل هذا. استخدمه لعقدة ترسل قراءات خاطئة.
+Its next request will be accepted. Click to deny it.: سيُقبل طلبها التالي. انقر لرفضها.
+Key: المفتاح
+Last asked: آخر طلب
+Last check-in: آخر اتصال
+Last Seen: آخر ظهور
+Last seen: آخر ظهور
+LED: LED
+Limit: الحد
+List: القائمة
+Live: متصل الآن
+Load Cell: خلية الحمل
+Loading schema...: جارٍ تحميل المخطط...
+Log out: تسجيل الخروج
+Lower-case letters and numbers only, no spaces or punctuation: أحرف لاتينية صغيرة وأرقام فقط، دون مسافات أو علامات ترقيم
+Lux: لوكس
+Manual: يدوي
+Message: الرسالة
+Monitor: المراقب
+Monitor speed: سرعة المراقب
+Move down: تحريك للأسفل
+Move up: تحريك للأعلى
+Name: الاسم
+Never seen: لم يُرَ قط
+New here?: جديد هنا؟
+New password: كلمة مرور جديدة
+Connect a board to flash: وصّل لوحة للتحميل
+Choose a firmware file to flash: اختر ملف برنامج ثابت للتحميل
+Erase and flash: مسح وتحميل
+kept from last session: محفوظ من الجلسة السابقة
+No farms registered for this organization yet.: لا توجد مزارع مسجّلة لهذه المؤسسة بعد.
+No nodes found for this farm's project(s).: لم يُعثر على عقد لمشروع (مشاريع) هذه المزرعة.
+No nodes found for this organization: لم يُعثر على عقد لهذه المؤسسة
+No nodes have enrolled yet, and none have asked and been rejected.: لم تُسجَّل أي عقدة بعد، ولم تطلب أي عقدة وتُرفض.
+No organization: لا توجد مؤسسة
+No organization selected: لم تُختر مؤسسة
+No OTA files uploaded yet.: لم تُرفع ملفات OTA بعد.
+No Pi bridges to this server for this organization. A bridge relays a Pi's readings here while the Pi carries on working on its own - see INSTALLATION.md step 11.: لا توجد جسور Pi إلى هذا الخادم لهذه المؤسسة. يرحّل الجسر قراءات الـ Pi إلى هنا بينما يواصل الـ Pi العمل بمفرده - انظر INSTALLATION.md الخطوة 11.
+No platforms registered yet.: لا توجد منصات مسجّلة بعد.
+No projects added for this organization yet.: لم تُضف مشاريع لهذه المؤسسة بعد.
+No projects to display until organization selected: لا مشاريع للعرض حتى تُختار مؤسسة
+No state received from the broker yet: لم تُستلم أي حالة من الوسيط بعد
+Nobody added for this organization yet.: لم يُضف أحد لهذه المؤسسة بعد.
+Node: العقدة
+Node Actions: إجراءات العقدة
+Node ID: معرّف العقدة
+Node Name: اسم العقدة
+Nodes: العقد
+Nodes in Farm: العقد في المزرعة
+Nodes in Organization: العقد في المؤسسة
+Nodes that have obtained broker credentials on first connection. Forget reissues a new credential at next connection and is needed if memory has been erased. Refused nodes are listed - click Approve to allow (on next retry, typically 30 minutes).: العقد التي حصلت على بيانات اعتماد الوسيط عند أول اتصال. "نسيان" يُصدر بيانات اعتماد جديدة عند الاتصال التالي ويلزم إن مُسحت الذاكرة. العقد المرفوضة مدرجة - انقر "موافقة" للسماح (عند المحاولة التالية، عادةً بعد 30 دقيقة).
+Not in the schema: ليس في المخطط
+Not selected: غير محدد
+Note this is your organization - not the organizations whose devices you want to access.: لاحظ أن هذه مؤسستك - وليست المؤسسات التي تريد الوصول إلى أجهزتها.
+Now: الآن
+now: الآن
+'Off': إيقاف
+offline: غير متصل
+Offline: غير متصل
+'On': تشغيل
+'On ArduinoIDE the file is typically in ': 'في ArduinoIDE يكون الملف عادةً في '
+'On PlatformIO The file is typically in ': 'في PlatformIO يكون الملف عادةً في '
+Organization: المؤسسة
+OTA: OTA
+OTA Upload: رفع OTA
+OTA binary uploaded: تم رفع ملف OTA الثنائي
+OTA Key: مفتاح OTA
+OTA Key or Device ID: مفتاح OTA أو معرّف الجهاز
+Out: المُخرج
+out: المُخرج
+Output: المُخرج
+Password: كلمة المرور
+Password reset - please sign in: أُعيد تعيين كلمة المرور - يرجى تسجيل الدخول
+Password reset is not available on this server: إعادة تعيين كلمة المرور غير متاحة على هذا الخادم
+Pattern: النمط
+Permissions: الصلاحيات
+Phone or Whatsapp: الهاتف أو واتساب
+Platform *: المنصة *
+Platform Name *: اسم المنصة *
+Platform registered: تم تسجيل المنصة
+Please login: يرجى تسجيل الدخول
+Pressure: الضغط
+Project: المشروع
+Project changed to: تغيّر المشروع إلى
+Asked %s to move: طُلب من %s الانتقال
+Waiting for %s to report: في انتظار تقرير %s
+Project ID: معرّف المشروع
+Project ID *: معرّف المشروع *
+Project Name: اسم المشروع
+Projects: المشاريع
+Property: الخاصية
+Provision instead (erases config): تجهيز بدلًا من ذلك (يمسح الإعدادات)
+Publish Message: نشر رسالة
+'Published to ': 'نُشر إلى '
+'Put this in platformio-secrets-local.ini, which is not committed:': 'ضع هذا في platformio-secrets-local.ini، الذي لا يُودَع في المستودع:'
+QoS: QoS
+reconnect: إعادة الاتصال
+Reconnect the board to flash again: أعد توصيل اللوحة للتحميل مرة أخرى
+Register: تسجيل
+Register a platform above before adding a farm.: سجّل منصة أعلاه قبل إضافة مزرعة.
+Register Farm: تسجيل مزرعة
+Refresh: تحديث
+Register Platform: تسجيل منصة
+Registered Platforms: المنصات المسجّلة
+Registration failed: فشل التسجيل
+Registration successful - please login: تم التسجيل بنجاح - يرجى تسجيل الدخول
+Relay: المرحّل
+Replica token: رمز النسخ
+Reporting every: يُبلغ كل
+Reset code: رمز إعادة التعيين
+Reset password: إعادة تعيين كلمة المرور
+Retain: احتفاظ
+Retained: محتفظ بها
+Retained messages: الرسائل المحتفظ بها
+Run this on the Pi, in the directory the server is installed in. Replace the placeholder with this server's fully-qualified name - the one on its certificate, which you can check by opening https:// that name in a browser. It will then ask for the broker password and for the replica token, in that order, so have both of the values below to hand.: شغّل هذا على الـ Pi، في المجلد المثبّت فيه الخادم. استبدل العنصر النائب بالاسم الكامل لهذا الخادم - الاسم الموجود على شهادته، ويمكنك التحقق منه بفتح https:// ذلك الاسم في متصفح. سيطلب بعدها كلمة مرور الوسيط ثم رمز النسخ، بهذا الترتيب، فاجعل القيمتين أدناه في متناولك.
+Schema: المخطط
+Select: اختيار
+Select a farm above to see its nodes.: اختر مزرعة أعلاه لرؤية عقدها.
+Select a node above to see actions.: اختر عقدة أعلاه لرؤية الإجراءات.
+Select a node above to send an action.: اختر عقدة أعلاه لإرسال إجراء.
+Select an organization to continue.: اختر مؤسسة للمتابعة.
+Send: إرسال
+SEND: إرسال
+Send another code: إرسال رمز آخر
+Send reset code: إرسال رمز إعادة التعيين
+sent: أُرسل
+server: الخادم
+set: ضبط
+Setpoint: القيمة المستهدفة
+Settings: الإعدادات
+Show enrolment secrets: إظهار أسرار التسجيل
+SHT: SHT
+SHT30: SHT30
+Sign In: تسجيل الدخول
+Sign in: تسجيل الدخول
+Site: الموقع
+Soil: التربة
+Soil Moisture: رطوبة التربة
+Soil Temperature: حرارة التربة
+Sonoff R2 switch: مفتاح Sonoff R2
+Sonoff switch: مفتاح Sonoff
+Speed: السرعة
+SSID: SSID
+Not reported recently: لم يُبلغ مؤخرًا
+Status: الحالة
+Stop monitor: إيقاف المراقب
+Stopped, and its credential removed. Click to clear.: توقف، وأُزيلت بيانات اعتماده. انقر للمسح.
+Submit: إرسال
+System: النظام
+Temperature: درجة الحرارة
+temperature: درجة الحرارة
+That code is not valid or has expired: هذا الرمز غير صالح أو منتهي الصلاحية
+The broker reports this bridge connected: يُبلغ الوسيط أن هذا الجسر متصل
+The broker reports this bridge not connected: يُبلغ الوسيط أن هذا الجسر غير متصل
+This field has no invocation URL (forms[0].href) in its schema: لا يحتوي هذا الحقل على عنوان URL للاستدعاء (forms[0].href) في مخططه
+This node has no actions in its schema.: لا تحتوي هذه العقدة على إجراءات في مخططها.
+This node has no actions or writable properties in its schema.: لا تحتوي هذه العقدة على إجراءات أو خصائص قابلة للكتابة في مخططها.
+This organization has no enrolment secret, so no new node can enrol. Add one.: لا تملك هذه المؤسسة سر تسجيل، فلا يمكن لأي عقدة جديدة التسجيل. أضف واحدًا.
+Time On (s): مدة التشغيل (ث)
+To: إلى
+Too many attempts - please wait a few minutes: محاولات كثيرة جدًا - يرجى الانتظار بضع دقائق
+Topic: الموضوع
+Topic and Value are required: الموضوع والقيمة مطلوبان
+TVOC: TVOC
+'Two credentials for two different connections: the password is what the MQTT bridge logs in with on port 8883, and the token is what lets that Pi pull this organization''s logins over HTTPS, so the same people can log in there too. The token can be skipped - press Enter at its prompt - and added later by doing this again. Neither is asked for on the command line, so that neither ends up in the Pi''s shell history.': 'بيانات اعتماد لاتصالين مختلفين: كلمة المرور هي ما يسجّل به جسر MQTT الدخول على المنفذ 8883، والرمز هو ما يسمح لذلك الـ Pi بجلب حسابات هذه المؤسسة عبر HTTPS، ليتمكن الأشخاص أنفسهم من تسجيل الدخول هناك أيضًا. يمكن تخطي الرمز - اضغط Enter عند طلبه - وإضافته لاحقًا بتكرار هذا. لا يُطلب أي منهما في سطر الأوامر، حتى لا ينتهي أي منهما في سجل أوامر الـ Pi.'
+Unable to find node: تعذّر العثور على العقدة
+Unable to find project: تعذّر العثور على المشروع
+Unauthorized: غير مصرّح
+undefined: غير معرّف
+Unknown: غير معروف
+Unsupported board: لوحة غير مدعومة
+Unused: غير مستخدم
+Up: أعلى
+Updating the app only: تحديث التطبيق فقط
+Updating the app only - the existing configuration will be preserved: تحديث التطبيق فقط - ستُحفظ الإعدادات الحالية
+Upload: رفع
+Upload finished - check the list below: اكتمل الرفع - تحقق من القائمة أدناه
+Uploading: جارٍ الرفع
+Username: اسم المستخدم
+Username or email: اسم المستخدم أو البريد الإلكتروني
+Value: القيمة
+Value *: القيمة *
+Voltage: الجهد
+Waiting: في الانتظار
+Waiting for devices: في انتظار الأجهزة
+We will email you a code and a link to choose a new password.: سنرسل إليك بالبريد رمزًا ورابطًا لاختيار كلمة مرور جديدة.
+When: متى
+WiFi: WiFi
+Withdraw this enrolment secret?: سحب سر التسجيل هذا؟
+Withdrawn: مسحوب
+'Yes': نعم
+You do not have permission for this organization: ليست لديك صلاحية لهذه المؤسسة
+Forwarders: التحويلات
+Grafana: Grafana
+OpenSearch: OpenSearch
+OpenSearch Dashboards: OpenSearch Dashboards
+every %s s: كل %s ث
+'%s topics': '%s مواضيع'
+From the file: من الملف
+Delete "%s"?: حذف "%s"؟
+Readings stop being sent to it straight away. Nothing already sent is removed from there.: يتوقف إرسال القراءات إليه فورًا. لا يُحذف من هناك أي شيء أُرسل بالفعل.
+Deleted, but the logger could not be told - it will take effect at the next restart: حُذف، لكن تعذّر إبلاغ المسجّل - سيسري ذلك عند إعادة التشغيل التالية
+set - leave blank to keep it: مضبوط - اتركه فارغًا للإبقاء عليه
+Give it a name first: أعطه اسمًا أولًا
+Saved, but the logger could not be told - it will take effect at the next restart: حُفظ، لكن تعذّر إبلاغ المسجّل - سيسري ذلك عند إعادة التشغيل التالية
+Sending... %s readings so far: جارٍ الإرسال... %s قراءة حتى الآن
+'Stopped: %s': 'توقف: %s'
+Never: أبدًا
+Making it again replaces its token, and the Grafana using the old one stops working until it is given the new one.: إنشاؤه مرة أخرى يستبدل رمزه، ويتوقف Grafana الذي يستخدم الرمز القديم عن العمل حتى يُعطى الجديد.
+Revoke "%s"?: إلغاء "%s"؟
+The Grafana using it stops being able to read this organization straight away.: يتوقف Grafana الذي يستخدمه عن قراءة هذه المؤسسة فورًا.
+Copied: تم النسخ
+Press Ctrl-C or Cmd-C to copy: اضغط Ctrl-C أو Cmd-C للنسخ
+'You have a login: %s. Making another replaces its password, and your Dashboards stops working until it is given the new one.': 'لديك حساب دخول: %s. إنشاء آخر يستبدل كلمة مروره، ويتوقف OpenSearch Dashboards لديك عن العمل حتى يُعطى الجديدة.'
+Replace the password?: استبدال كلمة المرور؟
+The Dashboards using the old one stops working until it is given the new one.: يتوقف OpenSearch Dashboards الذي يستخدم القديمة عن العمل حتى يُعطى الجديدة.
+Remove the login?: إزالة حساب الدخول؟
+Dashboards using it stops being able to read this organization straight away.: يتوقف OpenSearch Dashboards الذي يستخدمه عن قراءة هذه المؤسسة فورًا.
+Loading...: جارٍ التحميل...
+This organization forwards its readings nowhere. They are still recorded in the CSV files and charted in Grafana - add a forwarder to send them somewhere as well.: هذه المؤسسة لا تحوّل قراءاتها إلى أي مكان. لا تزال تُسجَّل في ملفات CSV وتُرسم في Grafana - أضف تحويلًا لإرسالها إلى مكان آخر أيضًا.
+Type: النوع
+Sends to: يرسل إلى
+State: الحالة
+Edit: تعديل
+Delete: حذف
+Send earlier readings...: إرسال القراءات السابقة...
+Save: حفظ
+Cancel: إلغاء
+From this day on (leave empty for everything): من هذا اليوم فصاعدًا (اتركه فارغًا لكل شيء)
+Start: بدء
+Close: إغلاق
+Readings are always recorded in the CSV files, and charted in Grafana from them. A forwarder also sends each reading, as it is logged, somewhere else - OpenSearch to search and browse them, or Google Sheets to add a row of values every so often. Changes apply straight away.: تُسجَّل القراءات دائمًا في ملفات CSV، وتُرسم منها في Grafana. يرسل التحويل أيضًا كل قراءة، عند تسجيلها، إلى مكان آخر - إلى OpenSearch للبحث فيها وتصفحها، أو إلى Google Sheets لإضافة صف من القيم بين حين وآخر. تسري التغييرات فورًا.
+No Grafana has been given access to this organization yet.: لم يُمنح أي Grafana وصولًا إلى هذه المؤسسة بعد.
+Made: أُنشئ
+Last used: آخر استخدام
+Whose: لمن
+Revoke: إلغاء
+Copy: نسخ
+Copy this now - it is not shown again: انسخ هذا الآن - لن يُعرض مرة أخرى
+Token: الرمز
+Allowed host: المضيف المسموح
+Remove my login: إزالة حساب دخولي
+Everyone's logins: حسابات دخول الجميع
+OpenSearch Dashboards is a program you run on your own computer to search and chart this organization's readings, which this server keeps in OpenSearch. It needs a login, made here, that is yours. It can read this organization's readings and nothing else, and the people of an organization share its saved dashboards. It needs permission to read the whole organization; if you can read only some projects, use the Grafana card instead.: OpenSearch Dashboards برنامج تشغّله على حاسوبك للبحث في قراءات هذه المؤسسة ورسمها، والتي يحفظها هذا الخادم في OpenSearch. يحتاج إلى حساب دخول خاص بك، يُنشأ هنا. يمكنه قراءة قراءات هذه المؤسسة ولا شيء غيرها، ويتشارك أعضاء المؤسسة لوحاته المحفوظة. يحتاج إلى صلاحية قراءة المؤسسة كلها؛ وإن كنت تستطيع قراءة بعض المشاريع فقط، فاستخدم بطاقة Grafana بدلًا منه.
+Give a Grafana access: منح Grafana وصولًا
+Name it for whoever or wherever it is, so it can be revoked on its own.: سمّه باسم صاحبه أو مكانه، حتى يمكن إلغاؤه وحده.
+Make a token: إنشاء رمز
+The starter dashboard: لوحة البداية
+A chart with a list of every topic to pick from. In Grafana choose Dashboards, New, Import, upload this file, and pick the data source above when it asks.: رسم بياني مع قائمة بكل المواضيع للاختيار منها. في Grafana اختر Dashboards ثم New ثم Import، وارفع هذا الملف، واختر مصدر البيانات أعلاه عند الطلب.
+Add a forwarder: إضافة تحويل
+Change this forwarder: تغيير هذا التحويل
+Active (untick to pause; the settings are kept): نشط (أزل العلامة للإيقاف المؤقت؛ تُحفظ الإعدادات)
+Would send %s readings: سيُرسل %s قراءة
+Sent %s readings: أُرسلت %s قراءة
+'Sends the readings already recorded in the CSV files, which this forwarder did not see because it was off or OpenSearch was down. It is safe to repeat: a reading already there is replaced, not doubled.': 'يرسل القراءات المسجّلة بالفعل في ملفات CSV، والتي لم يرها هذا التحويل لأنه كان متوقفًا أو كان OpenSearch معطلًا. التكرار آمن: القراءة الموجودة بالفعل تُستبدل ولا تتضاعف.'
+Only count them, send nothing: عدّها فقط، ولا ترسل شيئًا
+Yours: لك
+Another user's: لمستخدم آخر
+'In Grafana, add a data source of type Infinity, with Authentication set to Bearer Token and the token above, and the allowed host above. Or let this do it:': 'في Grafana، أضف مصدر بيانات من نوع Infinity، مع ضبط Authentication على Bearer Token والرمز أعلاه، والمضيف المسموح أعلاه. أو دع هذا يقوم بذلك:'
+Download the data source file: تنزيل ملف مصدر البيانات
+You have no login yet.: ليس لديك حساب دخول بعد.
+Replace the password: استبدال كلمة المرور
+Make a login: إنشاء حساب دخول
+'Put these lines in the configuration file of the OpenSearch Dashboards on your computer (opensearch_dashboards.yml), then restart it. Nothing is asked for when you open it: the login is in the file. The password is not kept anywhere you can read it, so if you lose this, press the button below to make a new one and paste the lines in again.': 'ضع هذه الأسطر في ملف إعدادات OpenSearch Dashboards على حاسوبك (opensearch_dashboards.yml)، ثم أعد تشغيله. لن يُطلب منك شيء عند فتحه: حساب الدخول موجود في الملف. لا تُحفظ كلمة المرور في أي مكان يمكنك قراءتها منه، فإن فقدت هذا، اضغط الزر أدناه لإنشاء واحدة جديدة والصق الأسطر مرة أخرى.'
+'Grafana can chart this organization''s readings straight from the server - every reading ever recorded, with nothing to export first. To set it up: install the Infinity plugin in Grafana, make a token here, give Grafana the data source, then import the dashboard. A token is yours: it lets one Grafana read what you can read in this organization, and stops working if your access to it does.': 'يستطيع Grafana رسم قراءات هذه المؤسسة مباشرة من الخادم - كل قراءة سُجّلت على الإطلاق، دون تصدير أي شيء أولًا. لإعداده: ثبّت إضافة Infinity في Grafana، وأنشئ رمزًا هنا، وأعطِ Grafana مصدر البيانات، ثم استورد اللوحة. الرمز خاص بك: يسمح لـ Grafana واحد بقراءة ما تستطيع قراءته في هذه المؤسسة، ويتوقف عن العمل إن توقف وصولك إليها.'
+Download the dashboard: تنزيل اللوحة
+Forgotten: نُسيت
+Failed - approve: فشل - وافق
+Choose an organization first, so there is a broker connection to publish on: اختر مؤسسة أولًا، ليكون هناك اتصال بالوسيط للنشر عليه
+Add Farm: إضافة مزرعة
+No broker credentials for this organization: لا توجد بيانات اعتماد للوسيط لهذه المؤسسة
+Listening on %s ...: جارٍ الاستماع على %s ...
+'Could not connect: %s': 'تعذّر الاتصال: %s'
+'Could not subscribe: %s': 'تعذّر الاشتراك: %s'
+Nothing retained matches that pattern: لا توجد رسائل محتفظ بها تطابق هذا النمط
+Deleting %s ...: جارٍ حذف %s ...
+'Could not delete: %s': 'تعذّر الحذف: %s'
+Deleted %s: حُذف %s
+If one comes back, a node is still publishing it.: إن عادت إحداها، فهناك عقدة لا تزال تنشرها.
+Add Project: إضافة مشروع
+Add Platform: إضافة منصة
+', %s failed': ، فشل %s
+This server has no OpenSearch of its own set up (config.d/opensearch.yaml): لم يُعدّ لهذا الخادم OpenSearch خاص به (config.d/opensearch.yaml)
+This server has not said where OpenSearch can be reached from outside (config.d/opensearch.yaml, "public"): لم يحدد هذا الخادم أين يمكن الوصول إلى OpenSearch من الخارج (config.d/opensearch.yaml، "public")
+OpenSearch logins need an organization id of lower-case letters and digits only: تتطلب حسابات دخول OpenSearch معرّف مؤسسة من أحرف لاتينية صغيرة وأرقام فقط
+OpenSearch did not answer: لم يستجب OpenSearch

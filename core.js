@@ -387,12 +387,13 @@ function isEditableTarget(e) {
 }
 // =============================== Languages and Internationalization ===============================
 // Every language the picker offers. Each but English has a file in languages/; a key is its own
-// English text, so English needs none.
+// English text, so English needs none. No flag where the language belongs to no one country.
 const languageIndex = {
   en: { name: 'English', flag: '🇬🇧' },
   fr: { name: 'Français', flag: '🇫🇷' },
   hi: { name: 'हिंदी', flag: '🇮🇳' },
   id: { name: 'Bahasa Indonesia', flag: '🇮🇩' },
+  ar: { name: 'العربية', dir: 'rtl' },
 };
 // Vocabulary by language code: the one in use, and whatever a dashboard adds with addVocabulary.
 const languages = {};
@@ -422,7 +423,14 @@ const language = languageMatch((new URL(window.location.href).searchParams.get('
   || languageMatch(storedLanguage())
   || browserLanguages().map(languageMatch).find(Boolean)
   || 'en';
+const languageDir = languageIndex[language].dir || 'ltr';
 document.documentElement.lang = language;
+document.documentElement.dir = languageDir;
+// A number with its unit, or a name, reads left to right even inside Arabic: without the isolate
+// "23.5 °C" in a right-to-left sentence shows as "C° 23.5". Left-to-right pages get the string as is.
+function bidiIsolate(s) {
+  return (languageDir === 'rtl') ? `\u2066${s}\u2069` : s;
+}
 function addVocabulary(langs) {
   // Accepts an object e.g. { FR: { word: 'mot' } }, or a YAML string in the same format. Merges into
   // existing language entries; adds new languages wholesale.
@@ -464,7 +472,7 @@ function getString(tag) {
 // A name dropped into translated prose. The placeholder rather than concatenation, because where
 // the name falls in the sentence is the translation's decision, not this caller's.
 function getStringWith(tag, value) {
-  return getString(tag).replace('%s', value);
+  return getString(tag).replace('%s', bidiIsolate(String(value)));
 }
 
 // server_config is assigned from /config.json in normal use; funnelled through here so a mock or
@@ -569,15 +577,17 @@ class LanguagePicker extends HTMLElementExtended {
     try { localStorage.setItem(LanguageKey, ev.target.value); } catch (e) { XXX(`language save: ${e.message}`); }
     locationParameterChange("lang", ev.target.value);
   }
-  labelFor({name, flag}) {
-    return this.state.compact ? flag : `${name} ${flag}`;
+  // Compact is the flag alone, or the code where there is no flag to stand for the language
+  labelFor(code, {name, flag}) {
+    if (this.state.compact) return flag || code.toUpperCase();
+    return flag ? `${name} ${flag}` : name;
   }
   render() {
     return [
       el('link', {rel: 'stylesheet', href: CssUrl}),
       el('select', {class: "language-picker", onchange: this.onchange.bind(this)},
         Object.entries(languageIndex).map(([k,v]) =>
-          EL('option', {value: k, textContent: this.labelFor(v), selected: k === language}))
+          EL('option', {value: k, textContent: this.labelFor(k, v), selected: k === language}))
       ),
     ];
   }
@@ -716,7 +726,7 @@ class MqttTopic {
     // being on, and ✓/✗ is what the rest of the UI already uses for one
     if (typeof v === 'boolean') return v ? '✓' : '✗';
     if (typeof v !== 'number') return String(v);
-    return v.toFixed(this.decimals) + unitSuffix(this.units);
+    return bidiIsolate(v.toFixed(this.decimals) + unitSuffix(this.units));
   }
   // The sensor said it has no reading, by publishing "nan" - see valueFromText. Distinct from
   // outOfRange below, which is a real reading that falls outside its declared min/max: a sensor

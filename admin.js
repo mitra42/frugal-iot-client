@@ -186,7 +186,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     GET(url, {}, (err, json) => {
       cb();
       if (err) {
-        this.message(err);
+        this.message(err.message);
         return;
       } else { // got config
         this.state.ota_files = json;
@@ -1891,7 +1891,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
        extraColumn ? el('th', {textContent: extraColumn.label}) : null,
        columns.map(col =>
          el('th', {
-           style: 'cursor: pointer; user-select: none; padding-right: 10px;',
+           style: 'cursor: pointer; user-select: none; padding-inline-end: 10px;',
            title: 'Click to sort',
            onclick: () => onSort(col.field),
          }, [

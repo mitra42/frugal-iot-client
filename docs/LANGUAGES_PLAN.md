@@ -2,7 +2,12 @@
 
 ## Status
 
-**Phases 1, 2 and 3 built**, branch `language` in the client and the server. Phase 4 not started.
+**Phases 1, 2 and 3 built**, branch `language` in the client and the server. **Phase 4 started with
+Arabic**, the first right-to-left language: `languages/ar.yaml` (machine translation, unreviewed),
+`dir: 'rtl'` in the index setting `<html dir>`, every physical left/right in `frugaliot.css`
+turned logical, numbers-with-units and `getStringWith` values wrapped in Unicode isolates on a
+right-to-left page (`bidiIsolate` in `core.js`), `unicode-bidi: plaintext` on values shown alone, the
+slider track held left to right, and no flag for Arabic - the compact picker shows `AR`.
 
 Phase 3 as built: `?lang=`, then the picker's last choice (`localStorage`, key `frugaliot:language`,
 written only by the picker), then `navigator.languages`, then `en`. Sign-in sends `browserlangs`;

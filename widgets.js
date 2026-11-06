@@ -610,16 +610,22 @@ class MqttSlider extends MqttTransmitter {
     // TODO use mqttTopic for conversion instead of subclassing
     return (this.state.value).toPrecision(3); // Conversion from int to String (for MQTT)
   }
+  // Right to left the minimum is at the right, as a bar fills from the right there. The pixel
+  // arithmetic stays in left offsets - the track is held left to right - and only the fraction turns.
+  get mirrored() {
+    return getComputedStyle(this).direction === 'rtl';
+  }
   leftToValue(l) {
     // TODO - I doubt this is workign with exponential
     if (this.state.type === "exponential") { XXX(["exponential sliders not tested"]); }
-    return (l+this.thumb.offsetWidth/2)/this.slider.offsetWidth * (this.state.max-this.state.min) + this.state.min;
+    const fraction = (l+this.thumb.offsetWidth/2)/this.slider.offsetWidth;
+    return (this.mirrored ? 1 - fraction : fraction) * (this.state.max-this.state.min) + this.state.min;
   }
   get leftOffset() {
-    return ((this.state.type === "exponential")
+    const fraction = (this.state.type === "exponential")
       ? (Math.log(this.state.value/(this.state.min||1))/Math.log(this.state.max/(this.state.min||1)))
-      : ((this.state.value-this.state.min)/(this.state.max-this.state.min))
-    ) * (this.slider.offsetWidth) - this.thumb.offsetWidth/2;
+      : ((this.state.value-this.state.min)/(this.state.max-this.state.min));
+    return (this.mirrored ? 1 - fraction : fraction) * (this.slider.offsetWidth) - this.thumb.offsetWidth/2;
   }
   onmousedown(event) {
     event.preventDefault();
