@@ -3,7 +3,8 @@
 ## Status
 
 Plan agreed 2026-11-06. Phase 1 (firmware) built and compiling, not yet run on a board; it goes
-into the next release. Phase 2 (schema, data tree, `located-devices` mock scenario) built and tested. Decisions are numbered M-n so they can be argued here rather than
+into the next release. Phase 2 (schema, data tree, `located-devices` mock scenario) built and tested. Phase 3 (the
+read-only map) built and tested in jsdom; not yet looked at in a browser. Decisions are numbered M-n so they can be argued here rather than
 re-decided in code; open questions are Q-n, deferred work is ML-n.
 
 ## Goal
@@ -87,8 +88,11 @@ Leaflet 1.9 ships an ESM build. markercluster is UMD and expects a global `L`, s
 `window.L` before importing it — check this first, since it will either work or need a vendored
 copy.
 
-**M-5 A new module `map.js`, imported only when the map is first opened** (dynamic `import()`). The
-card page must not pay for Leaflet or tiles until someone asks for a map. It imports `core.js` only.
+**M-5 A new module `map.js`; Leaflet is loaded only when the map is first opened.** The card page
+must not pay for Leaflet or tiles until someone asks for a map. `map.js` itself is small and
+`cards.js` imports it, because the page calls its methods, not just its tag. It imports `core.js`
+only. *As built:* Leaflet and markercluster are added as classic `<script>` tags, not imported.
+markercluster attaches itself to a global `L`, and an ES module's namespace is frozen.
 `mqtt-map` is light DOM (`HTMLElementExtendedMinimum`): Leaflet positions its own DOM with
 `leaflet.css`, and a page stylesheet cannot reach inside a shadow root.
 
@@ -104,12 +108,14 @@ card page must not pay for Leaflet or tiles until someone asks for a map. It imp
 **M-7 The map docks above the grid, with a drag handle on its bottom edge, rather than floating.**
 "Pops up and is resizable" either way, but a floating window covers the cards that hovering a pin
 is meant to lead to, and has no sensible form on a phone. Docked, it pushes the grid down. Its height
-is remembered in the layout store (`frugaliot:layout:v1:{org}/{project}`, as `mapHeight`) along with
-whether it was open. On a phone it is the same bottom sheet as the graph panel and a card's back
-(D-6, O-8).
+and whether it was open are remembered per project in `frugaliot:map:v1:{org}/{project}`. That key is
+separate from the card layout's, because the grid caches its layout and would write back over them.
+On a phone it is the same docked panel. The graph panel turned out not to be a sheet either.
 
 - Button: 🗺 in the project header beside the gear, shown only when the map has something to do:
-  at least one located device, or WRITE (so there is something to set).
+  at least one located device, or WRITE (so there is something to set). *Phase 3:* located devices
+  only, since there is nothing to set yet. The panel is hidden with its button, so a map remembered
+  open is never left on screen with no way to close it.
 - Opens fitted to `locationBounds`; one device → a fixed zoom on it.
 
 **M-8 Pins.**
@@ -120,7 +126,8 @@ whether it was open. On a phone it is the same bottom sheet as the graph panel a
   open, not stored, so it is never stale.
 - Tap (phone) or click → the same, as a popup with **Open card**, which scrolls to the card and opens
   it on FRONT.
-- GPS-sourced pins are drawn slightly differently (hollow), so a moving device reads as such.
+- Status is shown by shape as well as colour, as on the cards: live is solid, stale is a dashed
+  ring, offline and never are hollow. GPS-sourced pins are diamonds, so a moving device reads as one.
 - Re-read on the card UI's existing slow status interval, because a device going quiet sends nothing.
 
 ## Setting a location (the card's back)

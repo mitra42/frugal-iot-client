@@ -18,7 +18,7 @@ const TAGS = [
   'language-picker', 'mqtt-client', 'mqtt-login', 'mqtt-flash', 'mqtt-admin',
   'mqtt-text', 'mqtt-color', 'mqtt-toggle', 'mqtt-bar', 'mqtt-gauge', 'mqtt-slider',
   'mqtt-choosetopic', 'mqtt-wrapper', 'mqtt-graph', 'mqtt-graphdataset',
-  'mqtt-devicecard', 'mqtt-devicegrid', 'mqtt-projectback', 'mqtt-dashboard',
+  'mqtt-devicecard', 'mqtt-devicegrid', 'mqtt-projectback', 'mqtt-dashboard', 'mqtt-map',
 ];
 
 before(async () => {

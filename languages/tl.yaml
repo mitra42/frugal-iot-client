@@ -430,3 +430,7 @@ This server has no OpenSearch of its own set up (config.d/opensearch.yaml): Wala
 This server has not said where OpenSearch can be reached from outside (config.d/opensearch.yaml, "public"): Hindi pa sinasabi ng server na ito kung saan maaabot ang OpenSearch mula sa labas (config.d/opensearch.yaml, "public")
 OpenSearch logins need an organization id of lower-case letters and digits only: Kailangan ng OpenSearch login ng organization id na maliliit na titik at numero lang
 OpenSearch did not answer: Hindi sumagot ang OpenSearch
+Map: "Mapa"
+Resize map: "Baguhin ang laki ng mapa"
+Open card: "Buksan ang card"
+Map unavailable: "Hindi available ang mapa"

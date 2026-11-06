@@ -430,3 +430,7 @@ This server has no OpenSearch of its own set up (config.d/opensearch.yaml): इ�
 This server has not said where OpenSearch can be reached from outside (config.d/opensearch.yaml, "public"): इस सर्वर ने नहीं बताया है कि OpenSearch बाहर से कहाँ पहुँचा जा सकता है (config.d/opensearch.yaml, "public")
 OpenSearch logins need an organization id of lower-case letters and digits only: OpenSearch लॉगिन के लिए संगठन आईडी में केवल छोटे अक्षर और अंक होने चाहिए
 OpenSearch did not answer: OpenSearch ने जवाब नहीं दिया
+Map: "नक्शा"
+Resize map: "नक्शे का आकार बदलें"
+Open card: "कार्ड खोलें"
+Map unavailable: "नक्शा उपलब्ध नहीं"

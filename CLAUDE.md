@@ -13,8 +13,9 @@ it loadable on its own, and it is maintained by reaching the display elements **
 | `core.js` | none | MQTT plumbing, the `MqttTopic*` data tree, i18n and `el`, `server_config`, `MqttClient`, `MqttWrapper` |
 | `widgets.js` | core | `mqtt-bar`, `mqtt-text`, `mqtt-toggle`, `mqtt-gauge`, `mqtt-slider`, `mqtt-color`, `mqtt-choosetopic` — all shadow DOM |
 | `graph.js` | core, widgets | `mqtt-graph`, `mqtt-graphdataset` — pulls Chart.js |
-| `cards.js` | core | the card UI: `mqtt-devicecard`, `mqtt-devicegrid`, `mqtt-projectback`, `mqtt-dashboard`, the layout store |
+| `cards.js` | core, map | the card UI: `mqtt-devicecard`, `mqtt-devicegrid`, `mqtt-projectback`, `mqtt-dashboard`, the layout store |
 | `flash.js` | core | `mqtt-flash` — pulls esptool-js |
+| `map.js` | core | `mqtt-map` — the project's devices as pins; loads Leaflet as classic scripts on first open |
 | `nodeconfig.js` | none | the serial config protocol and the batch profile — no DOM, used by `flash.js` |
 | `admin.js` | core | `mqtt-admin` — one admin section, rendered per card by `cards.js` |
 | `login.js` | core | `mqtt-login` — sign in, register, forgot/reset password; light DOM |
@@ -41,7 +42,7 @@ reasoning, deferred work is L-n, and it is the place to argue with a choice rath
 it in code. `docs/CARDS_PLAN.md` is how it was built, including the bugs found on the way.
 `docs/FLASH_PLAN.md` and `docs/HEADLESS_PLAN.md` cover their own areas; `docs/CONFIG_PLAN.md` covers configuring
 a node over USB (a profile applied to each board, serial transport into the node's existing `set/` path). `docs/LANGUAGES_PLAN.md`
-covers the per-language files and how a page chooses one. Comments throughout the code cite
+covers the per-language files and how a page chooses one. `docs/MAPPING_PLAN.md` covers device locations and the map. Comments throughout the code cite
 these by bare filename (`see CARDS_UX.md 4.7`); they all live in `docs/`.
 
 ## Code style
@@ -274,6 +275,7 @@ const mt = document.querySelector('mqtt-wrapper')?.projectMt?.findTopic(this.sta
 | `frugaliot:organizationchanged` | `MqttWrapper.onOrganization` | `{ organization }` | capabilities are per organization, so this precedes any project |
 | `frugaliot:cardmove` / `cardmoveover` | `mqtt-devicecard` | `{ nodeId, delta }` / `{ nodeId, targetNodeId }` | the card asks to be moved; the grid decides what that means |
 | `frugaliot:cardmode` | `mqtt-devicecard` | `{ nodeId, mode }` | so the grid can remember what was open |
+| `frugaliot:cardopen` | `mqtt-map` (a pin's popup) | `{ nodeId }` | the grid opens that card on its front and scrolls to it |
 | `frugaliot:flashfile` | `mqtt-admin` (OTA section) | `{ org, path }` | the ⚡ beside an OTA file: `mqtt-projectback` opens the Flash card and passes it on |
 
 ---
@@ -404,6 +406,7 @@ When adding a new UI string: add it to `languages/en.yaml` mapped to itself, and
 | `luxon` | Date/time for Chart.js (adapter inlined in `core.js`) |
 | `dial-gauge` | Gauge web component |
 | `esptool-js` | Flashing over Web Serial, from `flash.js` (see `FLASH_PLAN.md`) |
+| `leaflet`, `leaflet.markercluster` | The map, from `map.js` (see `MAPPING_PLAN.md`) — classic scripts, not in any import map |
 
 ---
 

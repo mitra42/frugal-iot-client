@@ -496,6 +496,7 @@ body:has(mqtt-dashboard) {
 .fi-header language-picker { order: 8; margin-inline-start: auto; }
 /* The gear sits in a span, and it is the span that is the flex item - ordering the button inside it
    left the span at the default 0, next to the title */
+.fi-header__map { order: 8; display: inline-flex; }
 .fi-header__gear { order: 9; display: inline-flex; }
 .fi-header__logout { order: 10; text-decoration: none; }
 .fi-header__break { order: 12; display: none; }
@@ -561,6 +562,70 @@ body:has(mqtt-dashboard) {
     border: 1px solid var(--fi-border);
     border-radius: var(--fi-radius);
 }
+
+/* The project map (map.js), docked above the grid. Its height is set inline, from the handle. */
+mqtt-map:not([hidden]) {
+    display: flex;
+    flex-direction: column;
+    margin: var(--fi-gap);
+    background: var(--fi-card-bg);
+    border: 1px solid var(--fi-border);
+    border-radius: var(--fi-radius);
+    overflow: hidden;
+}
+.fi-map__canvas { flex: 1; min-height: 0; }
+.fi-map__error { padding: 1em; color: var(--fi-muted); }
+.fi-map__handle {
+    flex: none;
+    height: 14px;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    border-top: 1px solid var(--fi-border);
+    background: var(--fi-card-bg);
+    cursor: ns-resize;
+    touch-action: none;        /* or a phone scrolls the page instead of resizing */
+}
+.fi-map__handle::after {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 4px;
+    margin: 0 auto;
+    border-radius: 2px;
+    background: var(--fi-muted);
+}
+.fi-map__tip { min-width: 8em; }
+.fi-map__name { font-weight: 600; margin-bottom: 4px; }
+.fi-map__open { margin-top: 6px; }
+/* Pins. Status by shape as well as colour, as on the cards: live solid, stale a dashed ring,
+   offline and never hollow. A GPS pin is a diamond, so a device that moves reads as one. */
+.fi-pin {
+    --fi-pin: var(--fi-offline);
+    display: block;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    border-radius: 50%;
+    background: var(--fi-pin);
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, .45);
+}
+.fi-pin--live  { --fi-pin: var(--fi-live); }
+.fi-pin--stale { --fi-pin: var(--fi-stale); border-style: dashed; border-color: var(--fi-text); }
+.fi-pin--offline,
+.fi-pin--never { background: #fff; border: 4px solid var(--fi-pin); }
+.fi-pin--gps   { border-radius: 3px; transform: rotate(45deg) scale(.85); }
+.fi-pin--cluster {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 600;
+    font-size: 13px;
+}
+.fi-pin--cluster.fi-pin--offline,
+.fi-pin--cluster.fi-pin--never { color: var(--fi-text); }
 
 /* Retained messages: a list to read before deleting anything, so it must not be cramped */
 /* .formgroup has no styling, so nothing separates the label from the org prefix that follows it */

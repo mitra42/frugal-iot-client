@@ -430,3 +430,7 @@ This server has no OpenSearch of its own set up (config.d/opensearch.yaml): 此�
 This server has not said where OpenSearch can be reached from outside (config.d/opensearch.yaml, "public"): 此服务器未说明可从外部访问 OpenSearch 的地址（config.d/opensearch.yaml，"public"）
 OpenSearch logins need an organization id of lower-case letters and digits only: OpenSearch 登录账户要求组织 ID 只包含小写字母和数字
 OpenSearch did not answer: OpenSearch 未响应
+Map: "地图"
+Resize map: "调整地图大小"
+Open card: "打开卡片"
+Map unavailable: "地图不可用"

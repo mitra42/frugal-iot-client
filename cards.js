@@ -25,6 +25,7 @@ if (!('renderRoot' in HTMLElementExtendedMinimum.prototype)) {
     + 'reload ignoring the cache.');
 }
 import { el, getString, hasCapability, ImagesUrl, isEditableTarget, relativeTime, server_config, XXX } from './core.js';
+import './map.js';  // mqtt-map: small; the Leaflet it needs is not fetched until a map is opened
 
 // Shape as well as colour, so status survives sunlight and colour blindness
 const STATUS_MARK = { live: '●', stale: '◌', offline: '○', never: '·' };
@@ -606,12 +607,14 @@ class MqttDeviceGrid extends HTMLElementExtendedMinimum {
     this.onCardMove = this.onCardMove.bind(this);
     this.onCardMoveOver = this.onCardMoveOver.bind(this);
     this.onModeChanged = this.onModeChanged.bind(this);
+    this.onCardOpen = this.onCardOpen.bind(this);
   }
 
   connectedCallback() {
     super.connectedCallback();
     // Nodes arrive over time, so the order has to be applied per arrival rather than once (O-10)
     document.addEventListener('frugaliot:topicschanged', this.onTopicsChanged);
+    document.addEventListener('frugaliot:cardopen', this.onCardOpen);
     this.addEventListener('frugaliot:cardmove', this.onCardMove);
     this.addEventListener('frugaliot:cardmoveover', this.onCardMoveOver);
     this.addEventListener('frugaliot:cardmode', this.onModeChanged);
@@ -619,8 +622,17 @@ class MqttDeviceGrid extends HTMLElementExtendedMinimum {
   }
   disconnectedCallback() {
     document.removeEventListener('frugaliot:topicschanged', this.onTopicsChanged);
+    document.removeEventListener('frugaliot:cardopen', this.onCardOpen);
   }
   onTopicsChanged() { this.sync(); }
+  // From a pin on the map. A card already open stays as it is - flipping someone's back away would lose their place.
+  onCardOpen(e) {
+    const card = e.detail && this.state.cards.get(e.detail.nodeId);
+    if (!card) return;
+    if (card.mode === 'summary') card.mode = 'front';
+    if (card.scrollIntoView) card.scrollIntoView({ behavior: 'smooth', block: 'start' }); // jsdom has none
+    card.focus();
+  }
 
   get projectMt() { return this.mt; }
   get layout() { return this.state.layout || (this.state.layout = layoutLoad(this.projectMt)); }
@@ -853,9 +865,12 @@ class MqttDashboard extends HTMLElementExtendedMinimum {
     this.state.mode = 'front';
     this.onProjectChanged = this.onProjectChanged.bind(this);
     this.onOrganizationChanged = this.onOrganizationChanged.bind(this);
+    this.onGroupChanged = this.onGroupChanged.bind(this);
   }
   connectedCallback() {
     super.connectedCallback();
+    // A location arriving changes no topic list, so topicschanged never says the map now has a pin
+    document.addEventListener('frugaliot:groupchanged', this.onGroupChanged);
     document.addEventListener('frugaliot:projectchanged', this.onProjectChanged);
     document.addEventListener('frugaliot:topicschanged', this.onProjectChanged);
     document.addEventListener('frugaliot:organizationchanged', this.onOrganizationChanged);
@@ -870,6 +885,7 @@ class MqttDashboard extends HTMLElementExtendedMinimum {
     }
   }
   disconnectedCallback() {
+    document.removeEventListener('frugaliot:groupchanged', this.onGroupChanged);
     document.removeEventListener('frugaliot:projectchanged', this.onProjectChanged);
     document.removeEventListener('frugaliot:topicschanged', this.onProjectChanged);
     document.removeEventListener('frugaliot:organizationchanged', this.onOrganizationChanged);
@@ -892,6 +908,11 @@ class MqttDashboard extends HTMLElementExtendedMinimum {
     this.refreshBody();
   }
 
+  onGroupChanged(e) {
+    const groupId = (e.detail && e.detail.groupId) || '';
+    if ((groupId === 'frugal_iot') || groupId.startsWith('gps')) this.refreshMap();
+  }
+
   get projectMt() { return this.state.projectMt; }
   get canAdminister() { return adminCardsFor(this.state.organization).length > 0; }
 
@@ -911,6 +932,7 @@ class MqttDashboard extends HTMLElementExtendedMinimum {
           project: this.getAttribute('project') || undefined,
         }),
         this.state.elements.language = el('language-picker'),
+        this.state.elements.mapButton = el('span', { class: 'fi-header__map' }),
         this.state.elements.gear = el('span', { class: 'fi-header__gear' }),
         // There was no way to log out at all before. It matters more now that a permissions change
         // ends the session, so people come back to the login page and need to be able to get there.
@@ -919,6 +941,8 @@ class MqttDashboard extends HTMLElementExtendedMinimum {
         // narrow - see .fi-header__break. Nothing to look at, so it is hidden from assistive tech.
         el('span', { class: 'fi-header__break', 'aria-hidden': 'true' }),
       ]),
+      // Outside the body, which is rebuilt as devices arrive - that would throw the map away each time
+      this.state.elements.map = el('mqtt-map', { hidden: true }),
       this.state.elements.body = el('div', { class: 'fi-body' }, [this.renderBody()]),
       // Where a graph lands when someone taps the icon on a reading. MqttGraph looks for this id and
       // falls back to the end of the document, which on this page would be below everything.
@@ -936,6 +960,21 @@ class MqttDashboard extends HTMLElementExtendedMinimum {
       class: 'fi-btn', title: 'Settings',
       textContent: (this.state.mode === 'back') ? '✕' : '⚙',
       onclick: () => { this.state.mode = (this.state.mode === 'back') ? 'front' : 'back'; this.refreshBody(); },
+    })] : []));
+    this.refreshMap();
+  }
+
+  // The map belongs to the front, and is offered only once there is something to put on it
+  refreshMap() {
+    const e = this.state.elements;
+    if (!e.map) return;
+    e.map.setProject(this.projectMt || null);
+    const offered = (this.state.mode !== 'back') && this.projectMt && (this.projectMt.locatedNodes.length > 0);
+    // Shown with its button or not at all: a map remembered open, with nothing on it yet, has no way to close
+    e.map.style.display = offered ? '' : 'none';
+    if (!!e.mapButton.firstChild === !!offered) return;
+    e.mapButton.replaceChildren(...(offered ? [el('button', {
+      class: 'fi-btn', title: 'Map', textContent: '🗺', onclick: () => e.map.toggle(),
     })] : []));
   }
 

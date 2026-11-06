@@ -86,6 +86,13 @@
       // The grid makes its own cards, in the order it remembers, and adds more as devices arrive
       const grid = el('mqtt-devicegrid');
       grid.mt = projectMt;   // Deliberately not projectMt.element - nothing is
+      // Opened whenever a scenario has locations, so located-devices shows its pins without a click
+      if (projectMt.locatedNodes.length) {
+        const mapEl = el('mqtt-map');
+        stage.append(mapEl);
+        mapEl.setProject(projectMt);
+        mapEl.open();
+      }
       stage.append(grid);
     }
     tree.style.display = (view === 'tree') ? '' : 'none';

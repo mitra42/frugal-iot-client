@@ -430,3 +430,7 @@ This server has no OpenSearch of its own set up (config.d/opensearch.yaml): Seva
 This server has not said where OpenSearch can be reached from outside (config.d/opensearch.yaml, "public"): Seva hii haijasema OpenSearch inaweza kufikiwa wapi kutoka nje (config.d/opensearch.yaml, "public")
 OpenSearch logins need an organization id of lower-case letters and digits only: Akaunti za kuingia za OpenSearch zinahitaji id ya shirika yenye herufi ndogo na tarakimu tu
 OpenSearch did not answer: OpenSearch haikujibu
+Map: "Ramani"
+Resize map: "Badilisha ukubwa wa ramani"
+Open card: "Fungua kadi"
+Map unavailable: "Ramani haipatikani"

@@ -430,3 +430,7 @@ This server has no OpenSearch of its own set up (config.d/opensearch.yaml): Ce s
 This server has not said where OpenSearch can be reached from outside (config.d/opensearch.yaml, "public"): Ce serveur n'a pas indiqué où OpenSearch est joignable de l'extérieur (config.d/opensearch.yaml, "public")
 OpenSearch logins need an organization id of lower-case letters and digits only: Les identifiants OpenSearch exigent un identifiant d'organisation composé uniquement de minuscules et de chiffres
 OpenSearch did not answer: OpenSearch n'a pas répondu
+Map: "Carte"
+Resize map: "Redimensionner la carte"
+Open card: "Ouvrir la carte de l'appareil"
+Map unavailable: "Carte indisponible"

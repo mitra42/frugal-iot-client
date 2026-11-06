@@ -430,3 +430,7 @@ This server has no OpenSearch of its own set up (config.d/opensearch.yaml): Serv
 This server has not said where OpenSearch can be reached from outside (config.d/opensearch.yaml, "public"): Server ini belum menyebutkan di mana OpenSearch dapat dijangkau dari luar (config.d/opensearch.yaml, "public")
 OpenSearch logins need an organization id of lower-case letters and digits only: Login OpenSearch memerlukan id organisasi yang hanya berisi huruf kecil dan angka
 OpenSearch did not answer: OpenSearch tidak menjawab
+Map: "Peta"
+Resize map: "Ubah ukuran peta"
+Open card: "Buka kartu"
+Map unavailable: "Peta tidak tersedia"

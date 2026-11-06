@@ -430,3 +430,7 @@ This server has no OpenSearch of its own set up (config.d/opensearch.yaml): لم
 This server has not said where OpenSearch can be reached from outside (config.d/opensearch.yaml, "public"): لم يحدد هذا الخادم أين يمكن الوصول إلى OpenSearch من الخارج (config.d/opensearch.yaml، "public")
 OpenSearch logins need an organization id of lower-case letters and digits only: تتطلب حسابات دخول OpenSearch معرّف مؤسسة من أحرف لاتينية صغيرة وأرقام فقط
 OpenSearch did not answer: لم يستجب OpenSearch
+Map: "خريطة"
+Resize map: "تغيير حجم الخريطة"
+Open card: "فتح البطاقة"
+Map unavailable: "الخريطة غير متاحة"
