@@ -208,7 +208,7 @@ function brokerHost(url) {
 function mqtt_deliver(topic, msg, retained) {
   // Mostly MqttTopicNode wildcards, which route the rest of the topic down their tree
   for (let o of mqtt_subscriptions) {
-    if (topicMatches(o.topic, topic)) { // Matches trailing wildcards, but not middle ones
+    if (topicMatches(o.topic, topic)) {
       o.cb(topic, msg, retained);
     }
   }
@@ -295,6 +295,11 @@ function hasCapability(org, capability, project) {
   return perms.some((p) => (p.capability === capability) && (p.org === org)
     && (!project || !p.project || (p.project === project)));
 }
+// hasCapability with no project accepts a grant on any one project; this accepts only the whole organization
+function hasOrganizationCapability(org, capability) {
+  const perms = (server_config && server_config.user && server_config.user.permissions) || [];
+  return perms.some((p) => (p.capability === capability) && (p.org === org) && !p.project);
+}
 
 /* Resolve a module id to its schema entry in modules.yaml.
  *
@@ -351,14 +356,16 @@ function moduleOrder(groupId) {
   return i === -1 ? Number.MAX_SAFE_INTEGER : i;
 }
 
+// MQTT's own rules: + is one level, a trailing # is any number including none, so a/# matches a
 function topicMatches(subscriptionTopic, messageTopic) {
-  if (subscriptionTopic.endsWith('/#')) {
-    return (
-      messageTopic === (subscriptionTopic.substring(0, subscriptionTopic.length - 2))
-      || messageTopic.startsWith(subscriptionTopic.substring(0, subscriptionTopic.length - 1)));
-  } else {
-    return (subscriptionTopic === messageTopic);
+  const sub = subscriptionTopic.split('/');
+  const msg = messageTopic.split('/');
+  for (let i = 0; i < sub.length; i++) {
+    if (sub[i] === '#') return i <= msg.length;
+    if (i >= msg.length) return false;
+    if ((sub[i] !== '+') && (sub[i] !== msg[i])) return false;
   }
+  return sub.length === msg.length;
 }
 function topicTwig(topic) {
   // dev/project/node/module/leaf/paramter -> module/leaf/parameter
@@ -1333,8 +1340,9 @@ class MqttTopicProject extends MqttTopic {
     const val = this.valueFromText(message);
     if (!this.nodes[val]) this.addNode(val);
   }
-  // Creates the MqttTopicNode for a node id.
-  addNode(id) {
+  // Creates the MqttTopicNode for a node id. The organization map's nodes are fed by its own
+  // subscriptions, not each one's node/#.
+  addNode(id, subscribe = true) {
     const topicPath = `${this.topicPath}/${id}`;
     const mt = new MqttTopicNode();
     mt.initialize({ type: "yaml", twig: topicPath });
@@ -1342,21 +1350,90 @@ class MqttTopicProject extends MqttTopic {
     mt._projectMt = this;
     mt.nodeId = id;
     this.nodes[id] = mt;
-    mt.subscribe();
+    if (subscribe) mt.subscribe();
     document.dispatchEvent(new CustomEvent('frugaliot:topicschanged', { detail: { project: this } }));
     return mt;
   }
   get locatedNodes() {
     return Object.values(this.nodes).filter((nodeMt) => nodeMt.location);
   }
-  // { south, west, north, east } around every located node, for fitting a map; null if none
-  get locationBounds() {
-    const locations = this.locatedNodes.map((nodeMt) => nodeMt.location);
-    if (!locations.length) return null;
-    const lats = locations.map((l) => l.lat);
-    const lons = locations.map((l) => l.lon);
-    return { south: Math.min(...lats), west: Math.min(...lons), north: Math.max(...lats), east: Math.max(...lons) };
+  get locationBounds() { return locationBounds(this.locatedNodes); }
+  // What config.json calls it, for anywhere a project is named beside one of its devices
+  get usableName() {
+    const config = server_config && server_config.organizations && server_config.organizations[this.organization];
+    const project = config && config.projects && config.projects[this.project];
+    return (project && project.name) || this.project;
   }
+}
+
+// { south, west, north, east } around nodes that have a location, for fitting a map; null if none
+function locationBounds(nodes) {
+  const locations = nodes.map((nodeMt) => nodeMt.location);
+  if (!locations.length) return null;
+  const lats = locations.map((l) => l.lat);
+  const lons = locations.map((l) => l.lon);
+  return { south: Math.min(...lats), west: Math.min(...lons), north: Math.max(...lats), east: Math.max(...lons) };
+}
+
+/*
+ * The organization page's tree: just enough of every project to put its devices on a map
+ * (MAPPING_PLAN.md M-13). Wildcards in the project position, which needs READ on the whole
+ * organization (M-12) - a project-scoped READ is granted org/project/# and the broker refuses more.
+ * gps is three leaves rather than gps/#, so a moving device's speed and course do not stream in.
+ */
+const ORGANIZATION_MAP_TWIGS = ['frugal_iot/#', 'gps/latitude', 'gps/longitude', 'gps/satellites'];
+class MqttTopicOrganization {
+  constructor(org) {
+    this.org = org;
+    this.projects = {};
+    this.message_received = this.message_received.bind(this);
+  }
+  get twig() { return this.org; }
+  get isOrganization() { return true; }
+  get subscriptionPaths() { return ORGANIZATION_MAP_TWIGS.map((twig) => `${this.org}/+/+/${twig}`); }
+  subscribe() { this.subscriptionPaths.forEach((path) => mqtt_subscribe(path, this.message_received)); }
+  unsubscribe() { this.subscriptionPaths.forEach((path) => mqtt_unsubscribe(path)); }
+
+  message_received(topicPath, message, retained) {
+    const [, projectId, nodeId] = topicPath.split('/');
+    this.nodeFor(projectId, nodeId).message_received(topicPath, message, retained);
+  }
+  nodeFor(projectId, nodeId) {
+    let projectMt = this.projects[projectId];
+    if (!projectMt) {
+      projectMt = this.projects[projectId] = new MqttTopicProject();
+      projectMt.initialize({ type: 'text', twig: `${this.org}/${projectId}` });
+    }
+    let nodeMt = projectMt.nodes[nodeId];
+    if (!nodeMt) {
+      nodeMt = projectMt.addNode(nodeId, false);
+      this.seed(nodeMt, server_config);
+    }
+    return nodeMt;
+  }
+  // Status is as of when the logger last heard from it (M-15): nothing here hears the readings
+  seed(nodeMt, config) {
+    const org = config && config.organizations && config.organizations[this.org];
+    const project = org && org.projects && org.projects[nodeMt._projectMt.project];
+    const seen = Date.parse(project && project.nodes && project.nodes[nodeMt.nodeId] && project.nodes[nodeMt.nodeId].lastseen);
+    if (Number.isFinite(seen) && !(nodeMt.lastMessageAt >= seen)) nodeMt.lastMessageAt = seen;
+  }
+  // The map's ↻: config.json again for lastseen, without replacing server_config under the rest of the page
+  reload(cb) {
+    GET('/config.json', {}, (err, config) => {
+      if (err) return cb(err);
+      Object.values(this.nodes).forEach((nodeMt) => this.seed(nodeMt, config));
+      cb(null);
+    });
+  }
+  // By node id across every project - a node belongs to one project
+  get nodes() {
+    return Object.assign({}, ...Object.values(this.projects).map((projectMt) => projectMt.nodes));
+  }
+  get locatedNodes() {
+    return Object.values(this.nodes).filter((nodeMt) => nodeMt.location);
+  }
+  get locationBounds() { return locationBounds(this.locatedNodes); }
 }
 
 // null for anything that is not a real coordinate, so a half-typed or garbled value draws no pin
@@ -1915,6 +1992,7 @@ class MqttWrapper extends HTMLElementExtended {
       detail: { organization: this.state.organization },
     }));
     this.state.project = null;
+    this.dropOrganizationTree();
     if (this.state.projectEl) {
       this.removeChild(this.state.projectEl);
     }
@@ -1925,9 +2003,33 @@ class MqttWrapper extends HTMLElementExtended {
   onProject(e) {
     this.state.project = e.target.value;
     if (this.state.project) { // Will be false if the placeholder option is re-chosen
+      this.dropOrganizationTree();  // the project builds its own, with every reading
       this.appender();
     }
   }
+  // From outside - the organization map's Open project - as setOrganization is
+  setProject(project) {
+    if (!project || (this.state.project === project)) { return; }
+    const projectSelect = this.querySelector('#projects');
+    if (projectSelect) { projectSelect.value = project; }
+    this.onProject({target: {value: project}});
+  }
+  // Only for READ on the whole organization (MAPPING_PLAN.md M-12): its wildcards need that
+  addOrganizationTree() {
+    this.dropOrganizationTree();
+    if (!hasOrganizationCapability(this.state.organization, 'READ')) { return; }
+    const organizationMt = this.state.elements.organization = new MqttTopicOrganization(this.state.organization);
+    organizationMt.subscribe();
+    document.dispatchEvent(new CustomEvent('frugaliot:organizationtree', { detail: { organizationMt } }));
+  }
+  dropOrganizationTree() {
+    const organizationMt = this.state.elements.organization;
+    if (!organizationMt) { return; }
+    organizationMt.unsubscribe();
+    this.state.elements.organization = null;
+    document.dispatchEvent(new CustomEvent('frugaliot:organizationtree', { detail: { organizationMt: null } }));
+  }
+  get organizationMt() { return this.state.elements.organization || null; }
   appendClient() {
     // The client does not connect until setClientCredentials tells it which organization to connect as,
     // so append it whether or not an organization has been chosen yet - it also shows connection status.
@@ -2029,6 +2131,7 @@ class MqttWrapper extends HTMLElementExtended {
                 ),
               ]),
             ]));
+          this.addOrganizationTree();
         }
       } else { // !n p ?o
         // noinspection JSUnresolvedReference
@@ -2119,6 +2222,7 @@ export {
   MqttTopic,
   MqttTopicGroup,
   MqttTopicNode,
+  MqttTopicOrganization,
   MqttTopicProject,
   DELETE,
   POST,
@@ -2147,6 +2251,7 @@ export {
   nextUniqueId,
   nowMs,
   hasCapability,
+  hasOrganizationCapability,
   redirectToLogin,
   relativeTime,
   brokerHost,

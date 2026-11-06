@@ -611,6 +611,12 @@ function layoutLoad(projectMt) {
     return layoutDefault();
   }
 }
+// A card asked to open that is not there yet: remembered open, unless it was left on its back. true if changed
+function layoutOpen(layout, nodeId) {
+  if ((layout.mode[nodeId] || 'summary') !== 'summary') return false;
+  layout.mode[nodeId] = 'front';
+  return true;
+}
 function layoutSave(projectMt, layout) {
   try {
     localStorage.setItem(layoutKey(projectMt), JSON.stringify(layout));
@@ -654,8 +660,14 @@ class MqttDeviceGrid extends HTMLElementExtendedMinimum {
   onTopicsChanged() { this.sync(); }
   // From a pin on the map. A card already open stays as it is - flipping someone's back away would lose their place.
   onCardOpen(e) {
-    const card = e.detail && this.state.cards.get(e.detail.nodeId);
-    if (!card) return;
+    const nodeId = e.detail && e.detail.nodeId;
+    const card = nodeId && this.state.cards.get(nodeId);
+    // Arriving from the organization map, the device may not have announced itself yet: remember it
+    // open, as if it had been opened here, for the card that is made when it does
+    if (!card) {
+      if (nodeId && layoutOpen(this.layout, nodeId)) this.save();
+      return;
+    }
     if (card.mode === 'summary') card.mode = 'front';
     if (card.scrollIntoView) card.scrollIntoView({ behavior: 'smooth', block: 'start' }); // jsdom has none
     card.focus();
@@ -894,12 +906,16 @@ class MqttDashboard extends HTMLElementExtendedMinimum {
     this.onOrganizationChanged = this.onOrganizationChanged.bind(this);
     this.onGroupChanged = this.onGroupChanged.bind(this);
     this.onLocationPick = this.onLocationPick.bind(this);
+    this.onOrganizationTree = this.onOrganizationTree.bind(this);
+    this.onProjectOpen = this.onProjectOpen.bind(this);
   }
   connectedCallback() {
     super.connectedCallback();
     // A location arriving changes no topic list, so topicschanged never says the map now has a pin
     document.addEventListener('frugaliot:groupchanged', this.onGroupChanged);
     document.addEventListener('frugaliot:locationpick', this.onLocationPick);
+    document.addEventListener('frugaliot:organizationtree', this.onOrganizationTree);
+    document.addEventListener('frugaliot:projectopen', this.onProjectOpen);
     document.addEventListener('frugaliot:projectchanged', this.onProjectChanged);
     document.addEventListener('frugaliot:topicschanged', this.onProjectChanged);
     document.addEventListener('frugaliot:organizationchanged', this.onOrganizationChanged);
@@ -916,6 +932,8 @@ class MqttDashboard extends HTMLElementExtendedMinimum {
   disconnectedCallback() {
     document.removeEventListener('frugaliot:groupchanged', this.onGroupChanged);
     document.removeEventListener('frugaliot:locationpick', this.onLocationPick);
+    document.removeEventListener('frugaliot:organizationtree', this.onOrganizationTree);
+    document.removeEventListener('frugaliot:projectopen', this.onProjectOpen);
     document.removeEventListener('frugaliot:projectchanged', this.onProjectChanged);
     document.removeEventListener('frugaliot:topicschanged', this.onProjectChanged);
     document.removeEventListener('frugaliot:organizationchanged', this.onOrganizationChanged);
@@ -925,10 +943,13 @@ class MqttDashboard extends HTMLElementExtendedMinimum {
   onOrganizationChanged(e) {
     this.state.organization = e.detail.organization;
     this.state.projectMt = null;
+    this.state.organizationMt = null;  // the new one, if any, follows in organizationtree
     this.state.mode = 'front';
     this.refreshBody();
   }
   onProjectChanged(e) {
+    // The organization map's tree makes projects of its own, which are not this page's
+    if ((e.type === 'frugaliot:topicschanged') && e.detail && (e.detail.project !== this.state.projectMt)) return;
     const before = [this.state.projectMt, this.state.organization];
     if (e.detail && e.detail.projectMt) this.state.projectMt = e.detail.projectMt;
     if (e.detail && e.detail.organization) this.state.organization = e.detail.organization;
@@ -941,6 +962,23 @@ class MqttDashboard extends HTMLElementExtendedMinimum {
   onGroupChanged(e) {
     const groupId = (e.detail && e.detail.groupId) || '';
     if ((groupId === 'frugal_iot') || groupId.startsWith('gps')) this.refreshMap();
+  }
+  onOrganizationTree(e) {
+    this.state.organizationMt = e.detail && e.detail.organizationMt;
+    this.refreshMap();
+  }
+  // From a pin on the organization map: that project's page, with the device's card open (M-16)
+  onProjectOpen(e) {
+    const wrapper = this.state.elements.wrapper;
+    if (!wrapper || !e.detail) return;
+    wrapper.setProject(e.detail.project);
+    // A project whose devices have not arrived shows no grid yet, so nothing would hear cardopen
+    if (this.querySelector('mqtt-devicegrid')) {
+      document.dispatchEvent(new CustomEvent('frugaliot:cardopen', { detail: { nodeId: e.detail.nodeId } }));
+    } else if (this.projectMt) {
+      const layout = layoutLoad(this.projectMt);
+      if (layoutOpen(layout, e.detail.nodeId)) layoutSave(this.projectMt, layout);
+    }
   }
   // From a card's 📍, and back to that card when it is done
   onLocationPick(e) {
@@ -1011,9 +1049,11 @@ class MqttDashboard extends HTMLElementExtendedMinimum {
   refreshMap() {
     const e = this.state.elements;
     if (!e.map) return;
-    e.map.setProject(this.projectMt || null);
-    const offered = (this.state.mode !== 'back') && this.projectMt
-      && ((this.projectMt.locatedNodes.length > 0) || e.map.isPicking);
+    // The organization's map until a project is chosen (MAPPING_PLAN.md M-17)
+    const treeMt = this.projectMt || this.state.organizationMt || null;
+    e.map.setProject(treeMt);
+    const offered = (this.state.mode !== 'back') && treeMt
+      && ((treeMt.locatedNodes.length > 0) || e.map.isPicking);
     // Shown with its button or not at all: a map remembered open, with nothing on it yet, has no way to close
     e.map.style.display = offered ? '' : 'none';
     if (!!e.mapButton.firstChild === !!offered) return;

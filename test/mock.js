@@ -5,16 +5,16 @@
  * it uses is mqtt_deliver - the same call the real client makes for every message it receives.
  */
 import { configSet, mqtt_deliver, mqtt_unsubscribe_organization, server_config, setClock,
-         MqttTopicProject } from '../core.js';
+         MqttTopicOrganization, MqttTopicProject } from '../core.js';
 
 const ORG = 'dev';
 const PROJECT = 'lotus';
 
 // One device's worth of messages. `id` is the node id; `groups` maps twig -> payload.
 // Values are strings because that is what arrives off the wire.
-function device(id, name, twigs, { ota = 'sht30_c3_pico', battery = '3940', wifi = 'shed-ap' } = {}) {
-  const msgs = [[`${ORG}/${PROJECT}`, id]]; // Discovery: node id published on the project topic
-  const base = `${ORG}/${PROJECT}/${id}`;
+function device(id, name, twigs, { ota = 'sht30_c3_pico', battery = '3940', wifi = 'shed-ap', project = PROJECT } = {}) {
+  const msgs = [[`${ORG}/${project}`, id]]; // Discovery: node id published on the project topic
+  const base = `${ORG}/${project}/${id}`;
   msgs.push([`${base}/frugal_iot/name`, name]);
   msgs.push([`${base}/frugal_iot/description`, `${name} - test scenario`]);
   if (ota) msgs.push([`${base}/ota/key`, ota]);
@@ -208,6 +208,17 @@ export const scenarios = {
     },
   },
 
+  'located-organization': {
+    // For the organization map: located-devices, and a second project some way off with its own pins.
+    // Only the organization view shows the second project - a project page sees its own devices.
+    title: 'Located devices in two projects, for the organization map',
+    messages: () => [
+      ...messagesOf('located-devices'),
+      ...device('esp8266-paddy1', 'Paddy 1', { 'frugal_iot/location': '-6.595000,106.790000', ...SHT }, { project: 'ricefield' }),
+      ...device('esp8266-paddy2', 'Paddy 2', { 'frugal_iot/location': '-6.597000,106.793000', ...SHT }, { project: 'ricefield' }),
+    ],
+  },
+
   'every-device': {
     // One device per devices.yaml entry, each announcing that entry's OTA key, so every configured
     // card layout can be seen at once. Built when it runs, since it reads the schema.
@@ -316,6 +327,18 @@ export function runScenario(name, { at = null } = {}) {
     mqtt_deliver(topic, payload);
   });
   return { projectMt };
+}
+
+// The organization map's tree, with a scenario replayed into it. Returns { organizationMt }.
+export function runOrganization(name) {
+  mqtt_unsubscribe_organization(ORG);
+  const organizationMt = new MqttTopicOrganization(ORG);
+  organizationMt.subscribe();
+  messagesOf(name).forEach(([topic, payload, when]) => {
+    if (when !== undefined) setNow(when);
+    mqtt_deliver(topic, payload);
+  });
+  return { organizationMt };
 }
 
 // Deliver one extra message into a scenario already running - a device arriving late, say

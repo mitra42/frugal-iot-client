@@ -40,6 +40,7 @@
     <label>Scenario <select id="scenario"></select></label>
     <label>View <select id="view">
         <option value="cards">cards</option>
+        <option value="organization">organization map</option>
         <option value="tree">data tree only</option>
     </select></label>
     <button id="rerun">Re-run</button>
@@ -53,7 +54,7 @@
 <pre id="tree" style="display:none;padding:12px;font-size:0.85em"></pre>
 
 <script type="module">
-  import { scenarios, loadConfig, runScenario, messagesOf } from './mock.js';
+  import { scenarios, loadConfig, runOrganization, runScenario, messagesOf } from './mock.js';
   import { snapshot } from './serialize.js';
   import '../cards.js';
   import { el, mqtt_deliver, setMqttClient } from '../core.js';
@@ -76,6 +77,12 @@
   // Replaced on every run, so a pick only ever reaches the map on screen
   let onLocationPick = null;
   document.addEventListener('frugaliot:locationpick', (e) => onLocationPick && onLocationPick(e));
+  // What mqtt-dashboard does with Open project, as near as one project per scenario allows
+  document.addEventListener('frugaliot:projectopen', (e) => {
+    document.getElementById('view').value = 'cards';
+    run();
+    document.dispatchEvent(new CustomEvent('frugaliot:cardopen', { detail: { nodeId: e.detail.nodeId } }));
+  });
 
   function run() {
     onLocationPick = null;
@@ -90,6 +97,18 @@
       `${messages.length} messages replayed with no broker.`;
     document.querySelector('#messages pre').textContent =
       messages.map(([topic, payload]) => `${topic} = ${payload}`).join('\n');
+
+    if (view === 'organization') {
+      // Every project in the scenario, as the organization page's map sees them - try located-organization
+      const { organizationMt } = runOrganization(name);
+      const mapEl = el('mqtt-map');
+      stage.append(mapEl);
+      mapEl.setProject(organizationMt);
+      mapEl.open();
+      document.getElementById('tree').style.display = 'none';
+      location.hash = name;
+      return;
+    }
 
     // The cards read the data tree, so they need no elements of their own built for them
     const { projectMt } = runScenario(name);

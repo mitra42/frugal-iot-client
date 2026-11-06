@@ -140,6 +140,7 @@ class MqttMap extends HTMLElementExtendedMinimum {
   get projectMt() { return this.mt; }
   get isOpen() { return !this.hidden; }
   get isPicking() { return !!this.state.pick; }
+  get isOrganization() { return !!(this.mt && this.mt.isOrganization); }
 
   // Rendered once - Leaflet owns the canvas's children from then on, and a re-render would drop them
   render0() {
@@ -156,14 +157,19 @@ class MqttMap extends HTMLElementExtendedMinimum {
       el('button', { class: 'fi-btn', type: 'button', textContent: 'Cancel', onclick: () => this.pickEnd('cancel') }),
       e.save = el('button', { class: 'fi-btn fi-map__save', type: 'button', textContent: 'Save', onclick: () => this.pickEnd('save') }),
     ]);
-    return [e.pickBar, e.canvas = el('div', { class: 'fi-map__canvas' }), handle];
+    // Organization level only: its status is as of page load, so this is how it catches up (M-15)
+    e.reload = el('button', { class: 'fi-btn fi-map__reload', type: 'button', title: 'Refresh', textContent: '↻', hidden: true,
+      onclick: () => this.reload() });
+    return [e.pickBar, e.canvas = el('div', { class: 'fi-map__canvas' }), e.reload, handle];
   }
 
-  // A different project starts from its own remembered state, fitted to its own devices
+  // A project, or an organization (MAPPING_PLAN.md M-17) - each starts from its own remembered
+  // state, fitted to its own devices
   setProject(projectMt) {
     if (projectMt === this.mt) return;
     if (this.state.pick) this.pickEnd('cancel');
     this.mt = projectMt;
+    this.state.elements.reload.hidden = !this.isOrganization;
     if (this.state.cluster) this.state.cluster.clearLayers();
     this.state.markers.clear();
     this.state.fitted = false;
@@ -297,6 +303,19 @@ class MqttMap extends HTMLElementExtendedMinimum {
   pinContent(nodeId, withOpen) {
     const nodeMt = this.projectMt && this.projectMt.nodes[nodeId];
     if (!nodeMt) return '';
+    // No chips: the organization's tree has no readings (M-16). Its project has, one tap away.
+    if (this.isOrganization) {
+      const projectMt = nodeMt._projectMt;
+      return el('div', { class: 'fi-map__tip' }, [
+        el('div', { class: 'fi-map__name' }, [el('span', { textContent: nodeMt.usableName, i8n: false })]),
+        el('div', {}, [el('span', { textContent: projectMt.usableName, i8n: false })]),
+        withOpen ? el('button', { class: 'fi-btn fi-map__open', type: 'button', textContent: 'Open project',
+          onclick: () => {
+            if (this.state.map) this.state.map.closePopup();
+            document.dispatchEvent(new CustomEvent('frugaliot:projectopen', { detail: { project: projectMt.project, nodeId } }));
+          } }) : null,
+      ]);
+    }
     return el('div', { class: 'fi-map__tip' }, [
       el('div', { class: 'fi-map__name' }, [el('span', { textContent: nodeMt.usableName, i8n: false })]),
       el('div', { class: 'fi-card__chips' },
@@ -314,6 +333,7 @@ class MqttMap extends HTMLElementExtendedMinimum {
   // Every other device stays on the map, so "between the two greenhouses" can be placed by eye.
   // cb(null, how) when it ends - how is 'save', 'clear' or 'cancel'.
   pick(nodeMt, cb = () => {}) {
+    if (this.isOrganization) return cb(null, 'cancel');  // a location is set from its device's card
     if (this.state.pick) this.pickEnd('cancel');
     const loc = nodeMt.location;
     this.state.pick = { nodeMt, at: loc ? { lat: loc.lat, lon: loc.lon } : null, wasOpen: this.isOpen, cb };
@@ -405,6 +425,16 @@ class MqttMap extends HTMLElementExtendedMinimum {
   }
   onKeyDown(e) {
     if ((e.key === 'Escape') && this.state.pick) { e.preventDefault(); this.pickEnd('cancel'); }
+  }
+
+  reload() {
+    const button = this.state.elements.reload;
+    button.disabled = true;
+    this.mt.reload((err) => {
+      button.disabled = false;
+      if (err) { XXX(['map: reload failed', err.message]); return; }
+      this.sync();
+    });
   }
 
   // ===== resizing: the handle on the bottom edge =====

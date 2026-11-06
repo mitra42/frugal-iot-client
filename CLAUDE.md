@@ -143,6 +143,7 @@ MqttTopic            leaf data node — history, metadata, subscribe/publish, fo
     MqttTopicGroupRelay / …Ota / …ControlHysteresis   only where a reading list is the wrong shape
   MqttTopicProject   discovery; nodes
   MqttTopicNode      status, deviceConfig, frontRows, summaryChips — what a card reads
+MqttTopicOrganization  the organization page's map: every project's locations, and nothing else
 MqttNodeStandalone   stub nodeMt from standaloneTopic(), for an embedded widget with no tree
 ```
 
@@ -275,7 +276,9 @@ const mt = document.querySelector('mqtt-wrapper')?.projectMt?.findTopic(this.sta
 | `frugaliot:organizationchanged` | `MqttWrapper.onOrganization` | `{ organization }` | capabilities are per organization, so this precedes any project |
 | `frugaliot:cardmove` / `cardmoveover` | `mqtt-devicecard` | `{ nodeId, delta }` / `{ nodeId, targetNodeId }` | the card asks to be moved; the grid decides what that means |
 | `frugaliot:cardmode` | `mqtt-devicecard` | `{ nodeId, mode }` | so the grid can remember what was open |
-| `frugaliot:cardopen` | `mqtt-map` (a pin's popup), `mqtt-dashboard` (a pick ending) | `{ nodeId }` | the grid opens that card on its front and scrolls to it |
+| `frugaliot:cardopen` | `mqtt-map` (a pin's popup), `mqtt-dashboard` (a pick ending, Open project) | `{ nodeId }` | the grid opens that card on its front and scrolls to it |
+| `frugaliot:organizationtree` | `MqttWrapper` | `{ organizationMt }`, null when dropped | the organization page's map; only for READ on the whole organization |
+| `frugaliot:projectopen` | `mqtt-map` (a pin's popup, organization level) | `{ project, nodeId }` | `mqtt-dashboard` switches to that project, with the card open |
 | `frugaliot:locationpick` | `mqtt-devicecard` (the 📍 on its back) | `{ nodeId }` | `mqtt-dashboard` puts the project map into pick mode for that device |
 | `frugaliot:flashfile` | `mqtt-admin` (OTA section) | `{ org, path }` | the ⚡ beside an OTA file: `mqtt-projectback` opens the Flash card and passes it on |
 

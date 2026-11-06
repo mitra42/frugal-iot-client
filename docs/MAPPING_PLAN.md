@@ -5,7 +5,8 @@
 Plan agreed 2026-11-06. Phase 1 (firmware) built and compiling, not yet run on a board; it goes
 into the next release. Phase 2 (schema, data tree, `located-devices` mock scenario) built and tested. Phase 3 (the
 read-only map) built, tested in jsdom, and looked at in a browser. Phase 4 (pick mode) built and tested in
-jsdom; not yet looked at in a browser, and not yet round-tripped through a node. Decisions are numbered M-n so they can be argued here rather than
+jsdom; not yet looked at in a browser, and not yet round-tripped through a node. The organization map
+(ML-1) built and tested in jsdom; not yet looked at in a browser or run against the broker's ACLs. Decisions are numbered M-n so they can be argued here rather than
 re-decided in code; open questions are Q-n, deferred work is ML-n.
 
 ## Goal
@@ -176,6 +177,78 @@ away for the user who isn't.
 **M-11 Gated by `mt.canWrite` on the `frugal_iot/location` topic**, through the same single check as
 every other control. Without WRITE the row shows the value only, and the map has no pick mode.
 
+## The organization map (ML-1)
+
+*Planned 2026-11-06; Q-6 and Q-7 answered the same day. Built the same day.*
+
+**Where.** On the organization page: the dashboard once an organization is chosen and before a project is,
+which today says only "Choose a project to see its devices". The same 🗺 header button, the same
+docked `mqtt-map`, remembered under its own key `frugaliot:map:v1:{org}`. The project selector stays where it is;
+the map is another way of choosing.
+
+**M-12 Only for READ on the whole organization.** Someone with READ on some of its projects gets no
+organization map: they choose a project. `hasCapability(org, 'READ')` cannot be the test, since with no project it
+accepts a project-scoped row; it needs a form that accepts only organization-wide rows.
+
+**M-13 A slim data tree for the organization, not every project's full one.** A new
+`MqttTopicOrganization` in `core.js` holds one `MqttTopicProject` per project, created as messages
+arrive. Their nodes are created *without* their usual `node/#` subscription. Instead the
+organization subscribes to:
+
+```
+org/+/+/frugal_iot/#        name, description, location - retained, a few per device
+org/+/+/gps/latitude        for a device that locates itself (M-3) - not gps/#, which would
+org/+/+/gps/longitude       stream a moving device's speed and course into a page that only
+org/+/+/gps/satellites      draws pins
+```
+
+so `nodeMt.location`, `usableName` and the M-3 precedence work unchanged. M-12 is what makes the
+wildcard in the project position allowed: an organization-wide READ has the ACL `org/#`
+(`dynsec-plan.js` `orgTree`). `org/#` itself would pull every reading of every device just to draw pins.
+
+**M-14 `topicMatches` learns `+`.** It is the one routine that matches incoming topics to subscriptions,
+and it matches a trailing `#` only. Small change, with tests.
+
+**M-15 Status as of page load, with a reload.** A pin is coloured from `/config.json`'s `lastseen`, as the
+project page seeds it already. Retained messages do not count as contact (as now); a live GPS message
+does. Nothing else updates it: live status would mean subscribing to everything. A ↻ on the map
+fetches `/config.json` again and re-seeds `lastseen`, so a device that has come back can be seen to.
+
+**M-16 The popup goes to the project.** Name, project name, and **Open project**: the wrapper switches to
+that project (a new public `setProject`, like `setOrganization`). That is the ordinary project page,
+listing every device and subscribing to their readings, and it then sends `frugaliot:cardopen`, so the
+device's card is open on its front. The organization map's popup has no summary chips, since the organization tree
+does not subscribe to readings. The project page has them as usual.
+
+**M-17 `mqtt-map` takes either level.** It already asks its tree only for `nodes`, `locatedNodes`,
+`locationBounds` and `twig`; `MqttTopicOrganization` provides the same four, keyed by node id across its
+projects (a node belongs to one project). The map checks the level only for the popup (M-16) and the ↻
+(M-15). There is no pick mode at organization level: a location is set from a device's card.
+
+**M-18 Built when the organization page is shown, dropped when a project is chosen.** The button
+appears only when something is located, so the data has to be there before the map is asked for.
+Choosing a project unsubscribes the organization's topics, and the project builds its own full tree as now.
+
+Pins, clusters (worst status wins), shapes, tiles, resizing: as the project map.
+
+*As built:*
+- The tree is announced by a new event, `frugaliot:organizationtree {organizationMt}`, fired again
+  with null when it is dropped. A URL that names the organization reaches the organization page
+  without the organization picker, so the event comes from where the page is built, not from the picker.
+- Its projects fire `topicschanged` like any other. The dashboard now ignores a `topicschanged`
+  for any project but its own, or each device arriving on the organization map rebuilt the page.
+- Open project is `frugaliot:projectopen {project, nodeId}`, handled by the dashboard. A project
+  whose devices have not arrived shows "Waiting for devices" and no grid, so nothing would hear
+  `cardopen`. The card is then remembered open in the layout, and is made open when it arrives.
+- ↻ uses the existing `Refresh` string as its title. It re-seeds from a fresh `/config.json`
+  without replacing `server_config`, which the rest of the page reads.
+- `mock.html` has an *organization map* view; `located-organization` adds a second project.
+
+Tests: `topicMatches` with `+`; the organization-wide gate, including a user with READ on every
+project but not the organization; `MqttTopicOrganization` routing and `locatedNodes` across projects; the
+organization page offering the map; ↻ re-seeding status; Open project landing on the open card. A mock
+scenario with located devices in two projects.
+
 ## Firmware (Frugal-IoT repo — announce before editing)
 
 In `System_Frugal`: a `location` String beside `description`, handled in `dispatch` identically
@@ -213,20 +286,14 @@ own controls are icons, and its attribution stays as the provider wrote it.
 
 | # | Deferred | Why it waits |
 |---|---|---|
-| ML-1 | **Organization-level map** | Needs every project's location topics, which retained topics make a single wildcard subscribe — but the org page has no device cards to open, so the popup needs a "go to project" instead. Build once the project map has been used |
-| ML-2 | **Offline tiles on a Pi** | A tile set for the farm's area, served by the Pi. Config already points at it (M-6). Size and how to fetch it are their own plan |
+| ML-1 | **Organization-level map** | Planned above (M-12 to M-18) |
+| ML-2 | **Offline tiles on a Pi** | The Pi is online at some point and goes offline. While online it fetches enough OpenStreetMap tiles for the whole organization at low zoom (zooming further only enlarges them), then each project's area at high zoom. Config already points the map at the Pi (M-6). OSM's tile policy allows this only for small areas: it forbids downloading *significant* areas at zoom 17 and above for offline use without their consent. A few farms is small, but the fetcher should be limited to project areas and say who it is. A FEW tiles of imagery (ML-8) would come down to that provider's terms |
 | ML-3 | **A tile provider beyond OSM** | Only if usage outgrows OSM's policy |
 | ML-4 | **Card ↔ pin highlighting** | Hovering a card lights its pin. Nice, not needed to be useful |
 | ML-5 | **Shapes** — fields, beds, a greenhouse outline | A different data model (a polygon per project, not a point per device) |
 | ML-6 | **Values on the map** — pins coloured by a reading (soil moisture across a field) | The most interesting one, and needs a choice of reading and scale; wait until there are real deployments with several located sensors |
-
-## Questions — open
-
-- **Q-5** Should a `set/` be retained? `MqttTopic`'s constructor says not, so a set is not replayed
-  at every subscribe, but `initialize()` copies the schema's `retain: true` over it. So
-  `description`, `location` and six other topics already publish their sets retained. For a location
-  that means a page loaded after a Save shows the new value even if the node never took it, with no
-  Pending to say so. `location` follows `description` until this is decided for all of them.
+| ML-7 | **What `retain` in the schema means** | Look at at the end of this project. Sets from the UI are meant to be QoS 1 and not retained; readings from a node are retained. But `initialize()` copies the schema's `retain: true` over the constructor's default, so `description`, `location` and six others publish their sets retained, and it is no longer clear what the schema field is for. `location` follows `description` until then |
+| ML-8 | **Detail at site scale** — imagery for a view ~100 m across, where OpenStreetMap shows little | On an online server nothing is kept: the browser fetches a few imagery tiles as it would any map, so this is a second tile layer (map / imagery) with its own provider in config, as M-6. What it needs is a provider whose terms allow use from our page — most want an API key and attribution. OpenAerialMap has nothing for our sites |
 
 ## Questions — resolved 2026-11-06
 
@@ -238,3 +305,7 @@ own controls are icons, and its attribution stays as the provider wrote it.
   every other topic.
 - **Q-4** MQTT or a server table? **MQTT (M-1)** — nodes are assumed to update by OTA to firmware
   that has `location`.
+- **Q-6** Is a status as of page load acceptable on the organization map? **Yes**, with a reload on the
+  map (M-15).
+- **Q-7** Where does Open project land? **The project page, with that device's card open on its front**
+  (M-16).
