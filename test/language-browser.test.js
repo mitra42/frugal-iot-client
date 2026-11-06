@@ -6,8 +6,8 @@ import assert from 'node:assert/strict';
 
 let core;
 before(async () => {
-  // German is not supported, so it falls through to the next; hi-IN matches hi on its language alone
-  Object.defineProperty(navigator, 'languages', { value: ['de-DE', 'hi-IN', 'en'], configurable: true });
+  // Dutch is not supported, so it falls through to the next; hi-IN matches hi on its language alone
+  Object.defineProperty(navigator, 'languages', { value: ['nl-NL', 'hi-IN', 'en'], configurable: true });
   core = await import('../core.js');
   await import('../login.js');
 });
@@ -21,6 +21,6 @@ test('sign-in sends every browser language, unsupported ones too, and returns in
   const login = document.createElement('mqtt-login');
   login.setAttribute('url', '/dashboard/');
   document.body.append(login);
-  assert.equal(login.querySelector('input[name=browserlangs]').value, 'de-DE,hi-IN,en');
+  assert.equal(login.querySelector('input[name=browserlangs]').value, 'nl-NL,hi-IN,en');
   assert.match(login.querySelector('input[name=url]').value, /lang=hi/);
 });

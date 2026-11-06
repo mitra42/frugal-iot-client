@@ -1,0 +1,432 @@
+# Swahili
+'"%s" already exists.': '"%s" tayari ipo.'
+'+ matches one level, # matches the rest. Look before deleting.': '+ inalingana na ngazi moja, # inalingana na zilizobaki. Angalia kabla ya kufuta.'
+(Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): (Upeo 4MB, .bin pekee, kwa kawaida frugal-iot.ino.bin au firmware.bin)
+A bridge relays a Pi's readings to this server, so its nodes appear here too, while the Pi carries on recording and serving on its own whenever the link is down. "Bridge" is the broker's live view of the relay; "Last check-in" is when that Pi last collected this organization's logins, which it does over HTTP - so a Pi can be checking in while its bridge is down, and the two together say which half is broken.: Daraja hupeleka vipimo vya Pi kwenye seva hii, hivyo nodi zake zinaonekana hapa pia, huku Pi ikiendelea kurekodi na kuhudumia yenyewe kila kiungo kinapokatika. "Daraja" ni mwonekano wa moja kwa moja wa broker kuhusu upelekaji huo; "Mawasiliano ya mwisho" ni wakati Pi hiyo ilipochukua mara ya mwisho akaunti za kuingia za shirika hili, jambo inalofanya kupitia HTTP - kwa hiyo Pi inaweza kuwa inawasiliana wakati daraja lake limekatika, na viwili hivyo kwa pamoja vinaonyesha nusu ipi imeharibika.
+Action %s sent: Kitendo %s kimetumwa
+Action *: Kitendo *
+Add: Ongeza
+Reset board: Anzisha upya bodi
+Clear log: Futa kumbukumbu
+Copy log: Nakili kumbukumbu
+Start the monitor to configure: Washa kifuatiliaji ili kusanidi
+Board not answering - old firmware?: Bodi haijibu - firmware ya zamani?
+Waiting for the board: Inasubiri bodi
+Board was already configured - its settings were kept. Apply to board changes them: Bodi ilikuwa tayari imesanidiwa - mipangilio yake imebakizwa. Tumia kwenye bodi huibadilisha
+Configure board: Sanidi bodi
+Apply after flashing: Tumia baada ya kuflashi
+Apply to board: Tumia kwenye bodi
+Board ready: Bodi iko tayari
+Boards done: Bodi zimekamilika
+WiFi networks: Mitandao ya WiFi
+Add network: Ongeza mtandao
+Remove: Ondoa
+No active project: Hakuna mradi unaotumika
+Project name must be 2 to 15 characters: Jina la mradi liwe na herufi 2 hadi 15
+Add a WiFi network: Ongeza mtandao wa WiFi
+WiFi network not valid: Mtandao wa WiFi si sahihi
+Not understood: Haikueleweka
+Too long: Ndefu mno
+No reply: Hakuna jibu
+Could not fetch the enrolment secret: Imeshindwa kupata siri ya uandikishaji
+WiFi connected: WiFi imeunganishwa
+WiFi not connected: WiFi haijaunganishwa
+MQTT connected: MQTT imeunganishwa
+MQTT not connected: MQTT haijaunganishwa
+Not enrolled: Haijaandikishwa
+Add a bridge: Ongeza daraja
+Add another enrolment secret: Ongeza siri nyingine ya uandikishaji
+Added: Imeongezwa
+Adding it again issues a new broker password and a new replica token, and the ones that Pi is using now stop working. It will stay disconnected until you put the new ones into its configuration and restart its broker.: Kuiongeza tena kunatoa nenosiri jipya la broker na token mpya ya nakala, na zile ambazo Pi hiyo inatumia sasa zinaacha kufanya kazi. Itabaki bila kuunganishwa hadi uweke hizo mpya kwenye usanidi wake na uanzishe upya broker yake.
+Admin: Usimamizi
+Advanced: Mahiri
+All: Zote
+Already have an account?: Una akaunti tayari?
+'And these two, if you are not building against the production server:': 'Na hizi mbili, ikiwa hujengi kwa ajili ya seva kuu:'
+Any node flashed with it that has not enrolled yet will be refused and will need reflashing. Nodes that have already enrolled are unaffected - they never present it again.: Nodi yoyote iliyoflashiwa nayo ambayo bado haijajiandikisha itakataliwa na itahitaji kuflashiwa upya. Nodi ambazo tayari zimejiandikisha haziathiriki - hazitaiwasilisha tena kamwe.
+API: API
+Approved: Imeidhinishwa
+AQI: AQI
+AQI500: AQI500
+Asked and was refused. Click to let it enrol.: Iliomba na ikakataliwa. Bofya kuiruhusu ijiandikishe.
+Auth Token: Token ya uthibitisho
+Back to sign in: Rudi kuingia
+Base URL: URL ya msingi
+Battery: Betri
+Board: Bodi
+Bridge: Daraja
+Bridged Pis: Pi zenye daraja
+Bridges: Madaraja
+Brightness: Mwangaza
+Broker: Broker
+Broker account: Akaunti ya broker
+Broker password: Nenosiri la broker
+Built in LED: LED ya ndani
+buttons: vitufe
+Choose a project to see its devices: Chagua mradi kuona vifaa vyake
+Click to change project: Bofya kubadilisha mradi
+Click to sort: Bofya kupanga
+Climate: Hali ya hewa
+close: funga
+Collapse: Kunja
+Color: Rangi
+'Compiled into firmware and used to request broker credential. Add a second one to change it: both are accepted, so nodes already flashed keep working until you withdraw the old one.': 'Huwekwa ndani ya firmware na hutumika kuomba kitambulisho cha broker. Ongeza ya pili ili kuibadilisha: zote mbili zinakubaliwa, hivyo nodi zilizokwisha flashiwa zinaendelea kufanya kazi hadi uiondoe ile ya zamani.'
+Connect board: Unganisha bodi
+connected: imeunganishwa
+connecting: inaunganisha
+Control: Udhibiti
+Cookie Name: Jina la cookie
+Copy these now - they are not shown again: Nakili hizi sasa - hazitaonyeshwa tena
+Could not read the board - assuming it is already provisioned: Imeshindwa kusoma bodi - inachukuliwa kuwa tayari imeandaliwa
+Create an account: Fungua akaunti
+Dashboard: Dashibodi
+Data: Data
+Delete these: Futa hizi
+Delete this firmware: Futa firmware hii
+Denied: Imekataliwa
+Deny %s?: Kataa %s?
+Description: Maelezo
+Device: Kifaa
+Display carousel: Onyesho la mzunguko
+DOWN: IMEKATIKA
+Download this firmware: Pakua firmware hii
+Done: Imekamilika
+ds18b20: ds18b20
+e.g. LiteFarm: k.m. LiteFarm
+eCO2: eCO2
+Email: Barua pepe
+Enrol URL: URL ya uandikishaji
+Enrolled: Imeandikishwa
+Enrolled nodes: Nodi zilizoandikishwa
+Enrolment secret: Siri ya uandikishaji
+ENS AHT: ENS AHT
+Enter the code we emailed you, then choose a new password.: Weka msimbo tuliokutumia kwa barua pepe, kisha chagua nenosiri jipya.
+Enter topic: Weka mada
+Enter value: Weka thamani
+Existing OTA Files: Faili za OTA zilizopo
+Failed: Imeshindwa
+Farm ID *: ID ya shamba *
+Farm registered: Shamba limesajiliwa
+Farms: Mashamba
+File: Faili
+Firmware: Firmware
+Firmware file: Faili ya firmware
+Flash: Flashi
+Flash over USB: Flashi kupitia USB
+Flash size was not detected reliably - flash anyway: Ukubwa wa kumbukumbu ya flash haukutambuliwa kwa uhakika - flashi hata hivyo
+Flash this over USB: Flashi hii kupitia USB
+Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer: Kuflashi kunahitaji Web Serial API - tumia Chrome, Edge au Opera kwenye kompyuta ya mezani
+for node: kwa nodi
+Forget: Sahau
+Forget %s?: Sahau %s?
+Forget this node, so it is issued a new credential: Sahau nodi hii, ili ipewe kitambulisho kipya
+Forgot password?: Umesahau nenosiri?
+From: Kutoka
+Frugal IoT project: Mradi wa Frugal IoT
+Frugal-IoT Username *: Jina la mtumiaji la Frugal-IoT *
+Full provision - all configuration on the board will be erased: Uandaaji kamili - usanidi wote kwenye bodi utafutwa
+Gas Resistance: Ukinzani wa gesi
+Give the Pi a short name - it becomes its broker account and cannot be changed later without reconfiguring that Pi. Lower-case letters, digits and hyphens.: Ipe Pi jina fupi - linakuwa akaunti yake ya broker na haliwezi kubadilishwa baadaye bila kusanidi upya Pi hiyo. Herufi ndogo, tarakimu na vistari.
+Give the Pi a short name first: Ipe Pi jina fupi kwanza
+Graph: Grafu
+Greater Than: Zaidi ya
+Has its own broker credential. Click to deny it.: Ina kitambulisho chake cha broker. Bofya kuikataa.
+heating: kupasha joto
+humidifier: kiongeza unyevu
+Humidity: Unyevu
+humidity: unyevu
+Humidity control: Udhibiti wa unyevu
+Hysteresis: Histeresisi
+hysteresis: histeresisi
+I have a code: Nina msimbo
+id: id
+If that account exists we have emailed a reset code: Ikiwa akaunti hiyo ipo tumekutumia msimbo wa kubadilisha kwa barua pepe
+If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': Ikiwa saraka hii haionekani kwenye kichagua faili, nakili faili mahali pengine AU tengeneza alias ya saraka ya .pio bila '.' mwanzoni
+Incorrect username or password: Jina la mtumiaji au nenosiri si sahihi
+Info: Taarifa
+Input: Ingizo
+It will be issued a new broker credential the next time it asks. A node that is running will be offline for a minute or two while it notices; a node whose filesystem was erased needs this before it can rejoin at all.: Itapewa kitambulisho kipya cha broker wakati ujao itakapoomba. Nodi inayofanya kazi itakuwa nje ya mtandao kwa dakika moja au mbili hadi itambue; nodi ambayo mfumo wake wa faili ulifutwa inahitaji hili kabla ya kuweza kujiunga tena kabisa.
+Its broker account is deleted, so it stops being able to publish or subscribe, and it cannot enrol again until you clear this. Use it for a node sending bad readings.: Akaunti yake ya broker inafutwa, hivyo haiwezi tena kuchapisha wala kusikiliza mada, na haiwezi kujiandikisha tena hadi uondoe hili. Tumia kwa nodi inayotuma vipimo vibaya.
+Its next request will be accepted. Click to deny it.: Ombi lake lijalo litakubaliwa. Bofya kuikataa.
+Key: Ufunguo
+Last asked: Iliomba mwisho
+Last check-in: Mawasiliano ya mwisho
+Last Seen: Ilionekana mwisho
+Last seen: Ilionekana mwisho
+LED: LED
+Limit: Kikomo
+List: Orodha
+Live: Moja kwa moja
+Load Cell: Kipima uzito
+Loading schema...: Inapakia skima...
+Log out: Toka
+Lower-case letters and numbers only, no spaces or punctuation: Herufi ndogo na tarakimu tu, bila nafasi wala alama
+Lux: Lux
+Manual: Kwa mkono
+Message: Ujumbe
+Monitor: Kifuatiliaji
+Monitor speed: Kasi ya kifuatiliaji
+Move down: Sogeza chini
+Move up: Sogeza juu
+Name: Jina
+Never seen: Haijawahi kuonekana
+New here?: Mgeni hapa?
+New password: Nenosiri jipya
+Connect a board to flash: Unganisha bodi ili kuflashi
+Choose a firmware file to flash: Chagua faili ya firmware ya kuflashi
+Erase and flash: Futa na uflashi
+kept from last session: imebakizwa kutoka kipindi kilichopita
+No farms registered for this organization yet.: Bado hakuna mashamba yaliyosajiliwa kwa shirika hili.
+No nodes found for this farm's project(s).: Hakuna nodi zilizopatikana kwa mradi/miradi ya shamba hili.
+No nodes found for this organization: Hakuna nodi zilizopatikana kwa shirika hili
+No nodes have enrolled yet, and none have asked and been rejected.: Bado hakuna nodi iliyojiandikisha, na hakuna iliyoomba na kukataliwa.
+No organization: Hakuna shirika
+No organization selected: Hakuna shirika lililochaguliwa
+No OTA files uploaded yet.: Bado hakuna faili za OTA zilizopakiwa.
+No Pi bridges to this server for this organization. A bridge relays a Pi's readings here while the Pi carries on working on its own - see INSTALLATION.md step 11.: Hakuna madaraja ya Pi kwenda seva hii kwa shirika hili. Daraja hupeleka vipimo vya Pi hapa huku Pi ikiendelea kufanya kazi yenyewe - tazama INSTALLATION.md hatua ya 11.
+No platforms registered yet.: Bado hakuna majukwaa yaliyosajiliwa.
+No projects added for this organization yet.: Bado hakuna miradi iliyoongezwa kwa shirika hili.
+No projects to display until organization selected: Hakuna miradi ya kuonyesha hadi shirika lichaguliwe
+No state received from the broker yet: Bado hakuna hali iliyopokelewa kutoka kwa broker
+Nobody added for this organization yet.: Bado hakuna mtu aliyeongezwa kwa shirika hili.
+Node: Nodi
+Node Actions: Vitendo vya nodi
+Node ID: ID ya nodi
+Node Name: Jina la nodi
+Nodes: Nodi
+Nodes in Farm: Nodi shambani
+Nodes in Organization: Nodi katika shirika
+Nodes that have obtained broker credentials on first connection. Forget reissues a new credential at next connection and is needed if memory has been erased. Refused nodes are listed - click "Failed - approve" to allow (on next retry, typically 30 minutes).: Nodi zilizopata vitambulisho vya broker zilipounganishwa mara ya kwanza. Sahau hutoa kitambulisho kipya kwenye muunganisho unaofuata na inahitajika ikiwa kumbukumbu imefutwa. Nodi zilizokataliwa zimeorodheshwa - bofya "Imeshindwa - idhinisha" kuziruhusu (kwenye jaribio linalofuata, kwa kawaida dakika 30).
+Not in the schema: Haipo kwenye skima
+Not selected: Haijachaguliwa
+Note this is your organization - not the organizations whose devices you want to access.: Kumbuka hili ni shirika lako - si mashirika ambayo unataka kufikia vifaa vyao.
+Now: Sasa
+now: sasa
+'Off': Imezimwa
+offline: nje ya mtandao
+Offline: Nje ya mtandao
+'On': Imewashwa
+'On ArduinoIDE the file is typically in ': 'Kwenye ArduinoIDE faili kwa kawaida iko katika '
+'On PlatformIO The file is typically in ': 'Kwenye PlatformIO faili kwa kawaida iko katika '
+Organization: Shirika
+OTA: OTA
+OTA Upload: Pakia OTA
+OTA binary uploaded: Faili ya OTA imepakiwa
+OTA Key: Ufunguo wa OTA
+OTA Key or Device ID: Ufunguo wa OTA au ID ya kifaa
+Out: Matokeo
+out: matokeo
+Output: Matokeo
+Password: Nenosiri
+Password reset - please sign in: Nenosiri limebadilishwa - tafadhali ingia
+Password reset is not available on this server: Kubadilisha nenosiri hakupatikani kwenye seva hii
+Pattern: Kiolezo
+Permissions: Ruhusa
+Phone or Whatsapp: Simu au Whatsapp
+Platform *: Jukwaa *
+Platform Name *: Jina la jukwaa *
+Platform registered: Jukwaa limesajiliwa
+Please login: Tafadhali ingia
+Pressure: Shinikizo
+Project: Mradi
+Asked %s to move: Imeomba %s isogee
+Waiting for %s to report: Inasubiri %s iripoti
+Project ID: ID ya mradi
+Project ID *: ID ya mradi *
+Project Name: Jina la mradi
+Projects: Miradi
+Property: Sifa
+Provision instead (erases config): Andaa badala yake (inafuta usanidi)
+Publish Message: Chapisha ujumbe
+'Published to ': 'Imechapishwa kwenye '
+'Put this in platformio-secrets-local.ini, which is not committed:': 'Weka hii katika platformio-secrets-local.ini, ambayo haiingizwi kwenye git:'
+QoS: QoS
+reconnect: unganisha upya
+Reconnect the board to flash again: Unganisha upya bodi ili kuflashi tena
+Register: Jisajili
+Register a platform above before adding a farm.: Sajili jukwaa hapo juu kabla ya kuongeza shamba.
+Register Farm: Sajili shamba
+Refresh: Onyesha upya
+Register Platform: Sajili jukwaa
+Registered Platforms: Majukwaa yaliyosajiliwa
+Registration failed: Usajili umeshindwa
+Registration successful - please login: Usajili umefaulu - tafadhali ingia
+Relay: Relei
+Replica token: Token ya nakala
+Reporting every: Inaripoti kila
+Reset code: Msimbo wa kubadilisha
+Reset password: Badilisha nenosiri
+Retain: Hifadhi
+Retained: Imehifadhiwa
+Retained messages: Ujumbe uliohifadhiwa
+Run this on the Pi, in the directory the server is installed in. Replace the placeholder with this server's fully-qualified name - the one on its certificate, which you can check by opening https:// that name in a browser. It will then ask for the broker password and for the replica token, in that order, so have both of the values below to hand.: Endesha hii kwenye Pi, katika saraka ambamo seva imesakinishwa. Badilisha kishika-nafasi kwa jina kamili la seva hii - lile lililo kwenye cheti chake, ambalo unaweza kuhakikisha kwa kufungua https:// jina hilo kwenye kivinjari. Kisha itaomba nenosiri la broker na token ya nakala, kwa mpangilio huo, kwa hiyo kuwa na thamani zote mbili zilizo hapa chini tayari.
+Schema: Skima
+Select: Chagua
+Select a farm above to see its nodes.: Chagua shamba hapo juu kuona nodi zake.
+Select a node above to see actions.: Chagua nodi hapo juu kuona vitendo.
+Select a node above to send an action.: Chagua nodi hapo juu kutuma kitendo.
+Select an organization to continue.: Chagua shirika ili kuendelea.
+Send: Tuma
+SEND: TUMA
+Send another code: Tuma msimbo mwingine
+Send reset code: Tuma msimbo wa kubadilisha
+server: seva
+set: imewekwa
+Setpoint: Kiwango lengwa
+Settings: Mipangilio
+Show enrolment secrets: Onyesha siri za uandikishaji
+SHT: SHT
+SHT30: SHT30
+Sign In: Ingia
+Sign in: Ingia
+Site: Eneo
+Soil: Udongo
+Soil Moisture: Unyevu wa udongo
+Soil Temperature: Joto la udongo
+Sonoff R2 switch: Swichi ya Sonoff R2
+Sonoff switch: Swichi ya Sonoff
+Speed: Kasi
+SSID: SSID
+Not reported recently: Haijaripoti hivi karibuni
+Status: Hali
+Stop monitor: Simamisha kifuatiliaji
+Stopped, and its credential removed. Click to clear.: Imesimamishwa, na kitambulisho chake kimeondolewa. Bofya kuondoa hili.
+Submit: Wasilisha
+System: Mfumo
+Temperature: Joto
+temperature: joto
+That code is not valid or has expired: Msimbo huo si sahihi au muda wake umekwisha
+The broker reports this bridge connected: Broker inaripoti kuwa daraja hili limeunganishwa
+The broker reports this bridge not connected: Broker inaripoti kuwa daraja hili halijaunganishwa
+This field has no invocation URL (forms[0].href) in its schema: Sehemu hii haina URL ya kuitisha (forms[0].href) katika skima yake
+This node has no actions in its schema.: Nodi hii haina vitendo katika skima yake.
+This node has no actions or writable properties in its schema.: Nodi hii haina vitendo wala sifa zinazoweza kuandikwa katika skima yake.
+This organization has no enrolment secret, so no new node can enrol. Add one.: Shirika hili halina siri ya uandikishaji, hivyo hakuna nodi mpya inayoweza kujiandikisha. Ongeza moja.
+Time On (s): Muda wa kuwaka (s)
+To: Hadi
+Too many attempts - please wait a few minutes: Majaribio mengi mno - tafadhali subiri dakika chache
+Topic: Mada
+Topic and Value are required: Mada na Thamani zinahitajika
+TVOC: TVOC
+'Two credentials for two different connections: the password is what the MQTT bridge logs in with on port 8883, and the token is what lets that Pi pull this organization''s logins over HTTPS, so the same people can log in there too. The token can be skipped - press Enter at its prompt - and added later by doing this again. Neither is asked for on the command line, so that neither ends up in the Pi''s shell history.': 'Vitambulisho viwili kwa miunganisho miwili tofauti: nenosiri ndilo daraja la MQTT hutumia kuingia kwenye port 8883, na token ndiyo inayoruhusu Pi hiyo kuvuta akaunti za kuingia za shirika hili kupitia HTTPS, ili watu wale wale waweze kuingia huko pia. Token inaweza kurukwa - bonyeza Enter inapoulizwa - na kuongezwa baadaye kwa kufanya hivi tena. Hakuna kati ya hivyo kinachoombwa kwenye mstari wa amri, ili kisiishie kwenye historia ya shell ya Pi.'
+Unable to find node: Imeshindwa kupata nodi
+Unable to find project: Imeshindwa kupata mradi
+Unauthorized: Hauruhusiwi
+undefined: haijafafanuliwa
+Unknown: Haijulikani
+Unsupported board: Bodi haiungwi mkono
+Unused: Haitumiki
+Up: Inafanya kazi
+Updating the app only: Inasasisha programu tu
+Updating the app only - the existing configuration will be preserved: Inasasisha programu tu - usanidi uliopo utabakizwa
+Upload: Pakia
+Upload finished - check the list below: Upakiaji umekamilika - angalia orodha hapa chini
+Uploading: Inapakia
+Username: Jina la mtumiaji
+Username or email: Jina la mtumiaji au barua pepe
+Value: Thamani
+Value *: Thamani *
+Voltage: Volteji
+Waiting: Inasubiri
+Waiting for devices: Inasubiri vifaa
+We will email you a code and a link to choose a new password.: Tutakutumia kwa barua pepe msimbo na kiungo cha kuchagua nenosiri jipya.
+When: Lini
+WiFi: WiFi
+Withdraw this enrolment secret?: Ondoa siri hii ya uandikishaji?
+Withdrawn: Imeondolewa
+'Yes': Ndiyo
+You do not have permission for this organization: Huna ruhusa kwa shirika hili
+Forwarders: Vipelekaji
+Grafana: Grafana
+OpenSearch: OpenSearch
+OpenSearch Dashboards: OpenSearch Dashboards
+every %s s: kila sekunde %s
+'%s topics': mada %s
+From the file: Kutoka kwenye faili
+Delete "%s"?: Futa "%s"?
+Readings stop being sent to it straight away. Nothing already sent is removed from there.: Vipimo vinaacha kutumwa huko mara moja. Hakuna kilichokwisha tumwa kinachoondolewa huko.
+Deleted, but the logger could not be told - it will take effect at the next restart: Imefutwa, lakini kirekodi hakikuweza kuarifiwa - itatekelezwa wakati wa kuanzisha upya ujao
+set - leave blank to keep it: imewekwa - acha wazi ili kuibakiza
+Give it a name first: Ipe jina kwanza
+Saved, but the logger could not be told - it will take effect at the next restart: Imehifadhiwa, lakini kirekodi hakikuweza kuarifiwa - itatekelezwa wakati wa kuanzisha upya ujao
+Sending... %s readings so far: Inatuma... vipimo %s hadi sasa
+'Stopped: %s': 'Imesimama: %s'
+Never: Haijawahi
+Making it again replaces its token, and the Grafana using the old one stops working until it is given the new one.: Kuitengeneza tena kunabadilisha token yake, na Grafana inayotumia ile ya zamani inaacha kufanya kazi hadi ipewe mpya.
+Revoke "%s"?: Batilisha "%s"?
+The Grafana using it stops being able to read this organization straight away.: Grafana inayoitumia inashindwa kusoma shirika hili mara moja.
+Copied: Imenakiliwa
+Press Ctrl-C or Cmd-C to copy: Bonyeza Ctrl-C au Cmd-C kunakili
+'You have a login: %s. Making another replaces its password, and your Dashboards stops working until it is given the new one.': 'Una akaunti ya kuingia: %s. Kutengeneza nyingine kunabadilisha nenosiri lake, na Dashboards yako inaacha kufanya kazi hadi ipewe jipya.'
+Replace the password?: Badilisha nenosiri?
+The Dashboards using the old one stops working until it is given the new one.: Dashboards inayotumia lile la zamani inaacha kufanya kazi hadi ipewe jipya.
+Remove the login?: Ondoa akaunti ya kuingia?
+Dashboards using it stops being able to read this organization straight away.: Dashboards inayoitumia inashindwa kusoma shirika hili mara moja.
+Loading...: Inapakia...
+This organization forwards its readings nowhere. They are still recorded in the CSV files and charted in Grafana - add a forwarder to send them somewhere as well.: Shirika hili halipeleki vipimo vyake popote. Bado vinarekodiwa kwenye faili za CSV na kuchorwa kwenye Grafana - ongeza kipelekaji kuvituma mahali pengine pia.
+Type: Aina
+Sends to: Hutuma kwa
+State: Hali
+Edit: Hariri
+Delete: Futa
+Send earlier readings...: Tuma vipimo vya awali...
+Save: Hifadhi
+Cancel: Ghairi
+From this day on (leave empty for everything): Kuanzia siku hii (acha wazi kwa vyote)
+Start: Anza
+Close: Funga
+Readings are always recorded in the CSV files, and charted in Grafana from them. A forwarder also sends each reading, as it is logged, somewhere else - OpenSearch to search and browse them, or Google Sheets to add a row of values every so often. Changes apply straight away.: Vipimo hurekodiwa kila mara kwenye faili za CSV, na kuchorwa kwenye Grafana kutoka humo. Kipelekaji pia hutuma kila kipimo, kinaporekodiwa, mahali pengine - OpenSearch kuvitafuta na kuvipitia, au Google Sheets kuongeza safu ya thamani kila baada ya muda. Mabadiliko yanaanza kutumika mara moja.
+No Grafana has been given access to this organization yet.: Bado hakuna Grafana iliyopewa ruhusa ya kufikia shirika hili.
+Made: Imetengenezwa
+Last used: Ilitumika mwisho
+Whose: Ya nani
+Revoke: Batilisha
+Copy: Nakili
+Copy this now - it is not shown again: Nakili hii sasa - haitaonyeshwa tena
+Token: Token
+Allowed host: Host inayoruhusiwa
+Remove my login: Ondoa akaunti yangu ya kuingia
+Everyone's logins: Akaunti za kuingia za kila mtu
+OpenSearch Dashboards is a program you run on your own computer to search and chart this organization's readings, which this server keeps in OpenSearch. It needs a login, made here, that is yours. It can read this organization's readings and nothing else, and the people of an organization share its saved dashboards. It needs permission to read the whole organization; if you can read only some projects, use the Grafana card instead.: OpenSearch Dashboards ni programu unayoiendesha kwenye kompyuta yako mwenyewe kutafuta na kuchora vipimo vya shirika hili, ambavyo seva hii huvihifadhi katika OpenSearch. Inahitaji akaunti ya kuingia, inayotengenezwa hapa, ambayo ni yako. Inaweza kusoma vipimo vya shirika hili na si kitu kingine, na watu wa shirika hushiriki dashibodi zake zilizohifadhiwa. Inahitaji ruhusa ya kusoma shirika zima; ikiwa unaweza kusoma baadhi ya miradi tu, tumia kadi ya Grafana badala yake.
+Give a Grafana access: Ipe Grafana ruhusa ya kufikia
+Name it for whoever or wherever it is, so it can be revoked on its own.: Ipe jina la mtu au mahali inapotumika, ili iweze kubatilishwa peke yake.
+Make a token: Tengeneza token
+The starter dashboard: Dashibodi ya kuanzia
+A chart with a list of every topic to pick from. In Grafana choose Dashboards, New, Import, upload this file, and pick the data source above when it asks.: Chati yenye orodha ya kila mada ya kuchagua. Kwenye Grafana chagua Dashboards, New, Import, pakia faili hii, na uchague chanzo cha data kilicho hapo juu inapouliza.
+Add a forwarder: Ongeza kipelekaji
+Change this forwarder: Badilisha kipelekaji hiki
+Active (untick to pause; the settings are kept): Kinatumika (ondoa alama ili kusitisha; mipangilio inabakizwa)
+Would send %s readings: Kingetuma vipimo %s
+Sent %s readings: Kimetuma vipimo %s
+'Sends the readings already recorded in the CSV files, which this forwarder did not see because it was off or OpenSearch was down. It is safe to repeat: a reading already there is replaced, not doubled.': 'Hutuma vipimo vilivyokwisha rekodiwa kwenye faili za CSV, ambavyo kipelekaji hiki hakikuviona kwa sababu kilikuwa kimezimwa au OpenSearch haikuwa ikifanya kazi. Ni salama kurudia: kipimo kilichopo tayari kinabadilishwa, si kurudufishwa.'
+Only count them, send nothing: Vihesabu tu, usitume chochote
+Yours: Yako
+Another user's: Ya mtumiaji mwingine
+'In Grafana, add a data source of type Infinity, with Authentication set to Bearer Token and the token above, and the allowed host above. Or let this do it:': 'Kwenye Grafana, ongeza chanzo cha data cha aina Infinity, Authentication ikiwa Bearer Token na token iliyo hapo juu, pamoja na host inayoruhusiwa iliyo hapo juu. Au acha hii ifanye hivyo:'
+Download the data source file: Pakua faili ya chanzo cha data
+You have no login yet.: Bado huna akaunti ya kuingia.
+Replace the password: Badilisha nenosiri
+Make a login: Tengeneza akaunti ya kuingia
+'Put these lines in the configuration file of the OpenSearch Dashboards on your computer (opensearch_dashboards.yml), then restart it. Nothing is asked for when you open it: the login is in the file. The password is not kept anywhere you can read it, so if you lose this, press the button below to make a new one and paste the lines in again.': 'Weka mistari hii kwenye faili ya usanidi ya OpenSearch Dashboards kwenye kompyuta yako (opensearch_dashboards.yml), kisha iwashe upya. Hakuna kinachoulizwa unapoifungua: akaunti ya kuingia iko ndani ya faili. Nenosiri halihifadhiwi mahali popote unapoweza kulisoma, kwa hiyo ukipoteza hii, bonyeza kitufe kilicho hapa chini kutengeneza jipya na ubandike mistari tena.'
+'Grafana can chart this organization''s readings straight from the server - every reading ever recorded, with nothing to export first. To set it up: install the Infinity plugin in Grafana, make a token here, give Grafana the data source, then import the dashboard. A token is yours: it lets one Grafana read what you can read in this organization, and stops working if your access to it does.': 'Grafana inaweza kuchora vipimo vya shirika hili moja kwa moja kutoka kwa seva - kila kipimo kilichowahi kurekodiwa, bila kuhamisha chochote kwanza. Kuisanidi: sakinisha plugin ya Infinity kwenye Grafana, tengeneza token hapa, ipe Grafana chanzo cha data, kisha ingiza dashibodi. Token ni yako: inaruhusu Grafana moja kusoma unachoweza kusoma katika shirika hili, na inaacha kufanya kazi ikiwa ruhusa yako inakoma.'
+Download the dashboard: Pakua dashibodi
+Forgotten: Imesahauliwa
+Failed - approve: Imeshindwa - idhinisha
+Choose an organization first, so there is a broker connection to publish on: Chagua shirika kwanza, ili kuwe na muunganisho wa broker wa kuchapishia
+Add Farm: Ongeza shamba
+No broker credentials for this organization: Hakuna vitambulisho vya broker kwa shirika hili
+Listening on %s ...: Inasikiliza %s ...
+'Could not connect: %s': 'Imeshindwa kuunganisha: %s'
+'Could not subscribe: %s': 'Imeshindwa kusikiliza: %s'
+Nothing retained matches that pattern: Hakuna kilichohifadhiwa kinacholingana na kiolezo hicho
+Deleting %s ...: Inafuta %s ...
+'Could not delete: %s': 'Imeshindwa kufuta: %s'
+Deleted %s: Imefutwa %s
+If one comes back, a node is still publishing it.: Ikirudi, nodi bado inaichapisha.
+Add Project: Ongeza mradi
+Add Platform: Ongeza jukwaa
+', %s failed': ', %s imeshindwa'
+This server has no OpenSearch of its own set up (config.d/opensearch.yaml): Seva hii haina OpenSearch yake yenyewe iliyosanidiwa (config.d/opensearch.yaml)
+This server has not said where OpenSearch can be reached from outside (config.d/opensearch.yaml, "public"): Seva hii haijasema OpenSearch inaweza kufikiwa wapi kutoka nje (config.d/opensearch.yaml, "public")
+OpenSearch logins need an organization id of lower-case letters and digits only: Akaunti za kuingia za OpenSearch zinahitaji id ya shirika yenye herufi ndogo na tarakimu tu
+OpenSearch did not answer: OpenSearch haikujibu

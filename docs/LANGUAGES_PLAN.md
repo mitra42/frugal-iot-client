@@ -7,7 +7,18 @@ Arabic**, the first right-to-left language: `languages/ar.yaml` (machine transla
 `dir: 'rtl'` in the index setting `<html dir>`, every physical left/right in `frugaliot.css`
 turned logical, numbers-with-units and `getStringWith` values wrapped in Unicode isolates on a
 right-to-left page (`bidiIsolate` in `core.js`), `unicode-bidi: plaintext` on values shown alone, the
-slider track held left to right, and no flag for Arabic - the compact picker shows `AR`.
+slider track held left to right, and no flag for Arabic - the compact picker shows `AR`. The slider
+was then mirrored to match the bar: the minimum is at the right on a right-to-left page.
+
+First batch after Arabic: Spanish (`es`), Portuguese (`pt`, Brazilian usage), Swahili (`sw`), German
+(`de`), Tagalog (`tl`, with `fil` mapped to it in the client and the server) and Chinese (`zh`,
+Simplified - `zh-TW`/`zh-HK` get it until there is a Traditional file). All machine translations,
+unreviewed. Each has a flag, from the country whose usage it follows: Spain, Brazil, Germany, China;
+Swahili has none and shows `SW` in the compact picker, as Arabic shows `AR`.
+
+Found while translating, and fixed: "Action %s sent" replaces a message built in English word order;
+"Project changed to" was used nowhere and is gone; the enrolled-nodes help names the control it
+means, "Failed - approve"; and the French sign-up button is "S'inscrire".
 
 Phase 3 as built: `?lang=`, then the picker's last choice (`localStorage`, key `frugaliot:language`,
 written only by the picker), then `navigator.languages`, then `en`. Sign-in sends `browserlangs`;

@@ -3,7 +3,7 @@
 "+ matches one level, # matches the rest. Look before deleting.": "+ correspond à un niveau, # au reste. Regardez avant de supprimer."
 (Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): (Max 4 Mo, .bin uniquement, généralement frugal-iot.ino.bin ou firmware.bin)
 A bridge relays a Pi's readings to this server, so its nodes appear here too, while the Pi carries on recording and serving on its own whenever the link is down. "Bridge" is the broker's live view of the relay; "Last check-in" is when that Pi last collected this organization's logins, which it does over HTTP - so a Pi can be checking in while its bridge is down, and the two together say which half is broken.: Une passerelle relaie les mesures d'un Pi vers ce serveur, de sorte que ses nœuds apparaissent ici aussi, tandis que le Pi continue d'enregistrer et de servir de son côté chaque fois que le lien est coupé. « Passerelle » est la vue en direct du relais par le courtier ; « Dernier contact » indique quand ce Pi a récupéré pour la dernière fois les comptes de cette organisation, ce qu'il fait en HTTP - un Pi peut donc prendre contact alors que sa passerelle est coupée, et les deux ensemble disent quelle moitié est en panne.
-Action: Action
+Action %s sent: Action %s envoyée
 Action *: Action *
 Add: Ajouter
 Reset board: Réinitialiser la carte
@@ -196,7 +196,7 @@ Node Name: Nom du nœud
 Nodes: Nœuds
 Nodes in Farm: Nœuds dans la ferme
 Nodes in Organization: Nœuds dans l'organisation
-Nodes that have obtained broker credentials on first connection. Forget reissues a new credential at next connection and is needed if memory has been erased. Refused nodes are listed - click Approve to allow (on next retry, typically 30 minutes).: Nœuds ayant obtenu leur identifiant de broker à la première connexion. Oublier en délivre un nouveau à la prochaine connexion, nécessaire si la mémoire a été effacée. Les nœuds refusés sont listés - cliquez sur Approuver pour autoriser (à la prochaine tentative, généralement 30 minutes).
+Nodes that have obtained broker credentials on first connection. Forget reissues a new credential at next connection and is needed if memory has been erased. Refused nodes are listed - click "Failed - approve" to allow (on next retry, typically 30 minutes).: Nœuds ayant obtenu leur identifiant de broker à la première connexion. Oublier en délivre un nouveau à la prochaine connexion, nécessaire si la mémoire a été effacée. Les nœuds refusés sont listés - cliquez sur « Échoué - approuver » pour autoriser (à la prochaine tentative, généralement 30 minutes).
 Not in the schema: Absent du schéma
 Not selected: Non sélectionné
 Note this is your organization - not the organizations whose devices you want to access.: Ceci est votre organisation - pas les organisations dont vous voulez accéder aux appareils.
@@ -229,7 +229,6 @@ Platform registered: Plateforme enregistrée
 Please login: Veuillez vous connecter
 Pressure: Pression
 Project: Projet
-Project changed to: Projet changé en
 Asked %s to move: Déplacement demandé à %s
 Waiting for %s to report: En attente du rapport de %s
 Project ID: ID du projet
@@ -244,7 +243,7 @@ Publish Message: Publier un message
 QoS: QoS
 reconnect: reconnecter
 Reconnect the board to flash again: Reconnectez la carte pour flasher à nouveau
-Register: Registre
+Register: S'inscrire
 Register a platform above before adding a farm.: Enregistrez une plateforme ci-dessus avant d'ajouter une ferme.
 Register Farm: Enregistrer la ferme
 Refresh: Actualiser
@@ -271,7 +270,6 @@ Send: Envoyer
 SEND: ENVOYER
 Send another code: Envoyer un autre code
 Send reset code: Envoyer le code
-sent: envoyé
 server: serveur
 set: défini
 Setpoint: consigne

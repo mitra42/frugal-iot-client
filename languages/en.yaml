@@ -4,7 +4,7 @@
 "+ matches one level, # matches the rest. Look before deleting.": "+ matches one level, # matches the rest. Look before deleting."
 (Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): (Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin)
 A bridge relays a Pi's readings to this server, so its nodes appear here too, while the Pi carries on recording and serving on its own whenever the link is down. "Bridge" is the broker's live view of the relay; "Last check-in" is when that Pi last collected this organization's logins, which it does over HTTP - so a Pi can be checking in while its bridge is down, and the two together say which half is broken.: A bridge relays a Pi's readings to this server, so its nodes appear here too, while the Pi carries on recording and serving on its own whenever the link is down. "Bridge" is the broker's live view of the relay; "Last check-in" is when that Pi last collected this organization's logins, which it does over HTTP - so a Pi can be checking in while its bridge is down, and the two together say which half is broken.
-Action: Action
+Action %s sent: Action %s sent
 Action *: Action *
 Add: Add
 Reset board: Reset board
@@ -197,7 +197,7 @@ Node Name:  Node Name
 Nodes: Nodes
 Nodes in Farm: Nodes in Farm
 Nodes in Organization: Nodes in Organization
-Nodes that have obtained broker credentials on first connection. Forget reissues a new credential at next connection and is needed if memory has been erased. Refused nodes are listed - click Approve to allow (on next retry, typically 30 minutes).: Nodes that have obtained broker credentials on first connection. Forget reissues a new credential at next connection and is needed if memory has been erased. Refused nodes are listed - click Approve to allow (on next retry, typically 30 minutes).
+Nodes that have obtained broker credentials on first connection. Forget reissues a new credential at next connection and is needed if memory has been erased. Refused nodes are listed - click "Failed - approve" to allow (on next retry, typically 30 minutes).: Nodes that have obtained broker credentials on first connection. Forget reissues a new credential at next connection and is needed if memory has been erased. Refused nodes are listed - click "Failed - approve" to allow (on next retry, typically 30 minutes).
 Not in the schema: Not in the schema
 Not selected: Not selected
 Note this is your organization - not the organizations whose devices you want to access.: Note this is your organization - not the organizations whose devices you want to access.
@@ -230,7 +230,6 @@ Platform registered: Platform registered
 Please login: Please login
 Pressure: Pressure
 Project: Project
-Project changed to: Project changed to
 Asked %s to move: Asked %s to move
 Waiting for %s to report: Waiting for %s to report
 Project ID: Project ID
@@ -272,7 +271,6 @@ Send: Send
 SEND: SEND
 Send another code: Send another code
 Send reset code: Send reset code
-sent: sent
 server: server
 set: set
 Setpoint: Setpoint

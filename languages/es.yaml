@@ -1,0 +1,432 @@
+# Spanish
+'"%s" already exists.': '"%s" ya existe.'
+'+ matches one level, # matches the rest. Look before deleting.': '+ coincide con un nivel, # con el resto. Revisa antes de borrar.'
+(Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): (Máx. 4 MB, solo .bin, normalmente frugal-iot.ino.bin o firmware.bin)
+A bridge relays a Pi's readings to this server, so its nodes appear here too, while the Pi carries on recording and serving on its own whenever the link is down. "Bridge" is the broker's live view of the relay; "Last check-in" is when that Pi last collected this organization's logins, which it does over HTTP - so a Pi can be checking in while its bridge is down, and the two together say which half is broken.: Un puente retransmite las lecturas de un Pi a este servidor, así que sus nodos también aparecen aquí, mientras el Pi sigue registrando y sirviendo por su cuenta siempre que el enlace esté caído. "Puente" es la vista en vivo del bróker sobre la retransmisión; "Último contacto" es cuándo ese Pi recogió por última vez los inicios de sesión de esta organización, lo que hace por HTTP; así que un Pi puede estar haciendo contacto mientras su puente está caído, y ambos juntos indican qué mitad falla.
+Action %s sent: Acción %s enviada
+Action *: Acción *
+Add: Agregar
+Reset board: Reiniciar placa
+Clear log: Borrar registro
+Copy log: Copiar registro
+Start the monitor to configure: Inicia el monitor para configurar
+Board not answering - old firmware?: La placa no responde - ¿firmware antiguo?
+Waiting for the board: Esperando la placa
+Board was already configured - its settings were kept. Apply to board changes them: La placa ya estaba configurada - se conservaron sus ajustes. "Aplicar a la placa" los cambia
+Configure board: Configurar placa
+Apply after flashing: Aplicar tras grabar
+Apply to board: Aplicar a la placa
+Board ready: Placa lista
+Boards done: Placas terminadas
+WiFi networks: Redes WiFi
+Add network: Agregar red
+Remove: Quitar
+No active project: Ningún proyecto activo
+Project name must be 2 to 15 characters: El nombre del proyecto debe tener de 2 a 15 caracteres
+Add a WiFi network: Agrega una red WiFi
+WiFi network not valid: Red WiFi no válida
+Not understood: No entendido
+Too long: Demasiado largo
+No reply: Sin respuesta
+Could not fetch the enrolment secret: No se pudo obtener el secreto de registro
+WiFi connected: WiFi conectado
+WiFi not connected: WiFi no conectado
+MQTT connected: MQTT conectado
+MQTT not connected: MQTT no conectado
+Not enrolled: No registrado
+Add a bridge: Agregar un puente
+Add another enrolment secret: Agregar otro secreto de registro
+Added: Agregado
+Adding it again issues a new broker password and a new replica token, and the ones that Pi is using now stop working. It will stay disconnected until you put the new ones into its configuration and restart its broker.: Agregarlo de nuevo emite una nueva contraseña del bróker y un nuevo token de réplica, y los que ese Pi usa ahora dejan de funcionar. Seguirá desconectado hasta que pongas los nuevos en su configuración y reinicies su bróker.
+Admin: Admin
+Advanced: Avanzado
+All: Todos
+Already have an account?: ¿Ya tienes una cuenta?
+'And these two, if you are not building against the production server:': 'Y estas dos, si no compilas para el servidor de producción:'
+Any node flashed with it that has not enrolled yet will be refused and will need reflashing. Nodes that have already enrolled are unaffected - they never present it again.: 'Cualquier nodo grabado con él que aún no se haya registrado será rechazado y habrá que volver a grabarlo. Los nodos ya registrados no se ven afectados: nunca lo vuelven a presentar.'
+API: API
+Approved: Aprobado
+AQI: AQI
+AQI500: AQI500
+Asked and was refused. Click to let it enrol.: Lo pidió y fue rechazado. Haz clic para permitir que se registre.
+Auth Token: Token de autenticación
+Back to sign in: Volver a iniciar sesión
+Base URL: URL base
+Battery: Batería
+Board: Placa
+Bridge: Puente
+Bridged Pis: Pis con puente
+Bridges: Puentes
+Brightness: Brillo
+Broker: Bróker
+Broker account: Cuenta del bróker
+Broker password: Contraseña del bróker
+Built in LED: LED integrado
+buttons: botones
+Choose a project to see its devices: Elige un proyecto para ver sus dispositivos
+Click to change project: Haz clic para cambiar de proyecto
+Click to sort: Haz clic para ordenar
+Climate: Clima
+close: cerrar
+Collapse: Contraer
+Color: Color
+'Compiled into firmware and used to request broker credential. Add a second one to change it: both are accepted, so nodes already flashed keep working until you withdraw the old one.': 'Se compila en el firmware y se usa para pedir la credencial del bróker. Agrega un segundo para cambiarlo: ambos se aceptan, así que los nodos ya grabados siguen funcionando hasta que retires el antiguo.'
+Connect board: Conectar placa
+connected: conectado
+connecting: conectando
+Control: Control
+Cookie Name: Nombre de la cookie
+Copy these now - they are not shown again: Cópialos ahora - no se vuelven a mostrar
+Could not read the board - assuming it is already provisioned: No se pudo leer la placa - se supone que ya está aprovisionada
+Create an account: Crear una cuenta
+Dashboard: Panel
+Data: Datos
+Delete these: Borrar estos
+Delete this firmware: Borrar este firmware
+Denied: Denegado
+Deny %s?: ¿Denegar %s?
+Description: Descripción
+Device: Dispositivo
+Display carousel: Carrusel de pantalla
+DOWN: CAÍDO
+Download this firmware: Descargar este firmware
+Done: Hecho
+ds18b20: ds18b20
+e.g. LiteFarm: p. ej. LiteFarm
+eCO2: eCO2
+Email: Correo electrónico
+Enrol URL: URL de registro
+Enrolled: Registrado
+Enrolled nodes: Nodos registrados
+Enrolment secret: Secreto de registro
+ENS AHT: ENS AHT
+Enter the code we emailed you, then choose a new password.: Introduce el código que te enviamos por correo y luego elige una nueva contraseña.
+Enter topic: Introduce el tema
+Enter value: Introduce el valor
+Existing OTA Files: Archivos OTA existentes
+Failed: Falló
+Farm ID *: ID de la finca *
+Farm registered: Finca registrada
+Farms: Fincas
+File: Archivo
+Firmware: Firmware
+Firmware file: Archivo de firmware
+Flash: Grabar
+Flash over USB: Grabar por USB
+Flash size was not detected reliably - flash anyway: No se detectó con fiabilidad el tamaño de la flash - grabar de todos modos
+Flash this over USB: Grabar esto por USB
+Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer: Grabar requiere la Web Serial API - usa Chrome, Edge u Opera en una computadora de escritorio
+for node: para el nodo
+Forget: Olvidar
+Forget %s?: ¿Olvidar %s?
+Forget this node, so it is issued a new credential: Olvidar este nodo, para que se le emita una nueva credencial
+Forgot password?: ¿Olvidaste tu contraseña?
+From: Desde
+Frugal IoT project: Proyecto Frugal IoT
+Frugal-IoT Username *: Nombre de usuario de Frugal-IoT *
+Full provision - all configuration on the board will be erased: Aprovisionamiento completo - se borrará toda la configuración de la placa
+Gas Resistance: Resistencia del gas
+Give the Pi a short name - it becomes its broker account and cannot be changed later without reconfiguring that Pi. Lower-case letters, digits and hyphens.: 'Dale al Pi un nombre corto: se convierte en su cuenta del bróker y no se puede cambiar después sin reconfigurar ese Pi. Letras minúsculas, dígitos y guiones.'
+Give the Pi a short name first: Primero dale al Pi un nombre corto
+Graph: Gráfico
+Greater Than: Mayor que
+Has its own broker credential. Click to deny it.: Tiene su propia credencial del bróker. Haz clic para denegarla.
+heating: calefacción
+humidifier: humidificador
+Humidity: Humedad
+humidity: humedad
+Humidity control: Control de humedad
+Hysteresis: Histéresis
+hysteresis: histéresis
+I have a code: Tengo un código
+id: id
+If that account exists we have emailed a reset code: Si esa cuenta existe, te enviamos un código de restablecimiento por correo
+If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': Si este directorio no aparece en el selector de archivos, copia el archivo a otro lugar O crea un alias al directorio .pio sin el '.' inicial
+Incorrect username or password: Usuario o contraseña incorrectos
+Info: Info
+Input: Entrada
+It will be issued a new broker credential the next time it asks. A node that is running will be offline for a minute or two while it notices; a node whose filesystem was erased needs this before it can rejoin at all.: Se le emitirá una nueva credencial del bróker la próxima vez que la pida. Un nodo en funcionamiento estará desconectado un minuto o dos mientras se da cuenta; un nodo cuyo sistema de archivos se borró necesita esto para poder volver a unirse.
+Its broker account is deleted, so it stops being able to publish or subscribe, and it cannot enrol again until you clear this. Use it for a node sending bad readings.: Su cuenta del bróker se elimina, así que deja de poder publicar o suscribirse, y no puede volver a registrarse hasta que lo anules. Úsalo para un nodo que envía lecturas erróneas.
+Its next request will be accepted. Click to deny it.: Su próxima solicitud será aceptada. Haz clic para denegarla.
+Key: Clave
+Last asked: Última solicitud
+Last check-in: Último contacto
+Last Seen: Última actividad
+Last seen: Visto por última vez
+LED: LED
+Limit: Límite
+List: Listar
+Live: En vivo
+Load Cell: Celda de carga
+Loading schema...: Cargando esquema...
+Log out: Cerrar sesión
+Lower-case letters and numbers only, no spaces or punctuation: Solo letras minúsculas y números, sin espacios ni puntuación
+Lux: Lux
+Manual: Manual
+Message: Mensaje
+Monitor: Monitor
+Monitor speed: Velocidad del monitor
+Move down: Bajar
+Move up: Subir
+Name: Nombre
+Never seen: Nunca visto
+New here?: ¿Eres nuevo?
+New password: Nueva contraseña
+Connect a board to flash: Conecta una placa para grabar
+Choose a firmware file to flash: Elige un archivo de firmware para grabar
+Erase and flash: Borrar y grabar
+kept from last session: conservado de la última sesión
+No farms registered for this organization yet.: Aún no hay fincas registradas para esta organización.
+No nodes found for this farm's project(s).: No se encontraron nodos para los proyectos de esta finca.
+No nodes found for this organization: No se encontraron nodos para esta organización
+No nodes have enrolled yet, and none have asked and been rejected.: Ningún nodo se ha registrado aún, y ninguno lo ha pedido y ha sido rechazado.
+No organization: Sin organización
+No organization selected: Ninguna organización seleccionada
+No OTA files uploaded yet.: Aún no se han subido archivos OTA.
+No Pi bridges to this server for this organization. A bridge relays a Pi's readings here while the Pi carries on working on its own - see INSTALLATION.md step 11.: No hay puentes de Pi hacia este servidor para esta organización. Un puente retransmite aquí las lecturas de un Pi mientras el Pi sigue funcionando por su cuenta - consulta INSTALLATION.md, paso 11.
+No platforms registered yet.: Aún no hay plataformas registradas.
+No projects added for this organization yet.: Aún no se han agregado proyectos para esta organización.
+No projects to display until organization selected: No hay proyectos que mostrar hasta seleccionar una organización
+No state received from the broker yet: Aún no se ha recibido ningún estado del bróker
+Nobody added for this organization yet.: Aún no se ha agregado a nadie para esta organización.
+Node: Nodo
+Node Actions: Acciones del nodo
+Node ID: ID del nodo
+Node Name: Nombre del nodo
+Nodes: Nodos
+Nodes in Farm: Nodos en la finca
+Nodes in Organization: Nodos en la organización
+Nodes that have obtained broker credentials on first connection. Forget reissues a new credential at next connection and is needed if memory has been erased. Refused nodes are listed - click "Failed - approve" to allow (on next retry, typically 30 minutes).: 'Nodos que obtuvieron credenciales del bróker en su primera conexión. Olvidar emite una nueva credencial en la siguiente conexión y es necesario si se borró la memoria. Se listan los nodos rechazados: haz clic en «Falló - aprobar» para permitirlos (en el siguiente intento, normalmente 30 minutos).'
+Not in the schema: No está en el esquema
+Not selected: No seleccionado
+Note this is your organization - not the organizations whose devices you want to access.: Ten en cuenta que esta es tu organización, no las organizaciones a cuyos dispositivos quieres acceder.
+Now: Ahora
+now: ahora
+'Off': Apagado
+offline: desconectado
+Offline: Desconectado
+'On': Encendido
+'On ArduinoIDE the file is typically in ': 'En ArduinoIDE el archivo suele estar en '
+'On PlatformIO The file is typically in ': 'En PlatformIO el archivo suele estar en '
+Organization: Organización
+OTA: OTA
+OTA Upload: Subida OTA
+OTA binary uploaded: Binario OTA subido
+OTA Key: Clave OTA
+OTA Key or Device ID: Clave OTA o ID del dispositivo
+Out: Salida
+out: salida
+Output: Salida
+Password: Contraseña
+Password reset - please sign in: Contraseña restablecida - inicia sesión
+Password reset is not available on this server: El restablecimiento de contraseña no está disponible en este servidor
+Pattern: Patrón
+Permissions: Permisos
+Phone or Whatsapp: Teléfono o WhatsApp
+Platform *: Plataforma *
+Platform Name *: Nombre de la plataforma *
+Platform registered: Plataforma registrada
+Please login: Inicia sesión
+Pressure: Presión
+Project: Proyecto
+Asked %s to move: Se pidió a %s que se mueva
+Waiting for %s to report: Esperando a que %s informe
+Project ID: ID del proyecto
+Project ID *: ID del proyecto *
+Project Name: Nombre del proyecto
+Projects: Proyectos
+Property: Propiedad
+Provision instead (erases config): Aprovisionar en su lugar (borra la configuración)
+Publish Message: Publicar mensaje
+'Published to ': 'Publicado en '
+'Put this in platformio-secrets-local.ini, which is not committed:': 'Pon esto en platformio-secrets-local.ini, que no se sube al repositorio:'
+QoS: QoS
+reconnect: reconectar
+Reconnect the board to flash again: Vuelve a conectar la placa para grabar de nuevo
+Register: Registrarse
+Register a platform above before adding a farm.: Registra una plataforma arriba antes de agregar una finca.
+Register Farm: Registrar finca
+Refresh: Actualizar
+Register Platform: Registrar plataforma
+Registered Platforms: Plataformas registradas
+Registration failed: Falló el registro
+Registration successful - please login: Registro correcto - inicia sesión
+Relay: Relé
+Replica token: Token de réplica
+Reporting every: Informa cada
+Reset code: Código de restablecimiento
+Reset password: Restablecer contraseña
+Retain: Retener
+Retained: Retenidos
+Retained messages: Mensajes retenidos
+Run this on the Pi, in the directory the server is installed in. Replace the placeholder with this server's fully-qualified name - the one on its certificate, which you can check by opening https:// that name in a browser. It will then ask for the broker password and for the replica token, in that order, so have both of the values below to hand.: 'Ejecuta esto en el Pi, en el directorio donde está instalado el servidor. Sustituye el marcador por el nombre completo de este servidor: el que figura en su certificado, que puedes comprobar abriendo https:// ese nombre en un navegador. Luego te pedirá la contraseña del bróker y el token de réplica, en ese orden, así que ten a mano los dos valores de abajo.'
+Schema: Esquema
+Select: Seleccionar
+Select a farm above to see its nodes.: Selecciona una finca arriba para ver sus nodos.
+Select a node above to see actions.: Selecciona un nodo arriba para ver las acciones.
+Select a node above to send an action.: Selecciona un nodo arriba para enviar una acción.
+Select an organization to continue.: Selecciona una organización para continuar.
+Send: Enviar
+SEND: ENVIAR
+Send another code: Enviar otro código
+Send reset code: Enviar código
+server: servidor
+set: definido
+Setpoint: Consigna
+Settings: Ajustes
+Show enrolment secrets: Mostrar secretos de registro
+SHT: SHT
+SHT30: SHT30
+Sign In: Iniciar sesión
+Sign in: Iniciar sesión
+Site: Sitio
+Soil: Suelo
+Soil Moisture: Humedad del suelo
+Soil Temperature: Temperatura del suelo
+Sonoff R2 switch: Interruptor Sonoff R2
+Sonoff switch: Interruptor Sonoff
+Speed: Velocidad
+SSID: SSID
+Not reported recently: Sin informes recientes
+Status: Estado
+Stop monitor: Detener monitor
+Stopped, and its credential removed. Click to clear.: Detenido, y su credencial eliminada. Haz clic para anularlo.
+Submit: Enviar
+System: Sistema
+Temperature: Temperatura
+temperature: temperatura
+That code is not valid or has expired: Ese código no es válido o ha caducado
+The broker reports this bridge connected: El bróker informa que este puente está conectado
+The broker reports this bridge not connected: El bróker informa que este puente no está conectado
+This field has no invocation URL (forms[0].href) in its schema: Este campo no tiene URL de invocación (forms[0].href) en su esquema
+This node has no actions in its schema.: Este nodo no tiene acciones en su esquema.
+This node has no actions or writable properties in its schema.: Este nodo no tiene acciones ni propiedades editables en su esquema.
+This organization has no enrolment secret, so no new node can enrol. Add one.: Esta organización no tiene secreto de registro, así que ningún nodo nuevo puede registrarse. Agrega uno.
+Time On (s): Tiempo encendido (s)
+To: Hasta
+Too many attempts - please wait a few minutes: Demasiados intentos - espera unos minutos
+Topic: Tema
+Topic and Value are required: El tema y el valor son obligatorios
+TVOC: TVOC
+'Two credentials for two different connections: the password is what the MQTT bridge logs in with on port 8883, and the token is what lets that Pi pull this organization''s logins over HTTPS, so the same people can log in there too. The token can be skipped - press Enter at its prompt - and added later by doing this again. Neither is asked for on the command line, so that neither ends up in the Pi''s shell history.': 'Dos credenciales para dos conexiones distintas: la contraseña es con la que el puente MQTT inicia sesión en el puerto 8883, y el token es lo que permite a ese Pi obtener los inicios de sesión de esta organización por HTTPS, para que las mismas personas también puedan iniciar sesión allí. El token se puede omitir - pulsa Intro cuando lo pida - y agregarlo más tarde repitiendo esto. Ninguno se pide en la línea de comandos, para que ninguno quede en el historial del shell del Pi.'
+Unable to find node: No se encontró el nodo
+Unable to find project: No se encontró el proyecto
+Unauthorized: No autorizado
+undefined: indefinido
+Unknown: Desconocido
+Unsupported board: Placa no compatible
+Unused: Sin usar
+Up: Activo
+Updating the app only: Actualizando solo la aplicación
+Updating the app only - the existing configuration will be preserved: Actualizando solo la aplicación - se conservará la configuración existente
+Upload: Subir
+Upload finished - check the list below: Subida terminada - revisa la lista de abajo
+Uploading: Subiendo
+Username: Usuario
+Username or email: Usuario o correo electrónico
+Value: Valor
+Value *: Valor *
+Voltage: Voltaje
+Waiting: Esperando
+Waiting for devices: Esperando dispositivos
+We will email you a code and a link to choose a new password.: Te enviaremos por correo un código y un enlace para elegir una nueva contraseña.
+When: Cuándo
+WiFi: WiFi
+Withdraw this enrolment secret?: ¿Retirar este secreto de registro?
+Withdrawn: Retirado
+'Yes': Sí
+You do not have permission for this organization: No tienes permiso para esta organización
+Forwarders: Reenviadores
+Grafana: Grafana
+OpenSearch: OpenSearch
+OpenSearch Dashboards: OpenSearch Dashboards
+every %s s: cada %s s
+'%s topics': '%s temas'
+From the file: Del archivo
+Delete "%s"?: ¿Borrar "%s"?
+Readings stop being sent to it straight away. Nothing already sent is removed from there.: Las lecturas dejan de enviarse allí de inmediato. No se elimina nada de lo ya enviado.
+Deleted, but the logger could not be told - it will take effect at the next restart: Borrado, pero no se pudo avisar al registrador - tendrá efecto en el próximo reinicio
+set - leave blank to keep it: definido - déjalo en blanco para conservarlo
+Give it a name first: Primero dale un nombre
+Saved, but the logger could not be told - it will take effect at the next restart: Guardado, pero no se pudo avisar al registrador - tendrá efecto en el próximo reinicio
+Sending... %s readings so far: Enviando... %s lecturas hasta ahora
+'Stopped: %s': 'Detenido: %s'
+Never: Nunca
+Making it again replaces its token, and the Grafana using the old one stops working until it is given the new one.: Volver a crearlo reemplaza su token, y el Grafana que usa el antiguo deja de funcionar hasta que reciba el nuevo.
+Revoke "%s"?: ¿Revocar "%s"?
+The Grafana using it stops being able to read this organization straight away.: El Grafana que lo usa deja de poder leer esta organización de inmediato.
+Copied: Copiado
+Press Ctrl-C or Cmd-C to copy: Pulsa Ctrl-C o Cmd-C para copiar
+'You have a login: %s. Making another replaces its password, and your Dashboards stops working until it is given the new one.': 'Tienes un inicio de sesión: %s. Crear otro reemplaza su contraseña, y tu Dashboards deja de funcionar hasta que reciba la nueva.'
+Replace the password?: ¿Reemplazar la contraseña?
+The Dashboards using the old one stops working until it is given the new one.: El Dashboards que usa la antigua deja de funcionar hasta que reciba la nueva.
+Remove the login?: ¿Quitar el inicio de sesión?
+Dashboards using it stops being able to read this organization straight away.: El Dashboards que lo usa deja de poder leer esta organización de inmediato.
+Loading...: Cargando...
+This organization forwards its readings nowhere. They are still recorded in the CSV files and charted in Grafana - add a forwarder to send them somewhere as well.: Esta organización no reenvía sus lecturas a ningún sitio. Siguen registrándose en los archivos CSV y graficándose en Grafana - agrega un reenviador para enviarlas también a otro lugar.
+Type: Tipo
+Sends to: Envía a
+State: Estado
+Edit: Editar
+Delete: Borrar
+Send earlier readings...: Enviar lecturas anteriores...
+Save: Guardar
+Cancel: Cancelar
+From this day on (leave empty for everything): Desde este día (déjalo vacío para todo)
+Start: Iniciar
+Close: Cerrar
+Readings are always recorded in the CSV files, and charted in Grafana from them. A forwarder also sends each reading, as it is logged, somewhere else - OpenSearch to search and browse them, or Google Sheets to add a row of values every so often. Changes apply straight away.: 'Las lecturas siempre se registran en los archivos CSV y se grafican en Grafana a partir de ellos. Un reenviador además envía cada lectura, a medida que se registra, a otro lugar: a OpenSearch para buscarlas y explorarlas, o a Google Sheets para agregar una fila de valores cada cierto tiempo. Los cambios se aplican de inmediato.'
+No Grafana has been given access to this organization yet.: Aún no se ha dado acceso a ningún Grafana a esta organización.
+Made: Creado
+Last used: Último uso
+Whose: De quién
+Revoke: Revocar
+Copy: Copiar
+Copy this now - it is not shown again: Cópialo ahora - no se vuelve a mostrar
+Token: Token
+Allowed host: Host permitido
+Remove my login: Quitar mi inicio de sesión
+Everyone's logins: Inicios de sesión de todos
+OpenSearch Dashboards is a program you run on your own computer to search and chart this organization's readings, which this server keeps in OpenSearch. It needs a login, made here, that is yours. It can read this organization's readings and nothing else, and the people of an organization share its saved dashboards. It needs permission to read the whole organization; if you can read only some projects, use the Grafana card instead.: OpenSearch Dashboards es un programa que ejecutas en tu propia computadora para buscar y graficar las lecturas de esta organización, que este servidor guarda en OpenSearch. Necesita un inicio de sesión, creado aquí, que es tuyo. Puede leer las lecturas de esta organización y nada más, y las personas de una organización comparten sus paneles guardados. Necesita permiso para leer toda la organización; si solo puedes leer algunos proyectos, usa la tarjeta de Grafana.
+Give a Grafana access: Dar acceso a un Grafana
+Name it for whoever or wherever it is, so it can be revoked on its own.: Ponle el nombre de quien lo use o de donde esté, para poder revocarlo por separado.
+Make a token: Crear un token
+The starter dashboard: El panel inicial
+A chart with a list of every topic to pick from. In Grafana choose Dashboards, New, Import, upload this file, and pick the data source above when it asks.: Un gráfico con una lista de todos los temas para elegir. En Grafana elige Dashboards, New, Import, sube este archivo y elige la fuente de datos de arriba cuando lo pida.
+Add a forwarder: Agregar un reenviador
+Change this forwarder: Cambiar este reenviador
+Active (untick to pause; the settings are kept): Activo (desmárcalo para pausar; se conservan los ajustes)
+Would send %s readings: Enviaría %s lecturas
+Sent %s readings: Se enviaron %s lecturas
+'Sends the readings already recorded in the CSV files, which this forwarder did not see because it was off or OpenSearch was down. It is safe to repeat: a reading already there is replaced, not doubled.': 'Envía las lecturas ya registradas en los archivos CSV que este reenviador no vio porque estaba apagado u OpenSearch no estaba disponible. Se puede repetir sin riesgo: una lectura que ya está allí se reemplaza, no se duplica.'
+Only count them, send nothing: Solo contarlas, no enviar nada
+Yours: Tuyo
+Another user's: De otro usuario
+'In Grafana, add a data source of type Infinity, with Authentication set to Bearer Token and the token above, and the allowed host above. Or let this do it:': 'En Grafana, agrega una fuente de datos de tipo Infinity, con Authentication en Bearer Token y el token de arriba, y el host permitido de arriba. O deja que esto lo haga:'
+Download the data source file: Descargar el archivo de fuente de datos
+You have no login yet.: Aún no tienes inicio de sesión.
+Replace the password: Reemplazar la contraseña
+Make a login: Crear un inicio de sesión
+'Put these lines in the configuration file of the OpenSearch Dashboards on your computer (opensearch_dashboards.yml), then restart it. Nothing is asked for when you open it: the login is in the file. The password is not kept anywhere you can read it, so if you lose this, press the button below to make a new one and paste the lines in again.': 'Pon estas líneas en el archivo de configuración de OpenSearch Dashboards en tu computadora (opensearch_dashboards.yml) y luego reinícialo. No se pide nada al abrirlo: el inicio de sesión está en el archivo. La contraseña no se guarda en ningún lugar donde puedas leerla, así que si la pierdes, pulsa el botón de abajo para crear una nueva y vuelve a pegar las líneas.'
+'Grafana can chart this organization''s readings straight from the server - every reading ever recorded, with nothing to export first. To set it up: install the Infinity plugin in Grafana, make a token here, give Grafana the data source, then import the dashboard. A token is yours: it lets one Grafana read what you can read in this organization, and stops working if your access to it does.': 'Grafana puede graficar las lecturas de esta organización directamente desde el servidor: todas las lecturas registradas, sin exportar nada antes. Para configurarlo: instala el plugin Infinity en Grafana, crea un token aquí, dale a Grafana la fuente de datos y luego importa el panel. Un token es tuyo: permite que un Grafana lea lo que tú puedes leer en esta organización, y deja de funcionar si tu acceso deja de hacerlo.'
+Download the dashboard: Descargar el panel
+Forgotten: Olvidado
+Failed - approve: Falló - aprobar
+Choose an organization first, so there is a broker connection to publish on: Primero elige una organización, para tener una conexión al bróker en la que publicar
+Add Farm: Agregar finca
+No broker credentials for this organization: No hay credenciales del bróker para esta organización
+Listening on %s ...: Escuchando en %s ...
+'Could not connect: %s': 'No se pudo conectar: %s'
+'Could not subscribe: %s': 'No se pudo suscribir: %s'
+Nothing retained matches that pattern: Ningún mensaje retenido coincide con ese patrón
+Deleting %s ...: Borrando %s ...
+'Could not delete: %s': 'No se pudo borrar: %s'
+Deleted %s: Se borraron %s
+If one comes back, a node is still publishing it.: Si alguno vuelve, es que un nodo aún lo está publicando.
+Add Project: Agregar proyecto
+Add Platform: Agregar plataforma
+', %s failed': ', %s fallaron'
+This server has no OpenSearch of its own set up (config.d/opensearch.yaml): Este servidor no tiene configurado un OpenSearch propio (config.d/opensearch.yaml)
+This server has not said where OpenSearch can be reached from outside (config.d/opensearch.yaml, "public"): Este servidor no ha indicado dónde se puede acceder a OpenSearch desde fuera (config.d/opensearch.yaml, "public")
+OpenSearch logins need an organization id of lower-case letters and digits only: Los inicios de sesión de OpenSearch requieren un id de organización solo con letras minúsculas y dígitos
+OpenSearch did not answer: OpenSearch no respondió

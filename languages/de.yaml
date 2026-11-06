@@ -1,0 +1,432 @@
+# German
+'"%s" already exists.': „%s“ existiert bereits.
+'+ matches one level, # matches the rest. Look before deleting.': '+ passt auf eine Ebene, # auf den Rest. Vor dem Löschen prüfen.'
+(Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): (Max. 4 MB, nur .bin, meist frugal-iot.ino.bin oder firmware.bin)
+A bridge relays a Pi's readings to this server, so its nodes appear here too, while the Pi carries on recording and serving on its own whenever the link is down. "Bridge" is the broker's live view of the relay; "Last check-in" is when that Pi last collected this organization's logins, which it does over HTTP - so a Pi can be checking in while its bridge is down, and the two together say which half is broken.: Eine Bridge leitet die Messwerte eines Pi an diesen Server weiter, sodass seine Knoten auch hier erscheinen, während der Pi selbstständig weiter aufzeichnet und bereitstellt, wann immer die Verbindung unterbrochen ist. „Bridge“ ist die Live-Sicht des Brokers auf die Weiterleitung; „Letzter Kontakt“ ist der Zeitpunkt, zu dem dieser Pi zuletzt die Logins dieser Organisation abgeholt hat, was er über HTTP tut - ein Pi kann sich also melden, während seine Bridge ausgefallen ist, und beides zusammen zeigt, welche Hälfte defekt ist.
+Action %s sent: Aktion %s gesendet
+Action *: Aktion *
+Add: Hinzufügen
+Reset board: Board zurücksetzen
+Clear log: Protokoll leeren
+Copy log: Protokoll kopieren
+Start the monitor to configure: Monitor starten, um zu konfigurieren
+Board not answering - old firmware?: Board antwortet nicht - alte Firmware?
+Waiting for the board: Warte auf das Board
+Board was already configured - its settings were kept. Apply to board changes them: Board war bereits konfiguriert - seine Einstellungen wurden beibehalten. „Auf Board anwenden“ ändert sie
+Configure board: Board konfigurieren
+Apply after flashing: Nach dem Flashen anwenden
+Apply to board: Auf Board anwenden
+Board ready: Board bereit
+Boards done: Fertige Boards
+WiFi networks: WLAN-Netze
+Add network: Netz hinzufügen
+Remove: Entfernen
+No active project: Kein aktives Projekt
+Project name must be 2 to 15 characters: Projektname muss 2 bis 15 Zeichen lang sein
+Add a WiFi network: Fügen Sie ein WLAN-Netz hinzu
+WiFi network not valid: WLAN-Netz ungültig
+Not understood: Nicht verstanden
+Too long: Zu lang
+No reply: Keine Antwort
+Could not fetch the enrolment secret: Registrierungsgeheimnis konnte nicht abgerufen werden
+WiFi connected: WLAN verbunden
+WiFi not connected: WLAN nicht verbunden
+MQTT connected: MQTT verbunden
+MQTT not connected: MQTT nicht verbunden
+Not enrolled: Nicht registriert
+Add a bridge: Bridge hinzufügen
+Add another enrolment secret: Weiteres Registrierungsgeheimnis hinzufügen
+Added: Hinzugefügt
+Adding it again issues a new broker password and a new replica token, and the ones that Pi is using now stop working. It will stay disconnected until you put the new ones into its configuration and restart its broker.: Erneutes Hinzufügen erzeugt ein neues Broker-Passwort und ein neues Replika-Token, und die, die dieser Pi jetzt verwendet, funktionieren nicht mehr. Er bleibt getrennt, bis Sie die neuen in seine Konfiguration eintragen und seinen Broker neu starten.
+Admin: Admin
+Advanced: Erweitert
+All: Alle
+Already have an account?: Sie haben schon ein Konto?
+'And these two, if you are not building against the production server:': 'Und diese beiden, wenn Sie nicht für den Produktionsserver kompilieren:'
+Any node flashed with it that has not enrolled yet will be refused and will need reflashing. Nodes that have already enrolled are unaffected - they never present it again.: Jeder damit geflashte Knoten, der sich noch nicht registriert hat, wird abgewiesen und muss neu geflasht werden. Bereits registrierte Knoten sind nicht betroffen - sie legen es nie wieder vor.
+API: API
+Approved: Genehmigt
+AQI: AQI
+AQI500: AQI500
+Asked and was refused. Click to let it enrol.: Hat angefragt und wurde abgewiesen. Klicken, um die Registrierung zu erlauben.
+Auth Token: Auth-Token
+Back to sign in: Zurück zur Anmeldung
+Base URL: Basis-URL
+Battery: Batterie
+Board: Board
+Bridge: Bridge
+Bridged Pis: Pis mit Bridge
+Bridges: Bridges
+Brightness: Helligkeit
+Broker: Broker
+Broker account: Broker-Konto
+Broker password: Broker-Passwort
+Built in LED: Eingebaute LED
+buttons: Tasten
+Choose a project to see its devices: Wählen Sie ein Projekt, um seine Geräte zu sehen
+Click to change project: Klicken, um das Projekt zu wechseln
+Click to sort: Klicken zum Sortieren
+Climate: Klima
+close: Schließen
+Collapse: Einklappen
+Color: Farbe
+'Compiled into firmware and used to request broker credential. Add a second one to change it: both are accepted, so nodes already flashed keep working until you withdraw the old one.': 'In die Firmware einkompiliert und zum Anfordern der Broker-Zugangsdaten verwendet. Fügen Sie ein zweites hinzu, um es zu ändern: Beide werden akzeptiert, sodass bereits geflashte Knoten weiter funktionieren, bis Sie das alte zurückziehen.'
+Connect board: Board verbinden
+connected: verbunden
+connecting: verbindet
+Control: Steuerung
+Cookie Name: Cookie-Name
+Copy these now - they are not shown again: Jetzt kopieren - sie werden nicht erneut angezeigt
+Could not read the board - assuming it is already provisioned: Board konnte nicht gelesen werden - es wird angenommen, dass es bereits eingerichtet ist
+Create an account: Konto erstellen
+Dashboard: Dashboard
+Data: Daten
+Delete these: Diese löschen
+Delete this firmware: Diese Firmware löschen
+Denied: Abgelehnt
+Deny %s?: '%s ablehnen?'
+Description: Beschreibung
+Device: Gerät
+Display carousel: Anzeige-Karussell
+DOWN: AUSGEFALLEN
+Download this firmware: Diese Firmware herunterladen
+Done: Fertig
+ds18b20: ds18b20
+e.g. LiteFarm: z. B. LiteFarm
+eCO2: eCO2
+Email: E-Mail
+Enrol URL: Registrierungs-URL
+Enrolled: Registriert
+Enrolled nodes: Registrierte Knoten
+Enrolment secret: Registrierungsgeheimnis
+ENS AHT: ENS AHT
+Enter the code we emailed you, then choose a new password.: Geben Sie den Code ein, den wir Ihnen per E-Mail gesendet haben, und wählen Sie dann ein neues Passwort.
+Enter topic: Topic eingeben
+Enter value: Wert eingeben
+Existing OTA Files: Vorhandene OTA-Dateien
+Failed: Fehlgeschlagen
+Farm ID *: Farm-ID *
+Farm registered: Farm registriert
+Farms: Farmen
+File: Datei
+Firmware: Firmware
+Firmware file: Firmware-Datei
+Flash: Flashen
+Flash over USB: Über USB flashen
+Flash size was not detected reliably - flash anyway: Flash-Größe nicht zuverlässig erkannt - trotzdem flashen
+Flash this over USB: Dies über USB flashen
+Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer: Zum Flashen wird die Web Serial API benötigt - verwenden Sie Chrome, Edge oder Opera auf einem Desktop-Computer
+for node: für Knoten
+Forget: Vergessen
+Forget %s?: '%s vergessen?'
+Forget this node, so it is issued a new credential: Diesen Knoten vergessen, damit er neue Zugangsdaten erhält
+Forgot password?: Passwort vergessen?
+From: Von
+Frugal IoT project: Frugal-IoT-Projekt
+Frugal-IoT Username *: Frugal-IoT-Benutzername *
+Full provision - all configuration on the board will be erased: Vollständige Einrichtung - die gesamte Konfiguration auf dem Board wird gelöscht
+Gas Resistance: Gaswiderstand
+Give the Pi a short name - it becomes its broker account and cannot be changed later without reconfiguring that Pi. Lower-case letters, digits and hyphens.: Geben Sie dem Pi einen kurzen Namen - er wird zu seinem Broker-Konto und kann später nicht geändert werden, ohne diesen Pi neu zu konfigurieren. Kleinbuchstaben, Ziffern und Bindestriche.
+Give the Pi a short name first: Geben Sie dem Pi zuerst einen kurzen Namen
+Graph: Diagramm
+Greater Than: Größer als
+Has its own broker credential. Click to deny it.: Hat eigene Broker-Zugangsdaten. Klicken, um ihn abzulehnen.
+heating: Heizung
+humidifier: Luftbefeuchter
+Humidity: Luftfeuchte
+humidity: Luftfeuchte
+Humidity control: Feuchteregelung
+Hysteresis: Hysterese
+hysteresis: Hysterese
+I have a code: Ich habe einen Code
+id: ID
+If that account exists we have emailed a reset code: Falls dieses Konto existiert, haben wir einen Code zum Zurücksetzen per E-Mail gesendet
+If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': Wenn dieses Verzeichnis in der Dateiauswahl unsichtbar ist, kopieren Sie die Datei an einen anderen Ort ODER legen Sie einen Alias auf das Verzeichnis .pio ohne führenden '.' an
+Incorrect username or password: Benutzername oder Passwort falsch
+Info: Info
+Input: Eingang
+It will be issued a new broker credential the next time it asks. A node that is running will be offline for a minute or two while it notices; a node whose filesystem was erased needs this before it can rejoin at all.: Er erhält bei seiner nächsten Anfrage neue Broker-Zugangsdaten. Ein laufender Knoten ist ein bis zwei Minuten offline, bis er es bemerkt; ein Knoten, dessen Dateisystem gelöscht wurde, braucht dies, bevor er überhaupt wieder beitreten kann.
+Its broker account is deleted, so it stops being able to publish or subscribe, and it cannot enrol again until you clear this. Use it for a node sending bad readings.: Sein Broker-Konto wird gelöscht, sodass er weder veröffentlichen noch abonnieren kann, und er kann sich erst wieder registrieren, wenn Sie dies aufheben. Für einen Knoten verwenden, der fehlerhafte Messwerte sendet.
+Its next request will be accepted. Click to deny it.: Seine nächste Anfrage wird angenommen. Klicken, um ihn abzulehnen.
+Key: Schlüssel
+Last asked: Zuletzt angefragt
+Last check-in: Letzter Kontakt
+Last Seen: Zuletzt aktiv
+Last seen: Zuletzt gesehen
+LED: LED
+Limit: Grenzwert
+List: Auflisten
+Live: Live
+Load Cell: Wägezelle
+Loading schema...: Schema wird geladen...
+Log out: Abmelden
+Lower-case letters and numbers only, no spaces or punctuation: Nur Kleinbuchstaben und Ziffern, keine Leerzeichen oder Satzzeichen
+Lux: Lux
+Manual: Manuell
+Message: Nachricht
+Monitor: Monitor
+Monitor speed: Monitor-Geschwindigkeit
+Move down: Nach unten
+Move up: Nach oben
+Name: Name
+Never seen: Nie gesehen
+New here?: Neu hier?
+New password: Neues Passwort
+Connect a board to flash: Schließen Sie ein Board zum Flashen an
+Choose a firmware file to flash: Wählen Sie eine Firmware-Datei zum Flashen
+Erase and flash: Löschen und flashen
+kept from last session: aus der letzten Sitzung übernommen
+No farms registered for this organization yet.: Für diese Organisation sind noch keine Farmen registriert.
+No nodes found for this farm's project(s).: Für die Projekte dieser Farm wurden keine Knoten gefunden.
+No nodes found for this organization: Keine Knoten für diese Organisation gefunden
+No nodes have enrolled yet, and none have asked and been rejected.: Es hat sich noch kein Knoten registriert, und keiner wurde nach einer Anfrage abgewiesen.
+No organization: Keine Organisation
+No organization selected: Keine Organisation ausgewählt
+No OTA files uploaded yet.: Noch keine OTA-Dateien hochgeladen.
+No Pi bridges to this server for this organization. A bridge relays a Pi's readings here while the Pi carries on working on its own - see INSTALLATION.md step 11.: Keine Pi-Bridges zu diesem Server für diese Organisation. Eine Bridge leitet die Messwerte eines Pi hierher weiter, während der Pi selbstständig weiterarbeitet - siehe INSTALLATION.md Schritt 11.
+No platforms registered yet.: Noch keine Plattformen registriert.
+No projects added for this organization yet.: Für diese Organisation wurden noch keine Projekte hinzugefügt.
+No projects to display until organization selected: Keine Projekte, solange keine Organisation ausgewählt ist
+No state received from the broker yet: Noch kein Status vom Broker empfangen
+Nobody added for this organization yet.: Für diese Organisation wurde noch niemand hinzugefügt.
+Node: Knoten
+Node Actions: Knotenaktionen
+Node ID: Knoten-ID
+Node Name: Knotenname
+Nodes: Knoten
+Nodes in Farm: Knoten der Farm
+Nodes in Organization: Knoten der Organisation
+Nodes that have obtained broker credentials on first connection. Forget reissues a new credential at next connection and is needed if memory has been erased. Refused nodes are listed - click "Failed - approve" to allow (on next retry, typically 30 minutes).: Knoten, die bei der ersten Verbindung Broker-Zugangsdaten erhalten haben. Vergessen stellt bei der nächsten Verbindung neue aus und ist nötig, wenn der Speicher gelöscht wurde. Abgewiesene Knoten werden aufgeführt - klicken Sie auf „Fehlgeschlagen - genehmigen“, um sie zuzulassen (beim nächsten Versuch, meist nach 30 Minuten).
+Not in the schema: Nicht im Schema
+Not selected: Nicht ausgewählt
+Note this is your organization - not the organizations whose devices you want to access.: 'Hinweis: Dies ist Ihre Organisation - nicht die Organisationen, auf deren Geräte Sie zugreifen möchten.'
+Now: Jetzt
+now: jetzt
+'Off': Aus
+offline: offline
+Offline: Offline
+'On': Ein
+'On ArduinoIDE the file is typically in ': 'In der ArduinoIDE liegt die Datei meist in '
+'On PlatformIO The file is typically in ': 'In PlatformIO liegt die Datei meist in '
+Organization: Organisation
+OTA: OTA
+OTA Upload: OTA-Upload
+OTA binary uploaded: OTA-Binärdatei hochgeladen
+OTA Key: OTA-Schlüssel
+OTA Key or Device ID: OTA-Schlüssel oder Geräte-ID
+Out: Ausgang
+out: Ausgang
+Output: Ausgabe
+Password: Passwort
+Password reset - please sign in: Passwort zurückgesetzt - bitte melden Sie sich an
+Password reset is not available on this server: Zurücksetzen des Passworts ist auf diesem Server nicht verfügbar
+Pattern: Muster
+Permissions: Berechtigungen
+Phone or Whatsapp: Telefon oder Whatsapp
+Platform *: Plattform *
+Platform Name *: Plattformname *
+Platform registered: Plattform registriert
+Please login: Bitte melden Sie sich an
+Pressure: Luftdruck
+Project: Projekt
+Asked %s to move: '%s wurde zum Verschieben aufgefordert'
+Waiting for %s to report: Warte auf Meldung von %s
+Project ID: Projekt-ID
+Project ID *: Projekt-ID *
+Project Name: Projektname
+Projects: Projekte
+Property: Eigenschaft
+Provision instead (erases config): Stattdessen neu einrichten (löscht Konfiguration)
+Publish Message: Nachricht veröffentlichen
+'Published to ': 'Veröffentlicht auf '
+'Put this in platformio-secrets-local.ini, which is not committed:': 'Tragen Sie dies in platformio-secrets-local.ini ein, die nicht eingecheckt wird:'
+QoS: QoS
+reconnect: Neu verbinden
+Reconnect the board to flash again: Board erneut verbinden, um wieder zu flashen
+Register: Registrieren
+Register a platform above before adding a farm.: Registrieren Sie oben eine Plattform, bevor Sie eine Farm hinzufügen.
+Register Farm: Farm registrieren
+Refresh: Aktualisieren
+Register Platform: Plattform registrieren
+Registered Platforms: Registrierte Plattformen
+Registration failed: Registrierung fehlgeschlagen
+Registration successful - please login: Registrierung erfolgreich - bitte melden Sie sich an
+Relay: Relais
+Replica token: Replika-Token
+Reporting every: Meldet alle
+Reset code: Rücksetzcode
+Reset password: Passwort zurücksetzen
+Retain: Behalten
+Retained: Gespeichert
+Retained messages: Gespeicherte Nachrichten
+Run this on the Pi, in the directory the server is installed in. Replace the placeholder with this server's fully-qualified name - the one on its certificate, which you can check by opening https:// that name in a browser. It will then ask for the broker password and for the replica token, in that order, so have both of the values below to hand.: Führen Sie dies auf dem Pi aus, in dem Verzeichnis, in dem der Server installiert ist. Ersetzen Sie den Platzhalter durch den vollständigen Namen dieses Servers - den auf seinem Zertifikat, den Sie prüfen können, indem Sie https:// mit diesem Namen in einem Browser öffnen. Danach fragt es nach dem Broker-Passwort und dem Replika-Token, in dieser Reihenfolge, halten Sie also beide Werte unten bereit.
+Schema: Schema
+Select: Auswählen
+Select a farm above to see its nodes.: Wählen Sie oben eine Farm, um ihre Knoten zu sehen.
+Select a node above to see actions.: Wählen Sie oben einen Knoten, um Aktionen zu sehen.
+Select a node above to send an action.: Wählen Sie oben einen Knoten, um eine Aktion zu senden.
+Select an organization to continue.: Wählen Sie eine Organisation, um fortzufahren.
+Send: Senden
+SEND: SENDEN
+Send another code: Neuen Code senden
+Send reset code: Code senden
+server: Server
+set: gesetzt
+Setpoint: Sollwert
+Settings: Einstellungen
+Show enrolment secrets: Registrierungsgeheimnisse anzeigen
+SHT: SHT
+SHT30: SHT30
+Sign In: Anmelden
+Sign in: Anmelden
+Site: Standort
+Soil: Boden
+Soil Moisture: Bodenfeuchte
+Soil Temperature: Bodentemperatur
+Sonoff R2 switch: Sonoff-R2-Schalter
+Sonoff switch: Sonoff-Schalter
+Speed: Geschwindigkeit
+SSID: SSID
+Not reported recently: Länger keine Meldung
+Status: Status
+Stop monitor: Monitor stoppen
+Stopped, and its credential removed. Click to clear.: Gestoppt und Zugangsdaten entfernt. Klicken zum Aufheben.
+Submit: Absenden
+System: System
+Temperature: Temperatur
+temperature: Temperatur
+That code is not valid or has expired: Dieser Code ist ungültig oder abgelaufen
+The broker reports this bridge connected: Laut Broker ist diese Bridge verbunden
+The broker reports this bridge not connected: Laut Broker ist diese Bridge nicht verbunden
+This field has no invocation URL (forms[0].href) in its schema: Dieses Feld hat in seinem Schema keine Aufruf-URL (forms[0].href)
+This node has no actions in its schema.: Dieser Knoten hat keine Aktionen in seinem Schema.
+This node has no actions or writable properties in its schema.: Dieser Knoten hat keine Aktionen oder beschreibbaren Eigenschaften in seinem Schema.
+This organization has no enrolment secret, so no new node can enrol. Add one.: Diese Organisation hat kein Registrierungsgeheimnis, daher kann sich kein neuer Knoten registrieren. Fügen Sie eines hinzu.
+Time On (s): Einschaltdauer (s)
+To: Bis
+Too many attempts - please wait a few minutes: Zu viele Versuche - bitte warten Sie einige Minuten
+Topic: Topic
+Topic and Value are required: Topic und Wert sind erforderlich
+TVOC: TVOC
+'Two credentials for two different connections: the password is what the MQTT bridge logs in with on port 8883, and the token is what lets that Pi pull this organization''s logins over HTTPS, so the same people can log in there too. The token can be skipped - press Enter at its prompt - and added later by doing this again. Neither is asked for on the command line, so that neither ends up in the Pi''s shell history.': 'Zwei Zugangsdaten für zwei verschiedene Verbindungen: Mit dem Passwort meldet sich die MQTT-Bridge auf Port 8883 an, und mit dem Token holt dieser Pi die Logins dieser Organisation über HTTPS ab, damit sich dieselben Personen auch dort anmelden können. Das Token kann übersprungen werden - drücken Sie an seiner Eingabeaufforderung die Eingabetaste - und später hinzugefügt werden, indem Sie dies wiederholen. Keines von beiden wird auf der Kommandozeile abgefragt, damit keines im Shell-Verlauf des Pi landet.'
+Unable to find node: Knoten nicht gefunden
+Unable to find project: Projekt nicht gefunden
+Unauthorized: Nicht autorisiert
+undefined: undefiniert
+Unknown: Unbekannt
+Unsupported board: Nicht unterstütztes Board
+Unused: Unbenutzt
+Up: Aktiv
+Updating the app only: Nur die Anwendung wird aktualisiert
+Updating the app only - the existing configuration will be preserved: Nur die Anwendung wird aktualisiert - die vorhandene Konfiguration bleibt erhalten
+Upload: Hochladen
+Upload finished - check the list below: Hochladen abgeschlossen - prüfen Sie die Liste unten
+Uploading: Wird hochgeladen
+Username: Benutzername
+Username or email: Benutzername oder E-Mail
+Value: Wert
+Value *: Wert *
+Voltage: Spannung
+Waiting: Wartet
+Waiting for devices: Warte auf Geräte
+We will email you a code and a link to choose a new password.: Wir senden Ihnen per E-Mail einen Code und einen Link, um ein neues Passwort zu wählen.
+When: Wann
+WiFi: WLAN
+Withdraw this enrolment secret?: Dieses Registrierungsgeheimnis zurückziehen?
+Withdrawn: Zurückgezogen
+'Yes': Ja
+You do not have permission for this organization: Sie haben keine Berechtigung für diese Organisation
+Forwarders: Weiterleitungen
+Grafana: Grafana
+OpenSearch: OpenSearch
+OpenSearch Dashboards: OpenSearch Dashboards
+every %s s: alle %s s
+'%s topics': '%s Topics'
+From the file: Aus der Datei
+Delete "%s"?: „%s“ löschen?
+Readings stop being sent to it straight away. Nothing already sent is removed from there.: Ab sofort werden keine Messwerte mehr dorthin gesendet. Bereits Gesendetes wird dort nicht entfernt.
+Deleted, but the logger could not be told - it will take effect at the next restart: Gelöscht, aber der Logger konnte nicht benachrichtigt werden - wirksam beim nächsten Neustart
+set - leave blank to keep it: gesetzt - leer lassen, um es zu behalten
+Give it a name first: Geben Sie ihm zuerst einen Namen
+Saved, but the logger could not be told - it will take effect at the next restart: Gespeichert, aber der Logger konnte nicht benachrichtigt werden - wirksam beim nächsten Neustart
+Sending... %s readings so far: Senden... bisher %s Messwerte
+'Stopped: %s': 'Gestoppt: %s'
+Never: Nie
+Making it again replaces its token, and the Grafana using the old one stops working until it is given the new one.: Erneutes Erstellen ersetzt sein Token, und das Grafana, das das alte verwendet, funktioniert nicht mehr, bis es das neue erhält.
+Revoke "%s"?: „%s“ widerrufen?
+The Grafana using it stops being able to read this organization straight away.: Das Grafana, das es verwendet, kann diese Organisation ab sofort nicht mehr lesen.
+Copied: Kopiert
+Press Ctrl-C or Cmd-C to copy: Drücken Sie Ctrl-C oder Cmd-C zum Kopieren
+'You have a login: %s. Making another replaces its password, and your Dashboards stops working until it is given the new one.': 'Sie haben einen Login: %s. Ein neuer ersetzt dessen Passwort, und Ihr Dashboards funktioniert nicht mehr, bis es das neue erhält.'
+Replace the password?: Passwort ersetzen?
+The Dashboards using the old one stops working until it is given the new one.: Das Dashboards, das das alte verwendet, funktioniert nicht mehr, bis es das neue erhält.
+Remove the login?: Login entfernen?
+Dashboards using it stops being able to read this organization straight away.: Das Dashboards, das ihn verwendet, kann diese Organisation ab sofort nicht mehr lesen.
+Loading...: Wird geladen...
+This organization forwards its readings nowhere. They are still recorded in the CSV files and charted in Grafana - add a forwarder to send them somewhere as well.: Diese Organisation leitet ihre Messwerte nirgendwohin weiter. Sie werden weiterhin in den CSV-Dateien aufgezeichnet und in Grafana dargestellt - fügen Sie eine Weiterleitung hinzu, um sie zusätzlich woandershin zu senden.
+Type: Typ
+Sends to: Sendet an
+State: Zustand
+Edit: Bearbeiten
+Delete: Löschen
+Send earlier readings...: Frühere Messwerte senden...
+Save: Speichern
+Cancel: Abbrechen
+From this day on (leave empty for everything): Ab diesem Tag (leer lassen für alles)
+Start: Starten
+Close: Schließen
+Readings are always recorded in the CSV files, and charted in Grafana from them. A forwarder also sends each reading, as it is logged, somewhere else - OpenSearch to search and browse them, or Google Sheets to add a row of values every so often. Changes apply straight away.: Messwerte werden immer in den CSV-Dateien aufgezeichnet und daraus in Grafana dargestellt. Eine Weiterleitung sendet zusätzlich jeden Messwert, sobald er protokolliert wird, woandershin - an OpenSearch, um sie zu durchsuchen und zu durchstöbern, oder an Google Sheets, um regelmäßig eine Zeile mit Werten hinzuzufügen. Änderungen gelten sofort.
+No Grafana has been given access to this organization yet.: Noch kein Grafana hat Zugriff auf diese Organisation erhalten.
+Made: Erstellt
+Last used: Zuletzt verwendet
+Whose: Inhaber
+Revoke: Widerrufen
+Copy: Kopieren
+Copy this now - it is not shown again: Jetzt kopieren - es wird nicht erneut angezeigt
+Token: Token
+Allowed host: Erlaubter Host
+Remove my login: Meinen Login entfernen
+Everyone's logins: Logins aller
+OpenSearch Dashboards is a program you run on your own computer to search and chart this organization's readings, which this server keeps in OpenSearch. It needs a login, made here, that is yours. It can read this organization's readings and nothing else, and the people of an organization share its saved dashboards. It needs permission to read the whole organization; if you can read only some projects, use the Grafana card instead.: OpenSearch Dashboards ist ein Programm, das Sie auf Ihrem eigenen Computer ausführen, um die Messwerte dieser Organisation zu durchsuchen und darzustellen, die dieser Server in OpenSearch speichert. Es braucht einen Login, der hier erstellt wird und Ihnen gehört. Es kann die Messwerte dieser Organisation lesen und nichts anderes, und die Mitglieder einer Organisation teilen sich deren gespeicherte Dashboards. Es braucht die Berechtigung, die ganze Organisation zu lesen; wenn Sie nur einige Projekte lesen können, verwenden Sie stattdessen die Grafana-Karte.
+Give a Grafana access: Einem Grafana Zugriff geben
+Name it for whoever or wherever it is, so it can be revoked on its own.: Benennen Sie es nach der Person oder dem Ort, damit es einzeln widerrufen werden kann.
+Make a token: Token erstellen
+The starter dashboard: Das Start-Dashboard
+A chart with a list of every topic to pick from. In Grafana choose Dashboards, New, Import, upload this file, and pick the data source above when it asks.: Ein Diagramm mit einer Liste aller Topics zur Auswahl. Wählen Sie in Grafana Dashboards, New, Import, laden Sie diese Datei hoch und wählen Sie die obige Datenquelle, wenn danach gefragt wird.
+Add a forwarder: Weiterleitung hinzufügen
+Change this forwarder: Diese Weiterleitung ändern
+Active (untick to pause; the settings are kept): Aktiv (Haken entfernen zum Pausieren; die Einstellungen bleiben erhalten)
+Would send %s readings: Würde %s Messwerte senden
+Sent %s readings: '%s Messwerte gesendet'
+'Sends the readings already recorded in the CSV files, which this forwarder did not see because it was off or OpenSearch was down. It is safe to repeat: a reading already there is replaced, not doubled.': 'Sendet die bereits in den CSV-Dateien aufgezeichneten Messwerte, die diese Weiterleitung nicht gesehen hat, weil sie ausgeschaltet oder OpenSearch nicht erreichbar war. Das kann gefahrlos wiederholt werden: Ein bereits vorhandener Messwert wird ersetzt, nicht verdoppelt.'
+Only count them, send nothing: Nur zählen, nichts senden
+Yours: Ihres
+Another user's: Eines anderen Benutzers
+'In Grafana, add a data source of type Infinity, with Authentication set to Bearer Token and the token above, and the allowed host above. Or let this do it:': 'Fügen Sie in Grafana eine Datenquelle vom Typ Infinity hinzu, mit Authentication auf Bearer Token und dem obigen Token sowie dem obigen erlaubten Host. Oder lassen Sie dies erledigen:'
+Download the data source file: Datenquellendatei herunterladen
+You have no login yet.: Sie haben noch keinen Login.
+Replace the password: Passwort ersetzen
+Make a login: Login erstellen
+'Put these lines in the configuration file of the OpenSearch Dashboards on your computer (opensearch_dashboards.yml), then restart it. Nothing is asked for when you open it: the login is in the file. The password is not kept anywhere you can read it, so if you lose this, press the button below to make a new one and paste the lines in again.': 'Tragen Sie diese Zeilen in die Konfigurationsdatei von OpenSearch Dashboards auf Ihrem Computer ein (opensearch_dashboards.yml) und starten Sie es neu. Beim Öffnen wird nichts abgefragt: Der Login steht in der Datei. Das Passwort wird nirgends lesbar aufbewahrt; wenn Sie es verlieren, drücken Sie die Schaltfläche unten, um ein neues zu erstellen, und fügen Sie die Zeilen erneut ein.'
+'Grafana can chart this organization''s readings straight from the server - every reading ever recorded, with nothing to export first. To set it up: install the Infinity plugin in Grafana, make a token here, give Grafana the data source, then import the dashboard. A token is yours: it lets one Grafana read what you can read in this organization, and stops working if your access to it does.': 'Grafana kann die Messwerte dieser Organisation direkt vom Server darstellen - jeden je aufgezeichneten Messwert, ohne vorher etwas zu exportieren. So richten Sie es ein: Installieren Sie das Infinity-Plugin in Grafana, erstellen Sie hier ein Token, geben Sie Grafana die Datenquelle und importieren Sie dann das Dashboard. Ein Token gehört Ihnen: Es lässt ein Grafana lesen, was Sie in dieser Organisation lesen können, und funktioniert nicht mehr, wenn Ihr Zugriff endet.'
+Download the dashboard: Dashboard herunterladen
+Forgotten: Vergessen
+Failed - approve: Fehlgeschlagen - genehmigen
+Choose an organization first, so there is a broker connection to publish on: Wählen Sie zuerst eine Organisation, damit es eine Broker-Verbindung zum Veröffentlichen gibt
+Add Farm: Farm hinzufügen
+No broker credentials for this organization: Keine Broker-Zugangsdaten für diese Organisation
+Listening on %s ...: Höre auf %s ...
+'Could not connect: %s': 'Verbindung fehlgeschlagen: %s'
+'Could not subscribe: %s': 'Abonnieren fehlgeschlagen: %s'
+Nothing retained matches that pattern: Keine gespeicherte Nachricht passt zu diesem Muster
+Deleting %s ...: Lösche %s ...
+'Could not delete: %s': 'Löschen fehlgeschlagen: %s'
+Deleted %s: '%s gelöscht'
+If one comes back, a node is still publishing it.: Kommt eine zurück, veröffentlicht ein Knoten sie noch.
+Add Project: Projekt hinzufügen
+Add Platform: Plattform hinzufügen
+', %s failed': ', %s fehlgeschlagen'
+This server has no OpenSearch of its own set up (config.d/opensearch.yaml): Auf diesem Server ist kein eigenes OpenSearch eingerichtet (config.d/opensearch.yaml)
+This server has not said where OpenSearch can be reached from outside (config.d/opensearch.yaml, "public"): Dieser Server hat nicht angegeben, wo OpenSearch von außen erreichbar ist (config.d/opensearch.yaml, "public")
+OpenSearch logins need an organization id of lower-case letters and digits only: OpenSearch-Logins erfordern eine Organisations-ID nur aus Kleinbuchstaben und Ziffern
+OpenSearch did not answer: OpenSearch hat nicht geantwortet

@@ -3,7 +3,7 @@
 "+ matches one level, # matches the rest. Look before deleting.": "+ cocok dengan satu tingkat, # dengan sisanya. Lihat dulu sebelum menghapus."
 (Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): (Maks 4MB, hanya .bin, biasanya frugal-iot.ino.bin atau firmware.bin)
 A bridge relays a Pi's readings to this server, so its nodes appear here too, while the Pi carries on recording and serving on its own whenever the link is down. "Bridge" is the broker's live view of the relay; "Last check-in" is when that Pi last collected this organization's logins, which it does over HTTP - so a Pi can be checking in while its bridge is down, and the two together say which half is broken.: Sebuah jembatan meneruskan pembacaan Pi ke server ini, sehingga node-nya muncul di sini juga, sementara Pi tetap merekam dan melayani sendiri setiap kali tautannya putus. « Jembatan » adalah tampilan langsung relai menurut broker; « Kontak terakhir » adalah saat Pi itu terakhir mengambil login organisasi ini, yang dilakukannya lewat HTTP - jadi sebuah Pi bisa berkontak sementara jembatannya mati, dan keduanya bersama-sama menunjukkan bagian mana yang rusak.
-Action: Aksi
+Action %s sent: Aksi %s terkirim
 Action *: Aksi *
 Add: Tambah
 Reset board: Setel ulang papan
@@ -196,7 +196,7 @@ Node Name: Nama Node
 Nodes: Node
 Nodes in Farm: Node dalam Farm
 Nodes in Organization: Node dalam Organisasi
-Nodes that have obtained broker credentials on first connection. Forget reissues a new credential at next connection and is needed if memory has been erased. Refused nodes are listed - click Approve to allow (on next retry, typically 30 minutes).: Node yang telah memperoleh kredensial broker saat pertama kali tersambung. Lupakan menerbitkan kredensial baru pada sambungan berikutnya, dan diperlukan jika memori telah dihapus. Node yang ditolak juga dicantumkan - klik Setujui untuk mengizinkan (pada percobaan berikutnya, biasanya 30 menit).
+Nodes that have obtained broker credentials on first connection. Forget reissues a new credential at next connection and is needed if memory has been erased. Refused nodes are listed - click "Failed - approve" to allow (on next retry, typically 30 minutes).: Node yang telah memperoleh kredensial broker saat pertama kali tersambung. Lupakan menerbitkan kredensial baru pada sambungan berikutnya, dan diperlukan jika memori telah dihapus. Node yang ditolak juga dicantumkan - klik "Gagal - setujui" untuk mengizinkan (pada percobaan berikutnya, biasanya 30 menit).
 Not in the schema: Tidak ada di skema
 Not selected: Tidak dipilih
 Note this is your organization - not the organizations whose devices you want to access.: Ini adalah organisasi Anda - bukan organisasi yang perangkatnya ingin Anda akses.
@@ -229,7 +229,6 @@ Platform registered: Platform terdaftar
 Please login: Silakan masuk
 Pressure: Tekanan
 Project: Proyek
-Project changed to: Proyek diubah menjadi
 Asked %s to move: Meminta %s pindah
 Waiting for %s to report: Menunggu laporan %s
 Project ID: ID Proyek
@@ -271,7 +270,6 @@ Send: Kirim
 SEND: KIRIM
 Send another code: Kirim kode lain
 Send reset code: Kirim kode reset
-sent: terkirim
 server: server
 set: diatur
 Setpoint: titik setel

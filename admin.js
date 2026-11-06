@@ -1614,7 +1614,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
           this.message(err.message);
           return;
         }
-        this.message(`${getString("Action")} ${field.key} ${getString("sent")}`, false);
+        this.message(getStringWith("Action %s sent", field.key), false);
       });
     } else {
       // Property forms.href already carries deviceId/property (also used for GET-to-read) - PUT the
@@ -2192,7 +2192,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
          el('p', {textContent:
            "Nodes that have obtained broker credentials on first connection. " +
            "Forget reissues a new credential at next connection and is needed if memory has been erased. " +
-           "Refused nodes are listed - click Approve to allow (on next retry, typically 30 minutes)."}),
+           "Refused nodes are listed - click \"Failed - approve\" to allow (on next retry, typically 30 minutes)."}),
          this.state.elements.enrolled_nodes = this.enrolledNodesList(),
        ]),
        el('section', {}, [

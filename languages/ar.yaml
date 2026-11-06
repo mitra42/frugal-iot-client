@@ -3,7 +3,7 @@
 '+ matches one level, # matches the rest. Look before deleting.': + يطابق مستوى واحدًا، و# يطابق الباقي. راجع قبل الحذف.
 (Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): (الحد الأقصى 4 ميغابايت، ملفات .bin فقط، عادةً frugal-iot.ino.bin أو firmware.bin)
 A bridge relays a Pi's readings to this server, so its nodes appear here too, while the Pi carries on recording and serving on its own whenever the link is down. "Bridge" is the broker's live view of the relay; "Last check-in" is when that Pi last collected this organization's logins, which it does over HTTP - so a Pi can be checking in while its bridge is down, and the two together say which half is broken.: يرحّل الجسر قراءات جهاز Pi إلى هذا الخادم، فتظهر عُقده هنا أيضًا، بينما يواصل Pi التسجيل والخدمة بمفرده كلما انقطع الاتصال. "الجسر" هو عرض الوسيط المباشر للترحيل؛ و"آخر اتصال" هو آخر مرة جمع فيها ذلك الـ Pi حسابات هذه المؤسسة، وهو ما يفعله عبر HTTP - لذا قد يتصل Pi بينما جسره متوقف، ومعًا يبيّنان أي النصفين معطّل.
-Action: إجراء
+Action %s sent: أُرسل الإجراء %s
 Action *: إجراء *
 Add: إضافة
 Reset board: إعادة تشغيل اللوحة
@@ -196,7 +196,7 @@ Node Name: اسم العقدة
 Nodes: العقد
 Nodes in Farm: العقد في المزرعة
 Nodes in Organization: العقد في المؤسسة
-Nodes that have obtained broker credentials on first connection. Forget reissues a new credential at next connection and is needed if memory has been erased. Refused nodes are listed - click Approve to allow (on next retry, typically 30 minutes).: العقد التي حصلت على بيانات اعتماد الوسيط عند أول اتصال. "نسيان" يُصدر بيانات اعتماد جديدة عند الاتصال التالي ويلزم إن مُسحت الذاكرة. العقد المرفوضة مدرجة - انقر "موافقة" للسماح (عند المحاولة التالية، عادةً بعد 30 دقيقة).
+Nodes that have obtained broker credentials on first connection. Forget reissues a new credential at next connection and is needed if memory has been erased. Refused nodes are listed - click "Failed - approve" to allow (on next retry, typically 30 minutes).: العقد التي حصلت على بيانات اعتماد الوسيط عند أول اتصال. "نسيان" يُصدر بيانات اعتماد جديدة عند الاتصال التالي ويلزم إن مُسحت الذاكرة. العقد المرفوضة مدرجة - انقر "فشل - وافق" للسماح (عند المحاولة التالية، عادةً بعد 30 دقيقة).
 Not in the schema: ليس في المخطط
 Not selected: غير محدد
 Note this is your organization - not the organizations whose devices you want to access.: لاحظ أن هذه مؤسستك - وليست المؤسسات التي تريد الوصول إلى أجهزتها.
@@ -229,7 +229,6 @@ Platform registered: تم تسجيل المنصة
 Please login: يرجى تسجيل الدخول
 Pressure: الضغط
 Project: المشروع
-Project changed to: تغيّر المشروع إلى
 Asked %s to move: طُلب من %s الانتقال
 Waiting for %s to report: في انتظار تقرير %s
 Project ID: معرّف المشروع
@@ -271,7 +270,6 @@ Send: إرسال
 SEND: إرسال
 Send another code: إرسال رمز آخر
 Send reset code: إرسال رمز إعادة التعيين
-sent: أُرسل
 server: الخادم
 set: ضبط
 Setpoint: القيمة المستهدفة

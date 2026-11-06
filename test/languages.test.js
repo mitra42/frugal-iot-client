@@ -35,6 +35,7 @@ describe('choosing a language', () => {
     assert.equal(languageMatch('FR'), 'fr');
     assert.equal(languageMatch('fr-CA'), 'fr');
     assert.equal(languageMatch(' hi '), 'hi');
+    assert.equal(languageMatch('fil-PH'), 'tl', 'Filipino, as browsers call Tagalog');
   });
   test('an unsupported code matches nothing', () => {
     assert.equal(languageMatch('xx'), null);

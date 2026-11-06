@@ -1,0 +1,432 @@
+# Tagalog (Filipino)
+'"%s" already exists.': Mayroon nang "%s".
+'+ matches one level, # matches the rest. Look before deleting.': 'Tumutugma ang + sa isang level, at ang # sa lahat ng natitira. Tingnan muna bago magbura.'
+(Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): (Hanggang 4MB, .bin lang, karaniwang frugal-iot.ino.bin o firmware.bin)
+A bridge relays a Pi's readings to this server, so its nodes appear here too, while the Pi carries on recording and serving on its own whenever the link is down. "Bridge" is the broker's live view of the relay; "Last check-in" is when that Pi last collected this organization's logins, which it does over HTTP - so a Pi can be checking in while its bridge is down, and the two together say which half is broken.: Ipinapasa ng bridge ang mga reading ng isang Pi sa server na ito, kaya lumalabas din dito ang mga node nito, habang patuloy na nagre-record at nagse-serve ang Pi nang mag-isa tuwing putol ang koneksyon. Ang "Bridge" ay ang live na tingin ng broker sa relay; ang "Huling check-in" ay kung kailan huling kinuha ng Pi na iyon ang mga login ng organisasyong ito, na ginagawa nito sa HTTP - kaya puwedeng nagche-check in ang Pi kahit putol ang bridge nito, at sinasabi ng dalawa kung aling kalahati ang sira.
+Action %s sent: Naipadala ang aksyon na %s
+Action *: Aksyon *
+Add: Idagdag
+Reset board: I-reset ang board
+Clear log: Burahin ang log
+Copy log: Kopyahin ang log
+Start the monitor to configure: Simulan ang monitor para mag-configure
+Board not answering - old firmware?: Hindi sumasagot ang board - lumang firmware?
+Waiting for the board: Hinihintay ang board
+Board was already configured - its settings were kept. Apply to board changes them: Naka-configure na ang board - pinanatili ang mga setting nito. Babaguhin ang mga ito ng "I-apply sa board"
+Configure board: I-configure ang board
+Apply after flashing: I-apply pagkatapos mag-flash
+Apply to board: I-apply sa board
+Board ready: Handa na ang board
+Boards done: Mga board na tapos na
+WiFi networks: Mga WiFi network
+Add network: Magdagdag ng network
+Remove: Alisin
+No active project: Walang aktibong proyekto
+Project name must be 2 to 15 characters: Dapat 2 hanggang 15 character ang pangalan ng proyekto
+Add a WiFi network: Magdagdag ng WiFi network
+WiFi network not valid: Hindi valid ang WiFi network
+Not understood: Hindi naintindihan
+Too long: Masyadong mahaba
+No reply: Walang sagot
+Could not fetch the enrolment secret: Hindi makuha ang enrolment secret
+WiFi connected: Nakakonekta ang WiFi
+WiFi not connected: Hindi nakakonekta ang WiFi
+MQTT connected: Nakakonekta ang MQTT
+MQTT not connected: Hindi nakakonekta ang MQTT
+Not enrolled: Hindi naka-enrol
+Add a bridge: Magdagdag ng bridge
+Add another enrolment secret: Magdagdag ng isa pang enrolment secret
+Added: Naidagdag
+Adding it again issues a new broker password and a new replica token, and the ones that Pi is using now stop working. It will stay disconnected until you put the new ones into its configuration and restart its broker.: Kapag idinagdag ulit, bibigyan ito ng bagong broker password at bagong replica token, at hihinto sa paggana ang mga ginagamit ngayon ng Pi na iyon. Mananatili itong disconnected hanggang ilagay mo ang mga bago sa configuration nito at i-restart ang broker nito.
+Admin: Admin
+Advanced: Advanced
+All: Lahat
+Already have an account?: May account ka na?
+'And these two, if you are not building against the production server:': 'At ang dalawang ito, kung hindi ka nagbi-build para sa production server:'
+Any node flashed with it that has not enrolled yet will be refused and will need reflashing. Nodes that have already enrolled are unaffected - they never present it again.: Ang anumang node na na-flash gamit ito na hindi pa naka-enrol ay tatanggihan at kailangang i-flash ulit. Hindi apektado ang mga node na naka-enrol na - hindi na nila ito ipinapakita ulit.
+API: API
+Approved: Aprubado
+AQI: AQI
+AQI500: AQI500
+Asked and was refused. Click to let it enrol.: Humiling at tinanggihan. I-click para payagan itong mag-enrol.
+Auth Token: Auth Token
+Back to sign in: Bumalik sa pag-sign in
+Base URL: Base URL
+Battery: Baterya
+Board: Board
+Bridge: Bridge
+Bridged Pis: Mga Pi na naka-bridge
+Bridges: Mga bridge
+Brightness: Liwanag
+Broker: Broker
+Broker account: Broker account
+Broker password: Broker password
+Built in LED: Built-in na LED
+buttons: mga button
+Choose a project to see its devices: Pumili ng proyekto para makita ang mga device nito
+Click to change project: I-click para palitan ang proyekto
+Click to sort: I-click para i-sort
+Climate: Klima
+close: isara
+Collapse: Itiklop
+Color: Kulay
+'Compiled into firmware and used to request broker credential. Add a second one to change it: both are accepted, so nodes already flashed keep working until you withdraw the old one.': 'Naka-compile sa firmware at ginagamit para humingi ng broker credential. Magdagdag ng pangalawa para palitan ito: parehong tinatanggap ang dalawa, kaya patuloy na gagana ang mga node na na-flash na hanggang bawiin mo ang luma.'
+Connect board: Ikonekta ang board
+connected: nakakonekta
+connecting: kumokonekta
+Control: Kontrol
+Cookie Name: Pangalan ng cookie
+Copy these now - they are not shown again: Kopyahin na ang mga ito - hindi na sila ipapakita ulit
+Could not read the board - assuming it is already provisioned: Hindi mabasa ang board - ipinapalagay na naka-provision na ito
+Create an account: Gumawa ng account
+Dashboard: Dashboard
+Data: Data
+Delete these: Burahin ang mga ito
+Delete this firmware: Burahin ang firmware na ito
+Denied: Tinanggihan
+Deny %s?: Tanggihan ang %s?
+Description: Paglalarawan
+Device: Device
+Display carousel: Carousel ng display
+DOWN: PUTOL
+Download this firmware: I-download ang firmware na ito
+Done: Tapos na
+ds18b20: ds18b20
+e.g. LiteFarm: hal. LiteFarm
+eCO2: eCO2
+Email: Email
+Enrol URL: Enrol URL
+Enrolled: Naka-enrol
+Enrolled nodes: Mga naka-enrol na node
+Enrolment secret: Enrolment secret
+ENS AHT: ENS AHT
+Enter the code we emailed you, then choose a new password.: Ilagay ang code na in-email namin sa iyo, saka pumili ng bagong password.
+Enter topic: Ilagay ang topic
+Enter value: Ilagay ang value
+Existing OTA Files: Mga kasalukuyang OTA file
+Failed: Nabigo
+Farm ID *: Farm ID *
+Farm registered: Nairehistro ang farm
+Farms: Mga farm
+File: File
+Firmware: Firmware
+Firmware file: Firmware file
+Flash: I-flash
+Flash over USB: I-flash sa USB
+Flash size was not detected reliably - flash anyway: Hindi natukoy nang maayos ang laki ng flash - i-flash pa rin
+Flash this over USB: I-flash ito sa USB
+Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer: Kailangan ng Web Serial API para mag-flash - gamitin ang Chrome, Edge o Opera sa desktop computer
+for node: para sa node
+Forget: Kalimutan
+Forget %s?: Kalimutan ang %s?
+Forget this node, so it is issued a new credential: Kalimutan ang node na ito, para mabigyan ito ng bagong credential
+Forgot password?: Nakalimutan ang password?
+From: Mula
+Frugal IoT project: Proyekto ng Frugal IoT
+Frugal-IoT Username *: Frugal-IoT Username *
+Full provision - all configuration on the board will be erased: Buong provision - mabubura ang lahat ng configuration sa board
+Gas Resistance: Gas Resistance
+Give the Pi a short name - it becomes its broker account and cannot be changed later without reconfiguring that Pi. Lower-case letters, digits and hyphens.: Bigyan ang Pi ng maikling pangalan - ito ang magiging broker account nito at hindi na mapapalitan nang hindi muling kino-configure ang Pi na iyon. Maliliit na titik, numero at gitling.
+Give the Pi a short name first: Bigyan muna ang Pi ng maikling pangalan
+Graph: Graph
+Greater Than: Mas mataas sa
+Has its own broker credential. Click to deny it.: May sarili itong broker credential. I-click para tanggihan ito.
+heating: pag-init
+humidifier: humidifier
+Humidity: Halumigmig
+humidity: halumigmig
+Humidity control: Kontrol ng halumigmig
+Hysteresis: Hysteresis
+hysteresis: hysteresis
+I have a code: May code ako
+id: id
+If that account exists we have emailed a reset code: Kung may account na iyon, nag-email kami ng reset code
+If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': Kung hindi nakikita ang directory na ito sa file picker, kopyahin ang file sa ibang lugar O gumawa ng alias sa .pio directory nang walang '.' sa unahan
+Incorrect username or password: Mali ang username o password
+Info: Impormasyon
+Input: Input
+It will be issued a new broker credential the next time it asks. A node that is running will be offline for a minute or two while it notices; a node whose filesystem was erased needs this before it can rejoin at all.: Bibigyan ito ng bagong broker credential sa susunod na paghingi nito. Ang node na tumatakbo ay magiging offline nang isa o dalawang minuto habang napapansin ito; ang node na nabura ang filesystem ay kailangan ito bago muling makasali.
+Its broker account is deleted, so it stops being able to publish or subscribe, and it cannot enrol again until you clear this. Use it for a node sending bad readings.: Buburahin ang broker account nito, kaya hindi na ito makakapag-publish o makakapag-subscribe, at hindi na ito makakapag-enrol ulit hangga't hindi mo ito kina-clear. Gamitin ito para sa node na nagpapadala ng maling reading.
+Its next request will be accepted. Click to deny it.: Tatanggapin ang susunod nitong request. I-click para tanggihan ito.
+Key: Key
+Last asked: Huling paghingi
+Last check-in: Huling check-in
+Last Seen: Huling nakita
+Last seen: Huling nakita
+LED: LED
+Limit: Limitasyon
+List: Listahan
+Live: Live
+Load Cell: Load Cell
+Loading schema...: Nilo-load ang schema...
+Log out: Mag-log out
+Lower-case letters and numbers only, no spaces or punctuation: Maliliit na titik at numero lang, walang espasyo o bantas
+Lux: Lux
+Manual: Manual
+Message: Mensahe
+Monitor: Monitor
+Monitor speed: Bilis ng monitor
+Move down: Ibaba
+Move up: Itaas
+Name: Pangalan
+Never seen: Hindi pa nakikita
+New here?: Bago ka rito?
+New password: Bagong password
+Connect a board to flash: Ikonekta ang board para mag-flash
+Choose a firmware file to flash: Pumili ng firmware file na ifa-flash
+Erase and flash: Burahin at i-flash
+kept from last session: mula sa nakaraang session
+No farms registered for this organization yet.: Wala pang farm na nakarehistro para sa organisasyong ito.
+No nodes found for this farm's project(s).: Walang nakitang node para sa (mga) proyekto ng farm na ito.
+No nodes found for this organization: Walang nakitang node para sa organisasyong ito
+No nodes have enrolled yet, and none have asked and been rejected.: Wala pang node na naka-enrol, at wala pang humiling at tinanggihan.
+No organization: Walang organisasyon
+No organization selected: Walang napiling organisasyon
+No OTA files uploaded yet.: Wala pang OTA file na na-upload.
+No Pi bridges to this server for this organization. A bridge relays a Pi's readings here while the Pi carries on working on its own - see INSTALLATION.md step 11.: Walang Pi bridge sa server na ito para sa organisasyong ito. Ipinapasa ng bridge ang mga reading ng isang Pi dito habang patuloy na gumagana nang mag-isa ang Pi - tingnan ang INSTALLATION.md step 11.
+No platforms registered yet.: Wala pang platform na nakarehistro.
+No projects added for this organization yet.: Wala pang proyektong naidagdag para sa organisasyong ito.
+No projects to display until organization selected: Walang proyektong maipapakita hangga't walang napiling organisasyon
+No state received from the broker yet: Wala pang natatanggap na state mula sa broker
+Nobody added for this organization yet.: Wala pang naidagdag para sa organisasyong ito.
+Node: Node
+Node Actions: Mga aksyon ng node
+Node ID: Node ID
+Node Name: Pangalan ng node
+Nodes: Mga node
+Nodes in Farm: Mga node sa farm
+Nodes in Organization: Mga node sa organisasyon
+Nodes that have obtained broker credentials on first connection. Forget reissues a new credential at next connection and is needed if memory has been erased. Refused nodes are listed - click "Failed - approve" to allow (on next retry, typically 30 minutes).: Mga node na nakakuha ng broker credential sa unang pagkonekta. Ang Kalimutan ay magbibigay ng bagong credential sa susunod na pagkonekta, at kailangan ito kapag nabura ang memory. Nakalista ang mga tinanggihang node - i-click ang "Nabigo - aprubahan" para payagan (sa susunod na subok, karaniwang 30 minuto).
+Not in the schema: Wala sa schema
+Not selected: Hindi napili
+Note this is your organization - not the organizations whose devices you want to access.: Tandaan na ito ang iyong organisasyon - hindi ang mga organisasyon na ang mga device ay gusto mong i-access.
+Now: Ngayon
+now: ngayon
+'Off': 'Off'
+offline: offline
+Offline: Offline
+'On': 'On'
+'On ArduinoIDE the file is typically in ': 'Sa ArduinoIDE, karaniwang nasa '
+'On PlatformIO The file is typically in ': 'Sa PlatformIO, karaniwang nasa '
+Organization: Organisasyon
+OTA: OTA
+OTA Upload: OTA Upload
+OTA binary uploaded: Na-upload ang OTA binary
+OTA Key: OTA Key
+OTA Key or Device ID: OTA Key o Device ID
+Out: Output
+out: output
+Output: Output
+Password: Password
+Password reset - please sign in: Na-reset ang password - mag-sign in
+Password reset is not available on this server: Hindi available ang pag-reset ng password sa server na ito
+Pattern: Pattern
+Permissions: Mga pahintulot
+Phone or Whatsapp: Telepono o WhatsApp
+Platform *: Platform *
+Platform Name *: Pangalan ng platform *
+Platform registered: Nairehistro ang platform
+Please login: Mag-login
+Pressure: Presyon
+Project: Proyekto
+Asked %s to move: Hiniling na ilipat ang %s
+Waiting for %s to report: Hinihintay mag-report ang %s
+Project ID: Project ID
+Project ID *: Project ID *
+Project Name: Pangalan ng proyekto
+Projects: Mga proyekto
+Property: Property
+Provision instead (erases config): Mag-provision na lang (binubura ang config)
+Publish Message: I-publish ang mensahe
+'Published to ': 'Na-publish sa '
+'Put this in platformio-secrets-local.ini, which is not committed:': 'Ilagay ito sa platformio-secrets-local.ini, na hindi kino-commit:'
+QoS: QoS
+reconnect: kumonekta ulit
+Reconnect the board to flash again: Ikonekta ulit ang board para mag-flash ulit
+Register: Magparehistro
+Register a platform above before adding a farm.: Magrehistro muna ng platform sa itaas bago magdagdag ng farm.
+Register Farm: Irehistro ang farm
+Refresh: I-refresh
+Register Platform: Irehistro ang platform
+Registered Platforms: Mga nakarehistrong platform
+Registration failed: Nabigo ang pagpaparehistro
+Registration successful - please login: Matagumpay ang pagpaparehistro - mag-login
+Relay: Relay
+Replica token: Replica token
+Reporting every: Nagre-report tuwing
+Reset code: Reset code
+Reset password: I-reset ang password
+Retain: Retain
+Retained: Retained
+Retained messages: Mga retained na mensahe
+Run this on the Pi, in the directory the server is installed in. Replace the placeholder with this server's fully-qualified name - the one on its certificate, which you can check by opening https:// that name in a browser. It will then ask for the broker password and for the replica token, in that order, so have both of the values below to hand.: Patakbuhin ito sa Pi, sa directory kung saan naka-install ang server. Palitan ang placeholder ng buong pangalan ng server na ito - ang nasa certificate nito, na masusuri mo sa pagbukas ng https:// at ang pangalang iyon sa browser. Pagkatapos ay hihingin nito ang broker password at ang replica token, sa ganoong pagkakasunod, kaya ihanda ang dalawang value sa ibaba.
+Schema: Schema
+Select: Pumili
+Select a farm above to see its nodes.: Pumili ng farm sa itaas para makita ang mga node nito.
+Select a node above to see actions.: Pumili ng node sa itaas para makita ang mga aksyon.
+Select a node above to send an action.: Pumili ng node sa itaas para magpadala ng aksyon.
+Select an organization to continue.: Pumili ng organisasyon para magpatuloy.
+Send: Ipadala
+SEND: IPADALA
+Send another code: Magpadala ng isa pang code
+Send reset code: Ipadala ang reset code
+server: server
+set: naitakda
+Setpoint: Setpoint
+Settings: Mga setting
+Show enrolment secrets: Ipakita ang mga enrolment secret
+SHT: SHT
+SHT30: SHT30
+Sign In: Mag-sign in
+Sign in: Mag-sign in
+Site: Site
+Soil: Lupa
+Soil Moisture: Halumigmig ng lupa
+Soil Temperature: Temperatura ng lupa
+Sonoff R2 switch: Sonoff R2 switch
+Sonoff switch: Sonoff switch
+Speed: Bilis
+SSID: SSID
+Not reported recently: Hindi nag-report kamakailan
+Status: Status
+Stop monitor: Ihinto ang monitor
+Stopped, and its credential removed. Click to clear.: Inihinto, at inalis ang credential nito. I-click para i-clear.
+Submit: Isumite
+System: System
+Temperature: Temperatura
+temperature: temperatura
+That code is not valid or has expired: Hindi valid o expired na ang code na iyon
+The broker reports this bridge connected: Iniuulat ng broker na nakakonekta ang bridge na ito
+The broker reports this bridge not connected: Iniuulat ng broker na hindi nakakonekta ang bridge na ito
+This field has no invocation URL (forms[0].href) in its schema: Walang invocation URL (forms[0].href) ang field na ito sa schema nito
+This node has no actions in its schema.: Walang aksyon ang node na ito sa schema nito.
+This node has no actions or writable properties in its schema.: Walang aksyon o nasusulatang property ang node na ito sa schema nito.
+This organization has no enrolment secret, so no new node can enrol. Add one.: Walang enrolment secret ang organisasyong ito, kaya walang bagong node na makakapag-enrol. Magdagdag ng isa.
+Time On (s): Tagal na naka-on (s)
+To: Hanggang
+Too many attempts - please wait a few minutes: Masyadong maraming subok - maghintay ng ilang minuto
+Topic: Topic
+Topic and Value are required: Kailangan ang Topic at Value
+TVOC: TVOC
+'Two credentials for two different connections: the password is what the MQTT bridge logs in with on port 8883, and the token is what lets that Pi pull this organization''s logins over HTTPS, so the same people can log in there too. The token can be skipped - press Enter at its prompt - and added later by doing this again. Neither is asked for on the command line, so that neither ends up in the Pi''s shell history.': 'Dalawang credential para sa dalawang magkaibang koneksyon: ang password ang ginagamit ng MQTT bridge para mag-log in sa port 8883, at ang token ang nagpapahintulot sa Pi na iyon na kunin ang mga login ng organisasyong ito sa HTTPS, para makapag-log in din doon ang parehong mga tao. Puwedeng laktawan ang token - pindutin ang Enter sa prompt nito - at idagdag mamaya sa paggawa nito ulit. Wala sa dalawa ang hinihingi sa command line, para hindi mapunta ang alinman sa shell history ng Pi.'
+Unable to find node: Hindi mahanap ang node
+Unable to find project: Hindi mahanap ang proyekto
+Unauthorized: Walang pahintulot
+undefined: hindi tinukoy
+Unknown: Hindi alam
+Unsupported board: Hindi suportadong board
+Unused: Hindi ginagamit
+Up: Gumagana
+Updating the app only: App lang ang ina-update
+Updating the app only - the existing configuration will be preserved: App lang ang ina-update - pananatilihin ang kasalukuyang configuration
+Upload: I-upload
+Upload finished - check the list below: Tapos na ang upload - tingnan ang listahan sa ibaba
+Uploading: Nag-a-upload
+Username: Username
+Username or email: Username o email
+Value: Value
+Value *: Value *
+Voltage: Boltahe
+Waiting: Naghihintay
+Waiting for devices: Naghihintay ng mga device
+We will email you a code and a link to choose a new password.: Ii-email namin sa iyo ang isang code at link para pumili ng bagong password.
+When: Kailan
+WiFi: WiFi
+Withdraw this enrolment secret?: Bawiin ang enrolment secret na ito?
+Withdrawn: Binawi
+'Yes': Oo
+You do not have permission for this organization: Wala kang pahintulot para sa organisasyong ito
+Forwarders: Mga forwarder
+Grafana: Grafana
+OpenSearch: OpenSearch
+OpenSearch Dashboards: OpenSearch Dashboards
+every %s s: tuwing %s s
+'%s topics': '%s topic'
+From the file: Mula sa file
+Delete "%s"?: Burahin ang "%s"?
+Readings stop being sent to it straight away. Nothing already sent is removed from there.: Agad na hihinto ang pagpapadala ng mga reading dito. Walang mabubura sa mga naipadala na roon.
+Deleted, but the logger could not be told - it will take effect at the next restart: Nabura, pero hindi masabihan ang logger - magkakabisa ito sa susunod na restart
+set - leave blank to keep it: naka-set - iwanang blangko para panatilihin
+Give it a name first: Bigyan muna ito ng pangalan
+Saved, but the logger could not be told - it will take effect at the next restart: Na-save, pero hindi masabihan ang logger - magkakabisa ito sa susunod na restart
+Sending... %s readings so far: Nagpapadala... %s reading na sa ngayon
+'Stopped: %s': 'Huminto: %s'
+Never: Hindi kailanman
+Making it again replaces its token, and the Grafana using the old one stops working until it is given the new one.: Kapag ginawa ulit, papalitan ang token nito, at hihinto sa paggana ang Grafana na gumagamit ng luma hanggang mabigyan ito ng bago.
+Revoke "%s"?: Bawiin ang "%s"?
+The Grafana using it stops being able to read this organization straight away.: Agad na hindi na makakabasa ng organisasyong ito ang Grafana na gumagamit nito.
+Copied: Nakopya
+Press Ctrl-C or Cmd-C to copy: Pindutin ang Ctrl-C o Cmd-C para kopyahin
+'You have a login: %s. Making another replaces its password, and your Dashboards stops working until it is given the new one.': 'May login ka: %s. Kapag gumawa ng isa pa, papalitan ang password nito, at hihinto sa paggana ang iyong Dashboards hanggang mabigyan ito ng bago.'
+Replace the password?: Palitan ang password?
+The Dashboards using the old one stops working until it is given the new one.: Hihinto sa paggana ang Dashboards na gumagamit ng luma hanggang mabigyan ito ng bago.
+Remove the login?: Alisin ang login?
+Dashboards using it stops being able to read this organization straight away.: Agad na hindi na makakabasa ng organisasyong ito ang Dashboards na gumagamit nito.
+Loading...: Nilo-load...
+This organization forwards its readings nowhere. They are still recorded in the CSV files and charted in Grafana - add a forwarder to send them somewhere as well.: Hindi ipinapasa kahit saan ng organisasyong ito ang mga reading nito. Nire-record pa rin ang mga ito sa mga CSV file at naka-chart sa Grafana - magdagdag ng forwarder para ipadala rin ang mga ito sa ibang lugar.
+Type: Uri
+Sends to: Ipinapadala sa
+State: Estado
+Edit: I-edit
+Delete: Burahin
+Send earlier readings...: Ipadala ang mga naunang reading...
+Save: I-save
+Cancel: Kanselahin
+From this day on (leave empty for everything): Mula sa araw na ito (iwanang blangko para sa lahat)
+Start: Simulan
+Close: Isara
+Readings are always recorded in the CSV files, and charted in Grafana from them. A forwarder also sends each reading, as it is logged, somewhere else - OpenSearch to search and browse them, or Google Sheets to add a row of values every so often. Changes apply straight away.: Laging nire-record ang mga reading sa mga CSV file, at naka-chart sa Grafana mula roon. Ipinapadala rin ng forwarder ang bawat reading, habang nilo-log ito, sa ibang lugar - sa OpenSearch para hanapin at tingnan ang mga ito, o sa Google Sheets para magdagdag ng row ng mga value paminsan-minsan. Agad na magkakabisa ang mga pagbabago.
+No Grafana has been given access to this organization yet.: Wala pang Grafana na nabigyan ng access sa organisasyong ito.
+Made: Ginawa
+Last used: Huling ginamit
+Whose: Kanino
+Revoke: Bawiin
+Copy: Kopyahin
+Copy this now - it is not shown again: Kopyahin na ito - hindi na ito ipapakita ulit
+Token: Token
+Allowed host: Pinapayagang host
+Remove my login: Alisin ang login ko
+Everyone's logins: Mga login ng lahat
+OpenSearch Dashboards is a program you run on your own computer to search and chart this organization's readings, which this server keeps in OpenSearch. It needs a login, made here, that is yours. It can read this organization's readings and nothing else, and the people of an organization share its saved dashboards. It needs permission to read the whole organization; if you can read only some projects, use the Grafana card instead.: Ang OpenSearch Dashboards ay programang pinapatakbo mo sa sarili mong computer para maghanap at gumawa ng chart ng mga reading ng organisasyong ito, na itinatago ng server na ito sa OpenSearch. Kailangan nito ng login, na ginagawa dito, na sa iyo. Mababasa nito ang mga reading ng organisasyong ito at wala nang iba, at magkakahati ang mga tao sa isang organisasyon sa mga naka-save na dashboard nito. Kailangan nito ng pahintulot na basahin ang buong organisasyon; kung ilang proyekto lang ang nababasa mo, gamitin na lang ang Grafana card.
+Give a Grafana access: Bigyan ng access ang isang Grafana
+Name it for whoever or wherever it is, so it can be revoked on its own.: Pangalanan ito ayon sa kung sino o saan ito, para mabawi ito nang hiwalay.
+Make a token: Gumawa ng token
+The starter dashboard: Ang panimulang dashboard
+A chart with a list of every topic to pick from. In Grafana choose Dashboards, New, Import, upload this file, and pick the data source above when it asks.: Isang chart na may listahan ng bawat topic na mapipili. Sa Grafana, piliin ang Dashboards, New, Import, i-upload ang file na ito, at piliin ang data source sa itaas kapag hiningi.
+Add a forwarder: Magdagdag ng forwarder
+Change this forwarder: Baguhin ang forwarder na ito
+Active (untick to pause; the settings are kept): Aktibo (alisin ang tsek para i-pause; pananatilihin ang mga setting)
+Would send %s readings: Magpapadala ng %s reading
+Sent %s readings: Naipadala ang %s reading
+'Sends the readings already recorded in the CSV files, which this forwarder did not see because it was off or OpenSearch was down. It is safe to repeat: a reading already there is replaced, not doubled.': 'Ipinapadala ang mga reading na naka-record na sa mga CSV file, na hindi nakita ng forwarder na ito dahil naka-off ito o down ang OpenSearch. Ligtas itong ulitin: ang reading na naroon na ay papalitan, hindi madodoble.'
+Only count them, send nothing: Bilangin lang, walang ipapadala
+Yours: Sa iyo
+Another user's: Sa ibang user
+'In Grafana, add a data source of type Infinity, with Authentication set to Bearer Token and the token above, and the allowed host above. Or let this do it:': 'Sa Grafana, magdagdag ng data source na Infinity ang uri, na naka-set ang Authentication sa Bearer Token at ang token sa itaas, at ang pinapayagang host sa itaas. O hayaang ito ang gumawa:'
+Download the data source file: I-download ang data source file
+You have no login yet.: Wala ka pang login.
+Replace the password: Palitan ang password
+Make a login: Gumawa ng login
+'Put these lines in the configuration file of the OpenSearch Dashboards on your computer (opensearch_dashboards.yml), then restart it. Nothing is asked for when you open it: the login is in the file. The password is not kept anywhere you can read it, so if you lose this, press the button below to make a new one and paste the lines in again.': 'Ilagay ang mga linyang ito sa configuration file ng OpenSearch Dashboards sa iyong computer (opensearch_dashboards.yml), saka i-restart ito. Walang hihingin pagbukas mo nito: nasa file ang login. Hindi itinatago ang password kahit saan na mababasa mo, kaya kung mawala mo ito, pindutin ang button sa ibaba para gumawa ng bago at i-paste ulit ang mga linya.'
+'Grafana can chart this organization''s readings straight from the server - every reading ever recorded, with nothing to export first. To set it up: install the Infinity plugin in Grafana, make a token here, give Grafana the data source, then import the dashboard. A token is yours: it lets one Grafana read what you can read in this organization, and stops working if your access to it does.': 'Kayang i-chart ng Grafana ang mga reading ng organisasyong ito nang direkta mula sa server - bawat reading na na-record kailanman, nang walang kailangang i-export muna. Para i-set up: i-install ang Infinity plugin sa Grafana, gumawa ng token dito, ibigay sa Grafana ang data source, saka i-import ang dashboard. Sa iyo ang token: pinapayagan nito ang isang Grafana na basahin ang nababasa mo sa organisasyong ito, at hihinto ito sa paggana kapag nawala ang access mo rito.'
+Download the dashboard: I-download ang dashboard
+Forgotten: Kinalimutan
+Failed - approve: Nabigo - aprubahan
+Choose an organization first, so there is a broker connection to publish on: Pumili muna ng organisasyon, para may broker connection na mapag-publish-an
+Add Farm: Magdagdag ng farm
+No broker credentials for this organization: Walang broker credential para sa organisasyong ito
+Listening on %s ...: Nakikinig sa %s ...
+'Could not connect: %s': 'Hindi makakonekta: %s'
+'Could not subscribe: %s': 'Hindi makapag-subscribe: %s'
+Nothing retained matches that pattern: Walang retained na tumutugma sa pattern na iyon
+Deleting %s ...: Binubura ang %s ...
+'Could not delete: %s': 'Hindi mabura: %s'
+Deleted %s: Nabura ang %s
+If one comes back, a node is still publishing it.: Kung may bumalik, may node pang nagpa-publish nito.
+Add Project: Magdagdag ng proyekto
+Add Platform: Magdagdag ng platform
+', %s failed': ', %s ang nabigo'
+This server has no OpenSearch of its own set up (config.d/opensearch.yaml): Walang sariling OpenSearch na naka-set up ang server na ito (config.d/opensearch.yaml)
+This server has not said where OpenSearch can be reached from outside (config.d/opensearch.yaml, "public"): Hindi pa sinasabi ng server na ito kung saan maaabot ang OpenSearch mula sa labas (config.d/opensearch.yaml, "public")
+OpenSearch logins need an organization id of lower-case letters and digits only: Kailangan ng OpenSearch login ng organization id na maliliit na titik at numero lang
+OpenSearch did not answer: Hindi sumagot ang OpenSearch

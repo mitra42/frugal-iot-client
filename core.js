@@ -394,7 +394,16 @@ const languageIndex = {
   hi: { name: 'हिंदी', flag: '🇮🇳' },
   id: { name: 'Bahasa Indonesia', flag: '🇮🇩' },
   ar: { name: 'العربية', dir: 'rtl' },
+  es: { name: 'Español', flag: '🇪🇸' },
+  pt: { name: 'Português', flag: '🇧🇷' },
+  sw: { name: 'Kiswahili' },
+  de: { name: 'Deutsch', flag: '🇩🇪' },
+  tl: { name: 'Tagalog', flag: '🇵🇭' },
+  zh: { name: '中文', flag: '🇨🇳' }, // Simplified - zh-TW and zh-HK get it too until there is a Traditional file
 };
+// Other codes browsers send for a language the index has under one name: Chrome and Safari call
+// Tagalog "fil", Filipino.
+const languageAliases = { fil: 'tl' };
 // Vocabulary by language code: the one in use, and whatever a dashboard adds with addVocabulary.
 const languages = {};
 
@@ -408,7 +417,8 @@ function languageMatch(code) {
   const c = code.trim().toLowerCase();
   if (languageIndex[c]) return c;
   const primary = c.split('-')[0];
-  return languageIndex[primary] ? primary : null;
+  const known = languageAliases[primary] || primary;
+  return languageIndex[known] ? known : null;
 }
 // The picker's choice, so it survives a link without ?lang=. A convenience only: localStorage throws
 // in some private modes, and losing it just falls back to the browser's languages.

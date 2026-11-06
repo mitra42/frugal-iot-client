@@ -3,7 +3,7 @@
 "+ matches one level, # matches the rest. Look before deleting.": "+ एक स्तर से मेल खाता है, # बाकी सभी से। हटाने से पहले देख लें।"
 (Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): (अधिकतम 4MB, केवल .bin, सामान्यतः frugal-iot.ino.bin या firmware.bin)
 A bridge relays a Pi's readings to this server, so its nodes appear here too, while the Pi carries on recording and serving on its own whenever the link is down. "Bridge" is the broker's live view of the relay; "Last check-in" is when that Pi last collected this organization's logins, which it does over HTTP - so a Pi can be checking in while its bridge is down, and the two together say which half is broken.: एक ब्रिज किसी Pi की रीडिंग इस सर्वर तक पहुँचाता है, जिससे उसके नोड यहाँ भी दिखते हैं, जबकि लिंक टूटने पर Pi अपने आप रिकॉर्ड और सर्व करता रहता है। « ब्रिज » रिले का ब्रोकर द्वारा दिखाया गया सीधा दृश्य है; « अंतिम संपर्क » वह समय है जब उस Pi ने आखिरी बार इस संगठन के लॉगिन एकत्र किए, जो वह HTTP पर करता है - इसलिए कोई Pi संपर्क कर सकता है जबकि उसका ब्रिज बंद हो, और दोनों मिलकर बताते हैं कि कौन-सा हिस्सा खराब है।
-Action: क्रिया
+Action %s sent: क्रिया %s भेजी गई
 Action *: क्रिया *
 Add: जोड़ें
 Reset board: बोर्ड रीसेट करें
@@ -196,7 +196,7 @@ Node Name: नोड नाम
 Nodes: नोड्स
 Nodes in Farm: फार्म में नोड्स
 Nodes in Organization: संगठन में नोड्स
-Nodes that have obtained broker credentials on first connection. Forget reissues a new credential at next connection and is needed if memory has been erased. Refused nodes are listed - click Approve to allow (on next retry, typically 30 minutes).: वे नोड जिन्होंने पहली बार जुड़ने पर ब्रोकर क्रेडेंशियल प्राप्त किए हैं। भुलाएँ अगली बार जुड़ने पर नया क्रेडेंशियल जारी करता है, और यह ज़रूरी है यदि मेमोरी मिटा दी गई हो। अस्वीकृत नोड भी सूचीबद्ध हैं - अनुमति देने के लिए स्वीकृत करें पर क्लिक करें (अगले प्रयास पर, आमतौर पर 30 मिनट)।
+Nodes that have obtained broker credentials on first connection. Forget reissues a new credential at next connection and is needed if memory has been erased. Refused nodes are listed - click "Failed - approve" to allow (on next retry, typically 30 minutes).: वे नोड जिन्होंने पहली बार जुड़ने पर ब्रोकर क्रेडेंशियल प्राप्त किए हैं। भुलाएँ अगली बार जुड़ने पर नया क्रेडेंशियल जारी करता है, और यह ज़रूरी है यदि मेमोरी मिटा दी गई हो। अस्वीकृत नोड भी सूचीबद्ध हैं - अनुमति देने के लिए "असफल - स्वीकृत करें" पर क्लिक करें (अगले प्रयास पर, आमतौर पर 30 मिनट)।
 Not in the schema: स्कीमा में नहीं
 Not selected: चयनित नहीं
 Note this is your organization - not the organizations whose devices you want to access.: ध्यान दें यह आपका संगठन है - वे संगठन नहीं जिनके उपकरणों तक आप पहुंचना चाहते हैं।
@@ -229,7 +229,6 @@ Platform registered: प्लेटफ़ॉर्म पंजीकृत क
 Please login: कृपया लॉगिन करें
 Pressure: दाब
 Project: परियोजना
-Project changed to: प्रोजेक्ट बदलकर किया गया
 Asked %s to move: "%s को स्थानांतरित करने को कहा"
 Waiting for %s to report: "%s की रिपोर्ट की प्रतीक्षा"
 Project ID: प्रोजेक्ट आईडी
@@ -271,7 +270,6 @@ Send: भेजें
 SEND: भेजें
 Send another code: दूसरा कोड भेजें
 Send reset code: रीसेट कोड भेजें
-sent: भेजा गया
 server: सर्वर
 set: सेट किया गया
 Setpoint: सेटपॉइंट

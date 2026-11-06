@@ -1,0 +1,432 @@
+# Chinese (Simplified)
+'"%s" already exists.': “%s”已存在。
+'+ matches one level, # matches the rest. Look before deleting.': + 匹配一级，# 匹配其余所有级。删除前请先查看。
+(Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin): （最大 4MB，仅限 .bin，通常为 frugal-iot.ino.bin 或 firmware.bin）
+A bridge relays a Pi's readings to this server, so its nodes appear here too, while the Pi carries on recording and serving on its own whenever the link is down. "Bridge" is the broker's live view of the relay; "Last check-in" is when that Pi last collected this organization's logins, which it does over HTTP - so a Pi can be checking in while its bridge is down, and the two together say which half is broken.: 网桥将 Pi 的读数中继到此服务器，因此其节点也会显示在这里；而在链路中断时，Pi 会继续独立记录和提供服务。“网桥”是代理服务器对该中继的实时视图；“最后签到”是该 Pi 最后一次获取本组织登录账户的时间，这是通过 HTTP 进行的——因此 Pi 可能在网桥中断时仍在签到，两者结合可以判断是哪一半出了问题。
+Action %s sent: 操作 %s 已发送
+Action *: 操作 *
+Add: 添加
+Reset board: 重置开发板
+Clear log: 清除日志
+Copy log: 复制日志
+Start the monitor to configure: 启动监视器以进行配置
+Board not answering - old firmware?: 开发板无响应——固件太旧？
+Waiting for the board: 正在等待开发板
+Board was already configured - its settings were kept. Apply to board changes them: 开发板已配置过——其设置已保留。“应用到开发板”会更改这些设置
+Configure board: 配置开发板
+Apply after flashing: 烧录后应用
+Apply to board: 应用到开发板
+Board ready: 开发板就绪
+Boards done: 已完成的开发板
+WiFi networks: WiFi 网络
+Add network: 添加网络
+Remove: 移除
+No active project: 没有活动项目
+Project name must be 2 to 15 characters: 项目名称必须为 2 到 15 个字符
+Add a WiFi network: 添加 WiFi 网络
+WiFi network not valid: WiFi 网络无效
+Not understood: 无法理解
+Too long: 太长
+No reply: 无回复
+Could not fetch the enrolment secret: 无法获取注册密钥
+WiFi connected: WiFi 已连接
+WiFi not connected: WiFi 未连接
+MQTT connected: MQTT 已连接
+MQTT not connected: MQTT 未连接
+Not enrolled: 未注册
+Add a bridge: 添加网桥
+Add another enrolment secret: 添加另一个注册密钥
+Added: 已添加
+Adding it again issues a new broker password and a new replica token, and the ones that Pi is using now stop working. It will stay disconnected until you put the new ones into its configuration and restart its broker.: 再次添加会签发新的代理服务器密码和新的副本令牌，该 Pi 当前使用的密码和令牌将失效。在你将新的值写入其配置并重启其代理服务器之前，它将保持断开状态。
+Admin: 管理
+Advanced: 高级
+All: 全部
+Already have an account?: 已有账户？
+'And these two, if you are not building against the production server:': 如果不是针对生产服务器构建，还需要以下两项：
+Any node flashed with it that has not enrolled yet will be refused and will need reflashing. Nodes that have already enrolled are unaffected - they never present it again.: 任何用它烧录但尚未注册的节点都将被拒绝，需要重新烧录。已注册的节点不受影响——它们不会再出示该密钥。
+API: API
+Approved: 已批准
+AQI: AQI
+AQI500: AQI500
+Asked and was refused. Click to let it enrol.: 曾请求但被拒绝。点击允许其注册。
+Auth Token: 认证令牌
+Back to sign in: 返回登录
+Base URL: 基础 URL
+Battery: 电池
+Board: 开发板
+Bridge: 网桥
+Bridged Pis: 已桥接的 Pi
+Bridges: 网桥
+Brightness: 亮度
+Broker: 代理服务器
+Broker account: 代理服务器账户
+Broker password: 代理服务器密码
+Built in LED: 内置 LED
+buttons: 按钮
+Choose a project to see its devices: 选择一个项目以查看其设备
+Click to change project: 点击更换项目
+Click to sort: 点击排序
+Climate: 气候
+close: 关闭
+Collapse: 收起
+Color: 颜色
+'Compiled into firmware and used to request broker credential. Add a second one to change it: both are accepted, so nodes already flashed keep working until you withdraw the old one.': 编译进固件，用于请求代理服务器凭据。若要更换，请添加第二个：两个都会被接受，因此已烧录的节点在你撤销旧密钥之前仍可正常工作。
+Connect board: 连接开发板
+connected: 已连接
+connecting: 正在连接
+Control: 控制
+Cookie Name: Cookie 名称
+Copy these now - they are not shown again: 请立即复制——它们不会再次显示
+Could not read the board - assuming it is already provisioned: 无法读取开发板——假定其已完成初始配置
+Create an account: 创建账户
+Dashboard: 仪表板
+Data: 数据
+Delete these: 删除这些
+Delete this firmware: 删除此固件
+Denied: 已拒绝
+Deny %s?: 拒绝 %s？
+Description: 描述
+Device: 设备
+Display carousel: 轮播显示
+DOWN: 断开
+Download this firmware: 下载此固件
+Done: 完成
+ds18b20: ds18b20
+e.g. LiteFarm: 例如 LiteFarm
+eCO2: eCO2
+Email: 电子邮件
+Enrol URL: 注册 URL
+Enrolled: 已注册
+Enrolled nodes: 已注册的节点
+Enrolment secret: 注册密钥
+ENS AHT: ENS AHT
+Enter the code we emailed you, then choose a new password.: 输入我们通过电子邮件发送给你的验证码，然后设置新密码。
+Enter topic: 输入主题
+Enter value: 输入值
+Existing OTA Files: 现有 OTA 文件
+Failed: 失败
+Farm ID *: 农场 ID *
+Farm registered: 农场已注册
+Farms: 农场
+File: 文件
+Firmware: 固件
+Firmware file: 固件文件
+Flash: 烧录
+Flash over USB: 通过 USB 烧录
+Flash size was not detected reliably - flash anyway: 未能可靠检测到闪存大小——仍然烧录
+Flash this over USB: 通过 USB 烧录此固件
+Flashing needs the Web Serial API - use Chrome, Edge or Opera on a desktop computer: 烧录需要 Web Serial API——请在台式电脑上使用 Chrome、Edge 或 Opera
+for node: 用于节点
+Forget: 忘记
+Forget %s?: 忘记 %s？
+Forget this node, so it is issued a new credential: 忘记此节点，以便为其签发新凭据
+Forgot password?: 忘记密码？
+From: 从
+Frugal IoT project: Frugal IoT 项目
+Frugal-IoT Username *: Frugal-IoT 用户名 *
+Full provision - all configuration on the board will be erased: 完全配置——开发板上的所有配置都将被清除
+Gas Resistance: 气体电阻
+Give the Pi a short name - it becomes its broker account and cannot be changed later without reconfiguring that Pi. Lower-case letters, digits and hyphens.: 给 Pi 起一个简短的名称——它将成为其代理服务器账户，以后除非重新配置该 Pi，否则无法更改。可使用小写字母、数字和连字符。
+Give the Pi a short name first: 请先给 Pi 起一个简短的名称
+Graph: 图表
+Greater Than: 大于
+Has its own broker credential. Click to deny it.: 拥有自己的代理服务器凭据。点击拒绝。
+heating: 加热
+humidifier: 加湿器
+Humidity: 湿度
+humidity: 湿度
+Humidity control: 湿度控制
+Hysteresis: 迟滞
+hysteresis: 迟滞
+I have a code: 我有验证码
+id: ID
+If that account exists we have emailed a reset code: 如果该账户存在，我们已通过电子邮件发送重置验证码
+If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.': 如果该目录在文件选择器中不可见，请将文件复制到其他位置，或为 .pio 目录创建一个不以“.”开头的别名
+Incorrect username or password: 用户名或密码错误
+Info: 信息
+Input: 输入
+It will be issued a new broker credential the next time it asks. A node that is running will be offline for a minute or two while it notices; a node whose filesystem was erased needs this before it can rejoin at all.: 下次请求时将为其签发新的代理服务器凭据。正在运行的节点在察觉之前会离线一两分钟；文件系统已被擦除的节点必须先执行此操作才能重新加入。
+Its broker account is deleted, so it stops being able to publish or subscribe, and it cannot enrol again until you clear this. Use it for a node sending bad readings.: 其代理服务器账户将被删除，因此无法再发布或订阅，并且在你清除此状态之前无法再次注册。用于发送错误读数的节点。
+Its next request will be accepted. Click to deny it.: 其下一次请求将被接受。点击拒绝。
+Key: 密钥
+Last asked: 最后请求
+Last check-in: 最后签到
+Last Seen: 最后在线
+Last seen: 最后在线
+LED: LED
+Limit: 限值
+List: 列表
+Live: 实时
+Load Cell: 称重传感器
+Loading schema...: 正在加载架构……
+Log out: 退出登录
+Lower-case letters and numbers only, no spaces or punctuation: 只能使用小写字母和数字，不能有空格或标点
+Lux: 光照度
+Manual: 手动
+Message: 消息
+Monitor: 监视器
+Monitor speed: 监视器速率
+Move down: 下移
+Move up: 上移
+Name: 名称
+Never seen: 从未在线
+New here?: 新用户？
+New password: 新密码
+Connect a board to flash: 连接开发板以烧录
+Choose a firmware file to flash: 选择要烧录的固件文件
+Erase and flash: 擦除并烧录
+kept from last session: 沿用上次会话
+No farms registered for this organization yet.: 此组织尚未注册任何农场。
+No nodes found for this farm's project(s).: 未找到此农场项目中的节点。
+No nodes found for this organization: 未找到此组织的节点
+No nodes have enrolled yet, and none have asked and been rejected.: 尚无节点注册，也没有节点请求后被拒绝。
+No organization: 无组织
+No organization selected: 未选择组织
+No OTA files uploaded yet.: 尚未上传 OTA 文件。
+No Pi bridges to this server for this organization. A bridge relays a Pi's readings here while the Pi carries on working on its own - see INSTALLATION.md step 11.: 此组织没有桥接到本服务器的 Pi。网桥会将 Pi 的读数中继到这里，而 Pi 自身继续独立工作——参见 INSTALLATION.md 第 11 步。
+No platforms registered yet.: 尚未注册任何平台。
+No projects added for this organization yet.: 此组织尚未添加任何项目。
+No projects to display until organization selected: 选择组织后才会显示项目
+No state received from the broker yet: 尚未从代理服务器收到状态
+Nobody added for this organization yet.: 此组织尚未添加任何人。
+Node: 节点
+Node Actions: 节点操作
+Node ID: 节点 ID
+Node Name: 节点名称
+Nodes: 节点
+Nodes in Farm: 农场中的节点
+Nodes in Organization: 组织中的节点
+Nodes that have obtained broker credentials on first connection. Forget reissues a new credential at next connection and is needed if memory has been erased. Refused nodes are listed - click "Failed - approve" to allow (on next retry, typically 30 minutes).: 在首次连接时获得代理服务器凭据的节点。“忘记”会在下次连接时重新签发凭据，若内存已被擦除则需要此操作。被拒绝的节点也会列出——点击“失败——批准”以允许（在下次重试时生效，通常为 30 分钟）。
+Not in the schema: 不在架构中
+Not selected: 未选择
+Note this is your organization - not the organizations whose devices you want to access.: 注意：这是你自己的组织——而不是你想要访问其设备的组织。
+Now: 现在
+now: 当前
+'Off': 关
+offline: 离线
+Offline: 离线
+'On': 开
+'On ArduinoIDE the file is typically in ': '在 ArduinoIDE 中，该文件通常位于 '
+'On PlatformIO The file is typically in ': '在 PlatformIO 中，该文件通常位于 '
+Organization: 组织
+OTA: OTA
+OTA Upload: OTA 上传
+OTA binary uploaded: OTA 二进制文件已上传
+OTA Key: OTA 密钥
+OTA Key or Device ID: OTA 密钥或设备 ID
+Out: 输出
+out: 输出
+Output: 输出
+Password: 密码
+Password reset - please sign in: 密码已重置——请登录
+Password reset is not available on this server: 此服务器不支持重置密码
+Pattern: 匹配模式
+Permissions: 权限
+Phone or Whatsapp: 电话或 WhatsApp
+Platform *: 平台 *
+Platform Name *: 平台名称 *
+Platform registered: 平台已注册
+Please login: 请登录
+Pressure: 气压
+Project: 项目
+Asked %s to move: 已请求 %s 移动
+Waiting for %s to report: 正在等待 %s 报告
+Project ID: 项目 ID
+Project ID *: 项目 ID *
+Project Name: 项目名称
+Projects: 项目
+Property: 属性
+Provision instead (erases config): 改为完全配置（清除配置）
+Publish Message: 发布消息
+'Published to ': '已发布到 '
+'Put this in platformio-secrets-local.ini, which is not committed:': 将以下内容写入 platformio-secrets-local.ini（该文件不会被提交）：
+QoS: QoS
+reconnect: 重新连接
+Reconnect the board to flash again: 重新连接开发板以再次烧录
+Register: 注册
+Register a platform above before adding a farm.: 添加农场前请先在上方注册一个平台。
+Register Farm: 注册农场
+Refresh: 刷新
+Register Platform: 注册平台
+Registered Platforms: 已注册的平台
+Registration failed: 注册失败
+Registration successful - please login: 注册成功——请登录
+Relay: 继电器
+Replica token: 副本令牌
+Reporting every: 报告间隔
+Reset code: 重置验证码
+Reset password: 重置密码
+Retain: 保留
+Retained: 已保留
+Retained messages: 保留消息
+Run this on the Pi, in the directory the server is installed in. Replace the placeholder with this server's fully-qualified name - the one on its certificate, which you can check by opening https:// that name in a browser. It will then ask for the broker password and for the replica token, in that order, so have both of the values below to hand.: 在 Pi 上服务器的安装目录中运行此命令。将占位符替换为本服务器的完整域名——即其证书上的名称，你可以在浏览器中打开 https:// 加该名称来核对。之后它会依次询问代理服务器密码和副本令牌，因此请准备好下面的两个值。
+Schema: 架构
+Select: 选择
+Select a farm above to see its nodes.: 在上方选择一个农场以查看其节点。
+Select a node above to see actions.: 在上方选择一个节点以查看操作。
+Select a node above to send an action.: 在上方选择一个节点以发送操作。
+Select an organization to continue.: 请选择一个组织以继续。
+Send: 发送
+SEND: 发送
+Send another code: 再发送一个验证码
+Send reset code: 发送重置验证码
+server: 服务器
+set: 已设置
+Setpoint: 设定值
+Settings: 设置
+Show enrolment secrets: 显示注册密钥
+SHT: SHT
+SHT30: SHT30
+Sign In: 登录
+Sign in: 登录
+Site: 站点
+Soil: 土壤
+Soil Moisture: 土壤湿度
+Soil Temperature: 土壤温度
+Sonoff R2 switch: Sonoff R2 开关
+Sonoff switch: Sonoff 开关
+Speed: 速度
+SSID: SSID
+Not reported recently: 最近未报告
+Status: 状态
+Stop monitor: 停止监视器
+Stopped, and its credential removed. Click to clear.: 已停止，其凭据已删除。点击清除。
+Submit: 提交
+System: 系统
+Temperature: 温度
+temperature: 温度
+That code is not valid or has expired: 该验证码无效或已过期
+The broker reports this bridge connected: 代理服务器报告此网桥已连接
+The broker reports this bridge not connected: 代理服务器报告此网桥未连接
+This field has no invocation URL (forms[0].href) in its schema: 此字段的架构中没有调用 URL（forms[0].href）
+This node has no actions in its schema.: 此节点的架构中没有操作。
+This node has no actions or writable properties in its schema.: 此节点的架构中没有操作或可写属性。
+This organization has no enrolment secret, so no new node can enrol. Add one.: 此组织没有注册密钥，因此新节点无法注册。请添加一个。
+Time On (s): 开启时间（秒）
+To: 到
+Too many attempts - please wait a few minutes: 尝试次数过多——请等待几分钟
+Topic: 主题
+Topic and Value are required: 主题和值为必填项
+TVOC: TVOC
+'Two credentials for two different connections: the password is what the MQTT bridge logs in with on port 8883, and the token is what lets that Pi pull this organization''s logins over HTTPS, so the same people can log in there too. The token can be skipped - press Enter at its prompt - and added later by doing this again. Neither is asked for on the command line, so that neither ends up in the Pi''s shell history.': 两个凭据用于两个不同的连接：密码是 MQTT 网桥在 8883 端口登录时使用的；令牌则让该 Pi 通过 HTTPS 拉取本组织的登录账户，以便同样的人也能在那里登录。令牌可以跳过——在其提示处按回车——之后再执行一次即可添加。两者都不通过命令行参数传入，因此都不会留在 Pi 的 shell 历史记录中。
+Unable to find node: 找不到节点
+Unable to find project: 找不到项目
+Unauthorized: 未授权
+undefined: 未定义
+Unknown: 未知
+Unsupported board: 不支持的开发板
+Unused: 未使用
+Up: 正常
+Updating the app only: 仅更新应用
+Updating the app only - the existing configuration will be preserved: 仅更新应用——现有配置将被保留
+Upload: 上传
+Upload finished - check the list below: 上传完成——请查看下方列表
+Uploading: 正在上传
+Username: 用户名
+Username or email: 用户名或电子邮件
+Value: 值
+Value *: 值 *
+Voltage: 电压
+Waiting: 等待中
+Waiting for devices: 正在等待设备
+We will email you a code and a link to choose a new password.: 我们将通过电子邮件向你发送验证码和一个用于设置新密码的链接。
+When: 时间
+WiFi: WiFi
+Withdraw this enrolment secret?: 撤销此注册密钥？
+Withdrawn: 已撤销
+'Yes': 是
+You do not have permission for this organization: 你没有此组织的权限
+Forwarders: 转发器
+Grafana: Grafana
+OpenSearch: OpenSearch
+OpenSearch Dashboards: OpenSearch Dashboards
+every %s s: 每 %s 秒
+'%s topics': '%s 个主题'
+From the file: 来自文件
+Delete "%s"?: 删除“%s”？
+Readings stop being sent to it straight away. Nothing already sent is removed from there.: 将立即停止向其发送读数。已发送到那里的内容不会被删除。
+Deleted, but the logger could not be told - it will take effect at the next restart: 已删除，但无法通知日志记录器——将在下次重启时生效
+set - leave blank to keep it: 已设置——留空则保持不变
+Give it a name first: 请先起个名称
+Saved, but the logger could not be told - it will take effect at the next restart: 已保存，但无法通知日志记录器——将在下次重启时生效
+Sending... %s readings so far: 正在发送……目前已发送 %s 条读数
+'Stopped: %s': 已停止：%s
+Never: 从不
+Making it again replaces its token, and the Grafana using the old one stops working until it is given the new one.: 重新生成会替换其令牌，使用旧令牌的 Grafana 将停止工作，直到为其提供新令牌。
+Revoke "%s"?: 撤销“%s”？
+The Grafana using it stops being able to read this organization straight away.: 使用它的 Grafana 将立即无法读取此组织的数据。
+Copied: 已复制
+Press Ctrl-C or Cmd-C to copy: 按 Ctrl-C 或 Cmd-C 复制
+'You have a login: %s. Making another replaces its password, and your Dashboards stops working until it is given the new one.': 你已有一个登录账户：%s。再创建一个会替换其密码，你的 Dashboards 将停止工作，直到为其提供新密码。
+Replace the password?: 替换密码？
+The Dashboards using the old one stops working until it is given the new one.: 使用旧密码的 Dashboards 将停止工作，直到为其提供新密码。
+Remove the login?: 移除登录账户？
+Dashboards using it stops being able to read this organization straight away.: 使用它的 Dashboards 将立即无法读取此组织的数据。
+Loading...: 正在加载……
+This organization forwards its readings nowhere. They are still recorded in the CSV files and charted in Grafana - add a forwarder to send them somewhere as well.: 此组织不向任何地方转发读数。读数仍会记录在 CSV 文件中，并在 Grafana 中绘制图表——添加转发器可同时将它们发送到其他地方。
+Type: 类型
+Sends to: 发送到
+State: 状态
+Edit: 编辑
+Delete: 删除
+Send earlier readings...: 发送早期读数……
+Save: 保存
+Cancel: 取消
+From this day on (leave empty for everything): 从这一天起（留空表示全部）
+Start: 开始
+Close: 关闭
+Readings are always recorded in the CSV files, and charted in Grafana from them. A forwarder also sends each reading, as it is logged, somewhere else - OpenSearch to search and browse them, or Google Sheets to add a row of values every so often. Changes apply straight away.: 读数始终记录在 CSV 文件中，并由 Grafana 据此绘制图表。转发器还会在每条读数记录时将其发送到其他地方——发送到 OpenSearch 以便搜索和浏览，或发送到 Google Sheets 以每隔一段时间添加一行数值。更改立即生效。
+No Grafana has been given access to this organization yet.: 尚未授予任何 Grafana 访问此组织的权限。
+Made: 创建于
+Last used: 最后使用
+Whose: 所属者
+Revoke: 撤销
+Copy: 复制
+Copy this now - it is not shown again: 请立即复制——它不会再次显示
+Token: 令牌
+Allowed host: 允许的主机
+Remove my login: 移除我的登录账户
+Everyone's logins: 所有人的登录账户
+OpenSearch Dashboards is a program you run on your own computer to search and chart this organization's readings, which this server keeps in OpenSearch. It needs a login, made here, that is yours. It can read this organization's readings and nothing else, and the people of an organization share its saved dashboards. It needs permission to read the whole organization; if you can read only some projects, use the Grafana card instead.: OpenSearch Dashboards 是一个在你自己的电脑上运行的程序，用于搜索本组织的读数并绘制图表，这些读数由本服务器保存在 OpenSearch 中。它需要一个在这里创建、属于你自己的登录账户。它只能读取本组织的读数，不能读取其他内容，同一组织的人共享其保存的仪表板。它需要读取整个组织的权限；如果你只能读取部分项目，请改用 Grafana 卡片。
+Give a Grafana access: 授予 Grafana 访问权限
+Name it for whoever or wherever it is, so it can be revoked on its own.: 按使用者或使用地点为其命名，以便可以单独撤销。
+Make a token: 生成令牌
+The starter dashboard: 入门仪表板
+A chart with a list of every topic to pick from. In Grafana choose Dashboards, New, Import, upload this file, and pick the data source above when it asks.: 一个图表，附带可供选择的所有主题列表。在 Grafana 中依次选择 Dashboards、New、Import，上传此文件，并在询问时选择上面的数据源。
+Add a forwarder: 添加转发器
+Change this forwarder: 更改此转发器
+Active (untick to pause; the settings are kept): 启用（取消勾选可暂停；设置会保留）
+Would send %s readings: 将发送 %s 条读数
+Sent %s readings: 已发送 %s 条读数
+'Sends the readings already recorded in the CSV files, which this forwarder did not see because it was off or OpenSearch was down. It is safe to repeat: a reading already there is replaced, not doubled.': 发送已记录在 CSV 文件中、但此转发器因关闭或 OpenSearch 宕机而未收到的读数。可以安全地重复执行：已存在的读数会被替换，而不会重复。
+Only count them, send nothing: 只计数，不发送
+Yours: 你的
+Another user's: 其他用户的
+'In Grafana, add a data source of type Infinity, with Authentication set to Bearer Token and the token above, and the allowed host above. Or let this do it:': 在 Grafana 中添加一个类型为 Infinity 的数据源，将 Authentication 设置为 Bearer Token 并填入上面的令牌，再填入上面的允许主机。或者让这里自动完成：
+Download the data source file: 下载数据源文件
+You have no login yet.: 你还没有登录账户。
+Replace the password: 替换密码
+Make a login: 创建登录账户
+'Put these lines in the configuration file of the OpenSearch Dashboards on your computer (opensearch_dashboards.yml), then restart it. Nothing is asked for when you open it: the login is in the file. The password is not kept anywhere you can read it, so if you lose this, press the button below to make a new one and paste the lines in again.': 将以下几行写入你电脑上 OpenSearch Dashboards 的配置文件（opensearch_dashboards.yml），然后重启它。打开时无需输入任何内容：登录信息已在文件中。密码不会保存在任何你可以读取的地方，因此如果丢失，请点击下面的按钮重新生成，并再次粘贴这些行。
+'Grafana can chart this organization''s readings straight from the server - every reading ever recorded, with nothing to export first. To set it up: install the Infinity plugin in Grafana, make a token here, give Grafana the data source, then import the dashboard. A token is yours: it lets one Grafana read what you can read in this organization, and stops working if your access to it does.': Grafana 可以直接从服务器绘制本组织的读数图表——包括有史以来记录的每一条读数，无需先导出。设置方法：在 Grafana 中安装 Infinity 插件，在这里生成令牌，为 Grafana 添加数据源，然后导入仪表板。令牌属于你：它让一个 Grafana 读取你在本组织中可以读取的内容，一旦你失去访问权限，它也随之失效。
+Download the dashboard: 下载仪表板
+Forgotten: 已忘记
+Failed - approve: 失败——批准
+Choose an organization first, so there is a broker connection to publish on: 请先选择一个组织，以便有可用于发布的代理服务器连接
+Add Farm: 添加农场
+No broker credentials for this organization: 此组织没有代理服务器凭据
+Listening on %s ...: 正在监听 %s……
+'Could not connect: %s': 无法连接：%s
+'Could not subscribe: %s': 无法订阅：%s
+Nothing retained matches that pattern: 没有与该模式匹配的保留消息
+Deleting %s ...: 正在删除 %s……
+'Could not delete: %s': 无法删除：%s
+Deleted %s: 已删除 %s
+If one comes back, a node is still publishing it.: 如果有消息重新出现，说明仍有节点在发布它。
+Add Project: 添加项目
+Add Platform: 添加平台
+', %s failed': ，%s 个失败
+This server has no OpenSearch of its own set up (config.d/opensearch.yaml): 此服务器未设置自己的 OpenSearch（config.d/opensearch.yaml）
+This server has not said where OpenSearch can be reached from outside (config.d/opensearch.yaml, "public"): 此服务器未说明可从外部访问 OpenSearch 的地址（config.d/opensearch.yaml，"public"）
+OpenSearch logins need an organization id of lower-case letters and digits only: OpenSearch 登录账户要求组织 ID 只包含小写字母和数字
+OpenSearch did not answer: OpenSearch 未响应
