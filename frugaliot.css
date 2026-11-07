@@ -567,7 +567,6 @@ body:has(mqtt-dashboard) {
 
 /* The project map (map.js), docked above the grid. Its height is set inline, from the handle. */
 mqtt-map:not([hidden]) {
-    position: relative;        /* for the ↻ over the map */
     display: flex;
     flex-direction: column;
     margin: var(--fi-gap);
@@ -575,6 +574,13 @@ mqtt-map:not([hidden]) {
     border: 1px solid var(--fi-border);
     border-radius: var(--fi-radius);
     overflow: hidden;
+}
+.fi-map__frame {
+    position: relative;        /* for the buttons over the map, below the pick bar */
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
 }
 .fi-map__canvas { flex: 1; min-height: 0; }
 .fi-map__error { padding: 1em; color: var(--fi-muted); }

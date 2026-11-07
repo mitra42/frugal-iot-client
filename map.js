@@ -251,8 +251,11 @@ class MqttMap extends HTMLElementExtendedMinimum {
       onclick: () => this.reload() });
     // Imagery and the like - filled once the map is made, since that is when config is certain to be in
     e.layers = el('span', { class: 'fi-map__layers' });
-    return [e.pickBar, e.canvas = el('div', { class: 'fi-map__canvas' }),
-      el('div', { class: 'fi-map__corner' }, [e.layers, e.reload]), handle];
+    // The corner's buttons are placed against the frame, so the pick bar above pushes them down
+    return [e.pickBar, el('div', { class: 'fi-map__frame' }, [
+      e.canvas = el('div', { class: 'fi-map__canvas' }),
+      el('div', { class: 'fi-map__corner' }, [e.layers, e.reload]),
+    ]), handle];
   }
 
   // A project, or an organization (MAPPING_PLAN.md M-17) - each starts from its own remembered
