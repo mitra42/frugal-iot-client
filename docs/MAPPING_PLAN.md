@@ -15,20 +15,18 @@ firmware's `main` (`c2724d5`):
 | Phase 3: read-only map | Tested | In a browser |
 | Phase 4: setting a location from the card's back | Tested | In a browser (`mock.html`); not through a node |
 | ML-1: organization map | Tested | In a browser (`mock.html`); not against the broker's ACLs |
-| ML-4: card and pin highlight each other | Tested | In a browser (`mock.html`) |
+| ML-4: card and pin highlight each other; a card click pans the map | Tested | Highlighting in a browser (`mock.html`) |
 | ML-2 phase 1: tiles kept by the server | Tested | In a browser, through the server |
 | ML-2 phase 2: an enlarged ancestor where no tile is kept | Tested | In a browser, offline |
 | ML-2 phase 3: the prefetch (off by default) | Tested | Not yet: no device has a location |
-| ML-8: several sources, NSW imagery (off by default) | Tested | Not yet in a browser |
+| ML-8: several sources, NSW imagery (off by default) | Tested | The Imagery switch in a browser, with the cache on |
 
 **Before release**
-- A look at ML-8. With `nsw.enabled: true` in `mapping.yaml`, the map shows an Imagery button.
-  Over `dev/lotus`, zoomed to 15 or deeper, it should draw the aerial photo, with the map still
-  around the edges of NSW. Try it with the cache both on and off.
-- A look at ML-4 in `mock.html`: hovering a card rings its pin, and hovering a pin rings its card.
-- If a board is to hand, run the phase 1 firmware on one. Set a location from a card's back, and
-  check that the node echoes it and the card stops showing Pending.
-- Merge the branches (Mitra).
+- Merge the branches (Mitra). Ready otherwise. The packaged `mapping.yaml` ships with NSW, the cache
+  and the prefetch all off; a local copy with them on should not be committed.
+- Optional, if a board is to hand: run the phase 1 firmware on one, set a location from a card's
+  back, and check that the node echoes it and the card stops showing Pending. Otherwise this waits
+  for the release, as below.
 
 **After release**, once nodes have the new firmware:
 1. The node round trip: pending, the echo, GPS precedence (M-3).
@@ -36,7 +34,9 @@ firmware's `main` (`c2724d5`):
    account (allowed) and a project-only one (refused) (M-13).
 3. The prefetch on a Pi: turn it on, look for `Tile prefetch:` in the log, and check that
    `tiles/osm/19/` fills in around each device.
-4. ML-7: what `retain` in the schema means.
+4. ML-8 with the cache off: the browser fetching NSW imagery directly. And Q-8, whether caching it
+   is redistribution, before a Pi prefetches it.
+5. ML-7: what `retain` in the schema means.
 
 ## Goal
 
