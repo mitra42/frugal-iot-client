@@ -68,6 +68,11 @@
 
   // The fixture is generated from the real server schema - see fixtures/regenerate.js
   const config = await (await fetch('./fixtures/config.json')).json();
+  // Except where the map's tiles come from, which is the server's to say - so its tile cache is used
+  try {
+    const live = await fetch('/config.json');
+    if (live.ok) { const { mapping } = await live.json(); if (mapping) config.mapping = mapping; }
+  } catch (e) { /* not logged in, or no server: OpenStreetMap directly */ }
   loadConfig(config);
 
   const picker = document.getElementById('scenario');

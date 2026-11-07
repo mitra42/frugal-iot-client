@@ -2,12 +2,41 @@
 
 ## Status
 
-Plan agreed 2026-11-06. Phase 1 (firmware) built and compiling, not yet run on a board; it goes
-into the next release. Phase 2 (schema, data tree, `located-devices` mock scenario) built and tested. Phase 3 (the
-read-only map) built, tested in jsdom, and looked at in a browser. Phase 4 (pick mode) built and tested in
-jsdom; not yet looked at in a browser, and not yet round-tripped through a node. The organization map
-(ML-1) built and tested in jsdom; not yet looked at in a browser or run against the broker's ACLs. Decisions are numbered M-n so they can be argued here rather than
-re-decided in code; open questions are Q-n, deferred work is ML-n.
+Decisions are numbered M-n so they can be argued here rather than re-decided in code; open questions
+are Q-n, deferred work is ML-n.
+
+**Done (2026-11-07)**, committed on the `mapping` branches of the client and the server, and on the
+firmware's `main` (`c2724d5`):
+
+| Work | Built | Seen working |
+|---|---|---|
+| Phase 1: firmware `frugal_iot/location` | Compiles | Not yet run on a board |
+| Phase 2: schema, data tree, mock scenario | Tested | — |
+| Phase 3: read-only map | Tested | In a browser |
+| Phase 4: setting a location from the card's back | Tested | In a browser (`mock.html`); not through a node |
+| ML-1: organization map | Tested | In a browser (`mock.html`); not against the broker's ACLs |
+| ML-4: card and pin highlight each other | Tested | In a browser (`mock.html`) |
+| ML-2 phase 1: tiles kept by the server | Tested | In a browser, through the server |
+| ML-2 phase 2: an enlarged ancestor where no tile is kept | Tested | In a browser, offline |
+| ML-2 phase 3: the prefetch (off by default) | Tested | Not yet: no device has a location |
+| ML-8: several sources, NSW imagery (off by default) | Tested | Not yet in a browser |
+
+**Before release**
+- A look at ML-8. With `nsw.enabled: true` in `mapping.yaml`, the map shows an Imagery button.
+  Over `dev/lotus`, zoomed to 15 or deeper, it should draw the aerial photo, with the map still
+  around the edges of NSW. Try it with the cache both on and off.
+- A look at ML-4 in `mock.html`: hovering a card rings its pin, and hovering a pin rings its card.
+- If a board is to hand, run the phase 1 firmware on one. Set a location from a card's back, and
+  check that the node echoes it and the card stops showing Pending.
+- Merge the branches (Mitra).
+
+**After release**, once nodes have the new firmware:
+1. The node round trip: pending, the echo, GPS precedence (M-3).
+2. The organization map's `+` subscriptions against the live broker, with an organization-wide
+   account (allowed) and a project-only one (refused) (M-13).
+3. The prefetch on a Pi: turn it on, look for `Tile prefetch:` in the log, and check that
+   `tiles/osm/19/` fills in around each device.
+4. ML-7: what `retain` in the schema means.
 
 ## Goal
 
@@ -103,7 +132,7 @@ markercluster attaches itself to a global `L`, and an ES module's namespace is f
   (M-5) but is another reason not to show a map by default.
 - *An offline Pi has no tiles at all.* The pins still draw on a blank grid at the right relative
   positions, which is still useful. A Pi serving pre-downloaded tiles for its own area is ML-2.
-  `tiles.url` and `tiles.attribution` in config make that a config change, not a code change.
+  `mapping.tiles.url` and `.attribution` in config make that a config change, not a code change.
 - OSM's tile policy requires the attribution and forbids heavy use. A handful of farms is fine.
   Anything larger means a tile provider (ML-3).
 
@@ -251,7 +280,7 @@ scenario with located devices in two projects.
 
 ## Tiles kept by the server (ML-2)
 
-*Planned 2026-11-06, revised 2026-11-07, not yet agreed.*
+*Planned 2026-11-06, agreed 2026-11-07. All three phases built.*
 
 Three servers, one design:
 - **Production**: online, plenty of disk. Caching saves fetches from OSM.
@@ -263,10 +292,11 @@ They differ only in config (M-24): production turns the prefetch off and gives t
 
 **M-19 The server keeps the tiles, not the browser.** A browser cache (the service worker) only
 helps the phone that has already looked; a new phone on an offline Pi would get nothing. So the server
-gets `/tiles/osm/{z}/{x}/{y}.png`, a cache in `datadir/tiles/osm/z/x/y.png`:
+gets `/tiles/osm/{z}/{x}/{y}.png`, a cache in `tiles/osm/z/x/y.png`. It is not under `datadir`,
+which is served at `/data` and whose housekeeping walks every file in it.
 - **Kept and fresh**: served from disk.
-- **Kept but due a check, and online**: a conditional request upstream (`If-None-Match` /
-  `If-Modified-Since`). "Not modified" only touches the file's `mtime`; a new tile replaces it.
+- **Kept but due a check, and online**: served at once, and checked behind it with
+  `If-Modified-Since` (the `mtime`). "Not modified" only touches the `mtime`; a new tile replaces it.
 - **Kept but due a check, and offline**: served as it is. A stale tile beats none, so nothing is
   ever dropped for being old.
 - **Not kept, and online**: fetched, stored, and served.
@@ -274,8 +304,9 @@ gets `/tiles/osm/{z}/{x}/{y}.png`, a cache in `datadir/tiles/osm/z/x/y.png`:
   map; the server remembers that upstream failed and does not try again for a minute.
 
 `mtime` is when the tile was last known to be current, so "due a check" means `mtime` is older than
-the tile's `Expires`/`max-age` or `refreshdays`, whichever is longer. `/config.json` then carries
-`map.tiles.url: /tiles/osm/{z}/{x}/{y}.png`. The map already reads that (M-6), so the client needs no
+`refreshdays`, never less than 7 (OSM's minimum). `Expires` is ignored: it would need a file of
+metadata beside each tile, and OSM's is shorter than 30 days anyway. `/config.json` then carries
+`mapping.tiles.url: /tiles/osm/{z}/{x}/{y}.png` and nothing else of `mapping.yaml`. The map already reads that (M-6), so the client needs no
 change to use it.
 
 **M-20 Behind the login**, like `/data`. Tiles are not secret, but an open `/tiles` would make every
@@ -283,14 +314,17 @@ Frugal IoT server a free proxy to OSM. Leaflet's tile `<img>`s are same-origin a
 cookie, so this costs the map nothing.
 
 **M-21 A prefetch fills in what nobody has looked at yet**, only on a server where it is turned on,
-and only while online. It works from the retained locations, using the organization map's
-subscriptions (M-13) made by the server's own MQTT client. It runs at startup, daily, and when a
-location changes. An organization, or even a project, can span the world, so no layer is set as a
+and only while online. It works from the locations the logger last heard. The logger keeps the
+current value of every topic, retained ones included, so the prefetch needs no subscription of its
+own. It checks two minutes after startup, then every ten minutes. It runs when a location has
+changed, daily to refresh, and again at the next check after a run with failures. An organization, or even a project, can span the world, so no layer is set as a
 zoom. Each is set as a number of tiles, and goes as deep as that allows:
 - **Organization**: the bounding box of all its devices, at each zoom while it needs no more than
   `organizationtiles` (64). That is zoom 3 for the whole world, about 9 for a province, about 12 for a
   district.
 - **Project**: the same for each project's box, with `projecttiles` (256).
+- Neither box goes past zoom 16, however small it is, so zooms 17 and deeper are only ever fetched
+  in the device squares (M-23).
 - **Device**: a square `deviceradius` (250 m) around each device, down to `devicezoom` (19, OSM's
   deepest). About 100 tiles per device, fewer where devices are close together, because the squares
   overlap.
@@ -323,7 +357,8 @@ read-through (M-19) is ordinary use.
   cannot get them back, and the set can be recomputed from the locations at any time. When a device
   moves or is forgotten, the tiles that drop out of the set become ordinary.
 - **Everything else**, the tiles somebody looked at, is dropped least recently used first once the
-  cache is over `maxmb`. Disk space below housekeeping's `freespacepercent` also triggers dropping.
+  cache is over `maxmb`. Not built: dropping them when the disk is short of space. Housekeeping's
+  `freespacepercent` deletes readings, and should drop viewed tiles first.
 
 Recency is kept in memory, not read from `atime`:
 - Pis are commonly mounted `noatime` to spare the card, so `atime` would silently never change.
@@ -337,8 +372,8 @@ Writes on a Pi are then:
 - a `mtime` touch per tile per refresh period;
 - a delete per evicted tile.
 
-That is nothing per view. A whole prefetch is a few MB: a tile is 5–30 KB, and the budgets above are
-hundreds of tiles, not thousands.
+That is nothing per view. A tile is 5–50 KB: farmland at deep zoom is near the bottom of that, a
+city at zoom 10 near the top. A whole prefetch is a few MB, about 1–2 MB per device.
 
 **M-24 Config, in `config.d/mapping.yaml`** (`config.mapping`, as `email.yaml` is `config.email`). All
 of M-19 to M-25's numbers live here, not in code:
@@ -346,8 +381,9 @@ of M-19 to M-25's numbers live here, not in code:
 ```yaml
 tiles:
   enabled: false              # off: the map fetches from OSM directly, as now
+  dir: ./tiles
   upstream: https://tile.openstreetmap.org/{z}/{x}/{y}.png
-  refreshdays: 30             # re-check a kept tile after this, or its Expires if later
+  refreshdays: 30             # re-check a kept tile after this; never less than 7
   maxmb: 200                  # viewed tiles beyond this are dropped, least recently used first
   prefetch:
     enabled: false            # a Pi that goes offline: true; production: false
@@ -357,14 +393,26 @@ tiles:
     devicezoom: 19
 ```
 
-Off by default, so nothing changes on a server until it is turned on. `upstream` is a list in all
+Off by default, so nothing changes on a server until it is turned on. Phase 1 ships the file without
+the `prefetch` block, which arrives with phase 3. `frugal-iot-init` copies it into a new install. `upstream` is a list in all
 but name: ML-8 adds an imagery layer as a second entry, with a directory of its own.
 
 **Phasing**
 1. Server: `/tiles` read-through with its disk cache, conditional refresh, offline 404s, the config,
    and LRU eviction by size. Useful on production at once.
+   *Built.* `lib/tiles.js`; the route in `frugal-iot-server.js`; `mapping.tiles.url` added by
+   `buildConfigFor`; `config.d/mapping.yaml`. Tests: `test/unit/tiles.test.js`, and two in
+   `config-for-user.test.js`. One real tile was fetched from OSM, which accepted the User-Agent.
 2. Client: the enlarged-ancestor fallback (M-22).
+   *Built.* `fallbackTileLayer(L)` in `map.js`. Each tile is a `div` holding one `img`, so an ancestor
+   can be cropped. It goes up to 8 levels, 256 times enlarged; beyond that the tile is left blank. It
+   builds the ancestor's URL itself, because `getTileUrl` uses the map's zoom, not the tile's. It
+   relies on `_url` and `_getSubdomain`, which Leaflet 1.9 has. The tests use a stand-in for
+   `L.TileLayer`; only a browser shows the drawing.
 3. Server: the prefetch (M-21), and the rule that its tiles are never evicted (M-25).
+   *Built.* `lib/tile-prefetch.js`. The cache's fetch queue gives a view priority over the
+   prefetch, which runs two at a time. Tests: `test/unit/tile-prefetch.test.js`, and two more in
+   `tiles.test.js`. Not tried against real devices: none has a location yet.
 
 **Tests**:
 - A tile path to file and back, with a malformed `z/x/y` refused. It becomes a file path, so this is
@@ -376,6 +424,110 @@ but name: ML-8 adds an imagery layer as a second entry, with a directory of its 
 - The tiles each prefetch layer chooses, as numbers with no network. Include a world-spanning
   organization and a project of two far-apart devices.
 - The fallback's parent tile and offset, as numbers.
+
+## Several tile providers, each with its own bounds (ML-8)
+
+*Agreed and built 2026-11-07, before the release, because it changes `mapping.yaml`, and once that
+has shipped, changing it means migrating every installed server.*
+
+As built:
+- **Server:** `lib/tiles.js` (`enabledSources`, `sourcesForBrowser`, the cache keyed by source),
+  `lib/tile-prefetch.js`, and the route `/tiles/:source/:z/:x/:y`. `/config.json` always carries
+  `mapping.sources`, even with no `mapping.yaml`.
+- **Client:** `map.js` `mapSources`, `addSources`, and one switch per name in the map's top-right
+  corner, beside ↻. The fallback stops at a source's `minzoom`.
+- **The map's depth:** because the map underneath is enlarged to the deepest source's zoom, the map
+  can be zoomed to 21 even with Imagery off. It is blurry there, as anywhere past what is kept.
+
+The case: OpenStreetMap shows little at site scale, but some governments publish free aerial
+imagery for their own territory. The first is NSW, where `dev/lotus` is. NSW Spatial Services'
+`NSW_Imagery` is raster, Web Mercator, JPEG, no key, with levels to 23. Tiles near Sydney were
+fetched at zooms 15, 19 and 21. Its address is `…/NSW_Imagery/MapServer/tile/{z}/{y}/{x}`: note
+`{y}` before `{x}`. The NSW Basemap item first found is vector tiles, which Leaflet cannot draw
+without a heavy plugin, and is a street map anyway.
+
+**M-26 Config: a list of sources, each switched on separately.** `mapping.yaml` is restructured
+while nothing has shipped:
+
+```yaml
+cache:                       # was tiles: - the server keeping tiles (M-19 to M-25)
+  enabled: false
+  dir: ./tiles
+  refreshdays: 30
+  maxmb: 200
+prefetch:                    # M-21, unchanged
+  enabled: false
+  ...
+sources:
+  osm:
+    name: Map
+    enabled: true
+    upstream: https://tile.openstreetmap.org/{z}/{x}/{y}.png
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    maxzoom: 19
+  nsw:
+    name: Imagery
+    # Licence: CC BY 4.0, though Spatial Services' own sheet links the no-derivatives version
+    # (<link>). Showing the tiles with the attribution is fine either way. It is unclear whether
+    # caching them counts as redistribution, or is just good behaviour.
+    enabled: false
+    upstream: https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Imagery/MapServer/tile/{z}/{y}/{x}
+    attribution: '&copy; State Government of NSW and Spatial Services (DCS)'
+    bounds: [[-38.4, 138.4], [-26.5, 159.3]]   # south-west, north-east: its published extent
+    minzoom: 15
+    maxzoom: 21
+```
+
+- Each source's id (`osm`, `nsw`) is its directory in the cache and its segment in `/tiles/<id>/…`.
+- `bounds` and `minzoom` are optional; absent means everywhere and from zoom 0.
+- The licence note sits above `enabled`, as the reason someone might turn it off.
+- NSW ships `enabled: false`; Mitra turns it on where wanted.
+
+**M-27 `/config.json` sends each enabled source as the map needs it**: `id`, `name`, `url`,
+`attribution`, `bounds`, `minzoom`, `maxzoom`. The `url` is `/tiles/<id>/{z}/{x}/{y}` while the cache
+is on, and the upstream address while it is off. So a source works with or without the cache, and
+`upstream` with its `{y}/{x}` order only ever reaches Leaflet's template, which accepts any order.
+
+**M-28 On the map: the Map underneath everywhere, Imagery on top where it exists.**
+- **Underneath:** sources named `Map` are the base, drawn everywhere.
+- **On top:** every other name is drawn above the base, and only inside its bounds and zoom range.
+  Leaflet's `bounds` and `minZoom` mean nothing outside them is even requested.
+- **The switch:** one button per name other than Map. Sources that share a name switch together,
+  so NSW and, later, Victoria are one "Imagery".
+- **Where it shows:** only where the view touches one of that name's sources. Within reach but above
+  its `minzoom`, the button is greyed out, with the tooltip "Zoom in". Whether it is on stays as
+  chosen while the button comes and goes.
+- **Remembered:** the choice is kept per project with the map's other preferences.
+- **Fallback:** each source has M-22's enlarged-ancestor fallback, within its own bounds.
+
+A switch, not imagery taking over past some zoom, because a photo of a field is not always more
+useful than a map with names on it.
+
+**M-29 The cache keeps each source separately.**
+- **Files:** each source has its own directory. A tile keeps the extension its `Content-Type` gave
+  it (`.png`, `.jpg`), so it is served as what it is.
+- **Offline:** each source remembers being unreachable on its own. NSW being down does not stop
+  OpenStreetMap.
+- **Fetching:** one queue, two at a time across all sources, with views first.
+- **Refresh and eviction:** `refreshdays`, the 7-day minimum and `maxmb` apply to all sources
+  together.
+
+**M-30 The prefetch fetches a bounded source only where it applies.**
+- **Unbounded sources:** the organization, project and device layers, as M-21.
+- **Bounded sources:** only device squares inside the source's bounds, from its `minzoom` down to
+  `devicezoom`. So an organization with devices in NSW and Indonesia prefetches imagery for the
+  NSW ones only, and none of the shallow box layers.
+- `devicezoom` stays 19, even where a source goes deeper. Imagery at 20 and 21 is four and sixteen
+  times the tiles, about 5 MB per device more. Raise it in config if a Pi has the room.
+
+**Phasing** (all before the release):
+1. Server: the `mapping.yaml` restructure, `/config.json` (M-27), and the cache per source (M-29).
+2. Client: several layers, the Map / Imagery switch, and per-source fallback (M-28).
+3. Server: the prefetch per source (M-30).
+
+**Open**
+- **Q-8:** whether caching NSW imagery is redistribution. Worth an email to Spatial Services
+  before a Pi prefetches it. Until then, `enabled: false` on servers that cache.
 
 ## Firmware (Frugal-IoT repo — announce before editing)
 
@@ -409,19 +561,21 @@ own controls are icons, and its attribution stays as the provider wrote it.
 2. **Data tree + schema + mock scenario.** `location`, precedence, tests.
 3. **Read-only map.** `map.js`, header button, docked panel, clusters, tooltips, Open card.
 4. **Pick mode** on the back.
+5. **ML-1** the organization map, then **ML-4** highlighting.
+6. **ML-2** offline tiles: the server's cache, the client's fallback, then the prefetch.
 
 ## Deferred
 
 | # | Deferred | Why it waits |
 |---|---|---|
-| ML-1 | **Organization-level map** | Planned above (M-12 to M-18) |
-| ML-2 | **Offline tiles on a Pi** | Planned above (M-19 to M-25) |
+| ML-1 | **Organization-level map** | *Built 2026-11-06.* See above (M-12 to M-18) |
+| ML-2 | **Offline tiles on a Pi** | *Built 2026-11-07.* See above (M-19 to M-25). Not built: dropping viewed tiles when the disk runs short (M-25), and showing shrunken children when zooming out past what is kept, which the prefetch's organization layer makes unnecessary |
 | ML-3 | **A tile provider beyond OSM** | Only if usage outgrows OSM's policy |
 | ML-4 | **Card ↔ pin highlighting** | *Built 2026-11-06.* One event, `frugaliot:highlight {nodeId}` (null clears), either way: a card hovered by mouse or holding keyboard focus rings its pin (or the cluster hiding it); a pin hovered rings its card. Nothing on touch, where a tap already opens things |
 | ML-5 | **Shapes** — fields, beds, a greenhouse outline | A different data model (a polygon per project, not a point per device). Not at this stage |
 | ML-6 | **Values on the map** — pins coloured by a reading (soil moisture across a field) | The most interesting one, and needs a choice of reading and scale; waits for a use case |
 | ML-7 | **What `retain` in the schema means** | Look at at the end of this project. Sets from the UI are meant to be QoS 1 and not retained; readings from a node are retained. But `initialize()` copies the schema's `retain: true` over the constructor's default, so `description`, `location` and six others publish their sets retained, and it is no longer clear what the schema field is for. `location` follows `description` until then |
-| ML-8 | **Detail at site scale** — imagery for a view ~100 m across, where OpenStreetMap shows little | On an online server nothing is kept: the browser fetches a few imagery tiles as it would any map, so this is a second tile layer (map / imagery) with its own provider in config, as M-6. What it needs is a provider whose terms allow use from our page — most want an API key and attribution. OpenAerialMap has nothing for our sites. Waits for a budget, though several imagery providers have free tiers behind an API key that may cover a few farms - check their terms when this comes back |
+| ML-8 | **Detail at site scale** — imagery for a view ~100 m across, where OpenStreetMap shows little | *Built 2026-11-07 (M-26 to M-30), starting with NSW's free imagery.* Originally: on an online server nothing is kept: the browser fetches a few imagery tiles as it would any map, so this is a second tile layer (map / imagery) with its own provider in config, as M-6. What it needs is a provider whose terms allow use from our page — most want an API key and attribution. OpenAerialMap has nothing for our sites. Waits for a budget, though several imagery providers have free tiers behind an API key that may cover a few farms - check their terms when this comes back |
 
 ## Questions — resolved 2026-11-06
 

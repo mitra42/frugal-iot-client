@@ -618,17 +618,23 @@ mqtt-map:not([hidden]) {
 .fi-location__none, .fi-location__note { color: var(--fi-muted); }
 .fi-location__pick { min-height: 0; padding: 0 4px; }
 .fi-map__tip { min-width: 8em; }
-/* Above Leaflet's panes and controls (up to 1000); its zoom buttons are top left, so this goes right */
-.fi-map__reload {
+/* Above Leaflet's panes and controls (up to 1000); its zoom buttons are top left, so these go right */
+.fi-map__corner {
     position: absolute;
     top: 10px;
     right: 10px;
     z-index: 1001;
+    display: flex;
+    gap: 6px;
+}
+.fi-map__layers { display: contents; }
+.fi-map__reload, .fi-map__layer {
     background: #fff;
     border: 1px solid var(--fi-border);
     border-radius: var(--fi-radius);
     color: var(--fi-text);
 }
+.fi-map__layer[aria-pressed="true"] { background: var(--fi-text); color: #fff; }
 .fi-map__name { font-weight: 600; margin-bottom: 4px; }
 .fi-map__open { margin-top: 6px; }
 /* Pins. Status by shape as well as colour, as on the cards: live solid, stale a dashed ring,

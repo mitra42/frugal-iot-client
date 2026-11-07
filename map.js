@@ -8,7 +8,7 @@
  * Light DOM, so leaflet.css on the page reaches the map's own markup.
  */
 import { HTMLElementExtendedMinimum } from '/node_modules/html-element-extended/htmlelementextended.js';
-import { el, locationPayload, server_config, XXX } from './core.js';
+import { el, getString, locationPayload, server_config, XXX } from './core.js';
 
 const LEAFLET_SCRIPTS = [
   '/node_modules/leaflet/dist/leaflet.js',
@@ -18,11 +18,15 @@ const LEAFLET_CSS = [
   '/node_modules/leaflet/dist/leaflet.css',
   '/node_modules/leaflet.markercluster/dist/MarkerCluster.css',
 ];
-const DEFAULT_TILES = {
+const BASE_NAME = 'Map';   // sources with this name are drawn everywhere; any other is a switch over it
+const DEFAULT_SOURCES = [{
+  id: 'osm',
+  name: BASE_NAME,
   url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-  maxZoom: 19,
-};
+  minzoom: 0,
+  maxzoom: 19,
+}];
 const MAP_PREFS_VERSION = 1;
 const MAP_HEIGHT_DEFAULT = 320;
 const MAP_HEIGHT_MIN = 120;
@@ -31,11 +35,70 @@ const SYNC_DELAY_MS = 200;     // a node reports in a burst; draw once at the en
 // Worse is higher. A cluster shows its worst member, so an offline device cannot hide in a green "5".
 const STATUS_RANK = { live: 0, stale: 1, never: 2, offline: 3 };
 
-// Where tiles come from: OpenStreetMap unless config.json says otherwise - an offline Pi serving its
-// own, say (M-6). Leaflet only ever sees this, so a change of provider is a config change.
-function mapTiles() {
-  const configured = (server_config && server_config.map && server_config.map.tiles) || {};
-  return { ...DEFAULT_TILES, ...configured };
+// Where tiles come from, as config.json lists them (M-6, M-27): OpenStreetMap unless it says
+// otherwise. Leaflet only ever sees this, so a change of provider is a config change.
+function mapSources() {
+  const configured = server_config && server_config.mapping && server_config.mapping.sources;
+  const sources = (Array.isArray(configured) && configured.length) ? configured : DEFAULT_SOURCES;
+  return sources.map((s) => ({ minzoom: 0, maxzoom: 19, ...s }));
+}
+// The switches the map offers - one per name, so sources sharing a name switch together (M-28)
+function mapLayerNames(sources) {
+  return [...new Set(sources.filter((s) => s.name !== BASE_NAME).map((s) => s.name))];
+}
+// Whether a switch is worth showing for this view: 'hidden' where none of its sources reaches,
+// 'zoom' where one does but only deeper, 'ready' where pressing it shows something
+function layerAvailability(sources, name, view, zoom) {
+  const reaching = sources.filter((s) => (s.name === name) && (!s.bounds
+    || ((view.south <= s.bounds[1][0]) && (view.north >= s.bounds[0][0])
+      && (view.west <= s.bounds[1][1]) && (view.east >= s.bounds[0][1]))));
+  if (!reaching.length) return 'hidden';
+  return reaching.some((s) => zoom >= s.minzoom) ? 'ready' : 'zoom';
+}
+
+const FALLBACK_DEPTH = 8;   // 256 times enlarged; anything blurrier than that is no help
+
+// The tile `depth` levels up that covers this one, and which part of it this one is (M-22)
+function ancestorTile({ x, y, z }, depth) {
+  const scale = 2 ** depth;
+  const ax = Math.floor(x / scale);
+  const ay = Math.floor(y / scale);
+  return { x: ax, y: ay, z: z - depth, scale, dx: x - (ax * scale), dy: y - (ay * scale) };
+}
+
+// A tile not kept shows its parent's quarter enlarged, then the grandparent's, and so on - so past
+// what an offline Pi holds the map is blurry rather than blank. maxNativeZoom cannot do it: it is one
+// depth for the whole map, and what is kept is deep around devices and shallow between them.
+// Built once Leaflet has loaded, since that is a classic script.
+function fallbackTileLayer(L) {
+  return L.TileLayer.extend({
+    createTile(coords, done) {
+      const tile = document.createElement('div');
+      tile.style.overflow = 'hidden';
+      this.loadAncestor(tile, coords, 0, done);
+      return tile;
+    },
+    loadAncestor(tile, coords, depth, done) {
+      const a = ancestorTile(coords, depth);
+      const size = this.getTileSize();
+      const img = document.createElement('img');
+      img.alt = '';
+      img.setAttribute('role', 'presentation');
+      // leaflet.css caps an img at its container, which would undo the enlargement
+      Object.assign(img.style, {
+        position: 'absolute', maxWidth: 'none', maxHeight: 'none',
+        width: `${size.x * a.scale}px`, height: `${size.y * a.scale}px`,
+        left: `${-a.dx * size.x}px`, top: `${-a.dy * size.y}px`,
+      });
+      img.onload = () => done(null, tile);
+      img.onerror = () => (((depth < FALLBACK_DEPTH) && (a.z > (this.options.minZoom || 0)))
+        ? this.loadAncestor(tile, coords, depth + 1, done)
+        : done(new Error('no tile'), tile));
+      // getTileUrl would use the map's zoom, not the ancestor's
+      img.src = L.Util.template(this._url, L.Util.extend({ r: '', s: this._getSubdomain(a) }, this.options, { x: a.x, y: a.y, z: a.z }));
+      tile.replaceChildren(img);
+    },
+  });
 }
 
 function worstStatus(statuses) {
@@ -63,6 +126,7 @@ function mapPrefsLoad(projectMt) {
     if (parsed && (parsed.v === MAP_PREFS_VERSION)) {
       prefs.open = !!parsed.open;
       if (Number.isFinite(parsed.height)) prefs.height = Math.max(MAP_HEIGHT_MIN, parsed.height);
+      if (parsed.layers && (typeof parsed.layers === 'object')) prefs.layers = parsed.layers;
     }
   } catch (e) { /* storage blocked or garbled: the defaults will do */ }
   return prefs;
@@ -122,6 +186,7 @@ class MqttMap extends HTMLElementExtendedMinimum {
     this.onPickClick = this.onPickClick.bind(this);
     this.onKeyDown = this.onKeyDown.bind(this);
     this.onHighlight = this.onHighlight.bind(this);
+    this.onMapMoved = this.onMapMoved.bind(this);
   }
   connectedCallback() {
     super.connectedCallback();
@@ -163,7 +228,10 @@ class MqttMap extends HTMLElementExtendedMinimum {
     // Organization level only: its status is as of page load, so this is how it catches up (M-15)
     e.reload = el('button', { class: 'fi-btn fi-map__reload', type: 'button', title: 'Refresh', textContent: '↻', hidden: true,
       onclick: () => this.reload() });
-    return [e.pickBar, e.canvas = el('div', { class: 'fi-map__canvas' }), e.reload, handle];
+    // Imagery and the like - filled once the map is made, since that is when config is certain to be in
+    e.layers = el('span', { class: 'fi-map__layers' });
+    return [e.pickBar, e.canvas = el('div', { class: 'fi-map__canvas' }),
+      el('div', { class: 'fi-map__corner' }, [e.layers, e.reload]), handle];
   }
 
   // A project, or an organization (MAPPING_PLAN.md M-17) - each starts from its own remembered
@@ -178,7 +246,23 @@ class MqttMap extends HTMLElementExtendedMinimum {
     this.state.fitted = false;
     this.state.prefs = projectMt ? mapPrefsLoad(projectMt) : { open: false, height: MAP_HEIGHT_DEFAULT };
     this.style.height = `${this.state.prefs.height}px`;
+    this.applyLayers();
     if (projectMt && this.state.prefs.open) this.open(); else this.hidden = true;
+  }
+  // Each switchable layer on or off as this project last had it - off unless chosen
+  applyLayers() {
+    const on = this.state.prefs.layers || {};
+    Object.entries(this.state.overlays || {}).forEach(([name, group]) => {
+      if (on[name]) group.addTo(this.state.map); else group.remove();
+    });
+    this.state.elements.layers.querySelectorAll('.fi-map__layer').forEach((b) =>
+      b.setAttribute('aria-pressed', String(!!on[b.dataset.layer])));
+  }
+  toggleLayer(name) {
+    const layers = { ...(this.state.prefs.layers || {}) };
+    layers[name] = !layers[name];
+    this.savePrefs({ layers });
+    this.applyLayers();
   }
   toggle() { if (this.isOpen) this.close(); else this.open(); }
   open() {
@@ -201,6 +285,47 @@ class MqttMap extends HTMLElementExtendedMinimum {
     mapPrefsSave(this.projectMt, this.state.prefs);
   }
 
+  // The map underneath, and a group per switchable name (M-28). The map is enlarged past its own
+  // depth, so zoomed into imagery that goes deeper there is still a map around its edges.
+  addSources(L, map, sources) {
+    const TileLayer = fallbackTileLayer(L);
+    const deepest = Math.max(...sources.map((s) => s.maxzoom));
+    this.state.overlays = {};
+    sources.forEach((s) => {
+      const base = s.name === BASE_NAME;
+      const layer = new TileLayer(s.url, {
+        attribution: s.attribution,
+        minZoom: s.minzoom,
+        ...(base ? { maxNativeZoom: s.maxzoom, maxZoom: deepest } : { maxZoom: s.maxzoom }),
+        ...(s.bounds ? { bounds: L.latLngBounds(s.bounds) } : {}),
+      });
+      if (base) layer.addTo(map);
+      else (this.state.overlays[s.name] = this.state.overlays[s.name] || L.layerGroup()).addLayer(layer);
+    });
+    this.state.sources = sources;
+    this.state.elements.layers.replaceChildren(...mapLayerNames(sources).map((name) => {
+      const b = el('button', { class: 'fi-btn fi-map__layer', type: 'button', textContent: name, onclick: () => this.toggleLayer(name) });
+      b.dataset.layer = name;
+      return b;
+    }));
+    map.on('moveend', this.onMapMoved);
+    this.applyLayers();
+    this.onMapMoved();
+  }
+  // A switch only where it would show something; a choice made stays made as it comes and goes
+  onMapMoved() {
+    const map = this.state.map;
+    if (!map || !this.state.sources) return;
+    const b = map.getBounds();
+    const view = { south: b.getSouth(), west: b.getWest(), north: b.getNorth(), east: b.getEast() };
+    this.state.elements.layers.querySelectorAll('.fi-map__layer').forEach((button) => {
+      const available = layerAvailability(this.state.sources, button.dataset.layer, view, map.getZoom());
+      button.hidden = (available === 'hidden');
+      button.disabled = (available === 'zoom');
+      button.title = (available === 'zoom') ? getString('Zoom in') : '';
+    });
+  }
+
   ensureMap(cb) {
     if (this.state.map) return cb(null);
     leafletLoad((err) => {
@@ -211,9 +336,8 @@ class MqttMap extends HTMLElementExtendedMinimum {
       }
       if (this.state.map) return cb(null);  // two opens raced the load
       const L = window.L;
-      const tiles = mapTiles();
       const map = this.state.map = L.map(this.state.elements.canvas, { worldCopyJump: true });
-      L.tileLayer(tiles.url, { attribution: tiles.attribution, maxZoom: tiles.maxZoom }).addTo(map);
+      this.addSources(L, map, mapSources());
       this.state.cluster = L.markerClusterGroup({
         maxClusterRadius: 40,
         showCoverageOnHover: false,
@@ -486,4 +610,4 @@ class MqttMap extends HTMLElementExtendedMinimum {
 }
 customElements.define('mqtt-map', MqttMap);
 
-export { MqttMap, canLocate, mapPins, mapPrefsLoad, mapPrefsSave, mapTiles, worstStatus };
+export { MqttMap, ancestorTile, canLocate, fallbackTileLayer, layerAvailability, mapLayerNames, mapPins, mapPrefsLoad, mapPrefsSave, mapSources, worstStatus };

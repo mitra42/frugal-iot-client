@@ -45,16 +45,212 @@ describe('pins', () => {
 });
 
 describe('tiles', () => {
+  const NSW = { id: 'nsw', name: 'Imagery', url: '/tiles/nsw/{z}/{x}/{y}', attribution: 'NSW',
+                bounds: [[-38.4, 138.4], [-26.5, 159.3]], minzoom: 15, maxzoom: 21 };
+  const OSM = { id: 'osm', name: 'Map', url: '/tiles/osm/{z}/{x}/{y}', attribution: 'OSM', maxzoom: 19 };
+
   test('OpenStreetMap unless config says otherwise', () => {
-    assert.match(map.mapTiles().url, /tile\.openstreetmap\.org/);
-    assert.match(map.mapTiles().attribution, /OpenStreetMap/);
+    const [osm, ...rest] = map.mapSources();
+    assert.match(osm.url, /tile\.openstreetmap\.org/);
+    assert.match(osm.attribution, /OpenStreetMap/);
+    assert.equal(osm.name, 'Map');
+    assert.deepEqual(rest, []);
   });
 
-  test('config.json can point at other tiles - an offline Pi serving its own', () => {
-    core.configSet({ ...config, map: { tiles: { url: '/tiles/{z}/{x}/{y}.png', attribution: 'local' } } });
-    assert.equal(map.mapTiles().url, '/tiles/{z}/{x}/{y}.png');
-    assert.equal(map.mapTiles().maxZoom, 19, 'what it does not say keeps its default');
+  test('config.json can list other sources - an offline Pi serving its own, or imagery', () => {
+    core.configSet({ ...config, mapping: { sources: [{ id: 'osm', name: 'Map', url: '/tiles/osm/{z}/{x}/{y}' }, NSW] } });
+    const sources = map.mapSources();
+    assert.deepEqual(sources.map((s) => s.url), ['/tiles/osm/{z}/{x}/{y}', '/tiles/nsw/{z}/{x}/{y}']);
+    assert.equal(sources[0].maxzoom, 19, 'what it does not say keeps its default');
     core.configSet(config);
+  });
+
+  test('one switch per name, so sources sharing a name switch together', () => {
+    assert.deepEqual(map.mapLayerNames([OSM]), [], 'nothing to switch to');
+    assert.deepEqual(map.mapLayerNames([OSM, NSW, { ...NSW, id: 'vic' }]), ['Imagery']);
+  });
+
+  // Enough of Leaflet to see which layers end up on the map, and with what options
+  function fakeLeaflet() {
+    const onMap = new Set();
+    const L = {
+      Util: { extend: Object.assign, template: (u) => u },
+      latLngBounds: (b) => ({ bounds: b }),
+      TileLayer: { extend: (proto) => Object.assign(function Layer(url, options) { this._url = url; this.options = options; },
+        { prototype: { ...proto, addTo(m) { onMap.add(this); return this; } } }) },
+      layerGroup: () => ({ layers: [], addLayer(l) { this.layers.push(l); return this; },
+        addTo() { onMap.add(this); return this; }, remove() { onMap.delete(this); return this; } }),
+    };
+    return { L, onMap };
+  }
+  // Views as Leaflet reports them: the farm in NSW, close and far, and Jakarta
+  const LOTUS = { south: -33.9, west: 151.2, north: -33.8, east: 151.3 };
+  const JAKARTA = { south: -6.3, west: 106.7, north: -6.1, east: 106.9 };
+  function fakeMap(view, zoom) {
+    const handlers = {};
+    return {
+      view, zoom,
+      on(ev, fn) { handlers[ev] = fn; },
+      getBounds() { const v = this.view; return { getSouth: () => v.south, getWest: () => v.west, getNorth: () => v.north, getEast: () => v.east }; },
+      getZoom() { return this.zoom; },
+      moveTo(view, zoom) { this.view = view; this.zoom = zoom; handlers.moveend(); },
+    };
+  }
+  const withSources = (sources, view = LOTUS, zoom = 16) => {
+    const { projectMt } = mock.runScenario('located-devices');
+    const mapEl = document.createElement('mqtt-map');
+    document.body.append(mapEl);
+    mapEl.setProject(projectMt);
+    const { L, onMap } = fakeLeaflet();
+    mapEl.state.map = fakeMap(view, zoom);
+    mapEl.addSources(L, mapEl.state.map, sources);
+    return { mapEl, projectMt, onMap, button: mapEl.querySelector('.fi-map__layer') };
+  };
+
+  test('the map underneath, enlarged past its depth where imagery goes deeper', () => {
+    const { mapEl, onMap, button } = withSources([OSM, NSW]);
+    const [base] = [...onMap];
+    assert.equal(onMap.size, 1, 'imagery is off until chosen');
+    assert.equal(base._url, OSM.url);
+    assert.deepEqual([base.options.maxNativeZoom, base.options.maxZoom], [19, 21]);
+    assert.equal(button.textContent, 'Imagery');
+    assert.equal(button.getAttribute('aria-pressed'), 'false');
+    mapEl.remove();
+  });
+
+  test('imagery only inside its bounds and zooms, switched on and off, and remembered', () => {
+    const { mapEl, projectMt, onMap, button } = withSources([OSM, NSW]);
+    button.click();
+    const group = [...onMap].find((l) => l.layers);
+    assert.ok(group, 'on the map');
+    assert.deepEqual(group.layers[0].options, { attribution: 'NSW', minZoom: 15, maxZoom: 21, bounds: { bounds: NSW.bounds } });
+    assert.equal(button.getAttribute('aria-pressed'), 'true');
+    assert.deepEqual(map.mapPrefsLoad(projectMt).layers, { Imagery: true });
+    button.click();
+    assert.equal(onMap.has(group), false);
+    assert.deepEqual(map.mapPrefsLoad(projectMt).layers, { Imagery: false });
+    mapEl.remove();
+  });
+
+  test('a project opens with the layers it last had', () => {
+    const { projectMt } = mock.runScenario('located-devices');
+    map.mapPrefsSave(projectMt, { open: false, height: 320, layers: { Imagery: true } });
+    const { mapEl, onMap, button } = withSources([OSM, NSW]);
+    assert.ok([...onMap].some((l) => l.layers));
+    assert.equal(button.getAttribute('aria-pressed'), 'true');
+    mapEl.remove();
+  });
+
+  test('moving to another project takes up that project\'s choice', () => {
+    const { mapEl, onMap, button } = withSources([OSM, NSW]);
+    button.click();
+    const { organizationMt } = mock.runOrganization('located-organization');
+    mapEl.setProject(organizationMt);
+    assert.equal([...onMap].some((l) => l.layers), false, 'the organization map has not chosen imagery');
+    assert.equal(button.getAttribute('aria-pressed'), 'false');
+    mapEl.remove();
+    core.mqtt_unsubscribe_organization('dev');
+  });
+
+  test('the switch only where it would show something', () => {
+    assert.equal(map.layerAvailability([OSM, NSW], 'Imagery', JAKARTA, 16), 'hidden');
+    assert.equal(map.layerAvailability([OSM, NSW], 'Imagery', LOTUS, 12), 'zoom');
+    assert.equal(map.layerAvailability([OSM, NSW], 'Imagery', LOTUS, 15), 'ready');
+    const world = { south: -80, west: -180, north: 80, east: 180 };
+    assert.equal(map.layerAvailability([OSM, NSW], 'Imagery', world, 2), 'zoom', 'a view that takes in NSW');
+    assert.equal(map.layerAvailability([OSM, { ...NSW, bounds: undefined }], 'Imagery', JAKARTA, 16), 'ready');
+  });
+
+  test('and follows the map as it moves - the choice made stays made', () => {
+    const { mapEl, button } = withSources([OSM, NSW], JAKARTA, 16);
+    assert.equal(button.hidden, true, 'over Indonesia');
+    mapEl.state.map.moveTo(LOTUS, 12);
+    assert.deepEqual([button.hidden, button.disabled, button.title], [false, true, 'Zoom in']);
+    mapEl.state.map.moveTo(LOTUS, 16);
+    assert.deepEqual([button.hidden, button.disabled, button.title], [false, false, '']);
+    button.click();
+    mapEl.state.map.moveTo(JAKARTA, 16);
+    assert.equal(button.hidden, true);
+    mapEl.state.map.moveTo(LOTUS, 16);
+    assert.equal(button.getAttribute('aria-pressed'), 'true', 'still on when it comes back');
+    mapEl.remove();
+  });
+
+  test('no switch when there is only the map', () => {
+    const { mapEl } = withSources([OSM]);
+    assert.equal(mapEl.querySelector('.fi-map__layer'), null);
+    mapEl.remove();
+  });
+});
+
+describe('past what is kept, an ancestor enlarged', () => {
+  test('the parent, the grandparent, and which part of each', () => {
+    assert.deepEqual(map.ancestorTile({ x: 13001, y: 8451, z: 15 }, 1), { x: 6500, y: 4225, z: 14, scale: 2, dx: 1, dy: 1 });
+    assert.deepEqual(map.ancestorTile({ x: 13001, y: 8451, z: 15 }, 2), { x: 3250, y: 2112, z: 13, scale: 4, dx: 1, dy: 3 });
+    assert.deepEqual(map.ancestorTile({ x: 5, y: 9, z: 4 }, 0), { x: 5, y: 9, z: 4, scale: 1, dx: 0, dy: 0 });
+  });
+
+  // Enough of Leaflet for the layer: extend, the URL template, and what TileLayer would supply
+  const L = {
+    Util: {
+      extend: Object.assign,
+      template: (url, d) => url.replace(/\{(\w+)\}/g, (m, k) => d[k]),
+    },
+    TileLayer: { extend: (proto) => Object.assign(function Layer(url, options) { this._url = url; this.options = options; },
+      { prototype: { ...proto, getTileSize: () => ({ x: 256, y: 256 }), _getSubdomain: () => '' } }) },
+  };
+  const layer = () => { const Layer = map.fallbackTileLayer(L); return new Layer('/tiles/osm/{z}/{x}/{y}.png', {}); };
+  const fail = (tile) => tile.querySelector('img').dispatchEvent(new Event('error'));
+
+  test('a kept tile is itself, unscaled', () => {
+    let result;
+    const tile = layer().createTile({ x: 13001, y: 8451, z: 15 }, (err, t) => { result = { err, t }; });
+    const img = tile.querySelector('img');
+    assert.equal(img.getAttribute('src'), '/tiles/osm/15/13001/8451.png');
+    assert.equal(img.style.width, '256px');
+    img.dispatchEvent(new Event('load'));
+    assert.equal(result.err, null);
+    assert.equal(result.t, tile);
+  });
+
+  test('a missing one becomes its parent\'s quarter, twice the size, then the grandparent\'s', () => {
+    const tile = layer().createTile({ x: 13001, y: 8451, z: 15 }, () => {});
+    fail(tile);
+    let img = tile.querySelector('img');
+    assert.equal(img.getAttribute('src'), '/tiles/osm/14/6500/4225.png');
+    assert.deepEqual([img.style.width, img.style.left, img.style.top], ['512px', '-256px', '-256px']);
+    fail(tile);
+    img = tile.querySelector('img');
+    assert.equal(img.getAttribute('src'), '/tiles/osm/13/3250/2112.png');
+    assert.deepEqual([img.style.width, img.style.left, img.style.top], ['1024px', '-256px', '-768px']);
+    assert.equal(tile.querySelectorAll('img').length, 1, 'one image at a time');
+    assert.equal(tile.style.overflow, 'hidden', 'only this tile\'s part shows');
+  });
+
+  test('and never below the source\'s own minzoom, where it has nothing', () => {
+    let err;
+    const Layer = map.fallbackTileLayer(L);
+    const tile = new Layer('/tiles/nsw/{z}/{x}/{y}', { minZoom: 15 }).createTile({ x: 60000, y: 39000, z: 16 }, (e) => { err = e; });
+    fail(tile);
+    assert.match(tile.querySelector('img').getAttribute('src'), /^\/tiles\/nsw\/15\//);
+    fail(tile);
+    assert.ok(err);
+  });
+
+  test('and gives up - at the top of the world, or once it would be too blurred to help', () => {
+    let err;
+    const top = layer().createTile({ x: 1, y: 0, z: 1 }, (e) => { err = e; });
+    fail(top);
+    assert.equal(top.querySelector('img').getAttribute('src'), '/tiles/osm/0/0/0.png');
+    fail(top);
+    assert.ok(err, 'nothing above zoom 0');
+    err = undefined;
+    const deep = layer().createTile({ x: 13001, y: 8451, z: 15 }, (e) => { err = e; });
+    for (let i = 0; i < 8; i++) fail(deep);
+    assert.equal(deep.querySelector('img').getAttribute('src'), '/tiles/osm/7/50/33.png');
+    assert.equal(err, undefined);
+    fail(deep);
+    assert.ok(err);
   });
 });
 
