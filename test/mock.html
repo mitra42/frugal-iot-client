@@ -56,7 +56,7 @@
 <script type="module">
   import { scenarios, loadConfig, runOrganization, runScenario, messagesOf } from './mock.js';
   import { snapshot } from './serialize.js';
-  import '../cards.js';
+  import '../dashboard.js';   // what index.html loads - cards.js alone leaves a card's widgets undefined
   import { el, mqtt_deliver, setMqttClient } from '../core.js';
 
   // No broker, so act as one: a publish comes back to us as the broker would send it. No node

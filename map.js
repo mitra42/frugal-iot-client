@@ -48,12 +48,30 @@ function mapLayerNames(sources) {
 }
 // Whether a switch is worth showing for this view: 'hidden' where none of its sources reaches,
 // 'zoom' where one does but only deeper, 'ready' where pressing it shows something
-function layerAvailability(sources, name, view, zoom) {
-  const reaching = sources.filter((s) => (s.name === name) && (!s.bounds
+function reachingSources(sources, name, view) {
+  return sources.filter((s) => (s.name === name) && (!s.bounds
     || ((view.south <= s.bounds[1][0]) && (view.north >= s.bounds[0][0])
       && (view.west <= s.bounds[1][1]) && (view.east >= s.bounds[0][1]))));
+}
+function layerAvailability(sources, name, view, zoom) {
+  const reaching = reachingSources(sources, name, view);
   if (!reaching.length) return 'hidden';
   return reaching.some((s) => zoom >= s.minzoom) ? 'ready' : 'zoom';
+}
+// Where pressing a switch that is not yet deep enough takes the map, at the shallowest zoom it has
+// anything at: the device inside it nearest the centre of the view. Bounds are a rectangle, and
+// mostly not land the source covers, so failing a device, the middle of them.
+function layerZoomTarget(sources, name, view, center, devices = []) {
+  const [s] = reachingSources(sources, name, view).sort((a, b) => a.minzoom - b.minzoom);
+  if (!s) return null;
+  const inside = (d) => !s.bounds || ((d.lat >= s.bounds[0][0]) && (d.lat <= s.bounds[1][0])
+    && (d.lon >= s.bounds[0][1]) && (d.lon <= s.bounds[1][1]));
+  const distance = (d) => ((d.lat - center.lat) ** 2) + ((d.lon - center.lon) ** 2);
+  const [nearest] = devices.filter(inside).sort((a, b) => distance(a) - distance(b));
+  if (nearest) return { lat: nearest.lat, lon: nearest.lon, zoom: s.minzoom };
+  return s.bounds
+    ? { lat: (s.bounds[0][0] + s.bounds[1][0]) / 2, lon: (s.bounds[0][1] + s.bounds[1][1]) / 2, zoom: s.minzoom }
+    : { lat: center.lat, lon: center.lon, zoom: s.minzoom };
 }
 
 const FALLBACK_DEPTH = 8;   // 256 times enlarged; anything blurrier than that is no help
@@ -187,12 +205,14 @@ class MqttMap extends HTMLElementExtendedMinimum {
     this.onKeyDown = this.onKeyDown.bind(this);
     this.onHighlight = this.onHighlight.bind(this);
     this.onMapMoved = this.onMapMoved.bind(this);
+    this.onCardClick = this.onCardClick.bind(this);
   }
   connectedCallback() {
     super.connectedCallback();
     document.addEventListener('frugaliot:groupchanged', this.onGroupChanged);
     document.addEventListener('frugaliot:topicschanged', this.onTopicsChanged);
     document.addEventListener('frugaliot:highlight', this.onHighlight);
+    document.addEventListener('frugaliot:cardclick', this.onCardClick);
     this.state.tick = setInterval(() => this.scheduleSync(), STATUS_TICK_MS);
     if (this.state.tick && (typeof this.state.tick.unref === 'function')) this.state.tick.unref();
     this.addEventListener('keydown', this.onKeyDown);
@@ -201,6 +221,7 @@ class MqttMap extends HTMLElementExtendedMinimum {
     document.removeEventListener('frugaliot:groupchanged', this.onGroupChanged);
     document.removeEventListener('frugaliot:topicschanged', this.onTopicsChanged);
     document.removeEventListener('frugaliot:highlight', this.onHighlight);
+    document.removeEventListener('frugaliot:cardclick', this.onCardClick);
     clearInterval(this.state.tick);
     this.removeEventListener('keydown', this.onKeyDown);
   }
@@ -260,9 +281,23 @@ class MqttMap extends HTMLElementExtendedMinimum {
   }
   toggleLayer(name) {
     const layers = { ...(this.state.prefs.layers || {}) };
-    layers[name] = !layers[name];
+    const button = this.state.elements.layers.querySelector(`.fi-map__layer[data-layer="${CSS.escape(name)}"]`);
+    // Not deep enough to show anything yet: pressing it means "show me", so turn it on and go there
+    const toZoom = button && (button.dataset.available === 'zoom');
+    layers[name] = toZoom || !layers[name];
     this.savePrefs({ layers });
     this.applyLayers();
+    if (toZoom) {
+      const map = this.state.map;
+      const c = map.getCenter();
+      const devices = (this.mt ? this.mt.locatedNodes : []).map((n) => n.location);
+      const t = layerZoomTarget(this.state.sources, name, this.viewOf(map), { lat: c.lat, lon: c.lng }, devices);
+      if (t) map.setView([t.lat, t.lon], t.zoom);
+    }
+  }
+  viewOf(map) {
+    const b = map.getBounds();
+    return { south: b.getSouth(), west: b.getWest(), north: b.getNorth(), east: b.getEast() };
   }
   toggle() { if (this.isOpen) this.close(); else this.open(); }
   open() {
@@ -310,18 +345,17 @@ class MqttMap extends HTMLElementExtendedMinimum {
     }));
     map.on('moveend', this.onMapMoved);
     this.applyLayers();
-    this.onMapMoved();
+    map.whenReady(this.onMapMoved);   // the view is set after this, when the map is fitted to its devices
   }
   // A switch only where it would show something; a choice made stays made as it comes and goes
   onMapMoved() {
     const map = this.state.map;
     if (!map || !this.state.sources) return;
-    const b = map.getBounds();
-    const view = { south: b.getSouth(), west: b.getWest(), north: b.getNorth(), east: b.getEast() };
+    const view = this.viewOf(map);
     this.state.elements.layers.querySelectorAll('.fi-map__layer').forEach((button) => {
       const available = layerAvailability(this.state.sources, button.dataset.layer, view, map.getZoom());
+      button.dataset.available = available;
       button.hidden = (available === 'hidden');
-      button.disabled = (available === 'zoom');
       button.title = (available === 'zoom') ? getString('Zoom in') : '';
     });
   }
@@ -427,6 +461,12 @@ class MqttMap extends HTMLElementExtendedMinimum {
     if (!iconEl) return;  // off the edge of the view
     iconEl.classList.add('fi-pin-icon--highlight');
     this.state.highlighted = iconEl;
+  }
+  // A card clicked: its device to the middle of the map, at the zoom the user chose
+  onCardClick(e) {
+    const marker = e.detail && this.state.markers.get(e.detail.nodeId);
+    if (!marker || !this.isOpen || !this.state.map) return;
+    this.state.map.panTo(marker.getLatLng());
   }
   // Once per project: after that the view is the user's, and a reading arriving must not move it
   fit() {
@@ -610,4 +650,4 @@ class MqttMap extends HTMLElementExtendedMinimum {
 }
 customElements.define('mqtt-map', MqttMap);
 
-export { MqttMap, ancestorTile, canLocate, fallbackTileLayer, layerAvailability, mapLayerNames, mapPins, mapPrefsLoad, mapPrefsSave, mapSources, worstStatus };
+export { MqttMap, ancestorTile, canLocate, fallbackTileLayer, layerAvailability, layerZoomTarget, mapLayerNames, mapPins, mapPrefsLoad, mapPrefsSave, mapSources, worstStatus };

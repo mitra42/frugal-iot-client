@@ -88,12 +88,21 @@ describe('tiles', () => {
   const JAKARTA = { south: -6.3, west: 106.7, north: -6.1, east: 106.9 };
   function fakeMap(view, zoom) {
     const handlers = {};
+    const ready = [];
     return {
       view, zoom,
       on(ev, fn) { handlers[ev] = fn; },
-      getBounds() { const v = this.view; return { getSouth: () => v.south, getWest: () => v.west, getNorth: () => v.north, getEast: () => v.east }; },
+      // As Leaflet: getBounds throws until a view is set, and whenReady waits for one
+      whenReady(fn) { if (this.view) fn(); else ready.push(fn); },
+      getBounds() {
+        const v = this.view;
+        if (!v) throw new Error('Set map center and zoom first.');
+        return { getSouth: () => v.south, getWest: () => v.west, getNorth: () => v.north, getEast: () => v.east };
+      },
       getZoom() { return this.zoom; },
-      moveTo(view, zoom) { this.view = view; this.zoom = zoom; handlers.moveend(); },
+      getCenter() { const v = this.view; return { lat: (v.south + v.north) / 2, lng: (v.west + v.east) / 2 }; },
+      setView([lat, lon], zoom) { this.moveTo({ south: lat - 0.01, west: lon - 0.01, north: lat + 0.01, east: lon + 0.01 }, zoom); },
+      moveTo(view, zoom) { this.view = view; this.zoom = zoom; ready.splice(0).forEach((fn) => fn()); handlers.moveend(); },
     };
   }
   const withSources = (sources, view = LOTUS, zoom = 16) => {
@@ -161,19 +170,62 @@ describe('tiles', () => {
     assert.equal(map.layerAvailability([OSM, { ...NSW, bounds: undefined }], 'Imagery', JAKARTA, 16), 'ready');
   });
 
+  test('a map not yet given a view waits for one', () => {
+    const { mapEl, button } = withSources([OSM, NSW], null, null);
+    mapEl.state.map.moveTo(JAKARTA, 16);
+    assert.equal(button.hidden, true);
+    mapEl.remove();
+  });
+
   test('and follows the map as it moves - the choice made stays made', () => {
     const { mapEl, button } = withSources([OSM, NSW], JAKARTA, 16);
     assert.equal(button.hidden, true, 'over Indonesia');
     mapEl.state.map.moveTo(LOTUS, 12);
-    assert.deepEqual([button.hidden, button.disabled, button.title], [false, true, 'Zoom in']);
+    assert.deepEqual([button.hidden, button.dataset.available, button.title], [false, 'zoom', 'Zoom in']);
     mapEl.state.map.moveTo(LOTUS, 16);
-    assert.deepEqual([button.hidden, button.disabled, button.title], [false, false, '']);
+    assert.deepEqual([button.hidden, button.dataset.available, button.title], [false, 'ready', '']);
     button.click();
     mapEl.state.map.moveTo(JAKARTA, 16);
     assert.equal(button.hidden, true);
     mapEl.state.map.moveTo(LOTUS, 16);
     assert.equal(button.getAttribute('aria-pressed'), 'true', 'still on when it comes back');
     mapEl.remove();
+  });
+
+  test('pressed before it is deep enough, it turns on and takes the map there', () => {
+    const { mapEl, projectMt, button } = withSources([OSM, NSW], LOTUS, 12);
+    button.click();
+    assert.equal(mapEl.state.map.zoom, 15);
+    assert.equal(button.getAttribute('aria-pressed'), 'true');
+    assert.equal(button.dataset.available, 'ready');
+    assert.deepEqual(map.mapPrefsLoad(projectMt).layers, { Imagery: true });
+    button.click();
+    assert.equal(button.getAttribute('aria-pressed'), 'false', 'and once there, an ordinary switch');
+    assert.equal(mapEl.state.map.zoom, 15);
+    mapEl.remove();
+  });
+
+  test('already on but zoomed out past it, pressing it takes the map back in rather than off', () => {
+    const { mapEl, button } = withSources([OSM, NSW], LOTUS, 16);
+    button.click();
+    mapEl.state.map.moveTo(LOTUS, 10);
+    button.click();
+    assert.equal(button.getAttribute('aria-pressed'), 'true');
+    assert.equal(mapEl.state.map.zoom, 15);
+    mapEl.remove();
+  });
+
+  test('to the device inside the imagery nearest the view\'s centre', () => {
+    const view = { south: -40, west: 130, north: -20, east: 155 };
+    const devices = [{ lat: -6.2, lon: 106.8 }, { lat: -33.87, lon: 151.21 }, { lat: -30.5, lon: 151.6 }];
+    assert.deepEqual(map.layerZoomTarget([OSM, NSW], 'Imagery', view, { lat: -30, lon: 140 }, devices),
+      { lat: -30.5, lon: 151.6, zoom: 15 }, 'Jakarta is nearer, but has no imagery');
+  });
+
+  test('and with no device inside it, the middle of its bounds rather than an edge', () => {
+    const view = { south: -40, west: 130, north: -20, east: 145 };
+    const t = map.layerZoomTarget([OSM, NSW], 'Imagery', view, { lat: -30, lon: 137 }, [{ lat: -6.2, lon: 106.8 }]);
+    assert.deepEqual([t.lat.toFixed(6), t.lon.toFixed(6), t.zoom], ['-32.450000', '148.850000', 15]);
   });
 
   test('no switch when there is only the map', () => {
@@ -583,6 +635,24 @@ describe('card and pin light each other', () => {
     light(null);
     assert.ok(!clusterEl.classList.contains('fi-pin-icon--highlight'));
     mapEl.state.cluster = null;
+    mapEl.state.markers.clear();
+    pageEl.remove();
+  });
+
+  test('clicking a card brings its device to the middle of the map, at the same zoom', () => {
+    const { pageEl, mapEl, card } = page();
+    mapEl.hidden = false;
+    const panned = [];
+    mapEl.state.map = { panTo: (latlng) => panned.push(latlng) };   // panTo keeps the zoom
+    mapEl.state.markers.set('esp8266-pump', { getLatLng: () => ({ lat: -6.2, lng: 106.8 }) });
+    card('esp8266-pump').querySelector('.fi-card').click();
+    assert.deepEqual(panned, [{ lat: -6.2, lng: 106.8 }]);
+    card('esp8266-north').querySelector('.fi-card').click();
+    assert.equal(panned.length, 1, 'a device with no pin leaves the map alone');
+    mapEl.hidden = true;
+    card('esp8266-pump').querySelector('.fi-card').click();
+    assert.equal(panned.length, 1, 'and so does a closed map');
+    mapEl.state.map = null;
     mapEl.state.markers.clear();
     pageEl.remove();
   });

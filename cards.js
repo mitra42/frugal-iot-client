@@ -596,7 +596,11 @@ class MqttDeviceCard extends HTMLElementExtendedMinimum {
     if (this.state.movable && !this.hasAttribute('tabindex')) this.setAttribute('tabindex', '0');
     return this.state.elements.card = el('div', {
       class: `fi-card fi-card--${this.mode} fi-status-${this.nodeMt.status}`,
-      onclick: () => { if (this.mode === 'summary') this.mode = 'front'; }, // only the summary is one target
+      onclick: () => {
+        if (this.mode === 'summary') this.mode = 'front'; // only the summary is one target
+        // The map brings this device into view (MAPPING_PLAN.md ML-4)
+        document.dispatchEvent(new CustomEvent('frugaliot:cardclick', { detail: { nodeId: this.mt.nodeId } }));
+      },
     }, body);
   }
 }

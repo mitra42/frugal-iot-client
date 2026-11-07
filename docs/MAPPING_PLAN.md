@@ -494,9 +494,14 @@ is on, and the upstream address while it is off. So a source works with or witho
   Leaflet's `bounds` and `minZoom` mean nothing outside them is even requested.
 - **The switch:** one button per name other than Map. Sources that share a name switch together,
   so NSW and, later, Victoria are one "Imagery".
-- **Where it shows:** only where the view touches one of that name's sources. Within reach but above
-  its `minzoom`, the button is greyed out, with the tooltip "Zoom in". Whether it is on stays as
+- **Where it shows:** only where the view touches one of that name's sources. Whether it is on stays as
   chosen while the button comes and goes.
+- **Not deep enough yet:** within reach but above its `minzoom`, the button is faded, with the
+  tooltip "Zoom in". Pressing it switches the layer on and takes the map to that zoom, at the device
+  inside the source nearest the view's centre. With no device inside, it goes to the middle of the
+  source's bounds. Not the nearest point of the bounds: they are a rectangle, mostly ocean and
+  neighbouring states, so that point usually has no imagery. It is never disabled, because a button that does
+  nothing when pressed reads as broken.
 - **Remembered:** the choice is kept per project with the map's other preferences.
 - **Fallback:** each source has M-22's enlarged-ancestor fallback, within its own bounds.
 

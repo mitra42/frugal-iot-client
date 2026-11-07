@@ -635,6 +635,8 @@ mqtt-map:not([hidden]) {
     color: var(--fi-text);
 }
 .fi-map__layer[aria-pressed="true"] { background: var(--fi-text); color: #fff; }
+/* Imagery is here, but deeper - pressing it goes there */
+.fi-map__layer[data-available="zoom"] { opacity: 0.6; }
 .fi-map__name { font-weight: 600; margin-bottom: 4px; }
 .fi-map__open { margin-top: 6px; }
 /* Pins. Status by shape as well as colour, as on the cards: live solid, stale a dashed ring,
