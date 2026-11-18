@@ -206,7 +206,7 @@ now: agora
 offline: offline
 Offline: Offline
 'On': Ligado
-'On ArduinoIDE the file is typically in ': 'No ArduinoIDE o arquivo geralmente fica em '
+'On ArduinoIDE, first "Export Compiled Binary", then the file is typically in ': 'No ArduinoIDE, primeiro "Export Compiled Binary"; depois o arquivo geralmente fica em '
 'On PlatformIO The file is typically in ': 'No PlatformIO o arquivo geralmente fica em '
 Organization: Organização
 OTA: OTA

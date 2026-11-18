@@ -206,7 +206,7 @@ now: sasa
 offline: nje ya mtandao
 Offline: Nje ya mtandao
 'On': Imewashwa
-'On ArduinoIDE the file is typically in ': 'Kwenye ArduinoIDE faili kwa kawaida iko katika '
+'On ArduinoIDE, first "Export Compiled Binary", then the file is typically in ': 'Kwenye ArduinoIDE, kwanza "Export Compiled Binary", kisha faili kwa kawaida iko katika '
 'On PlatformIO The file is typically in ': 'Kwenye PlatformIO faili kwa kawaida iko katika '
 Organization: Shirika
 OTA: OTA

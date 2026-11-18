@@ -206,7 +206,7 @@ Off: Mati
 offline: offline
 Offline: Offline
 On: Hidup
-"On ArduinoIDE the file is typically in ": "Di ArduinoIDE berkas biasanya ada di "
+'On ArduinoIDE, first "Export Compiled Binary", then the file is typically in ': 'Di ArduinoIDE, pertama "Export Compiled Binary", lalu berkas biasanya ada di '
 "On PlatformIO The file is typically in ": "Di PlatformIO berkas biasanya ada di "
 Organization: Organisasi
 OTA: OTA

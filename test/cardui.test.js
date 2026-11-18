@@ -68,9 +68,11 @@ describe('summary mode', () => {
     card.remove();
   });
 
-  test('a device that has never reported says so instead of showing stale values', () => {
+  test('a device that has announced itself but sent no readings is live, with no values to show', () => {
+    // The announcement is the node speaking; "Never seen" beside a device that just appeared read
+    // as plainly wrong. The retained-replay case, which is what "never" is for, is in datatree.test.js
     const { card } = cardFor('no-readings', 'esp8266-newborn', { at: T0 });
-    assert.match(card.querySelector('.fi-card').className, /fi-status-never/);
+    assert.match(card.querySelector('.fi-card').className, /fi-status-live/);
     assert.equal(card.querySelectorAll('.fi-chip').length, 0);
     card.remove();
   });

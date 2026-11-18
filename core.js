@@ -1331,14 +1331,23 @@ const topicGroupClasses = {
 class MqttTopicProject extends MqttTopic {
   // Route directly on the data-tree object rather than through the element.
   // base MqttTopic.message_received routes through this.element.topicValueSet, which is wrong at project level.
-  message_received(topicPath, message) {
-    this.topicValueSet(topicPath, message);
+  /*
+   * The announcement is the one message that always means the node spoke just now: it is never
+   * retained (System_Discovery::quickAdvertise), so it is heard only live. Not counting it left a
+   * node that had just appeared reading "Never seen" - its readings in the same burst arrive before
+   * addNode has subscribed to it, so they come back as retained and rightly do not count either.
+   * The flag is still checked, in case a node ever does retain one.
+   */
+  message_received(topicPath, message, retained) {
+    const nodeMt = this.topicValueSet(topicPath, message);
+    if (nodeMt && !retained) nodeMt.noteMessage();
     if (this.graphdataset) this.graphdataset.dataChanged(); //TODO-73 cant think why project has a dataset?
   }
-  // Handle a discovery message. Creates a new node if not yet seen.
+  // Handle a discovery message. Creates a new node if not yet seen, and returns it.
   topicValueSet(topicPath, message) {
     const val = this.valueFromText(message);
-    if (!this.nodes[val]) this.addNode(val);
+    if (!val) return null;
+    return this.nodes[val] || this.addNode(val);
   }
   // Creates the MqttTopicNode for a node id. The organization map's nodes are fed by its own
   // subscriptions, not each one's node/#.

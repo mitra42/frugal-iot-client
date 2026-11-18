@@ -331,8 +331,15 @@ describe('status', () => {
 
   test('a device that has said nothing is "never", not "offline"', () => {
     const { projectMt } = mock.runScenario('no-readings', { at: T0 });
-    // The discovery message reaches the project, not the node, so the node has heard nothing itself
-    assert.equal(projectMt.nodes['esp8266-newborn'].status, 'never');
+    const nodeMt = projectMt.nodes['esp8266-newborn'];
+    nodeMt.lastMessageAt = undefined;  // all we have is replayed values, as after a logger restart
+    core.mqtt_deliver('dev/lotus/esp8266-newborn/frugal_iot/name', 'newborn', true);
+    assert.equal(nodeMt.status, 'never');
+  });
+
+  test('but its announcement is the node speaking, so one that has only announced is live', () => {
+    const { projectMt } = mock.runScenario('no-readings', { at: T0 });
+    assert.equal(projectMt.nodes['esp8266-newborn'].status, 'live');
   });
 
   test('a burst of messages is one report, not a reporting interval', () => {

@@ -206,7 +206,7 @@ Off: बंद
 offline: ऑफ़लाइन
 Offline: ऑफ़लाइन
 On: चालू
-"On ArduinoIDE the file is typically in ": "ArduinoIDE पर फ़ाइल सामान्यतः यहाँ होती है "
+'On ArduinoIDE, first "Export Compiled Binary", then the file is typically in ': 'ArduinoIDE पर, पहले "Export Compiled Binary" करें, फिर फ़ाइल सामान्यतः यहाँ होती है '
 "On PlatformIO The file is typically in ": "PlatformIO पर फ़ाइल सामान्यतः यहाँ होती है "
 Organization: संगठन
 OTA: ओटीए

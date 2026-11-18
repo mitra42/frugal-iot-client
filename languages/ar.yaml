@@ -206,7 +206,7 @@ now: الآن
 offline: غير متصل
 Offline: غير متصل
 'On': تشغيل
-'On ArduinoIDE the file is typically in ': 'في ArduinoIDE يكون الملف عادةً في '
+'On ArduinoIDE, first "Export Compiled Binary", then the file is typically in ': 'في ArduinoIDE، أولاً "Export Compiled Binary"، ثم يكون الملف عادةً في '
 'On PlatformIO The file is typically in ': 'في PlatformIO يكون الملف عادةً في '
 Organization: المؤسسة
 OTA: OTA

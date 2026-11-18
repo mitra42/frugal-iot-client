@@ -206,7 +206,7 @@ now: ngayon
 offline: offline
 Offline: Offline
 'On': 'On'
-'On ArduinoIDE the file is typically in ': 'Sa ArduinoIDE, karaniwang nasa '
+'On ArduinoIDE, first "Export Compiled Binary", then the file is typically in ': 'Sa ArduinoIDE, una ang "Export Compiled Binary", pagkatapos ay karaniwang nasa '
 'On PlatformIO The file is typically in ': 'Sa PlatformIO, karaniwang nasa '
 Organization: Organisasyon
 OTA: OTA

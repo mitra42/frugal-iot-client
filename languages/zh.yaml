@@ -206,7 +206,7 @@ now: 当前
 offline: 离线
 Offline: 离线
 'On': 开
-'On ArduinoIDE the file is typically in ': '在 ArduinoIDE 中，该文件通常位于 '
+'On ArduinoIDE, first "Export Compiled Binary", then the file is typically in ': '在 ArduinoIDE 中，先执行 "Export Compiled Binary"，然后该文件通常位于 '
 'On PlatformIO The file is typically in ': '在 PlatformIO 中，该文件通常位于 '
 Organization: 组织
 OTA: OTA

@@ -206,7 +206,7 @@ Off: Éteint
 offline: hors ligne
 Offline: Hors ligne
 On: Allumé
-"On ArduinoIDE the file is typically in ": "Sur ArduinoIDE, le fichier se trouve généralement dans "
+'On ArduinoIDE, first "Export Compiled Binary", then the file is typically in ': 'Sur ArduinoIDE, d''abord « Export Compiled Binary », puis le fichier se trouve généralement dans '
 "On PlatformIO The file is typically in ": "Sur PlatformIO, le fichier se trouve généralement dans "
 Organization: Organisation
 OTA: OTA

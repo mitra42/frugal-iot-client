@@ -77,6 +77,25 @@ describe('discovery', () => {
     assert.deepEqual(Object.keys(nodeMt.groups), []);
   });
 
+  test('an announcement is the node speaking, so a node that has just appeared is not "never seen"', () => {
+    // Its readings in the same burst arrive before the new node is subscribed, so they come back
+    // retained and do not count - the announcement is all there is to go on
+    const { projectMt } = mock.runScenario('one-device');
+    const node = projectMt.nodes['esp8266-fb94bb'];
+    node.lastMessageAt = undefined;
+    core.mqtt_deliver('dev/lotus', 'esp8266-fb94bb', false);
+    assert.ok(node.age !== null && node.age < 1000);
+    assert.equal(node.status, 'live');
+  });
+
+  test('a retained announcement does not count, like any other retained message', () => {
+    const { projectMt } = mock.runScenario('one-device');
+    const node = projectMt.nodes['esp8266-fb94bb'];
+    node.lastMessageAt = undefined;
+    core.mqtt_deliver('dev/lotus', 'esp8266-fb94bb', true);
+    assert.equal(node.status, 'never');
+  });
+
   test('one device arrives for every entry in devices.yaml', () => {
     const { projectMt } = mock.runScenario('every-device');
     assert.equal(Object.keys(projectMt.nodes).length,

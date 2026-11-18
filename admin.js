@@ -2027,7 +2027,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
            el('p', {textContent: "(Max 4MB, .bin only, typically frugal-iot.ino.bin or firmware.bin)"}),
            el('p', {}, [getString("On PlatformIO The file is typically in "), el('code',{}, ['<project>/.pio/build/<your board>/firmware.bin'])]),
            el('p', {textContent: "If this directory is invisible to the file picker, copy the file somewhere else OR make an an alias to the .pio directory without a leading '.'"}),
-           el('p', {}, [getString("On ArduinoIDE the file is typically in "), el('code',{}, ["<project>/build/<your board>/frugal-iot.ino.bin"])]),
+           el('p', {}, [getString('On ArduinoIDE, first "Export Compiled Binary", then the file is typically in '), el('code',{}, ["<project>/build/<your board>/frugal-iot.ino.bin"])]),
            ]),
          el('button', {class: "submit", type: "submit", textContent: 'Upload'}),
        ]), //form
