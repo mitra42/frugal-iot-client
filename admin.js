@@ -318,6 +318,15 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
             `'-D SYSTEM_MQTT_ENROL_SECRET="${secret}"'`}),
         ])),
         /*
+         * The organization, which the firmware otherwise defaults to "dev". A secret is only
+         * accepted for its own organization, so without this line a node flashed with this
+         * secret enrols into "dev" and is refused - on the production server as much as any other.
+         */
+        el('p', {}, [
+          el('code', {i8n: false, class: 'enrolment__line', textContent:
+            `'-D SYSTEM_FRUGAL_ORG="${e.org || this.state.org}"'`}),
+        ]),
+        /*
          * The host, and this server's own enrolment URL, for anyone building against something
          * other than the production server the firmware defaults to.
          *

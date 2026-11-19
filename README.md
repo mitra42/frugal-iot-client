@@ -16,33 +16,11 @@ which is still the best place to post complex issues involving client / server a
 
 ## Test and demonstration
 
-Connect to https://frugaliot.naturalinnovation  it will server up the current UI.
+Connect to https://frugaliot.naturalinnovation.org - it serves the current UI.
 
 ## Installation for development
 
-Note this process will probably change to make configuration changes for development easier.
-
-This should work on Linux or a Mac - (instructions on windows welcome as a PR)
-Clone this repo, 
-```
-git clone https://github.com/mitra42/frugal-iot-client.git
-cd frugal-iot-client; npm install
-cd ..
-```
-Clone and run the server
-```
-git clone https://github.com/mitra42/frugal-iot-server.git
-cd frugal-iot-server; npm install
-```
-Edit `frugal-iot-server.js` and uncomment the line hear the top
-that sets `htmldir` to the `../frugal-iot-client`
-```
-node frugal-iot-server.js
-```
-Point your browser at `https://localhost:8080`
-
-You should see a series of dialogues allowing you to select a project.
-Choosing `dev` and `lotus` will often get one of the test nodes I'm running at home.
+See [Developing on the server, logger and client](https://github.com/mitra42/frugal-iot/wiki/Development-%E2%80%90-getting-setup#developing-on-the-server-logger-and-client) on the wiki.
 
 
 
