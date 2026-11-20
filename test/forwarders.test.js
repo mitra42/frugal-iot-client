@@ -293,7 +293,7 @@ describe('the Grafana card', () => {
   });
 });
 
-describe('the Claude (MCP) card', () => {
+describe('the AI assistants (MCP) card', () => {
   async function mcpCard(tokens = []) {
     mock.loadConfig({ ...base, user: { id: 2, name: 'test', permissions: [{ org: 'dev', capability: 'MCP' }, { org: 'dev', capability: 'READ' }] } });
     listing = tokens;
@@ -308,7 +308,7 @@ describe('the Claude (MCP) card', () => {
 
   test('says so when nothing has access, and asks for the user\'s own tokens, not the organization\'s', async () => {
     const admin = await mcpCard([]);
-    assert.match(admin.shadowRoot.textContent, /No Claude has been given a token yet/);
+    assert.match(admin.shadowRoot.textContent, /No AI assistant has been given a token yet/);
     assert.ok(calls.some((c) => c.method === 'GET' && c.path === '/tokens/mcp'));
   });
 
@@ -332,6 +332,8 @@ describe('the Claude (MCP) card', () => {
     assert.deepEqual(calls.find((c) => c.method === 'POST'), { method: 'POST', path: '/tokens/mcp', body: { name: 'laptop' } });
     const command = admin.shadowRoot.querySelector('.mcp-new pre').textContent;
     assert.match(command, /^claude mcp add --scope user --transport http frugal-iot \S+\/mcp --header "Authorization: Bearer fiot_SECRET456"$/);
+    // Claude Code is the only one with a one-line setup; the rest are on the wiki
+    assert.match(admin.shadowRoot.querySelector('.mcp-new a').href, /wiki\/Using-AI-with-Frugal-IoT$/);
   });
 
   test('revoking asks first, then sends the name', async () => {
@@ -420,5 +422,17 @@ describe('the OpenSearch Dashboards card', () => {
     globalThis.window.confirm = realConfirm;
     assert.match(asked, /Remove the login/);
     assert.equal(calls.filter((c) => c.method === 'POST').length, 0);
+  });
+});
+
+describe('enrolment secrets', () => {
+  test('the enrolment URL for a node build is this page\'s own address, not what the server says it is', () => {
+    const admin = document.createElement('mqtt-admin');
+    admin.state.org = 'dev';
+    // What production sent from behind its proxy
+    admin.state.enrolment = { org: 'dev', secrets: ['s1'], enrol_url: 'http://127.0.0.1:8080/enrol' };
+    const text = admin.enrolmentSecretsList().textContent;
+    assert.match(text, new RegExp(`SYSTEM_MQTT_ENROL_URL="${window.location.origin}/enrol"`));
+    assert.doesNotMatch(text, /127\.0\.0\.1/);
   });
 });

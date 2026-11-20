@@ -10,6 +10,9 @@ import mqtt from '/node_modules/mqtt/dist/mqtt.esm.js'; // https://www.npmjs.com
 import { CssUrl, DELETE, POST, XXX, brokerHost, configSet, el, getString, getStringWith, hasCapability, mqttTempConnect, mqtt_subscribe, mqtt_unsubscribe, retainedPattern, language, mqtt_client, redirectToLogin, server_config } from './core.js';
 
 
+// How to connect assistants other than Claude Code - one place, kept up to date by their users
+const AI_WIKI_PAGE = 'https://github.com/mitra42/frugal-iot/wiki/Using-AI-with-Frugal-IoT';
+
 // The OTA upload is multipart, which POST() (JSON) cannot carry. Callback-style, like the rest.
 // The server answers every outcome with a redirect carrying ?message=, so the final URL is the reply.
 function postFormData(url, formData, cb) {
@@ -77,7 +80,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   get otaOrgs() {
     return this.orgsByPerm("OTAUPDATE");
   }
-  // Where the user may let their Claude query - the token itself is not tied to any one of them
+  // Where the user may let their AI assistant query - the token itself is not tied to any one of them
   get mcpOrgs() {
     return this.orgsByPerm("MCP");
   }
@@ -282,7 +285,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     if (!this.state.org) return;
     GET(`/enrolment_secret/${this.state.org}`, {}, (err, json) => {
       if (err) { this.message(err.message); return; }
-      this.state.enrolment = json;   // {org, secrets, enrol_url}
+      this.state.enrolment = json;   // {org, secrets, enrol_url} - enrol_url unused, see enrolmentSecretsList
       this.replaceElement("enrolment_secrets", this.enrolmentSecretsList());
     });
   }
@@ -347,7 +350,10 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
             `'-D SYSTEM_MQTT_HOST="${brokerHost(server_config.mqtt && server_config.mqtt.broker)}"'`}),
           el('br', {}),
           el('code', {i8n: false, class: 'enrolment__line', textContent:
-            `'-D SYSTEM_MQTT_ENROL_URL="${e.enrol_url}"'`}),
+            // From this page's own address, not the server's idea of it: the browser reached the
+            // server the way a node will, while behind a reverse proxy the server sees only
+            // 127.0.0.1:8080 - which is what production handed out, baked into node builds
+            `'-D SYSTEM_MQTT_ENROL_URL="${window.location.origin}/enrol"'`}),
         ]),
       ] : [el('p', {textContent:
         "This organization has no enrolment secret, so no new node can enrol. Add one."})]),
@@ -887,7 +893,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     ]);
   }
   /*
-   * Tokens that let the user's own Claude query this server through /mcp (frugal-iot-server issue #44).
+   * Tokens that let the user's own AI assistant (Claude, ChatGPT...) query this server through /mcp (frugal-iot-server issue #44).
    * Unlike Grafana's they belong to the user, not to the organization on the card: each request is
    * checked against MCP and READ on whatever organization it touches, so one token covers them all.
    */
@@ -902,7 +908,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   mcpList() {
     const tokens = this.state.mcp_tokens;
     if (!tokens || !tokens.length) {
-      return el('p', {textContent: "No Claude has been given a token yet."});
+      return el('p', {textContent: "No AI assistant has been given a token yet."});
     }
     return el('table', {class: 'nodestates'}, [
       el('tr', {}, [
@@ -923,7 +929,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     if (!name) { this.message(getString("Give it a name first")); return; }
     if (this.state.mcp_tokens && this.state.mcp_tokens.some((t) => t.name === name)
         && !window.confirm(getStringWith('"%s" already exists.', name) + "\n\n" +
-          getString("Making it again replaces its token, and the Claude using the old one stops working until it is given the new one."))) return;
+          getString("Making it again replaces its token, and the assistant using the old one stops working until it is given the new one."))) return;
     POST('/tokens/mcp', { name }, (err, json) => {
       if (err) { this.message(err.message); return; }
       this.state.mcp_new = json;  // { purpose, name, token } - shown once, below
@@ -933,7 +939,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   }
   onMcpRevoke(t) {
     if (!window.confirm(getStringWith('Revoke "%s"?', t.name) + "\n\n" +
-      getString("The Claude using it stops being able to read straight away."))) return;
+      getString("The assistant using it stops being able to read straight away."))) return;
     POST('/tokens/mcp/revoke', { name: t.name }, (err) => {
       if (err) { this.message(err.message); return; }
       if (this.state.mcp_new && this.state.mcp_new.name === t.name) this.state.mcp_new = null;
@@ -942,7 +948,8 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     });
   }
   // The server name is in the command so that a person with servers in two places can tell them apart
-  // in Claude, where it is the name the tools are listed under.
+  // in the assistant, where it is the name the tools are listed under. Only Claude Code takes the whole
+  // setup as one command; the wiki page has the others.
   mcpNewDetails() {
     const n = this.state.mcp_new;
     if (!n) return el('span', {});
@@ -960,19 +967,24 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
         const pre = el('pre', {i8n: false, textContent: command});
         return el('div', {}, [pre, this.copyButton(command, () => pre)]);
       })(),
+      el('p', {}, [
+        getString("For Claude Desktop, ChatGPT and other assistants, see:"), ' ',
+        el('a', {i8n: false, href: AI_WIKI_PAGE, target: '_blank', rel: 'noopener', textContent: 'Using AI with Frugal IoT'}),
+      ]),
     ]);
   }
   mcpRestContent() {
     return el('div', {}, [
-      this.refreshableHeading("Claude", this.getMcpTokens),
+      this.refreshableHeading("AI assistants", this.getMcpTokens),
       el('p', {textContent:
-        "Claude can answer questions about the readings you can see - trends, comparisons, which nodes " +
-        "went over their limits - using your own Claude account. A token lets your Claude reach this " +
-        "server as you: it reads what you may read, in each organization where you also have MCP " +
-        "permission, and nothing else. It stops working if your access does."}),
+        "An AI assistant such as Claude or ChatGPT can answer questions about the readings you can see - " +
+        "trends, comparisons, which nodes went over their limits - using your own account with it. A " +
+        "token lets your assistant reach this server as you: it reads what you may read, in each " +
+        "organization where you also have MCP permission, and nothing else. It stops working if your " +
+        "access does."}),
       this.state.elements.mcp_list = this.mcpList(),
       el('section', {}, [
-        el('h3', {textContent: "Give Claude access"}),
+        el('h3', {textContent: "Give an AI assistant access"}),
         el('p', {textContent: "Name it for the computer it is on, so it can be revoked on its own."}),
         el('div', {}, [
           this.state.elements.mcp_name = el('input', {i8n: false, type: 'text', size: 24, placeholder: 'my-laptop'}),
@@ -1291,7 +1303,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
           el('option', {value: "", textContent: "Not selected", selected: !this.state.value}),
           // OTAFLASH is separate from OTAUPDATE and neither implies the other: flashing needs the
           // device in your hand, where pushing an OTA binary reaches every device at once.
-          // MCP lets the person's own Claude query what they may READ - it adds nothing without READ.
+          // MCP lets the person's own AI assistant query what they may READ - it adds nothing without READ.
           ["READ","WRITE","OTAUPDATE","OTAFLASH","MCP","ADMIN"].map(x =>
             el('option', {value: x, textContent: x, selected: false, i8n: false})
           )
@@ -1844,7 +1856,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     // Which tabs do their own network fetch, and so need one again for a new organization. Only
     // Dashboard does not (mqtt-wrapper handles it). "Nodes" is in the list because it now fetches
     // the enrolled-node list as well as reading server_config:
-    this.state.sectionsNeedingLoad = new Set(['OTA', 'Admin', 'Projects', 'Nodes', 'Bridges', 'Forwarders', 'Grafana', 'Claude', 'OpenSearch', 'API']);
+    this.state.sectionsNeedingLoad = new Set(['OTA', 'Admin', 'Projects', 'Nodes', 'Bridges', 'Forwarders', 'Grafana', 'AI assistants', 'OpenSearch', 'API']);
     this.loadSectionIfNeeded(this.state.activeSectionTitle);
     // Only a card created without an organization has a dropdown of its own; replaceElement does
     // nothing for an element this rendering never made. Fine too if this.state.org is undefined.
@@ -1888,7 +1900,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       this.getForwarders();
     } else if (title === 'Grafana') {
       this.getGrafanaTokens();
-    } else if (title === 'Claude') {
+    } else if (title === 'AI assistants') {
       this.getMcpTokens();
     } else if (title === 'OpenSearch') {
       this.getOpenSearchAccess();
@@ -2358,7 +2370,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
        { key: 'nodes', title: "Nodes", orgs: 'adminOrgs', dropdown: 'nodesorgsdropdown', rest: 'nodes_rest', content: this.nodesRestContent },
        { key: 'bridges', title: "Bridges", orgs: 'adminOrgs', dropdown: 'bridgesorgsdropdown', rest: 'bridges_rest', content: this.bridgesRestContent },
        { key: 'grafana', title: "Grafana", orgs: 'readOrgs', dropdown: 'grafanaorgsdropdown', rest: 'grafana_rest', content: this.grafanaRestContent },
-       { key: 'mcp', title: "Claude", orgs: 'mcpOrgs', dropdown: 'mcporgsdropdown', rest: 'mcp_rest', content: this.mcpRestContent },
+       { key: 'mcp', title: "AI assistants", orgs: 'mcpOrgs', dropdown: 'mcporgsdropdown', rest: 'mcp_rest', content: this.mcpRestContent },
        { key: 'opensearch', title: "OpenSearch", orgs: 'readOrgs', dropdown: 'opensearchorgsdropdown', rest: 'opensearch_rest', content: this.openSearchRestContent },
        { key: 'forwarders', title: "Forwarders", orgs: 'adminOrgs', dropdown: 'forwardersorgsdropdown', rest: 'forwarders_rest', content: this.forwardersRestContent },
        { key: 'api',   title: "API",   orgs: 'adminOrgs', dropdown: 'apiorgsdropdown',   rest: 'api_rest',   content: this.apiRestContent },

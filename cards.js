@@ -832,8 +832,8 @@ const ADMIN_CARDS = [
   { section: 'bridges', title: 'Bridges',          capability: 'ADMIN' },
   // READ, not ADMIN: a token shows only what its maker may read, so anyone who can read can make one
   { section: 'grafana', title: 'Grafana',          capability: 'READ' },
-  // MCP: an administrator decides whether this organization's readings may go to anyone's Claude
-  { section: 'mcp',     title: 'Claude',           capability: 'MCP' },
+  // MCP: an administrator decides whether this organization's readings may go to anyone's AI assistant
+  { section: 'mcp',     title: 'AI assistants',    capability: 'MCP' },
   // READ: each person makes their own login. The server needs it for the whole organization, and says so.
   { section: 'opensearch', title: 'OpenSearch',    capability: 'READ' },
   { section: 'forwarders', title: 'Forwarders',    capability: 'ADMIN' },
