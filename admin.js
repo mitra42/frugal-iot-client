@@ -77,6 +77,10 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
   get otaOrgs() {
     return this.orgsByPerm("OTAUPDATE");
   }
+  // Where the user may let their Claude query - the token itself is not tied to any one of them
+  get mcpOrgs() {
+    return this.orgsByPerm("MCP");
+  }
   // Who may see the firmware list: pushing it or flashing it both need to know what is there.
   get otaListOrgs() {
     return [...new Map([...this.orgsByPerm("OTAUPDATE"), ...this.orgsByPerm("OTAFLASH")])];
@@ -883,6 +887,102 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     ]);
   }
   /*
+   * Tokens that let the user's own Claude query this server through /mcp (frugal-iot-server issue #44).
+   * Unlike Grafana's they belong to the user, not to the organization on the card: each request is
+   * checked against MCP and READ on whatever organization it touches, so one token covers them all.
+   */
+  getMcpTokens(cb = () => {}) {
+    GET('/tokens/mcp', {}, (err, json) => {
+      cb();
+      if (err) { this.message(err.message); return; }
+      this.state.mcp_tokens = json; // [{ name, created_at, last_used }] - always only your own
+      this.replaceElement("mcp_list", this.mcpList());
+    });
+  }
+  mcpList() {
+    const tokens = this.state.mcp_tokens;
+    if (!tokens || !tokens.length) {
+      return el('p', {textContent: "No Claude has been given a token yet."});
+    }
+    return el('table', {class: 'nodestates'}, [
+      el('tr', {}, [
+        el('th', {textContent: "Name"}), el('th', {textContent: "Made"}),
+        el('th', {textContent: "Last used"}), el('th', {textContent: ""}),
+      ]),
+      ...tokens.map((t) => el('tr', {}, [
+        el('td', {i8n: false, textContent: t.name}),
+        el('td', {i8n: false, textContent: this.formatLastSeen(new Date(t.created_at).toISOString())}),
+        el('td', {i8n: false, textContent: t.last_used
+          ? this.formatLastSeen(new Date(t.last_used).toISOString()) : getString("Never")}),
+        el('td', {}, [el('button', {type: 'button', textContent: "Revoke", onclick: () => this.onMcpRevoke(t)})]),
+      ])),
+    ]);
+  }
+  onMcpTokenAdd() {
+    const name = (this.state.elements.mcp_name.value || '').trim();
+    if (!name) { this.message(getString("Give it a name first")); return; }
+    if (this.state.mcp_tokens && this.state.mcp_tokens.some((t) => t.name === name)
+        && !window.confirm(getStringWith('"%s" already exists.', name) + "\n\n" +
+          getString("Making it again replaces its token, and the Claude using the old one stops working until it is given the new one."))) return;
+    POST('/tokens/mcp', { name }, (err, json) => {
+      if (err) { this.message(err.message); return; }
+      this.state.mcp_new = json;  // { purpose, name, token } - shown once, below
+      this.getMcpTokens();
+      this.replaceElement("mcp_new", this.mcpNewDetails());
+    });
+  }
+  onMcpRevoke(t) {
+    if (!window.confirm(getStringWith('Revoke "%s"?', t.name) + "\n\n" +
+      getString("The Claude using it stops being able to read straight away."))) return;
+    POST('/tokens/mcp/revoke', { name: t.name }, (err) => {
+      if (err) { this.message(err.message); return; }
+      if (this.state.mcp_new && this.state.mcp_new.name === t.name) this.state.mcp_new = null;
+      this.getMcpTokens();
+      this.replaceElement("mcp_new", this.mcpNewDetails());
+    });
+  }
+  // The server name is in the command so that a person with servers in two places can tell them apart
+  // in Claude, where it is the name the tools are listed under.
+  mcpNewDetails() {
+    const n = this.state.mcp_new;
+    if (!n) return el('span', {});
+    const command = `claude mcp add --scope user --transport http frugal-iot ${window.location.origin}/mcp --header "Authorization: Bearer ${n.token}"`;
+    return el('div', {class: 'mcp-new'}, [
+      el('h4', {textContent: "Copy this now - it is not shown again"}),
+      el('table', {class: 'nodestates'}, [
+        el('tr', {}, [el('th', {textContent: "Token"}), (() => {
+          const td = el('td', {i8n: false, textContent: n.token});
+          return el('td', {}, [td, this.copyButton(n.token, () => td)]);
+        })()]),
+      ]),
+      el('p', {textContent: "In Claude Code, run:"}),
+      (() => {
+        const pre = el('pre', {i8n: false, textContent: command});
+        return el('div', {}, [pre, this.copyButton(command, () => pre)]);
+      })(),
+    ]);
+  }
+  mcpRestContent() {
+    return el('div', {}, [
+      this.refreshableHeading("Claude", this.getMcpTokens),
+      el('p', {textContent:
+        "Claude can answer questions about the readings you can see - trends, comparisons, which nodes " +
+        "went over their limits - using your own Claude account. A token lets your Claude reach this " +
+        "server as you: it reads what you may read, in each organization where you also have MCP " +
+        "permission, and nothing else. It stops working if your access does."}),
+      this.state.elements.mcp_list = this.mcpList(),
+      el('section', {}, [
+        el('h3', {textContent: "Give Claude access"}),
+        el('p', {textContent: "Name it for the computer it is on, so it can be revoked on its own."}),
+        el('div', {}, [
+          this.state.elements.mcp_name = el('input', {i8n: false, type: 'text', size: 24, placeholder: 'my-laptop'}),
+          el('button', {textContent: "Make a token", onclick: this.onMcpTokenAdd.bind(this)}),
+        ]),
+        this.state.elements.mcp_new = this.mcpNewDetails(),
+      ]),
+    ]);
+  }
+  /*
    * A login to this server's OpenSearch for OpenSearch Dashboards running on the organization's own
    * computer. The server makes it (and a role that limits it to this organization) and shows the
    * password once, with the lines to put in Dashboards' configuration.
@@ -1191,7 +1291,8 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
           el('option', {value: "", textContent: "Not selected", selected: !this.state.value}),
           // OTAFLASH is separate from OTAUPDATE and neither implies the other: flashing needs the
           // device in your hand, where pushing an OTA binary reaches every device at once.
-          ["READ","WRITE","OTAUPDATE","OTAFLASH","ADMIN"].map(x =>
+          // MCP lets the person's own Claude query what they may READ - it adds nothing without READ.
+          ["READ","WRITE","OTAUPDATE","OTAFLASH","MCP","ADMIN"].map(x =>
             el('option', {value: x, textContent: x, selected: false, i8n: false})
           )
         ]),
@@ -1743,7 +1844,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
     // Which tabs do their own network fetch, and so need one again for a new organization. Only
     // Dashboard does not (mqtt-wrapper handles it). "Nodes" is in the list because it now fetches
     // the enrolled-node list as well as reading server_config:
-    this.state.sectionsNeedingLoad = new Set(['OTA', 'Admin', 'Projects', 'Nodes', 'Bridges', 'Forwarders', 'Grafana', 'OpenSearch', 'API']);
+    this.state.sectionsNeedingLoad = new Set(['OTA', 'Admin', 'Projects', 'Nodes', 'Bridges', 'Forwarders', 'Grafana', 'Claude', 'OpenSearch', 'API']);
     this.loadSectionIfNeeded(this.state.activeSectionTitle);
     // Only a card created without an organization has a dropdown of its own; replaceElement does
     // nothing for an element this rendering never made. Fine too if this.state.org is undefined.
@@ -1787,6 +1888,8 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
       this.getForwarders();
     } else if (title === 'Grafana') {
       this.getGrafanaTokens();
+    } else if (title === 'Claude') {
+      this.getMcpTokens();
     } else if (title === 'OpenSearch') {
       this.getOpenSearchAccess();
     } else if (title === 'API') {
@@ -2255,6 +2358,7 @@ class MqttAdmin extends HTMLElementExtended { // TODO-89 may depend on organizat
        { key: 'nodes', title: "Nodes", orgs: 'adminOrgs', dropdown: 'nodesorgsdropdown', rest: 'nodes_rest', content: this.nodesRestContent },
        { key: 'bridges', title: "Bridges", orgs: 'adminOrgs', dropdown: 'bridgesorgsdropdown', rest: 'bridges_rest', content: this.bridgesRestContent },
        { key: 'grafana', title: "Grafana", orgs: 'readOrgs', dropdown: 'grafanaorgsdropdown', rest: 'grafana_rest', content: this.grafanaRestContent },
+       { key: 'mcp', title: "Claude", orgs: 'mcpOrgs', dropdown: 'mcporgsdropdown', rest: 'mcp_rest', content: this.mcpRestContent },
        { key: 'opensearch', title: "OpenSearch", orgs: 'readOrgs', dropdown: 'opensearchorgsdropdown', rest: 'opensearch_rest', content: this.openSearchRestContent },
        { key: 'forwarders', title: "Forwarders", orgs: 'adminOrgs', dropdown: 'forwardersorgsdropdown', rest: 'forwarders_rest', content: this.forwardersRestContent },
        { key: 'api',   title: "API",   orgs: 'adminOrgs', dropdown: 'apiorgsdropdown',   rest: 'api_rest',   content: this.apiRestContent },

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#007bff">
+    <title>Frugal IoT - Readings</title>
+    <link href="./frugaliot.css" rel="stylesheet" type="text/css">
+    <script type="importmap">
+        {
+        "imports": {
+            "@kurkle/color": "/node_modules/@kurkle/color/dist/color.esm.js",
+            "chart.js": "/node_modules/chart.js/dist/Chart.js",
+            "dial-gauge": "/node_modules/dial-gauge/dial-gauge.js",
+            "luxon": "/node_modules/luxon/src/luxon.js",
+            "chartjs-adapter-luxon": "/node_modules/chartjs-adapter-luxon/dist/chartjs-adapter-luxon.esm.js",
+            "csv-parse": "/node_modules/csv-parse/dist/esm/index.js",
+            "esptool-js": "/node_modules/esptool-js/bundle.js"
+            }
+        }
+    </script>
+    <!-- Readings from /api/data, drawn from the parameters in this page's URL - see graphpage.js -->
+    <script src="./graphpage.js" type="module"></script>
+</head>
+<body>
+<fi-graph-page></fi-graph-page>
+</body>
+</html>

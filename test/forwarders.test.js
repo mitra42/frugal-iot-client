@@ -293,6 +293,69 @@ describe('the Grafana card', () => {
   });
 });
 
+describe('the Claude (MCP) card', () => {
+  async function mcpCard(tokens = []) {
+    mock.loadConfig({ ...base, user: { id: 2, name: 'test', permissions: [{ org: 'dev', capability: 'MCP' }, { org: 'dev', capability: 'READ' }] } });
+    listing = tokens;
+    const admin = document.createElement('mqtt-admin');
+    admin.setAttribute('section', 'mcp');
+    admin.setAttribute('org', 'dev'); // as cards.js does - a user who is not an administrator gets no default
+    document.body.append(admin);
+    admin.getMcpTokens();
+    await tick();
+    return admin;
+  }
+
+  test('says so when nothing has access, and asks for the user\'s own tokens, not the organization\'s', async () => {
+    const admin = await mcpCard([]);
+    assert.match(admin.shadowRoot.textContent, /No Claude has been given a token yet/);
+    assert.ok(calls.some((c) => c.method === 'GET' && c.path === '/tokens/mcp'));
+  });
+
+  test('lists tokens by name, with no token value anywhere', async () => {
+    const admin = await mcpCard([{ name: 'laptop', created_at: Date.now() - 86400000, last_used: null }]);
+    const row = admin.shadowRoot.querySelectorAll('table.nodestates tr')[1];
+    assert.match(row.textContent, /laptop/);
+    assert.match(row.textContent, /Never/);
+  });
+
+  test('making a token shows it once, in the command that gives it to Claude Code', async () => {
+    const admin = await mcpCard([]);
+    globalThis.fetch = (req, init) => {
+      const path = new URL(typeof req === 'string' ? req : req.url, 'http://localhost').pathname;
+      calls.push({ method: (init && init.method) || 'GET', path, body: init && init.body ? JSON.parse(init.body) : undefined });
+      return json((init && init.method === 'POST') ? { purpose: 'mcp', name: 'laptop', token: 'fiot_SECRET456' } : []);
+    };
+    admin.state.elements.mcp_name.value = 'laptop';
+    [...admin.shadowRoot.querySelectorAll('button')].find((b) => b.textContent === 'Make a token').click();
+    await tick();
+    assert.deepEqual(calls.find((c) => c.method === 'POST'), { method: 'POST', path: '/tokens/mcp', body: { name: 'laptop' } });
+    const command = admin.shadowRoot.querySelector('.mcp-new pre').textContent;
+    assert.match(command, /^claude mcp add --scope user --transport http frugal-iot \S+\/mcp --header "Authorization: Bearer fiot_SECRET456"$/);
+  });
+
+  test('revoking asks first, then sends the name', async () => {
+    const admin = await mcpCard([{ name: 'laptop', created_at: 1, last_used: null }]);
+    let asked;
+    const realConfirm = globalThis.window.confirm;
+    globalThis.window.confirm = (q) => { asked = q; return true; };
+    admin.onMcpRevoke({ name: 'laptop' });
+    await tick();
+    globalThis.window.confirm = realConfirm;
+    assert.match(asked, /Revoke "laptop"\?/);
+    assert.deepEqual(calls.find((c) => c.method === 'POST'),
+      { method: 'POST', path: '/tokens/mcp/revoke', body: { name: 'laptop' } });
+  });
+
+  test('is not offered without MCP, READ alone not being enough', async () => {
+    mock.loadConfig({ ...base, user: { id: 2, name: 'test', permissions: [{ org: 'dev', capability: 'READ' }] } });
+    const admin = document.createElement('mqtt-admin');
+    admin.setAttribute('section', 'mcp');
+    document.body.append(admin);
+    assert.equal(admin.shadowRoot.querySelector('.mqtt-admin'), null);
+  });
+});
+
 describe('the OpenSearch Dashboards card', () => {
   async function accessCard(state) {
     listing = state;

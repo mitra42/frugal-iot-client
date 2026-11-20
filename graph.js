@@ -509,3 +509,6 @@ document.addEventListener('frugaliot:publish', ({detail}) => {
 // Public API for custom dashboards and pages that import this module.
 // Add further exports here as dashboard needs grow (e.g. getString for i18n).
 
+// Chart has the Luxon adapter above registered on it, so a page drawing its own chart (graph.html,
+// graphpage.js) gets the same time axis as the dashboard's.
+export { Chart, variantColor, addAlpha };

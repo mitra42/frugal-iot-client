@@ -87,6 +87,11 @@ describe('which admin cards a user gets', () => {
       ['info', 'admin', 'projects', 'message', 'retained', 'nodes', 'bridges', 'grafana', 'opensearch', 'forwarders', 'api']);
   });
 
+  test('MCP brings the Claude card, next to Grafana', () => {
+    withCapabilities('READ', 'MCP');
+    assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section), ['info', 'grafana', 'mcp', 'opensearch']);
+  });
+
   test('someone who can only read gets the Grafana card, because a token shows only what they can read', () => {
     withCapabilities('READ');
     assert.deepEqual(cards.adminCardsFor('dev').map((c) => c.section), ['info', 'grafana', 'opensearch']);

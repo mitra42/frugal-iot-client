@@ -824,3 +824,11 @@ body:has(mqtt-login) {
 /* Colour is never the only signal: an error also says so in words the server wrote */
 .fi-login__message--error { border-color: #c0392b; background: #fdeeec; color: #7c231a; }
 .fi-login__message--info  { border-color: var(--fi-leaf-deep); background: #eaf7ef; color: #1c5c37; }
+
+/* graph.html - one chart of history, from a link (graphpage.js) */
+.fi-graphpage { padding: 12px 16px; }
+.fi-graphpage__title { margin: 0 0 4px; font-size: 1.3em; }
+.fi-graphpage__subtitle { margin: 0 0 8px; color: #555; font-size: 0.9em; overflow-wrap: anywhere; }
+.fi-graphpage__status { margin: 8px 0; }
+/* Chart.js sizes to its container when responsive, so the container is what has the height */
+.fi-graphpage__chart { position: relative; width: 100%; height: 70vh; min-height: 300px; }

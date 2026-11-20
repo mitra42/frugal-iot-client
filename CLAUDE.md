@@ -19,6 +19,7 @@ it loadable on its own, and it is maintained by reaching the display elements **
 | `nodeconfig.js` | none | the serial config protocol and the batch profile — no DOM, used by `flash.js` |
 | `admin.js` | core | `mqtt-admin` — one admin section, rendered per card by `cards.js` |
 | `login.js` | core | `mqtt-login` — sign in, register, forgot/reset password; light DOM |
+| `graphpage.js` | core, graph | `fi-graph-page` — one chart of `/api/data`, everything from the URL (the server's MCP `graph_link`); no MQTT; light DOM |
 
 Every page loads the modules it needs; there is no file that loads everything.
 
@@ -26,6 +27,7 @@ Every page loads the modules it needs; there is no file that loads everything.
 |---|---|
 | `index.html` | `dashboard.js` — the card UI |
 | `login.html` | `login.js`, which imports only `core.js` — that is why `mqtt-login` is not in `admin.js` |
+| `graph.html` | `graphpage.js`. Session-gated by the server like `index.html`, so never in the service worker's `urlsToCache` |
 | `index-embedded.html`, `dashboard_example.html` | `core.js` + `widgets.js` + `graph.js` |
 
 Retired with the pre-cards UI: `index-old.html`, `index-project.html`, `nodeview.js` and
@@ -48,7 +50,7 @@ these by bare filename (`see CARDS_UX.md 4.7`); they all live in `docs/`.
 ## Code style
 
 - **Indentation**: 2 spaces throughout.
-- **Async style**: prefer callback-style async (using the `async` library from `caolan/async`) over Promise chains. Existing `fetch` calls that use `.then()` are legacy patterns; new async code should use callbacks or `async.waterfall` / `async.parallel` etc.
+- **Async style**: `async`/`await` is fine, and preferred for new code. Existing callback code (including the `async` library's `waterfall`/`parallel`) does not need converting. Avoid bare `.then()` chains; use `await`.
 - **Comments**: explain WHY, not WHAT. One short line is enough; do not restate what the code clearly shows. No multi-line docstrings.
   - Good: `// topicSetPath throws when this.node is null — guard before calling`
   - Bad: `// Check if topic starts with the set path`
